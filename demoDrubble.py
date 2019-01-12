@@ -6,7 +6,8 @@ import scipy.integrate as spi
 import matplotlib.pyplot as plt
 # import matplotlib.animation as animation
 # import drubbleFunc
-runfile('drubbleFunc.py')
+# runfile('drubbleFunc.py')
+exec(open("./drubbleFunc.py").read())
 
 # Parameters
 g  = 9.81 # Gravitational acceleration [m/s^2]
@@ -94,6 +95,6 @@ for n in range(0,30,2):
     plt.plot(xv,yv)
     plt.plot(rf[0],rf[1],'k>')
     plt.plot(lf[0],lf[1],'k<')
-    plt.xlim([x-4.5,x+0.5])
-    plt.ylim([y-2.1,y+1.9])
+    plt.xlim(sol.y[0,n]+[-4.5,0.5])
+    plt.ylim(sol.y[1,n]+[-2.1,1.9])
          
