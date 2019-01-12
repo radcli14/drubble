@@ -1,13 +1,12 @@
 # Import required packages
-import os
-import time
+# import os
+# import time
 import numpy as np
 import scipy.integrate as spi
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import trunkiFuncs
-#cwd = os.getcwd()
-#execfile(cwd + "\\trunki.py")
+# import matplotlib.animation as animation
+# import drubbleFunc
+runfile('drubbleFunc.py')
 
 # Parameters
 g  = 9.81 # Gravitational acceleration [m/s^2]
@@ -57,13 +56,13 @@ sol = spi.solve_ivp(PlayerAndStool,tspan,u0,t_eval=t)
 
 # Plot results
 plt.figure()
-plt.subplot(2,2,1,xlabel="Time [sec]",ylabel="x [m]")
+plt.subplot(2,2,1,xlabel='Time [sec]',ylabel='x [m]')
 plt.plot(sol.t,sol.y[0,:])
-plt.subplot(2,2,2,xlabel="Time [sec]",ylabel="y [m]")
+plt.subplot(2,2,2,xlabel='Time [sec]',ylabel='y [m]')
 plt.plot(sol.t,sol.y[1,:])
-plt.subplot(2,2,3,xlabel="Time [sec]",ylabel="l [m]")
+plt.subplot(2,2,3,xlabel='Time [sec]',ylabel='l [m]')
 plt.plot(sol.t,sol.y[2,:])
-plt.subplot(2,2,4,xlabel="Time [sec]",ylabel="\theta [deg]")
+plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='\theta [deg]')
 plt.plot(sol.t,180/np.pi*sol.y[3,:])
 
 plt.figure()
@@ -93,8 +92,8 @@ for n in range(0,30,2):
     
     # Generate plot at time t[n]
     plt.plot(xv,yv)
-    plt.plot(rf[0],rf[1],'kv')
-    plt.plot(lf[0],lf[1],'k^')
+    plt.plot(rf[0],rf[1],'k>')
+    plt.plot(lf[0],lf[1],'k<')
     plt.xlim([x-4.5,x+0.5])
     plt.ylim([y-2.1,y+1.9])
          
