@@ -4,9 +4,7 @@
 import numpy as np
 import scipy.integrate as spi
 import matplotlib.pyplot as plt
-# import matplotlib.animation as animation
-# import drubbleFunc
-# runfile('drubbleFunc.py')
+import matplotlib.animation as animation
 exec(open("./drubbleFunc.py").read())
 
 # Parameters
@@ -43,7 +41,7 @@ u0 = [0,y0,l0,0,0,0,0,0]
 Q = np.matrix([[Qx],[0],[0],[0]])
 
 # Time vector for test simulation
-tspan = [0, 10]
+tspan = [0, 2]
 fs = 30
 dt = 1/fs
 t = np.linspace(tspan[0],tspan[1],fs*(tspan[1]-tspan[0])+1)
@@ -77,10 +75,7 @@ plt.subplot(2,2,4)
 plt.plot(sol.t,sol.y[7,:])
 
 
-#ani = animation.FuncAnimation(fig, animate, range(0,np.size(t), interval=dt, init_func=init)
-
-#plt.show()
-
+# Generate an overlay plot of several frames
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_aspect('equal')
@@ -98,3 +93,14 @@ for n in range(0,30,2):
     plt.xlim(sol.y[0,n]+[-4.5,0.5])
     plt.ylim(sol.y[1,n]+[-2.1,1.9])
          
+# Generate an animation
+fig, ax = plt.subplots()
+#xdata, ydata = [], []
+ln, = plt.plot([], [], '-g', animated=True)
+RF, = plt.plot([], [], '<k', animated=True)
+LF, = plt.plot([], [], '>k', animated=True)
+
+ani = animation.FuncAnimation(fig, animate, 
+                              np.size(t), 
+                              interval=dt*1000, init_func=init, blit=True)
+plt.show()    

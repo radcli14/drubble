@@ -91,17 +91,23 @@ def stickDude(n):
 
 
 def init():
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    #ax.set_xlim(-2.5, 2.5)
+    #ax.set_ylim(-1, 3)
+    ax.set_xlim(-1,11)
+    ax.set_ylim(-1,5)
     ax.set_aspect('equal')
+    return ln, RF, LF,
 
 def animate(n):
-    # Get the plotting vectors using plotDude function
+    # Get the plotting vectors using stickDude function
     xv,yv,rf,lf = stickDude(n)
 
-    # Generate plot at time t[n]
-    plt.plot(xv,yv)
-    plt.plot(rf[0],rf[1],'kv')
-    plt.plot(lf[0],lf[1],'k^')
-    plt.xlim([x-4.5,x+0.5])
-    plt.ylim([y-2.1,y+1.9])
+    ln.set_data(xv, yv)
+    RF.set_data(rf[0],rf[1])
+    LF.set_data(lf[0],lf[1])
+
+    # Update Axis Limits
+    #ax.set_xlim(xv[1]-4.5, xv[1]+0.5)
+    #ax.set_ylim(yv[1]-1.2, yv[1]+2.8)
+    
+    return ln, RF, LF,
