@@ -1,48 +1,19 @@
 # Import required packages
-# import os
-# import time
-import numpy as np
-import scipy.integrate as spi
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 exec(open("./drubbleFunc.py").read())
 
-# Parameters
-g  = 9.81 # Gravitational acceleration [m/s^2]
-mc = 50 # Mass of player [kg]
-mg = 2  # Mass of stool [kg]
-m  = mc+mg # Total mass
-y0 = 1.5  # Equilibrium position of player CG
-d  = 0.3 # Relative position from player CG to stool rotation axis
-l0 = 1  # Equilibrium position of stool
-ax = 1  # Horizontal acceleration [g]
-Qx = ax*m*g;
-fy = 0.8 # vertical frequency
-Ky = m*(fy*2*np.pi)**2
-fl = 1.2 # Stool extension frequency
-Kl = mg*(fl*2*np.pi)**2
-ft = 0.5 # Stool tilt frequency
-Kt = (mg*l0*l0)*(ft*2*np.pi)**2
-vx = 10 # Horizontal top speed [m/s]
-Cx = Qx/vx
-zy = 0.1 # Vertical damping ratio
-Cy = 2*zy*np.sqrt(Ky*m)
-zl = 0.2 # Stool extension damping ratio
-Cl = 2*zl*np.sqrt(Kl*m)
-zt = 0.05 # Stool tilt damping ratio
-Ct = 2*zl*np.sqrt(Kt*m)
+# Obtain Parameters
+p = parameters()
 
 # Initial States
-q0 = np.matrix([[0],[y0],[l0],[0]])
-#u0 = np.matrix([[0],[y0],[l0],[0],[0],[0],[0],[0]])
-u0 = [0,y0,l0,0,0,0,0,0]
+q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
+u0 = [0,p.y0,p.l0,0,0,0,0,0]
 
 # Generalized Forces
-Q = np.matrix([[Qx],[0],[0],[0]])
+Q = np.matrix([[p.Qx],[0],[0],[0]])
 
 # Time vector for test simulation
 tspan = [0, 2]
-fs = 30
+fs = 60
 dt = 1/fs
 t = np.linspace(tspan[0],tspan[1],fs*(tspan[1]-tspan[0])+1)
 
@@ -61,46 +32,42 @@ plt.subplot(2,2,2,xlabel='Time [sec]',ylabel='y [m]')
 plt.plot(sol.t,sol.y[1,:])
 plt.subplot(2,2,3,xlabel='Time [sec]',ylabel='l [m]')
 plt.plot(sol.t,sol.y[2,:])
-plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='\theta [deg]')
+plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='theta [deg]')
 plt.plot(sol.t,180/np.pi*sol.y[3,:])
 
 plt.figure()
-plt.subplot(2,2,1)
+plt.subplot(2,2,1,xlabel='Time [sec]',ylabel='dx/dt [m/s]')
 plt.plot(sol.t,sol.y[4,:])
-plt.subplot(2,2,2)
+plt.subplot(2,2,2,xlabel='Time [sec]',ylabel='dy/dt [m/s]')
 plt.plot(sol.t,sol.y[5,:])
-plt.subplot(2,2,3)
+plt.subplot(2,2,3,xlabel='Time [sec]',ylabel='dl/dt [m/s]')
 plt.plot(sol.t,sol.y[6,:])
-plt.subplot(2,2,4)
+plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='dtheta/dt [deg]')
 plt.plot(sol.t,sol.y[7,:])
-
 
 # Generate an overlay plot of several frames
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_aspect('equal')
 
-for n in range(0,30,2): 
-    #range(0,np.size(t)):
-    
-    # Get the plotting vectors using plotDude function
-    xv,yv,rf,lf = stickDude(n)
+for n in range(0,60,10): 
+
+    # Get the plotting vectors using stickDude function
+    xv,yv,rf,lf,sx,sy = stickDude(n)
     
     # Generate plot at time t[n]
     plt.plot(xv,yv)
     plt.plot(rf[0],rf[1],'k>')
     plt.plot(lf[0],lf[1],'k<')
-    plt.xlim(sol.y[0,n]+[-4.5,0.5])
-    plt.ylim(sol.y[1,n]+[-2.1,1.9])
+    plt.plot(sol.y[0,n],sol.y[1,n]+p.d*1.6,'go')
+    plt.plot(sx,sy,'-r')
+    #plt.xlim(sol.y[0,n]+[-5.5,0.5])
+    #plt.ylim(sol.y[1,n]+[-2.1,1.9])
          
 # Generate an animation
 fig, ax = plt.subplots()
-#xdata, ydata = [], []
-ln, = plt.plot([], [], '-g', animated=True)
-RF, = plt.plot([], [], '<k', animated=True)
-LF, = plt.plot([], [], '>k', animated=True)
+LN, RF, LF, HD, GD, ST, = initPlots()
 
-ani = animation.FuncAnimation(fig, animate, 
-                              np.size(t), 
-                              interval=dt*1000, init_func=init, blit=True)
+ani = animation.FuncAnimation(fig, animate, np.size(t), interval=dt*1000, 
+                              init_func=init, blit=True)
 plt.show()    
