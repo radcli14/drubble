@@ -5,6 +5,7 @@ import numpy as np
 import scipy.integrate as spi
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from matplotlib.backends.backend_pdf import PdfPages
 
 # Define the bunch class
 class Bunch:
