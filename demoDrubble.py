@@ -9,10 +9,10 @@ p = parameters()
 
 # Initial States
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u0 = [0,p.y0,p.l0,0,0,0,0,0,-1,3.5,4,12]
+u0 = [0,p.y0,p.l0,0,0,0,0,0,-1,3.5,3,12]
 
 # Predict position and time where ball hits stool
-[xb,yb,tb] = BallHitStool(u0)
+[xb,yb,tb] = BallPredict(u0)
 
 # Generalized Forces
 Q = np.matrix([[p.Qx],[p.Qy],[p.Ql],[p.Qt]])

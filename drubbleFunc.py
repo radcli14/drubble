@@ -44,14 +44,14 @@ def parameters():
     Ct = 2*zl*np.sqrt(Kt*m)
     
     # Stool parameters
-    xs = np.array([-0.2 , 0.2 ,  0.14, 
-                    0.16, 0.16,  0.16, 
-                    0.18, 0.18,  0.18,  
-                    0.2 , 0.15, -0.15, -0.2])
+    xs = np.array([-0.2 ,  0.2 ,  0.14, 
+                    0.16, -0.16,  0.16, 
+                    0.18, -0.18,  0.18,  
+                    0.2 ,  0.14, -0.14, -0.2])
     ys = np.array([  0 ,  0  ,  0  , 
                    -0.3, -0.3, -0.3, 
                    -0.6, -0.6, -0.6,
-                   -0.9,  0  ,   0  ,  -0.9 ])
+                   -0.9,  0  ,   0 ,  -0.9 ])
     
     p = Bunch(g=g,mc=mc,mg=mg,m=m,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Qy=Qy,Ql=Ql,
               Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,Cx=Cx,zy=zy,
@@ -59,7 +59,7 @@ def parameters():
     return p 
 
 # Predict
-def BallHitStool(u):
+def BallPredict(u):
     x  = u[8]  # Ball horizontal position
     y  = u[9]  # Ball vertical position
     dx = u[10] # Ball horizontal velocity
@@ -118,8 +118,37 @@ def PlayerAndStool(t,u):
                    [p.mg*p.g*c],
                    [-p.mg*p.g*l*s]])         
 
-    # Control Inputs
-    B  = np.matrix([[np.min([1,0.1*(xb-u[0])])],[0],[0],[0]])
+    # Fix the time, if supplied as tspan vector
+    if np.size(t)>1:
+        t = t[0]
+        
+    # Control horizontal acceleration based on zero effort miss (ZEM)
+    # Subtract 1 secoond to get there early    
+    ZEM = xb - u[0] - u[4]*np.abs(tb-t-1)
+    #print(ZEM)
+    Bx = 1.0*ZEM
+    if Bx>1:
+        Bx = 1
+    elif Bx<-1:
+        Bx = -1
+    
+    # Control arm extension based on timing, turn on when impact in <0.25 sec
+    Bl = np.abs(tb-t)<0.25
+    
+    # Control stool angle by pointing at the ball
+    B  = np.matrix([[Bx],[0],[0],[0]])
+    xdiff = u[8]-u[0]
+    ydiff = u[9]-u[1]-p.d
+    #wantAngle = np.arctan2(xdiff,ydiff)
+    wantAngle = np.arctan(xdiff/ydiff)
+    Bth = 5.0*(th - wantAngle)
+    if Bth>1:
+        Bth = 1
+    elif Bth<-1:
+        Bth = -1
+    
+    # Multiply Q and B to get the control forces
+    B  = np.matrix([[Bx],[0],[Bl],[Bth]])
     QQ = np.multiply(Q,B)
     
     # Equation of Motion
