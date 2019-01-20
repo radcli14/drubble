@@ -1,19 +1,25 @@
 # Import required packages
 exec(open("./drubbleFunc.py").read())
 
+# Clos figure windows
+plt.close('all')
+
 # Obtain Parameters
 p = parameters()
 
 # Initial States
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u0 = [0,p.y0,p.l0,0,0,0,0,0]
+u0 = [0,p.y0,p.l0,0,0,0,0,0,-1,3.5,4,12]
+
+# Predict position and time where ball hits stool
+[xb,yb,tb] = BallHitStool(u0)
 
 # Generalized Forces
-Q = np.matrix([[p.Qx],[0],[0],[0]])
+Q = np.matrix([[p.Qx],[p.Qy],[p.Ql],[p.Qt]])
 
 # Time vector for test simulation
-tspan = [0, 4]
-fs = 60
+tspan = [0, 10]
+fs = 30
 dt = 1/fs
 t = np.linspace(tspan[0],tspan[1],fs*(tspan[1]-tspan[0])+1)
 
@@ -37,7 +43,7 @@ with PdfPages('demoDrubble.pdf') as pdf:
     plt.plot(sol.t,sol.y[2,:])
     plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='theta [deg]')
     plt.plot(sol.t,180/np.pi*sol.y[3,:])
-    pdf.savefig()
+    #pdf.savefig()
     
     f2 = plt.figure()
     plt.subplot(2,2,1,xlabel='Time [sec]',ylabel='dx/dt [m/s]')
@@ -48,14 +54,14 @@ with PdfPages('demoDrubble.pdf') as pdf:
     plt.plot(sol.t,sol.y[6,:])
     plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='dtheta/dt [deg]')
     plt.plot(sol.t,sol.y[7,:])
-    pdf.savefig()
+    #pdf.savefig()
     
     # Generate an overlay plot of several frames
     f3 = plt.figure()
     ax = f3.add_subplot(211)
     ax.set_aspect('equal')
     
-    for n in range(0,120,10): 
+    for n in range(0,int(2*fs),int(fs/6)): 
     
         # Get the plotting vectors using stickDude function
         xv,yv,rf,lf,sx,sy = stickDude(n)
@@ -72,7 +78,7 @@ with PdfPages('demoDrubble.pdf') as pdf:
     ax = f3.add_subplot(212)
     ax.set_aspect('equal')
     
-    for n in range(130,200,10): 
+    for n in range(int(2*fs+fs/6),int(2*fs+9*fs/6),int(fs/6)): 
     
         # Get the plotting vectors using stickDude function
         xv,yv,rf,lf,sx,sy = stickDude(n)
@@ -83,19 +89,17 @@ with PdfPages('demoDrubble.pdf') as pdf:
         plt.plot(lf[0],lf[1],'k<')
         plt.plot(sol.y[0,n],sol.y[1,n]+p.d*1.6,'go')
         plt.plot(sx,sy,'-r')
-        #plt.xlim(sol.y[0,n]+[-5.5,0.5])
-        #plt.ylim(sol.y[1,n]+[-2.1,1.9])
     
-    pdf.savefig()
+    #pdf.savefig()
     
 # Generate an animation
 fig, ax = plt.subplots()
-LN, RF, LF, HD, GD, ST, = initPlots()
+LN, RF, LF, HD, GD, ST, BL = initPlots()
 
 ani = animation.FuncAnimation(fig, animate, np.size(t), interval=dt*1000, 
                               init_func=init, blit=True)
 #plt.show()    
 # Set up formatting for the movie files
-Writer = animation.writers['ffmpeg']
-writer = Writer(fps=fs, metadata=dict(artist='Me'), bitrate=1800)
-ani.save('demoDrubble.mp4', writer=writer)
+#Writer = animation.writers['ffmpeg']
+#writer = Writer(fps=fs, metadata=dict(artist='Me'), bitrate=1800)
+#ani.save('demoDrubble.mp4', writer=writer)

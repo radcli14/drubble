@@ -27,10 +27,13 @@ def parameters():
     Qx = ax*m*g;
     fy = 0.8 # vertical frequency
     Ky = m*(fy*2*np.pi)**2
+    Qy = Ky*0.3 # Leg strength
     fl = 1.2 # Stool extension frequency
     Kl = mg*(fl*2*np.pi)**2
+    Ql = Kl*0.3 # Arm strength
     ft = 0.5 # Stool tilt frequency
     Kt = (mg*l0*l0)*(ft*2*np.pi)**2
+    Qt = 0.3*Kt # Tilt strength
     vx = 10 # Horizontal top speed [m/s]
     Cx = Qx/vx
     zy = 0.1 # Vertical damping ratio
@@ -41,22 +44,35 @@ def parameters():
     Ct = 2*zl*np.sqrt(Kt*m)
     
     # Stool parameters
-    xs = np.array([-0.2, 0.2, 0.14, 
-                    0.16, -0.16, 0.16, 
-                    0.18, -0.18, 0.18,  
-                    0.2, 0.15, -0.15, -0.2])
+    xs = np.array([-0.2 , 0.2 ,  0.14, 
+                    0.16, 0.16,  0.16, 
+                    0.18, 0.18,  0.18,  
+                    0.2 , 0.15, -0.15, -0.2])
     ys = np.array([  0 ,  0  ,  0  , 
                    -0.3, -0.3, -0.3, 
                    -0.6, -0.6, -0.6,
                    -0.9,  0  ,   0  ,  -0.9 ])
     
-    #p = {'g':g,'mc':mc,'mg':mg,'m':m,'y0':y0,'d':d,'l0':l0,'ax':ax,'Qx':Qx,
-    #     'fy':fy,'Ky':Ky,'fl':fl,'Kl':Kl,'ft':ft,'Kt':Kt,'vx':vx,'Cx':Cx,
-    #     'zy':zy,'Cy':Cy,'zl':zl,'Cl':Cl,'zt':zt,'Ct':Ct}
-    p = Bunch(g=g,mc=mc,mg=mg,m=m,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,fy=fy,Ky=Ky,
-              fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,Cx=Cx,zy=zy,Cy=Cy,zl=zl,Cl=Cl,
-              zt=zt,Ct=Ct,xs=xs,ys=ys)
+    p = Bunch(g=g,mc=mc,mg=mg,m=m,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Qy=Qy,Ql=Ql,
+              Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,Cx=Cx,zy=zy,
+              Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys)
     return p 
+
+# Predict
+def BallHitStool(u):
+    x  = u[8]  # Ball horizontal position
+    y  = u[9]  # Ball vertical position
+    dx = u[10] # Ball horizontal velocity
+    dy = u[11] # Ball vertical velocity
+    
+    # Solve for time that the ball would hit the stool
+    tb = -(-dy - np.sqrt(dy**2 + p.g*(y-p.y0-p.d-p.l0) ))/p.g
+    
+    # Solve for position that the ball would hit the stool
+    xb = x+dx*tb
+    yb = y+dy*tb-0.5*p.g*tb**2
+    
+    return xb,yb,tb
 
 # Equation of Motion
 def PlayerAndStool(t,u):
@@ -102,12 +118,18 @@ def PlayerAndStool(t,u):
                    [p.mg*p.g*c],
                    [-p.mg*p.g*l*s]])         
 
+    # Control Inputs
+    B  = np.matrix([[np.min([1,0.1*(xb-u[0])])],[0],[0],[0]])
+    QQ = np.multiply(Q,B)
+    
     # Equation of Motion
-    RHS = -C*dq-K*q+K*q0-D-G+Q
+    RHS = -C*dq-K*q+K*q0-D-G+QQ
     ddq = M.I*RHS
     
     # Output State Derivatives
-    du = [u[4],u[5],u[6],u[7],ddq[0,0],ddq[1,0],ddq[2,0],ddq[3,0]]
+    du = [u[4],u[5],u[6],u[7],ddq[0,0],
+          ddq[1,0],ddq[2,0],ddq[3,0],
+          u[10],u[11],0,-p.g]
     return du
 
 def ThirdPoint(P0,P1,L,SGN):
@@ -134,11 +156,7 @@ def stickDude(n):
     l = sol.y[2,n]
     th = sol.y[3,n]
     s = np.sin(th)
-    sp = np.sin(th+0.25)
-    sm = np.sin(th-0.25)
     c = np.cos(th)
-    cp = np.cos(th+0.25)
-    cm = np.cos(th-0.25)
     v = sol.y[4,n]
 
     # Right Foot [rf] Left Foot [lf] Positions
@@ -151,8 +169,8 @@ def stickDude(n):
     w = [x,y-p.d]
     
     # Right Knee [rk] Left Knee [lk] Positions
-    rk = ThirdPoint(w,rf,p.y0-p.d,2*((sol.y[4,n]>-4)-0.5))
-    lk = ThirdPoint(w,lf,p.y0-p.d,2*((sol.y[4,n]>4)-0.5))
+    rk = ThirdPoint(w,rf,p.y0-p.d,2*((sol.y[4,n]>-2)-0.5))
+    lk = ThirdPoint(w,lf,p.y0-p.d,2*((sol.y[4,n]>2)-0.5))
     
     # Shoulder Position
     sh = [x,y+p.d]
@@ -182,13 +200,14 @@ def initPlots():
     HD, = plt.plot([], [], 'go', animated=True) # Head
     GD, = plt.plot([], [], '-b', animated=True) # Ground
     ST, = plt.plot([], [], '-r', animated=True) # Stool
-    return LN, RF, LF, HD, GD, ST,
+    BL, = plt.plot([], [], 'mo', animated=True) # Ball
+    return LN, RF, LF, HD, GD, ST, BL,
 
 def init():
     ax.set_xlim(-1,11)
     ax.set_ylim(-1,5)
     ax.set_aspect('equal')
-    return LN, RF, LF, HD, GD, ST,
+    return LN, RF, LF, HD, GD, ST, BL,
 
 def animate(n):
     # Get the plotting vectors using stickDude function
@@ -207,9 +226,10 @@ def animate(n):
     HD.set_data(x,y+p.d*1.6)
     GD.set_data([x-100, x+100],[0,0])
     ST.set_data(sx,sy)
+    BL.set_data(sol.y[8,n],sol.y[9,n])
     
     # Update Axis Limits
     #ax.set_xlim(xv[1]-4.5, xv[1]+0.5)
     #ax.set_ylim(yv[1]-1.2, yv[1]+2.8)
     
-    return LN, RF, LF, HD, GD, ST,
+    return LN, RF, LF, HD, GD, ST, BL,
