@@ -110,6 +110,23 @@ def PlayerAndStool(t,u):
     du = [u[4],u[5],u[6],u[7],ddq[0,0],ddq[1,0],ddq[2,0],ddq[3,0]]
     return du
 
+def ThirdPoint(P0,P1,L,SGN):
+
+    Psub = [P0[0]-P1[0],P0[1]-P1[1]]
+    Padd = [P0[0]+P1[0],P0[1]+P1[1]]
+    P2 = [Padd[0]/2, Padd[1]/2]
+    d = np.linalg.norm(Psub) # Distance between point P0,P1
+
+    if d > L:
+        P3 = P2
+    else:
+        a  = (d**2)/2/d # Distance to mid-Point
+        h  = np.sqrt( (L**2)/4 - a**2 )
+        x3 = P2[0] + h*SGN*Psub[1]/d
+        y3 = P2[1] - h*SGN*Psub[0]/d
+        P3 = [x3,y3]
+    return P3
+
 def stickDude(n):
     # States at time t[n]
     x = sol.y[0,n]
@@ -125,15 +142,17 @@ def stickDude(n):
     v = sol.y[4,n]
 
     # Right Foot [rf] Left Foot [lf] Positions
-    rf = [x+0.15+(v/p.vx)*np.sin(1.5*x+3*np.pi/2), 
+    rf = [x+0.25+(v/p.vx)*np.sin(1.5*x+3*np.pi/2), 
           0.2*(v/p.vx)*(1+np.sin(1.5*x+3*np.pi/2))]
-    lf = [x-0.15+(v/p.vx)*np.cos(1.5*x), 
+    lf = [x-0.25+(v/p.vx)*np.cos(1.5*x), 
           0.2*(v/p.vx)*(1+np.cos(1.5*x))]
-    
-    # Right Knee [rk] Left Knee [lk] Positions
     
     # Waist Position
     w = [x,y-p.d]
+    
+    # Right Knee [rk] Left Knee [lk] Positions
+    rk = ThirdPoint(w,rf,p.y0-p.d,2*((sol.y[4,n]>-4)-0.5))
+    lk = ThirdPoint(w,lf,p.y0-p.d,2*((sol.y[4,n]>4)-0.5))
     
     # Shoulder Position
     sh = [x,y+p.d]
@@ -146,9 +165,13 @@ def stickDude(n):
     rh = [sx[7], sy[7]] # [x-0.5*l*sp,y+p.d+0.5*l*cp]
     lh = [sx[6], sy[6]] # [x-0.5*l*sm,y+p.d+0.5*l*cm]
     
+    # Right Elbow [re] Left Elbow [le] Position
+    re = ThirdPoint(sh,rh,1,1)
+    le = ThirdPoint(sh,lh,1,-1)
+    
     # Plotting vectors
-    xv = [rf[0],w[0],lf[0],w[0],sh[0],rh[0],sh[0],lh[0],sh[0]]
-    yv = [rf[1],w[1],lf[1],w[1],sh[1],rh[1],sh[1],lh[1],sh[1]]
+    xv = [rf[0],rk[0],w[0],lk[0],lf[0],lk[0],w[0],sh[0],re[0],rh[0],re[0],sh[0],le[0],lh[0]]
+    yv = [rf[1],rk[1],w[1],lk[1],lf[1],lk[1],w[1],sh[1],re[1],rh[1],re[1],sh[1],le[1],lh[1]]
     
     return xv,yv,rf,lf,sx,sy
 

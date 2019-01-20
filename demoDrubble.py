@@ -12,7 +12,7 @@ u0 = [0,p.y0,p.l0,0,0,0,0,0]
 Q = np.matrix([[p.Qx],[0],[0],[0]])
 
 # Time vector for test simulation
-tspan = [0, 2]
+tspan = [0, 4]
 fs = 60
 dt = 1/fs
 t = np.linspace(tspan[0],tspan[1],fs*(tspan[1]-tspan[0])+1)
@@ -52,10 +52,27 @@ with PdfPages('demoDrubble.pdf') as pdf:
     
     # Generate an overlay plot of several frames
     f3 = plt.figure()
-    ax = f3.add_subplot(111)
+    ax = f3.add_subplot(211)
     ax.set_aspect('equal')
     
     for n in range(0,120,10): 
+    
+        # Get the plotting vectors using stickDude function
+        xv,yv,rf,lf,sx,sy = stickDude(n)
+        
+        # Generate plot at time t[n]
+        plt.plot(xv,yv)
+        plt.plot(rf[0],rf[1],'k>')
+        plt.plot(lf[0],lf[1],'k<')
+        plt.plot(sol.y[0,n],sol.y[1,n]+p.d*1.6,'go')
+        plt.plot(sx,sy,'-r')
+        #plt.xlim(sol.y[0,n]+[-5.5,0.5])
+        #plt.ylim(sol.y[1,n]+[-2.1,1.9])
+        
+    ax = f3.add_subplot(212)
+    ax.set_aspect('equal')
+    
+    for n in range(130,200,10): 
     
         # Get the plotting vectors using stickDude function
         xv,yv,rf,lf,sx,sy = stickDude(n)
