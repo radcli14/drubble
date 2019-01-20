@@ -93,13 +93,16 @@ with PdfPages('demoDrubble.pdf') as pdf:
     #pdf.savefig()
     
 # Generate an animation
-fig, ax = plt.subplots()
+fig = plt.figure()    
+ax  = fig.add_axes([0,0,1,1])
+DPI = fig.get_dpi()
+fig.set_size_inches(1334.0/float(DPI),750.0/float(DPI))
 LN, RF, LF, HD, GD, ST, BL = initPlots()
 
 ani = animation.FuncAnimation(fig, animate, np.size(t), interval=dt*1000, 
                               init_func=init, blit=True)
 #plt.show()    
 # Set up formatting for the movie files
-#Writer = animation.writers['ffmpeg']
-#writer = Writer(fps=fs, metadata=dict(artist='Me'), bitrate=1800)
-#ani.save('demoDrubble.mp4', writer=writer)
+Writer = animation.writers['ffmpeg']
+writer = Writer(fps=fs, metadata=dict(artist='Me'), bitrate=1800)
+ani.save('demoDrubble.mp4', writer=writer)

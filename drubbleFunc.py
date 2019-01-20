@@ -132,6 +132,9 @@ def PlayerAndStool(t,u):
     elif Bx<-1:
         Bx = -1
     
+    # Control leg extension based on timing, turn on when impact in <0.25 sec
+    By = np.abs(tb-t)<0.25
+    
     # Control arm extension based on timing, turn on when impact in <0.25 sec
     Bl = np.abs(tb-t)<0.25
     
@@ -148,7 +151,7 @@ def PlayerAndStool(t,u):
         Bth = -1
     
     # Multiply Q and B to get the control forces
-    B  = np.matrix([[Bx],[0],[Bl],[Bth]])
+    B  = np.matrix([[Bx],[By],[Bl],[Bth]])
     QQ = np.multiply(Q,B)
     
     # Equation of Motion
@@ -235,7 +238,7 @@ def initPlots():
 def init():
     ax.set_xlim(-1,11)
     ax.set_ylim(-1,5)
-    ax.set_aspect('equal')
+    #ax.set_aspect('equal')
     return LN, RF, LF, HD, GD, ST, BL,
 
 def animate(n):
@@ -258,7 +261,16 @@ def animate(n):
     BL.set_data(sol.y[8,n],sol.y[9,n])
     
     # Update Axis Limits
-    #ax.set_xlim(xv[1]-4.5, xv[1]+0.5)
-    #ax.set_ylim(yv[1]-1.2, yv[1]+2.8)
+    maxy  = 1.25*np.max([sol.y[9,n],y+p.d+l*np.cos(th)])
+    diffx = 1.25*np.abs(x-sol.y[8,n])
+    midx  = (x+sol.y[8,n])/2
+    if diffx>2*(maxy+1):
+        xrng = midx-0.5*diffx, midx+0.5*diffx
+        yrng = -1, 0.5*(diffx-0.5)
+    else:
+        xrng = midx-maxy-0.5, midx+maxy+0.5
+        yrng = -1, maxy
+    ax.set_xlim(xrng)
+    ax.set_ylim(yrng)
     
     return LN, RF, LF, HD, GD, ST, BL,
