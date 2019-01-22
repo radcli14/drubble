@@ -17,45 +17,47 @@ def parameters():
     g  = 9.81 # Gravitational acceleration [m/s^2]
     
     # Player parameters
-    mc = 50    # Mass of player [kg]
-    mg = 2     # Mass of stool [kg]
-    m  = mc+mg # Total mass
-    y0 = 1.5   # Equilibrium position of player CG
-    d  = 0.3   # Relative position from player CG to stool rotation axis
-    l0 = 1.5   # Equilibrium position of stool
-    ax = 1     # Horizontal acceleration [g]
-    Qx = ax*m*g;
-    fy = 0.8 # vertical frequency
-    Ky = m*(fy*2*np.pi)**2
-    Qy = Ky*0.3 # Leg strength
-    fl = 1.2 # Stool extension frequency
-    Kl = mg*(fl*2*np.pi)**2
-    Ql = Kl*0.3 # Arm strength
-    ft = 0.5 # Stool tilt frequency
-    Kt = (mg*l0*l0)*(ft*2*np.pi)**2
-    Qt = 0.3*Kt # Tilt strength
-    vx = 10 # Horizontal top speed [m/s]
-    Cx = Qx/vx
-    zy = 0.1 # Vertical damping ratio
-    Cy = 2*zy*np.sqrt(Ky*m)
-    zl = 0.2 # Stool extension damping ratio
-    Cl = 2*zl*np.sqrt(Kl*m)
-    zt = 0.05 # Stool tilt damping ratio
-    Ct = 2*zl*np.sqrt(Kt*m)
+    mc = 50      # Mass of player [kg]
+    mg = 2       # Mass of stool [kg]
+    m  = mc+mg   # Total mass
+    y0 = 1.5     # Equilibrium position of player CG
+    d  = 0.3     # Relative position from player CG to stool rotation axis
+    l0 = 1.5     # Equilibrium position of stool
+    ax = 1       # Horizontal acceleration [g]
+    Qx = ax*m*g; # Max horizontal force [N]
+    Gx = 1.0;    # Control gain on Qx 
+    fy = 0.8     # vertical frequency [Hz]
+    Ky = m*(fy*2*np.pi)**2 # Leg stiffness [N/m]
+    Qy = Ky*0.3  # Leg strength [N], to be updated
+    fl = 1.2     # Stool extension frequency
+    Kl = mg*(fl*2*np.pi)**2 # Arm stiffness [N/m]
+    Ql = Kl*0.3  # Arm strength [N]
+    ft = 0.5     # Stool tilt frequency [Hz]
+    Kt = (mg*l0*l0)*(ft*2*np.pi)**2 # Tilt stiffnes [N-m/rad]
+    Qt = 0.3*Kt  # Tilt strength [N-m]
+    Gt = 5.0     # Control gain on Qt
+    vx = 10      # Horizontal top speed [m/s]
+    Cx = Qx/vx   # Horizontal damping [N-s/m]
+    zy = 0.1     # Vertical damping ratio
+    Cy = 2*zy*np.sqrt(Ky*m) # Vertical damping [N-s/m]
+    zl = 0.2     # Arm damping ratio
+    Cl = 2*zl*np.sqrt(Kl*m) # Arm damping [N-s/m]
+    zt = 0.05    # Stool tilt damping ratio
+    Ct = 2*zl*np.sqrt(Kt*m) # Tilt damping [N-m-s/rad]
     
     # Stool parameters
     xs = np.array([-0.2 ,  0.2 ,  0.14, 
                     0.16, -0.16,  0.16, 
                     0.18, -0.18,  0.18,  
                     0.2 ,  0.14, -0.14, -0.2])
-    ys = np.array([  0 ,  0  ,  0  , 
-                   -0.3, -0.3, -0.3, 
-                   -0.6, -0.6, -0.6,
-                   -0.9,  0  ,   0 ,  -0.9 ])
+    ys = np.array([  0  ,  0   ,  0   , 
+                   -0.3 , -0.3 , -0.3 , 
+                   -0.6 , -0.6 , -0.6 ,
+                   -0.9 ,  0   ,   0  , -0.9 ])
     
-    p = Bunch(g=g,mc=mc,mg=mg,m=m,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Qy=Qy,Ql=Ql,
-              Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,Cx=Cx,zy=zy,
-              Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys)
+    p = Bunch(g=g,mc=mc,mg=mg,m=m,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Gx=Gx,Qy=Qy,
+              Ql=Ql,Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,Cx=Cx,
+              zy=zy,Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys)
     return p 
 
 # Predict
@@ -65,13 +67,28 @@ def BallPredict(u):
     dx = u[10] # Ball horizontal velocity
     dy = u[11] # Ball vertical velocity
     
-    # Solve for time that the ball would hit the stool
-    tb = -(-dy - np.sqrt(dy**2 + p.g*(y-p.y0-p.d-p.l0) ))/p.g
-    
+    if (dy>0) & (y<p.y0+p.d+p.l0):
+        # Solve for time and height at apogee
+        ta = dy/p.g
+        ya = 0.5*p.g*ta**2
+
+        # Solve for time the ball would hit the stool
+        tb = ta + np.sqrt(2*ya/p.g)
+    else:
+        # Solve for time that the ball would hit the stool
+        # a  = -0.5*p.g
+        # b  = dy
+        # c  = y - p.y0-p.d-p.l0
+        # tb = (-b - np.sqrt(b**2-4*a*c))/2/a
+        tb = -(-dy - np.sqrt(dy**2+2*p.g*(y-p.y0-p.d-p.l0)))/p.g
+        
+    if np.isnan(tb):
+        tb = 0
+
     # Solve for position that the ball would hit the stool
     xb = x+dx*tb
     yb = y+dy*tb-0.5*p.g*tb**2
-    
+    print("xb=",xb)
     return xb,yb,tb
 
 # Equation of Motion
@@ -126,36 +143,34 @@ def PlayerAndStool(t,u):
     # Subtract 1 secoond to get there early    
     ZEM = xb - u[0] - u[4]*np.abs(tb-t-1)
     #print(ZEM)
-    Bx = 1.0*ZEM
+    Bx = p.Gx*ZEM
     if Bx>1:
         Bx = 1
     elif Bx<-1:
         Bx = -1
     
-    # Control leg extension based on timing, turn on when impact in <0.25 sec
-    By = np.abs(tb-t)<0.25
+    # Control leg extension based on timing, turn on when impact in <0.2 sec
+    By = np.abs(tb-t)<0.2
     
-    # Control arm extension based on timing, turn on when impact in <0.25 sec
-    Bl = np.abs(tb-t)<0.25
+    # Control arm extension based on timing, turn on when impact in <0.2 sec
+    Bl = np.abs(tb-t)<0.2
     
     # Control stool angle by pointing at the ball
-    B  = np.matrix([[Bx],[0],[0],[0]])
     xdiff = u[8]-u[0]
     ydiff = u[9]-u[1]-p.d
-    #wantAngle = np.arctan2(xdiff,ydiff)
-    wantAngle = np.arctan(xdiff/ydiff)
-    Bth = 5.0*(th - wantAngle)
+    wantAngle = np.arctan2(xdiff,ydiff)
+    #wantAngle = np.arctan(xdiff/ydiff)
+    Bth = p.Qt*(th - wantAngle)
     if Bth>1:
         Bth = 1
     elif Bth<-1:
         Bth = -1
     
-    # Multiply Q and B to get the control forces
-    B  = np.matrix([[Bx],[By],[Bl],[Bth]])
-    QQ = np.multiply(Q,B)
+    # Control inputs form the generalized forces
+    Q = np.matrix([[Bx*p.Qx],[By*p.Qy],[Bl*p.Ql],[Bth*p.Qt]])
     
     # Equation of Motion
-    RHS = -C*dq-K*q+K*q0-D-G+QQ
+    RHS = -C*dq-K*q+K*q0-D-G+Q
     ddq = M.I*RHS
     
     # Output State Derivatives
@@ -163,6 +178,10 @@ def PlayerAndStool(t,u):
           ddq[1,0],ddq[2,0],ddq[3,0],
           u[10],u[11],0,-p.g]
     return du
+
+def BallHitFloor(t,u):
+    return u[9]
+BallHitFloor.terminal = True
 
 def ThirdPoint(P0,P1,L,SGN):
 
@@ -183,13 +202,13 @@ def ThirdPoint(P0,P1,L,SGN):
 
 def stickDude(n):
     # States at time t[n]
-    x = sol.y[0,n]
-    y = sol.y[1,n]
-    l = sol.y[2,n]
-    th = sol.y[3,n]
-    s = np.sin(th)
-    c = np.cos(th)
-    v = sol.y[4,n]
+    x  = Y[n,0] # sol.y[0,n]
+    y  = Y[n,1] # sol.y[1,n]
+    l  = Y[n,2] # sol.y[2,n]
+    th = Y[n,3] # sol.y[3,n]
+    s  = np.sin(th)
+    c  = np.cos(th)
+    v  = Y[n,4] # sol.y[4,n]
 
     # Right Foot [rf] Left Foot [lf] Positions
     rf = [x+0.25+(v/p.vx)*np.sin(1.5*x+3*np.pi/2), 
@@ -201,8 +220,8 @@ def stickDude(n):
     w = [x,y-p.d]
     
     # Right Knee [rk] Left Knee [lk] Positions
-    rk = ThirdPoint(w,rf,p.y0-p.d,2*((sol.y[4,n]>-2)-0.5))
-    lk = ThirdPoint(w,lf,p.y0-p.d,2*((sol.y[4,n]>2)-0.5))
+    rk = ThirdPoint(w,rf,p.y0-p.d,2*((v>-2)-0.5))
+    lk = ThirdPoint(w,lf,p.y0-p.d,2*((v>2)-0.5))
     
     # Shoulder Position
     sh = [x,y+p.d]
@@ -246,10 +265,10 @@ def animate(n):
     xv,yv,rf,lf,sx,sy = stickDude(n)
 
     # Get state variables
-    x  = sol.y[0,n]
-    y  = sol.y[1,n]
-    l  = sol.y[2,n]
-    th = sol.y[3,n]
+    x  = Y[n,0] # sol.y[0,n]
+    y  = Y[n,1] # sol.y[1,n]
+    l  = Y[n,2] # sol.y[2,n]
+    th = Y[n,3] # sol.y[3,n]
 
     # Update the plot
     LN.set_data(xv, yv)
@@ -258,12 +277,12 @@ def animate(n):
     HD.set_data(x,y+p.d*1.6)
     GD.set_data([x-100, x+100],[0,0])
     ST.set_data(sx,sy)
-    BL.set_data(sol.y[8,n],sol.y[9,n])
+    BL.set_data(Y[n,8],Y[n,9])
     
     # Update Axis Limits
-    maxy  = 1.25*np.max([sol.y[9,n],y+p.d+l*np.cos(th)])
-    diffx = 1.25*np.abs(x-sol.y[8,n])
-    midx  = (x+sol.y[8,n])/2
+    maxy  = 1.25*np.max([Y[n,9],y+p.d+l*np.cos(th),12])
+    diffx = 1.25*np.abs(x-Y[n,8])
+    midx  = (x+Y[n,8])/2
     if diffx>2*(maxy+1):
         xrng = midx-0.5*diffx, midx+0.5*diffx
         yrng = -1, 0.5*(diffx-0.5)

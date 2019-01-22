@@ -9,13 +9,10 @@ p = parameters()
 
 # Initial States
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u0 = [0,p.y0,p.l0,0,0,0,0,0,-1,3.5,3,12]
+u0 = [0,p.y0,p.l0,0,0,0,0,0,-4,8,4,12]
 
 # Predict position and time where ball hits stool
 [xb,yb,tb] = BallPredict(u0)
-
-# Generalized Forces
-Q = np.matrix([[p.Qx],[p.Qy],[p.Ql],[p.Qt]])
 
 # Time vector for test simulation
 tspan = [0, 10]
@@ -28,7 +25,32 @@ du = PlayerAndStool(tspan,u0)
 print(du)
 
 # Run a simulation
-sol = spi.solve_ivp(PlayerAndStool,tspan,u0,t_eval=t)
+sol = spi.solve_ivp(PlayerAndStool,tspan,u0,t_eval=t,events=BallHitFloor)
+T = sol.t
+Y = sol.y.T
+while T[-1]<tspan[1]:
+    # Solve up to the instant event occured, and get states at that instant
+    te    = sol.t_events[0][0]
+    ne    = np.size(T)
+    un    = Y[-1].tolist()
+    sol   = spi.solve_ivp(PlayerAndStool,[T[-1],te],un)
+    ue    = sol.y[:,-1].tolist() 
+    ue[9] = 0.001
+    
+    # Reverse direction of the ball
+    ue[10] = 0.7*ue[10]
+    ue[11] = -0.7*ue[11]
+    
+    # Recalculate next position
+    [xb,yb,tb] = BallPredict(ue)
+    
+    # Re-initialize from the event states
+    tspan_r = [te,tspan[1]]
+    sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[ne:],events=BallHitFloor)
+    
+    # Concatenate onto the T,Y arrays
+    T = np.concatenate((T,sol.t),axis=0)
+    Y = np.concatenate((Y,sol.y.T),axis=0)
 
 # Initialize the PDF file
 with PdfPages('demoDrubble.pdf') as pdf:
@@ -36,24 +58,24 @@ with PdfPages('demoDrubble.pdf') as pdf:
     # Plot results
     f1 = plt.figure()
     plt.subplot(2,2,1,xlabel='Time [sec]',ylabel='x [m]')
-    plt.plot(sol.t,sol.y[0,:])
+    plt.plot(T,Y[:,0])
     plt.subplot(2,2,2,xlabel='Time [sec]',ylabel='y [m]')
-    plt.plot(sol.t,sol.y[1,:])
+    plt.plot(T,Y[:,1])
     plt.subplot(2,2,3,xlabel='Time [sec]',ylabel='l [m]')
-    plt.plot(sol.t,sol.y[2,:])
+    plt.plot(T,Y[:,2])
     plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='theta [deg]')
-    plt.plot(sol.t,180/np.pi*sol.y[3,:])
+    plt.plot(T,np.rad2deg(Y[:,3]))
     #pdf.savefig()
     
     f2 = plt.figure()
     plt.subplot(2,2,1,xlabel='Time [sec]',ylabel='dx/dt [m/s]')
-    plt.plot(sol.t,sol.y[4,:])
+    plt.plot(T,Y[:,4])
     plt.subplot(2,2,2,xlabel='Time [sec]',ylabel='dy/dt [m/s]')
-    plt.plot(sol.t,sol.y[5,:])
+    plt.plot(T,Y[:,5])
     plt.subplot(2,2,3,xlabel='Time [sec]',ylabel='dl/dt [m/s]')
-    plt.plot(sol.t,sol.y[6,:])
+    plt.plot(T,Y[:,6])
     plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='dtheta/dt [deg]')
-    plt.plot(sol.t,sol.y[7,:])
+    plt.plot(T,np.rad2deg(Y[:,7]))
     #pdf.savefig()
     
     # Generate an overlay plot of several frames
@@ -70,7 +92,7 @@ with PdfPages('demoDrubble.pdf') as pdf:
         plt.plot(xv,yv)
         plt.plot(rf[0],rf[1],'k>')
         plt.plot(lf[0],lf[1],'k<')
-        plt.plot(sol.y[0,n],sol.y[1,n]+p.d*1.6,'go')
+        plt.plot(Y[n,0],Y[n,1]+p.d*1.6,'go')
         plt.plot(sx,sy,'-r')
         #plt.xlim(sol.y[0,n]+[-5.5,0.5])
         #plt.ylim(sol.y[1,n]+[-2.1,1.9])
@@ -87,9 +109,12 @@ with PdfPages('demoDrubble.pdf') as pdf:
         plt.plot(xv,yv)
         plt.plot(rf[0],rf[1],'k>')
         plt.plot(lf[0],lf[1],'k<')
-        plt.plot(sol.y[0,n],sol.y[1,n]+p.d*1.6,'go')
+        plt.plot(Y[n,0],Y[n,1]+p.d*1.6,'go')
         plt.plot(sx,sy,'-r')
+    #pdf.savefig()
     
+    f4 = plt.figure()
+    plt.plot(Y[:,8],Y[:,9])
     #pdf.savefig()
     
 # Generate an animation
@@ -102,7 +127,7 @@ LN, RF, LF, HD, GD, ST, BL = initPlots()
 ani = animation.FuncAnimation(fig, animate, np.size(t), interval=dt*1000, 
                               init_func=init, blit=True)
 #plt.show()    
-# Set up formatting for the movie files
-Writer = animation.writers['ffmpeg']
-writer = Writer(fps=fs, metadata=dict(artist='Me'), bitrate=1800)
-ani.save('demoDrubble.mp4', writer=writer)
+# Export the movie file
+#Writer = animation.writers['ffmpeg']
+#writer = Writer(fps=fs, metadata=dict(artist='Me'), bitrate=1800)
+#ani.save('demoDrubble.mp4', writer=writer)
