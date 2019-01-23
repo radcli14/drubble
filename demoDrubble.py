@@ -24,29 +24,51 @@ t = np.linspace(tspan[0],tspan[1],fs*(tspan[1]-tspan[0])+1)
 du = PlayerAndStool(tspan,u0)
 print(du)
 
+# Define the Events
+events = [BallHitStool,BallHitFloor]
+#events = [BallHitFloor]
+
 # Run a simulation
-sol = spi.solve_ivp(PlayerAndStool,tspan,u0,t_eval=t,events=BallHitFloor)
+sol = spi.solve_ivp(PlayerAndStool,tspan,u0,t_eval=t,events=events)
 T = sol.t
 Y = sol.y.T
 while T[-1]<tspan[1]:
     # Solve up to the instant event occured, and get states at that instant
-    te    = sol.t_events[0][0]
+    if np.size(sol.t_events[0]):
+        te = sol.t_events[0][0]
+        StoolBounce = True
+        FloorBounce = False
+    elif np.size(sol.t_events[1]):
+        te = sol.t_events[1][0]
+        StoolBounce = False
+        FloorBounce = True
+    print("te = ",te)
     ne    = np.size(T)
     un    = Y[-1].tolist()
     sol   = spi.solve_ivp(PlayerAndStool,[T[-1],te],un)
     ue    = sol.y[:,-1].tolist() 
-    ue[9] = 0.001
     
-    # Reverse direction of the ball
-    ue[10] = 0.7*ue[10]
-    ue[11] = -0.7*ue[11]
+    if StoolBounce:
+        ue[9] = ue[9]+0.001
+        
+        # Reverse direction of the ball
+        ue[10] = p.COR*ue[10]
+        ue[11] = -p.COR*ue[11]
+        
+    elif FloorBounce:
+        ue[9] = 0.001
+    
+        # Reverse direction of the ball
+        ue[10] = p.COR*ue[10]
+        ue[11] = -p.COR*ue[11]
     
     # Recalculate next position
     [xb,yb,tb] = BallPredict(ue)
+    tb = tb+te
     
     # Re-initialize from the event states
     tspan_r = [te,tspan[1]]
-    sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[ne:],events=BallHitFloor)
+    sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[ne:],events=events)
     
     # Concatenate onto the T,Y arrays
     T = np.concatenate((T,sol.t),axis=0)

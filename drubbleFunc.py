@@ -44,9 +44,10 @@ def parameters():
     Cl = 2*zl*np.sqrt(Kl*m) # Arm damping [N-s/m]
     zt = 0.05    # Stool tilt damping ratio
     Ct = 2*zl*np.sqrt(Kt*m) # Tilt damping [N-m-s/rad]
+    COR = 0.7    # Coefficient of restitution
     
     # Stool parameters
-    xs = np.array([-0.2 ,  0.2 ,  0.14, 
+    xs = np.array([-0.5 ,  0.5 ,  0.14, 
                     0.16, -0.16,  0.16, 
                     0.18, -0.18,  0.18,  
                     0.2 ,  0.14, -0.14, -0.2])
@@ -57,7 +58,7 @@ def parameters():
     
     p = Bunch(g=g,mc=mc,mg=mg,m=m,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Gx=Gx,Qy=Qy,
               Ql=Ql,Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,Cx=Cx,
-              zy=zy,Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys)
+              zy=zy,Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys,COR=COR)
     return p 
 
 # Predict
@@ -88,7 +89,7 @@ def BallPredict(u):
     # Solve for position that the ball would hit the stool
     xb = x+dx*tb
     yb = y+dy*tb-0.5*p.g*tb**2
-    print("xb=",xb)
+    #print("xb=",xb)
     return xb,yb,tb
 
 # Equation of Motion
@@ -183,6 +184,41 @@ def BallHitFloor(t,u):
     return u[9]
 BallHitFloor.terminal = True
 
+def BallHitStool(t,u):
+    # Get the stool locations using stickDude function
+    xv,yv,rf,lf,sx,sy = stickDude(ue)
+    
+    # Vectors from the left edge of the stool to the right, and to the ball
+    v1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
+    l1 = np.linalg.norm(v1)
+    u1 = v1/l1
+    v2 = np.array([ u[8]-sx[0], u[9]-sy[0]])
+    l2 = np.linalg.norm(v2)
+    u2 = v2/l2
+    v3 = np.array([ u[8]-sx[1], u[9]-sy[1]])
+    l3 = np.linalg.norm(v3)
+    
+    # Calculate angle between  v1 and v2 (u1 and u2)
+    ud  = u1@u2
+    phi = np.arccos(ud) 
+    
+    # Calculate length of orthogonal vector
+    L = l2*np.sin(phi)
+    D = l1*ud
+    if (D>0) & (D<l1):
+        return L-0.1
+    else:
+        return np.min([l2,l3])-0.1   
+    #print("sx = ",sx[0:2])
+    #print("sy = ",sy[0:2])
+    #print("v1 = ",v1)
+    #print("v2 = ",v2)
+    #print("u1 = ",u1)
+    #print("u2 = ",u2)
+    #print("ud = ",ud)
+    #return L
+BallHitStool.terminal = True 
+
 def ThirdPoint(P0,P1,L,SGN):
 
     Psub = [P0[0]-P1[0],P0[1]-P1[1]]
@@ -200,16 +236,25 @@ def ThirdPoint(P0,P1,L,SGN):
         P3 = [x3,y3]
     return P3
 
-def stickDude(n):
-    # States at time t[n]
-    x  = Y[n,0] # sol.y[0,n]
-    y  = Y[n,1] # sol.y[1,n]
-    l  = Y[n,2] # sol.y[2,n]
-    th = Y[n,3] # sol.y[3,n]
-    s  = np.sin(th)
-    c  = np.cos(th)
-    v  = Y[n,4] # sol.y[4,n]
-
+def stickDude(inp):
+    # Get the state variables
+    if np.size(inp)<2:
+        # States at time t[n]
+        x  = Y[n,0] # sol.y[0,n]
+        y  = Y[n,1] # sol.y[1,n]
+        l  = Y[n,2] # sol.y[2,n]
+        th = Y[n,3] # sol.y[3,n]
+        v  = Y[n,4] # sol.y[4,n]
+    else:
+        x  = inp[0]
+        y  = inp[1]
+        l  = inp[2]
+        th = inp[3]
+        v  = inp[4]
+        
+    s = np.sin(th)
+    c = np.cos(th)
+        
     # Right Foot [rf] Left Foot [lf] Positions
     rf = [x+0.25+(v/p.vx)*np.sin(1.5*x+3*np.pi/2), 
           0.2*(v/p.vx)*(1+np.sin(1.5*x+3*np.pi/2))]
@@ -262,7 +307,7 @@ def init():
 
 def animate(n):
     # Get the plotting vectors using stickDude function
-    xv,yv,rf,lf,sx,sy = stickDude(n)
+    xv,yv,rf,lf,sx,sy = stickDude(Y[n,:])
 
     # Get state variables
     x  = Y[n,0] # sol.y[0,n]
