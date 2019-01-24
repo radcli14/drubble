@@ -32,7 +32,10 @@ events = [BallHitStool,BallHitFloor]
 sol = spi.solve_ivp(PlayerAndStool,tspan,u0,t_eval=t,events=events)
 T = sol.t
 Y = sol.y.T
+eventCount = 0
 while T[-1]<tspan[1]:
+    eventCount = eventCount+1
+    
     # Solve up to the instant event occured, and get states at that instant
     if np.size(sol.t_events[0]):
         te = sol.t_events[0][0]
@@ -66,13 +69,29 @@ while T[-1]<tspan[1]:
     [xb,yb,tb] = BallPredict(ue)
     tb = tb+te
     
-    # Re-initialize from the event states
-    tspan_r = [te,tspan[1]]
-    sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[ne:],events=events)
+    # Simulate up to the next two steps without events (get through zero cross)
+    tspan_r = [te,t[ne+1]]
+    sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=[t[ne],t[ne+1]])
     
     # Concatenate onto the T,Y arrays
     T = np.concatenate((T,sol.t),axis=0)
     Y = np.concatenate((Y,sol.y.T),axis=0)
+    
+    # Re-initialize from the event states
+    tspan_r = [t[ne+1],tspan[1]]
+    sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[(ne+2):],events=events)
+    
+    # Concatenate onto the T,Y arrays
+    T = np.concatenate((T,sol.t),axis=0)
+    Y = np.concatenate((Y,sol.y.T),axis=0)
+    
+    # # Re-initialize from the event states
+    # tspan_r = [te,tspan[1]]
+    # sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[ne:],events=events)
+    
+    # # Concatenate onto the T,Y arrays
+    # T = np.concatenate((T,sol.t),axis=0)
+    # Y = np.concatenate((Y,sol.y.T),axis=0)
 
 # Initialize the PDF file
 with PdfPages('demoDrubble.pdf') as pdf:
