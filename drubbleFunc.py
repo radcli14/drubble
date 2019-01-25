@@ -44,7 +44,7 @@ def parameters():
     Cl = 2*zl*np.sqrt(Kl*m) # Arm damping [N-s/m]
     zt = 0.05    # Stool tilt damping ratio
     Ct = 2*zl*np.sqrt(Kt*m) # Tilt damping [N-m-s/rad]
-    COR = 0.7    # Coefficient of restitution
+    COR = 0.9    # Coefficient of restitution
     rb = 0.1     # Radius of the ball
     
     # Stool parameters
@@ -165,8 +165,8 @@ def PlayerAndStool(t,u):
     # Control stool angle by pointing at the ball
     xdiff = u[8]-u[0]
     ydiff = u[9]-u[1]-p.d
-    wantAngle = np.arctan2(xdiff,ydiff)
-    #wantAngle = np.arctan(xdiff/ydiff)
+    #wantAngle = -np.arctan2(xdiff,ydiff)
+    wantAngle = np.arctan(xdiff/ydiff)
     Bth = p.Qt*(th - wantAngle)
     if Bth>1:
         Bth = 1
@@ -207,15 +207,59 @@ def BallHitStool(t,u):
         ri = np.array([sx[1],sy[1]])
     else:
         ri = np.array([sx[0]+z*r1[0],sy[0]+z*r1[1]])
-        
+
     # Vector from the closest point of impact to the center of the ball    
     r2 = np.array([u[8]-ri[0],u[9]-ri[1]])
-    
+
     # Calculate the distance to the outer radius of the ball t
-    L  = np.sign(r2[1])*np.sqrt(r2@r2)-p.rb
+    #L  = np.sign(r2[1])*np.sqrt(r2@r2)-p.rb
+    L = np.sqrt(r2@r2)-p.rb
     
-    return L
+    return L 
 BallHitStool.terminal = True 
+
+def BallBounce(t,u):
+    # Get the stool locations using stickDude function
+    xv,yv,rf,lf,sx,sy = stickDude(u)
+    
+    # Vectors from the left edge of the stool to the right, and to the ball
+    r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
+    
+    # Calculate z that minimizes the distance
+    z  = ( (u[8]-sx[0])*r1[0] + (u[9]-sy[0])*r1[1] )/( r1@r1 )
+    
+    # Find the closest point of impact on the stool
+    if z<0:
+        ri = np.array([sx[0],sy[0]])
+    elif z>1:
+        ri = np.array([sx[1],sy[1]])
+    else:
+        ri = np.array([sx[0]+z*r1[0],sy[0]+z*r1[1]])
+    
+    # Velocity at the impact point 
+    print("ri=",ri)
+    vi = np.array([u[4]-u[2]*np.sin(u[3])-(ri[1]-u[1])*u[7],
+                   u[5]+u[2]*np.cos(u[3])+(ri[0]-u[0])*u[7]])
+    print("vi=",vi)
+    
+    # Velocity of the ball relative to impact point
+    vbrel = np.array([u[10],u[11]])-vi
+    
+    # Vector from the closest point of impact to the center of the ball    
+    r2 = np.array([u[8]-ri[0],u[9]-ri[1]])
+    u2 = r2/np.sqrt(r2@r2)
+    print("r2=",r2)
+    print("u2=",u2)
+    
+    # Delta ball velocity
+    print("vb=",[u[10],u[11]])
+    print("vbrel=",vbrel)
+    delta_vb = 2*p.COR*(u2@vbrel)
+    
+    # Velocity after bounce
+    vBounce = -u2*delta_vb + np.array([u[10],u[11]])
+
+    return vBounce
 
 def bhDebug(T,Y):
     N = np.size(T)
@@ -226,7 +270,8 @@ def bhDebug(T,Y):
         Lf[n] = BallHitFloor(T[n],Y[n,:])
     plt.figure()
     plt.plot(T,Ls,'-bo')  
-    plt.plot(T,Lf,'-rx')      
+    plt.plot(T,Lf,'-rx')    
+    plt.grid('on')
 
 def ThirdPoint(P0,P1,L,SGN):
 
@@ -265,17 +310,17 @@ def stickDude(inp):
     c = np.cos(th)
         
     # Right Foot [rf] Left Foot [lf] Positions
-    rf = [x+0.25+(v/p.vx)*np.sin(1.5*x+3*np.pi/2), 
+    rf = [x-0.25+(v/p.vx)*np.sin(1.5*x+3*np.pi/2), 
           0.2*(v/p.vx)*(1+np.sin(1.5*x+3*np.pi/2))]
-    lf = [x-0.25+(v/p.vx)*np.cos(1.5*x), 
+    lf = [x+0.25+(v/p.vx)*np.cos(1.5*x), 
           0.2*(v/p.vx)*(1+np.cos(1.5*x))]
     
     # Waist Position
     w = [x,y-p.d]
     
     # Right Knee [rk] Left Knee [lk] Positions
-    rk = ThirdPoint(w,rf,p.y0-p.d,2*((v>-2)-0.5))
-    lk = ThirdPoint(w,lf,p.y0-p.d,2*((v>2)-0.5))
+    rk = ThirdPoint(w,rf,p.y0-p.d,-1) #*((v>-2)-0.5))
+    lk = ThirdPoint(w,lf,p.y0-p.d,1) #2*((v>2)-0.5))
     
     # Shoulder Position
     sh = [x,y+p.d]
@@ -329,7 +374,7 @@ def animate(n):
     RF.set_data(rf[0],rf[1])
     LF.set_data(lf[0],lf[1])
     HD.set_data(x,y+p.d*1.6)
-    GD.set_data(np.round(x+np.linspace(-20,20,41)),0)
+    GD.set_data(np.round(x+np.linspace(-40,40,81)),0)
     ST.set_data(sx,sy)
     BL.set_data(Y[n,8],Y[n,9])
     

@@ -29,69 +29,77 @@ events = [BallHitStool,BallHitFloor]
 #events = [BallHitFloor]
 
 # Run a simulation
-sol = spi.solve_ivp(PlayerAndStool,tspan,u0,t_eval=t,events=events)
+sol = spi.solve_ivp(PlayerAndStool,tspan,u0,t_eval=t,max_step=0.005,events=events)
 T = sol.t
 Y = sol.y.T
 eventCount = 0
+
 while T[-1]<tspan[1]:
-    eventCount = eventCount+1
-    
-    # Solve up to the instant event occured, and get states at that instant
-    if np.size(sol.t_events[0]):
-        te = sol.t_events[0][0]
-        StoolBounce = True
-        FloorBounce = False
-    elif np.size(sol.t_events[1]):
-        te = sol.t_events[1][0]
-        StoolBounce = False
-        FloorBounce = True
-    print("te = ",te)
-    ne    = np.size(T)
-    un    = Y[-1].tolist()
-    sol   = spi.solve_ivp(PlayerAndStool,[T[-1],te],un)
-    ue    = sol.y[:,-1].tolist() 
-    
-    if StoolBounce:
-        ue[9] = ue[9]+0.001
+    try:
+        eventCount = eventCount+1
         
-        # Reverse direction of the ball
-        ue[10] = p.COR*ue[10]
-        ue[11] = -p.COR*ue[11]
+        # Solve up to the instant event occured, and get states at that instant
+        if np.size(sol.t_events[0]):
+            te = sol.t_events[0][0]
+            StoolBounce = True
+            FloorBounce = False
+        elif np.size(sol.t_events[1]):
+            te = sol.t_events[1][0]
+            StoolBounce = False
+            FloorBounce = True
+        print("te = ",te)
+        ne    = np.size(T)
+        un    = Y[-1].tolist()
+        sol   = spi.solve_ivp(PlayerAndStool,[T[-1],te],un)
+        ue    = sol.y[:,-1].tolist() 
         
-    elif FloorBounce:
-        ue[9] = 0.001
-    
-        # Reverse direction of the ball
-        ue[10] = p.COR*ue[10]
-        ue[11] = -p.COR*ue[11]
-    
-    # Recalculate next position
-    [xb,yb,tb] = BallPredict(ue)
-    tb = tb+te
-    
-    # Simulate up to the next two steps without events (get through zero cross)
-    tspan_r = [te,t[ne+1]]
-    sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=[t[ne],t[ne+1]])
-    
-    # Concatenate onto the T,Y arrays
-    T = np.concatenate((T,sol.t),axis=0)
-    Y = np.concatenate((Y,sol.y.T),axis=0)
-    
-    # Re-initialize from the event states
-    tspan_r = [t[ne+1],tspan[1]]
-    sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[(ne+2):],events=events)
-    
-    # Concatenate onto the T,Y arrays
-    T = np.concatenate((T,sol.t),axis=0)
-    Y = np.concatenate((Y,sol.y.T),axis=0)
-    
-    # # Re-initialize from the event states
-    # tspan_r = [te,tspan[1]]
-    # sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[ne:],events=events)
-    
-    # # Concatenate onto the T,Y arrays
-    # T = np.concatenate((T,sol.t),axis=0)
-    # Y = np.concatenate((Y,sol.y.T),axis=0)
+        if StoolBounce:
+            ue[9] = ue[9]+0.001
+            
+            # Obtain the bounce velocity
+            print("stool!")
+            vBounce = BallBounce(te,ue)
+            print("vBounce=",vBounce)
+            ue[10] = vBounce[0]
+            ue[11] = vBounce[1]
+            #print(ue)
+        elif FloorBounce:
+            ue[9] = 0.001
+        
+            # Reverse direction of the ball
+            ue[10] = p.COR*ue[10]
+            ue[11] = -p.COR*ue[11]
+        
+        # Recalculate next position
+        [xb,yb,tb] = BallPredict(ue)
+        tb = tb+te
+        
+        # Simulate up to the next two steps without events (get through zero cross)
+        tspan_r = [te,t[ne+1]]
+        sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=[t[ne],t[ne+1]])
+        
+        # Concatenate onto the T,Y arrays
+        T = np.concatenate((T,sol.t),axis=0)
+        Y = np.concatenate((Y,sol.y.T),axis=0)
+        
+        # Re-initialize from the event states
+        tspan_r = [t[ne+1],tspan[1]]
+        sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[(ne+2):],events=events)
+        
+        # Concatenate onto the T,Y arrays
+        T = np.concatenate((T,sol.t),axis=0)
+        Y = np.concatenate((Y,sol.y.T),axis=0)
+        
+        # # Re-initialize from the event states
+        # tspan_r = [te,tspan[1]]
+        # sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[ne:],events=events)
+        
+        # # Concatenate onto the T,Y arrays
+        # T = np.concatenate((T,sol.t),axis=0)
+        # Y = np.concatenate((Y,sol.y.T),axis=0)
+    except:
+        print("There was an exception in the simulation loop")
+        break
 
 # Initialize the PDF file
 with PdfPages('demoDrubble.pdf') as pdf:
@@ -142,16 +150,18 @@ with PdfPages('demoDrubble.pdf') as pdf:
     ax.set_aspect('equal')
     
     for n in range(int(2*fs+fs/6),int(2*fs+9*fs/6),int(fs/6)): 
-    
-        # Get the plotting vectors using stickDude function
-        xv,yv,rf,lf,sx,sy = stickDude(n)
-        
-        # Generate plot at time t[n]
-        plt.plot(xv,yv)
-        plt.plot(rf[0],rf[1],'k>')
-        plt.plot(lf[0],lf[1],'k<')
-        plt.plot(Y[n,0],Y[n,1]+p.d*1.6,'go')
-        plt.plot(sx,sy,'-r')
+        try:
+            # Get the plotting vectors using stickDude function
+            xv,yv,rf,lf,sx,sy = stickDude(n)
+            
+            # Generate plot at time t[n]
+            plt.plot(xv,yv)
+            plt.plot(rf[0],rf[1],'k>')
+            plt.plot(lf[0],lf[1],'k<')
+            plt.plot(Y[n,0],Y[n,1]+p.d*1.6,'go')
+            plt.plot(sx,sy,'-r')
+        except:
+            print("There was an exception generating the plot")
     #pdf.savefig()
     
     f4 = plt.figure()
@@ -165,7 +175,7 @@ DPI = fig.get_dpi()
 fig.set_size_inches(1334.0/float(DPI),750.0/float(DPI))
 LN, RF, LF, HD, GD, ST, BL = initPlots()
 
-ani = animation.FuncAnimation(fig, animate, np.size(t), interval=dt*1000, 
+ani = animation.FuncAnimation(fig, animate, np.size(T), interval=dt*1000, 
                               init_func=init, blit=True)
 #plt.show()    
 # Export the movie file
