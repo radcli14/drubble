@@ -1,6 +1,6 @@
 # Import modules
 # import os
-# import time
+import time
 import numpy as np
 import scipy.integrate as spi
 import matplotlib.pyplot as plt
@@ -25,7 +25,7 @@ def parameters():
     l0 = 1.5     # Equilibrium position of stool
     ax = 1       # Horizontal acceleration [g]
     Qx = ax*m*g; # Max horizontal force [N]
-    Gx = 1.0;    # Control gain on Qx 
+    Gx = 2.0;    # Control gain on Qx 
     fy = 0.8     # vertical frequency [Hz]
     Ky = m*(fy*2*np.pi)**2 # Leg stiffness [N/m]
     Qy = Ky*0.3  # Leg strength [N], to be updated
@@ -34,7 +34,7 @@ def parameters():
     Ql = Kl*0.3  # Arm strength [N]
     ft = 0.5     # Stool tilt frequency [Hz]
     Kt = (mg*l0*l0)*(ft*2*np.pi)**2 # Tilt stiffnes [N-m/rad]
-    Qt = 0.3*Kt  # Tilt strength [N-m]
+    Qt = 0.2*Kt  # Tilt strength [N-m]
     Gt = 5.0     # Control gain on Qt
     vx = 10      # Horizontal top speed [m/s]
     Cx = Qx/vx   # Horizontal damping [N-s/m]
@@ -139,11 +139,27 @@ def PlayerAndStool(t,u):
 
     # Fix the time, if supplied as tspan vector
     if np.size(t)>1:
-        t = t[0]
-        
+        t = t[0]       
+    
+    # Control inputs form the generalized forces
+    Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = ControlLogic(t,u)
+    
+    # Equation of Motion
+    RHS = -C*dq-K*q+K*q0-D-G+Q
+    ddq = M.I*RHS
+    
+    # Output State Derivatives
+    du = [u[4],u[5],u[6],u[7],ddq[0,0],
+          ddq[1,0],ddq[2,0],ddq[3,0],
+          u[10],u[11],0,-p.g]
+    return du
+
+def ControlLogic(t,u):
+
     # Control horizontal acceleration based on zero effort miss (ZEM)
-    # Subtract 1 secoond to get there early    
-    ZEM = xb - u[0] - u[4]*np.abs(tb-t-1)
+    # Subtract 1 secoond to get there early, and subtract 0.1 m to keep the
+    # ball moving forward    
+    ZEM = (xb-0.1) - u[0] - u[4]*np.abs(tb-t-1)
     #print(ZEM)
     Bx = p.Gx*ZEM
     if Bx>1:
@@ -166,25 +182,16 @@ def PlayerAndStool(t,u):
     xdiff = u[8]-u[0]
     ydiff = u[9]-u[1]-p.d
     #wantAngle = -np.arctan2(xdiff,ydiff)
-    wantAngle = np.arctan(xdiff/ydiff)
-    Bth = p.Qt*(th - wantAngle)
+    wantAngle = np.arctan(-xdiff/ydiff)-0.1
+    Bth = p.Qt*(wantAngle-u[3])
     if Bth>1:
         Bth = 1
     elif Bth<-1:
         Bth = -1
+        
+    Q = np.matrix([[Bx*p.Qx],[By*p.Qy],[Bl*p.Ql],[Bth*p.Qt]])    
     
-    # Control inputs form the generalized forces
-    Q = np.matrix([[Bx*p.Qx],[By*p.Qy],[Bl*p.Ql],[Bth*p.Qt]])
-    
-    # Equation of Motion
-    RHS = -C*dq-K*q+K*q0-D-G+Q
-    ddq = M.I*RHS
-    
-    # Output State Derivatives
-    du = [u[4],u[5],u[6],u[7],ddq[0,0],
-          ddq[1,0],ddq[2,0],ddq[3,0],
-          u[10],u[11],0,-p.g]
-    return du
+    return Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff    
 
 def BallHitFloor(t,u):
     return u[9]-p.rb

@@ -9,34 +9,52 @@ p = parameters()
 
 # Initial States
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u0 = [0,p.y0,p.l0,0,0,0,0,0,-4,8,4,12]
+u0 = [0,p.y0,p.l0,0,0,0,0,0,-4,8,3,12]
 
 # Predict position and time where ball hits stool
 [xb,yb,tb] = BallPredict(u0)
 
 # Time vector for test simulation
-tspan = [0, 10]
+tspan = [0, 20]
 fs = 30
 dt = 1/fs
 t = np.linspace(tspan[0],tspan[1],fs*(tspan[1]-tspan[0])+1)
 
+# Output data matrix
+N = np.size(t)
+Y = np.zeros((N,12))
+Y[0,:] = u0
+
 # Calculate a single point, to test    
-du = PlayerAndStool(tspan,u0)
-print(du)
+# du = PlayerAndStool(tspan,u0)
+# print(du)
 
 # Define the Events
 events = [BallHitStool,BallHitFloor]
 #events = [BallHitFloor]
 
-# Run a simulation
-sol = spi.solve_ivp(PlayerAndStool,tspan,u0,t_eval=t,max_step=0.005,events=events)
-T = sol.t
-Y = sol.y.T
+# Run a simulation demo
 eventCount = 0
+te = 0
+n = 0
 
-while T[-1]<tspan[1]:
+start_time = time.time()
+while t[n]<tspan[1]:
     try:
-        eventCount = eventCount+1
+        u = Y[n,:].tolist()
+        if (t[n]-te)>0.1:
+            sol = spi.solve_ivp(PlayerAndStool,[t[n],t[n+1]],u, 
+                                max_step=0.005,events=events)
+        else:
+            sol = spi.solve_ivp(PlayerAndStool,[t[n],t[n+1]],u, 
+                                max_step=0.005)    
+        
+        if sol.status:
+            eventCount = eventCount+1
+        else:
+            n = n+1
+            Y[n,:] = sol.y[:,-1]
+            continue
         
         # Solve up to the instant event occured, and get states at that instant
         if np.size(sol.t_events[0]):
@@ -47,11 +65,11 @@ while T[-1]<tspan[1]:
             te = sol.t_events[1][0]
             StoolBounce = False
             FloorBounce = True
-        print("te = ",te)
-        ne    = np.size(T)
-        un    = Y[-1].tolist()
-        sol   = spi.solve_ivp(PlayerAndStool,[T[-1],te],un)
-        ue    = sol.y[:,-1].tolist() 
+        print("te = ",te,' sec, StoolBounce = ',
+              StoolBounce,', FloorBounce = ',FloorBounce)
+        ue = sol.y[:,-1].tolist()
+        # sol = spi.solve_ivp(PlayerAndStool,[t[n],te],un)
+        # ue  = sol.y[:,-1].tolist() 
         
         if StoolBounce:
             ue[9] = ue[9]+0.001
@@ -73,33 +91,18 @@ while T[-1]<tspan[1]:
         # Recalculate next position
         [xb,yb,tb] = BallPredict(ue)
         tb = tb+te
-        
-        # Simulate up to the next two steps without events (get through zero cross)
-        tspan_r = [te,t[ne+1]]
-        sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=[t[ne],t[ne+1]])
-        
-        # Concatenate onto the T,Y arrays
-        T = np.concatenate((T,sol.t),axis=0)
-        Y = np.concatenate((Y,sol.y.T),axis=0)
-        
+ 
         # Re-initialize from the event states
-        tspan_r = [t[ne+1],tspan[1]]
-        sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[(ne+2):],events=events)
+        sol = spi.solve_ivp(PlayerAndStool,[te,t[n+1]],ue)
         
-        # Concatenate onto the T,Y arrays
-        T = np.concatenate((T,sol.t),axis=0)
-        Y = np.concatenate((Y,sol.y.T),axis=0)
+        # Iterate n, and add the current result into the data matrix
+        n = n+1
+        Y[n,:] = sol.y[:,-1]
         
-        # # Re-initialize from the event states
-        # tspan_r = [te,tspan[1]]
-        # sol = spi.solve_ivp(PlayerAndStool,tspan_r,ue,t_eval=t[ne:],events=events)
-        
-        # # Concatenate onto the T,Y arrays
-        # T = np.concatenate((T,sol.t),axis=0)
-        # Y = np.concatenate((Y,sol.y.T),axis=0)
     except:
         print("There was an exception in the simulation loop")
         break
+print("--- Simulation ran in %s seconds ---" % (time.time() - start_time))
 
 # Initialize the PDF file
 with PdfPages('demoDrubble.pdf') as pdf:
@@ -107,24 +110,24 @@ with PdfPages('demoDrubble.pdf') as pdf:
     # Plot results
     f1 = plt.figure()
     plt.subplot(2,2,1,xlabel='Time [sec]',ylabel='x [m]')
-    plt.plot(T,Y[:,0])
+    plt.plot(t,Y[:,0])
     plt.subplot(2,2,2,xlabel='Time [sec]',ylabel='y [m]')
-    plt.plot(T,Y[:,1])
+    plt.plot(t,Y[:,1])
     plt.subplot(2,2,3,xlabel='Time [sec]',ylabel='l [m]')
-    plt.plot(T,Y[:,2])
+    plt.plot(t,Y[:,2])
     plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='theta [deg]')
-    plt.plot(T,np.rad2deg(Y[:,3]))
+    plt.plot(t,np.rad2deg(Y[:,3]))
     #pdf.savefig()
     
     f2 = plt.figure()
     plt.subplot(2,2,1,xlabel='Time [sec]',ylabel='dx/dt [m/s]')
-    plt.plot(T,Y[:,4])
+    plt.plot(t,Y[:,4])
     plt.subplot(2,2,2,xlabel='Time [sec]',ylabel='dy/dt [m/s]')
-    plt.plot(T,Y[:,5])
+    plt.plot(t,Y[:,5])
     plt.subplot(2,2,3,xlabel='Time [sec]',ylabel='dl/dt [m/s]')
-    plt.plot(T,Y[:,6])
+    plt.plot(t,Y[:,6])
     plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='dtheta/dt [deg]')
-    plt.plot(T,np.rad2deg(Y[:,7]))
+    plt.plot(t,np.rad2deg(Y[:,7]))
     #pdf.savefig()
     
     # Generate an overlay plot of several frames
@@ -175,10 +178,10 @@ DPI = fig.get_dpi()
 fig.set_size_inches(1334.0/float(DPI),750.0/float(DPI))
 LN, RF, LF, HD, GD, ST, BL = initPlots()
 
-ani = animation.FuncAnimation(fig, animate, np.size(T), interval=dt*1000, 
+ani = animation.FuncAnimation(fig, animate, np.size(t), interval=dt*1000, 
                               init_func=init, blit=True)
 #plt.show()    
 # Export the movie file
-#Writer = animation.writers['ffmpeg']
-#writer = Writer(fps=fs, metadata=dict(artist='Me'), bitrate=1800)
-#ani.save('demoDrubble.mp4', writer=writer)
+Writer = animation.writers['ffmpeg']
+writer = Writer(fps=fs, metadata=dict(artist='Me'), bitrate=1800)
+ani.save('demoDrubble.mp4', writer=writer)
