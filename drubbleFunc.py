@@ -34,8 +34,8 @@ def parameters():
     Ql = Kl*0.3  # Arm strength [N]
     ft = 0.5     # Stool tilt frequency [Hz]
     Kt = (mg*l0*l0)*(ft*2*np.pi)**2 # Tilt stiffnes [N-m/rad]
-    Qt = 0.2*Kt  # Tilt strength [N-m]
-    Gt = 5.0     # Control gain on Qt
+    Qt = 1*Kt    # Tilt strength [N-m]
+    Gt = 2.0     # Control gain on Qt
     vx = 10      # Horizontal top speed [m/s]
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio
@@ -44,7 +44,7 @@ def parameters():
     Cl = 2*zl*np.sqrt(Kl*m) # Arm damping [N-s/m]
     zt = 0.05    # Stool tilt damping ratio
     Ct = 2*zl*np.sqrt(Kt*m) # Tilt damping [N-m-s/rad]
-    COR = 0.9    # Coefficient of restitution
+    COR = 0.8    # Coefficient of restitution
     rb = 0.1     # Radius of the ball
     
     # Stool parameters
@@ -90,8 +90,13 @@ def BallPredict(u):
     # Solve for position that the ball would hit the stool
     xb = x+dx*tb
     yb = y+dy*tb-0.5*p.g*tb**2
+    
+    # Solve for the arc
+    Tb = np.linspace(0,tb,20)
+    Xb = x+dx*Tb
+    Yb = y+dy*Tb-0.5*p.g*Tb**2
     #print("xb=",xb)
-    return xb,yb,tb
+    return xb,yb,tb,Xb,Yb
 
 # Equation of Motion
 def PlayerAndStool(t,u):
@@ -159,7 +164,7 @@ def ControlLogic(t,u):
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.1 m to keep the
     # ball moving forward    
-    ZEM = (xb-0.1) - u[0] - u[4]*np.abs(tb-t-1)
+    ZEM = (xb-0.05) - u[0] - u[4]*np.abs(tb-t-1)
     #print(ZEM)
     Bx = p.Gx*ZEM
     if Bx>1:
@@ -181,8 +186,7 @@ def ControlLogic(t,u):
     # Control stool angle by pointing at the ball
     xdiff = u[8]-u[0]
     ydiff = u[9]-u[1]-p.d
-    #wantAngle = -np.arctan2(xdiff,ydiff)
-    wantAngle = np.arctan(-xdiff/ydiff)-0.1
+    wantAngle = np.arctan2(-xdiff,ydiff)
     Bth = p.Qt*(wantAngle-u[3])
     if Bth>1:
         Bth = 1
@@ -358,13 +362,14 @@ def initPlots():
     GD, = plt.plot([], [],'-bx', animated=True) # Ground
     ST, = plt.plot([], [], '-r', animated=True) # Stool
     BL, = plt.plot([], [], 'mo', animated=True) # Ball
-    return LN, RF, LF, HD, GD, ST, BL,
+    BA, = plt.plot([], [], ':k', animated=True) # Ball (arc)
+    return LN, RF, LF, HD, GD, ST, BL, BA,
 
 def init():
     ax.set_xlim(-1,11)
     ax.set_ylim(-1,5)
     #ax.set_aspect('equal')
-    return LN, RF, LF, HD, GD, ST, BL,
+    return LN, RF, LF, HD, GD, ST, BL, BA,
 
 def animate(n):
     # Get the plotting vectors using stickDude function
@@ -384,6 +389,7 @@ def animate(n):
     GD.set_data(np.round(x+np.linspace(-40,40,81)),0)
     ST.set_data(sx,sy)
     BL.set_data(Y[n,8],Y[n,9])
+    BA.set_data(XB[n,:],YB[n,:])
     
     # Update Axis Limits
     maxy  = 1.25*np.max([Y[n,9],y+p.d+l*np.cos(th),12])
@@ -398,4 +404,4 @@ def animate(n):
     ax.set_xlim(xrng)
     ax.set_ylim(yrng)
     
-    return LN, RF, LF, HD, GD, ST, BL,
+    return LN, RF, LF, HD, GD, ST, BL, BA,

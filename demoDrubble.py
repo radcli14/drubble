@@ -1,7 +1,10 @@
 # Import required packages
 exec(open("./drubbleFunc.py").read())
 
-# Clos figure windows
+# Export Figures and Animations
+eboule = True
+
+# Close figure windows
 plt.close('all')
 
 # Obtain Parameters
@@ -12,7 +15,7 @@ q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
 u0 = [0,p.y0,p.l0,0,0,0,0,0,-4,8,3,12]
 
 # Predict position and time where ball hits stool
-[xb,yb,tb] = BallPredict(u0)
+[xb,yb,tb,Xb,Yb] = BallPredict(u0)
 
 # Time vector for test simulation
 tspan = [0, 20]
@@ -20,28 +23,37 @@ fs = 30
 dt = 1/fs
 t = np.linspace(tspan[0],tspan[1],fs*(tspan[1]-tspan[0])+1)
 
-# Output data matrix
+# Output data matrices
 N = np.size(t)
 Y = np.zeros((N,12))
 Y[0,:] = u0
-
-# Calculate a single point, to test    
-# du = PlayerAndStool(tspan,u0)
-# print(du)
+XB = np.zeros((N,20))
+YB = np.zeros((N,20))
+WantAngle = np.zeros((N,1))
 
 # Define the Events
 events = [BallHitStool,BallHitFloor]
-#events = [BallHitFloor]
 
 # Run a simulation demo
 eventCount = 0
 te = 0
-n = 0
+n  = 0
 
 start_time = time.time()
 while t[n]<tspan[1]:
+    # Ball Trajectory Prediction
+    XB[n,:] = Xb
+    YB[n,:] = Yb
+    
+    # Get the Control Logic Variables
+    Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = ControlLogic(t[n],Y[n,:].tolist())
+    WantAngle[n] = wantAngle  
+    
     try:
+        # Initial values for the current time step
         u = Y[n,:].tolist()
+        
+        # Prevent event detection if there was already one within 0.1 seconds
         if (t[n]-te)>0.1:
             sol = spi.solve_ivp(PlayerAndStool,[t[n],t[n+1]],u, 
                                 max_step=0.005,events=events)
@@ -49,6 +61,7 @@ while t[n]<tspan[1]:
             sol = spi.solve_ivp(PlayerAndStool,[t[n],t[n+1]],u, 
                                 max_step=0.005)    
         
+        # If an event occured, increment the counter, otherwise continue
         if sol.status:
             eventCount = eventCount+1
         else:
@@ -56,26 +69,29 @@ while t[n]<tspan[1]:
             Y[n,:] = sol.y[:,-1]
             continue
         
-        # Solve up to the instant event occured, and get states at that instant
+        # Determine if the was stool or floor
         if np.size(sol.t_events[0]):
             te = sol.t_events[0][0]
             StoolBounce = True
             FloorBounce = False
+            EventString = 'Awesome Stool Bounce!'
         elif np.size(sol.t_events[1]):
             te = sol.t_events[1][0]
             StoolBounce = False
             FloorBounce = True
-        print("te = ",te,' sec, StoolBounce = ',
-              StoolBounce,', FloorBounce = ',FloorBounce)
-        ue = sol.y[:,-1].tolist()
-        # sol = spi.solve_ivp(PlayerAndStool,[t[n],te],un)
-        # ue  = sol.y[:,-1].tolist() 
+            EventString = 'Boring Floor Bounce :('
+            
+        # Print the time and type of event    
+        print("te = ",te,' sec, ',EventString)
         
+        # Get states at time of event
+        ue = sol.y[:,-1].tolist()
+
+        # Change ball states depending on if it was a stool or floor bounce
         if StoolBounce:
             ue[9] = ue[9]+0.001
             
             # Obtain the bounce velocity
-            print("stool!")
             vBounce = BallBounce(te,ue)
             print("vBounce=",vBounce)
             ue[10] = vBounce[0]
@@ -88,8 +104,8 @@ while t[n]<tspan[1]:
             ue[10] = p.COR*ue[10]
             ue[11] = -p.COR*ue[11]
         
-        # Recalculate next position
-        [xb,yb,tb] = BallPredict(ue)
+        # Recalculate ball position the next time it crosses top of stool
+        [xb,yb,tb,Xb,Yb] = BallPredict(ue)
         tb = tb+te
  
         # Re-initialize from the event states
@@ -117,7 +133,9 @@ with PdfPages('demoDrubble.pdf') as pdf:
     plt.plot(t,Y[:,2])
     plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='theta [deg]')
     plt.plot(t,np.rad2deg(Y[:,3]))
-    #pdf.savefig()
+    plt.plot(t,np.rad2deg(WantAngle))
+    if eboule:
+        pdf.savefig()
     
     f2 = plt.figure()
     plt.subplot(2,2,1,xlabel='Time [sec]',ylabel='dx/dt [m/s]')
@@ -128,7 +146,8 @@ with PdfPages('demoDrubble.pdf') as pdf:
     plt.plot(t,Y[:,6])
     plt.subplot(2,2,4,xlabel='Time [sec]',ylabel='dtheta/dt [deg]')
     plt.plot(t,np.rad2deg(Y[:,7]))
-    #pdf.savefig()
+    if eboule:
+        pdf.savefig()
     
     # Generate an overlay plot of several frames
     f3 = plt.figure()
@@ -146,9 +165,7 @@ with PdfPages('demoDrubble.pdf') as pdf:
         plt.plot(lf[0],lf[1],'k<')
         plt.plot(Y[n,0],Y[n,1]+p.d*1.6,'go')
         plt.plot(sx,sy,'-r')
-        #plt.xlim(sol.y[0,n]+[-5.5,0.5])
-        #plt.ylim(sol.y[1,n]+[-2.1,1.9])
-        
+ 
     ax = f3.add_subplot(212)
     ax.set_aspect('equal')
     
@@ -165,23 +182,26 @@ with PdfPages('demoDrubble.pdf') as pdf:
             plt.plot(sx,sy,'-r')
         except:
             print("There was an exception generating the plot")
-    #pdf.savefig()
+    if eboule:
+        pdf.savefig()
     
     f4 = plt.figure()
     plt.plot(Y[:,8],Y[:,9])
-    #pdf.savefig()
+    if eboule:
+        pdf.savefig()
     
 # Generate an animation
 fig = plt.figure()    
 ax  = fig.add_axes([0,0,1,1])
 DPI = fig.get_dpi()
 fig.set_size_inches(1334.0/float(DPI),750.0/float(DPI))
-LN, RF, LF, HD, GD, ST, BL = initPlots()
+LN, RF, LF, HD, GD, ST, BL, BA = initPlots()
 
 ani = animation.FuncAnimation(fig, animate, np.size(t), interval=dt*1000, 
                               init_func=init, blit=True)
-#plt.show()    
+
 # Export the movie file
-Writer = animation.writers['ffmpeg']
-writer = Writer(fps=fs, metadata=dict(artist='Me'), bitrate=1800)
-ani.save('demoDrubble.mp4', writer=writer)
+if eboule:
+    Writer = animation.writers['ffmpeg']
+    writer = Writer(fps=fs, metadata=dict(artist='Me'), bitrate=1800)
+    ani.save('demoDrubble.mp4', writer=writer)
