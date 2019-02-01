@@ -2,10 +2,13 @@
 exec(open("./drubbleFunc.py").read())
 
 # Export Figures and Animations
-eboule = True
+eboule = False
 
 # Close figure windows
 plt.close('all')
+
+# Set Screen Size
+size = width, height = 1000, 600
 
 # Obtain Parameters
 p = parameters()
@@ -194,7 +197,7 @@ with PdfPages('demoDrubble.pdf') as pdf:
 fig = plt.figure()    
 ax  = fig.add_axes([0,0,1,1])
 DPI = fig.get_dpi()
-fig.set_size_inches(1334.0/float(DPI),750.0/float(DPI))
+fig.set_size_inches(width/float(DPI),height/float(DPI))
 LN, RF, LF, HD, GD, ST, BL, BA = initPlots()
 
 ani = animation.FuncAnimation(fig, animate, np.size(t), interval=dt*1000, 

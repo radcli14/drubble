@@ -1,11 +1,17 @@
 # Import modules
 # import os
+import sys
 import time
 import numpy as np
 import scipy.integrate as spi
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.cbook import get_sample_data
+import pygame
+
+# Import Image Data
+bigChair = plt.imread('bigChair.jpg')
 
 # Define the bunch class
 class Bunch:
@@ -34,8 +40,8 @@ def parameters():
     Ql = Kl*0.3  # Arm strength [N]
     ft = 0.5     # Stool tilt frequency [Hz]
     Kt = (mg*l0*l0)*(ft*2*np.pi)**2 # Tilt stiffnes [N-m/rad]
-    Qt = 1*Kt    # Tilt strength [N-m]
-    Gt = 2.0     # Control gain on Qt
+    Qt = 0.6*Kt  # Tilt strength [N-m]
+    Gt = 0.8     # Control gain on Qt
     vx = 10      # Horizontal top speed [m/s]
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio
@@ -48,7 +54,7 @@ def parameters():
     rb = 0.1     # Radius of the ball
     
     # Stool parameters
-    xs = np.array([-0.5 ,  0.5 ,  0.14, 
+    xs = np.array([-0.25,  0.25,  0.14, 
                     0.16, -0.16,  0.16, 
                     0.18, -0.18,  0.18,  
                     0.2 ,  0.14, -0.14, -0.2])
@@ -169,7 +175,7 @@ def ControlLogic(t,u):
     Bx = p.Gx*ZEM
     if Bx>1:
         Bx = 1
-    elif Bx<-1:
+    elif (Bx<-1) | ((tb-t)<0.2) & ((tb-t)>0):
         Bx = -1
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
@@ -190,7 +196,7 @@ def ControlLogic(t,u):
     Bth = p.Qt*(wantAngle-u[3])
     if Bth>1:
         Bth = 1
-    elif Bth<-1:
+    elif Bth<-1 | ((tb-t)<0.2) & ((tb-t)>0):
         Bth = -1
         
     Q = np.matrix([[Bx*p.Qx],[By*p.Qy],[Bl*p.Ql],[Bth*p.Qt]])    
@@ -368,6 +374,7 @@ def initPlots():
 def init():
     ax.set_xlim(-1,11)
     ax.set_ylim(-1,5)
+    
     #ax.set_aspect('equal')
     return LN, RF, LF, HD, GD, ST, BL, BA,
 
