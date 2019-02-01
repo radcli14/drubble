@@ -137,10 +137,10 @@ def PlayerAndStool(t,u):
     # print("phi     = \n",D)
     
     # Coriolis and Centripetal Force Vector
-    D = np.matrix([[-2*p.mg*dl*dth*c+p.mg*l*dth*dth*s], 
-                   [-2*p.mg*dl*dth*s+p.mg*l*dth*dth*c], 
+    D = np.matrix([[-p.mg*dl*dth*c+p.mg*l*dth*dth*s], 
+                   [-p.mg*dl*dth*s+p.mg*l*dth*dth*c], 
                    [0],
-                   [0]])
+                   [2*p.mg*dth]])
     
     # Gravitational Force Vector
     G = np.matrix([[0],
@@ -170,24 +170,24 @@ def ControlLogic(t,u):
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.1 m to keep the
     # ball moving forward    
-    ZEM = (xb-0.05) - u[0] - u[4]*np.abs(tb-t-1)
+    ZEM = (xb-0.05) - u[0] - u[4]*np.abs(timeUntilBounce-1)
     #print(ZEM)
     Bx = p.Gx*ZEM
     if Bx>1:
         Bx = 1
-    elif (Bx<-1) | ((tb-t)<0.2) & ((tb-t)>0):
+    elif (Bx<-1) | (timeUntilBounce<0.2) & (timeUntilBounce>0):
         Bx = -1
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
-    if ((tb-t)<0.6) & ((tb-t)>0.4):
+    if (timeUntilBounce<0.6) & (timeUntilBounce>0.4):
         By = -1
-    elif np.abs(tb-t)<0.2:       
+    elif np.abs(timeUntilBounce)<0.2:       
         By = 1
     else:
         By = 0
     
     # Control arm extension based on timing, turn on when impact in <0.2 sec
-    Bl = np.abs(tb-t)<0.2
+    Bl = np.abs(timeUntilBounce)<0.2
     
     # Control stool angle by pointing at the ball
     xdiff = u[8]-u[0]
@@ -289,6 +289,63 @@ def bhDebug(T,Y):
     plt.plot(T,Ls,'-bo')  
     plt.plot(T,Lf,'-rx')    
     plt.grid('on')
+
+def simThisStep(t,u,te):
+
+    # Prevent event detection if there was already one within 0.1 seconds
+    if (t-te)>0.1:
+        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u, 
+                            max_step=0.005,events=events)
+    else:
+        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u, 
+                            max_step=0.005)    
+    
+    # If an event occured, increment the counter, otherwise continue
+    if sol.status:
+        wasEvent = True
+        
+        # Determine if the was stool or floor
+        if np.size(sol.t_events[0]):
+            te = sol.t_events[0][0]+t
+            StoolBounce = True
+            FloorBounce = False
+            EventString = 'Awesome Stool Bounce!'
+        elif np.size(sol.t_events[1]):
+            te = sol.t_events[1][0]+t
+            StoolBounce = False
+            FloorBounce = True
+            EventString = 'Boring Floor Bounce :('
+            
+        # Print the time and type of event    
+        print("te = ",te,' sec, ',EventString)
+        
+        # Get states at time of event
+        ue = sol.y[:,-1].tolist()
+    
+        # Change ball states depending on if it was a stool or floor bounce
+        if StoolBounce:
+            ue[9] = ue[9]+0.001
+            
+            # Obtain the bounce velocity
+            vBounce = BallBounce(te,ue)
+            print("vBounce=",vBounce)
+            ue[10] = vBounce[0]
+            ue[11] = vBounce[1]
+            #print(ue)
+        elif FloorBounce:
+            ue[9] = 0.001
+        
+            # Reverse direction of the ball
+            ue[10] = p.COR*ue[10]
+            ue[11] = -p.COR*ue[11]       
+     
+        # Re-initialize from the event states
+        sol = spi.solve_ivp(PlayerAndStool,[0,dt],ue)
+    else:
+        wasEvent = False
+    
+    return sol, wasEvent, te  
+
 
 def ThirdPoint(P0,P1,L,SGN):
 

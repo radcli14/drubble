@@ -9,7 +9,7 @@ cyan = 0, 255, 255
 
 # Initial States
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u  = [0,p.y0,p.l0,0,0,0,0,0,-4,8,3,12]
+u0 = [0,p.y0,p.l0,0,0,0,0,0,-4,8,3,12]
 te = 0
 t  = 0
 fs = 30
@@ -23,18 +23,30 @@ bigChair = pygame.image.load("bigChair.jpg")
 bC_rect = bigChair.get_rect()
 
 # Run an infinite loop until stopped
-while 1:
+game_over = False
+u = u0
+n = 0
+eventCount = 0
+while not game_over:
     for event in pygame.event.get():
         print(event)
-        if event.type == pygame.QUIT: sys.exit()
+        if event.type == pygame.QUIT: 
+            #sys.exit()
+            game_over = True
+            pygame.quit()
 
-# Prevent event detection if there was already one within 0.1 seconds
-    if (t-te)>0.1:
-        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,events=events)
-    else:
-        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u)   
+    sol, wasEvent, te = simThisStep(t,u,te) 
+    eventCount += wasEvent
 
-
+    if wasEvent:
+        # Recalculate ball position the next time it crosses top of stool
+        [xb,yb,tb,Xb,Yb] = BallPredict(sol.y[:,-1])
+        tb = tb+te
+        
+    t += dt    
+    n += 1
+    u = sol.y[:,-1].tolist()
+    
     bC_rect = bC_rect.move(speed)
     if bC_rect.left < 0 or bC_rect.right > width:
         speed[0] = -speed[0]
