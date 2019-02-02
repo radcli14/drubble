@@ -7,6 +7,9 @@ size = width, height = 1000, 600
 speed = [2, 2]
 cyan = 0, 255, 255
 
+# Obtain Parameters
+p = parameters()
+
 # Initial States
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
 u0 = [0,p.y0,p.l0,0,0,0,0,0,-4,8,3,12]
@@ -15,12 +18,18 @@ t  = 0
 fs = 30
 dt = 1/fs
 
+# Predict position and time where ball hits stool
+[xb,yb,tb,Xb,Yb] = BallPredict(u0)
+
 # Open display
 screen = pygame.display.set_mode(size)
 
 # Import the Big Chair image
 bigChair = pygame.image.load("bigChair.jpg")
 bC_rect = bigChair.get_rect()
+
+# Define the Events
+events = [BallHitStool,BallHitFloor]
 
 # Run an infinite loop until stopped
 game_over = False
@@ -34,6 +43,9 @@ while not game_over:
             #sys.exit()
             game_over = True
             pygame.quit()
+
+    # Time until event 
+    timeUntilBounce = tb-t;
 
     sol, wasEvent, te = simThisStep(t,u,te) 
     eventCount += wasEvent
