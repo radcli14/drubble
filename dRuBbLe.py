@@ -91,12 +91,8 @@ while not game_over:
                     int(height-u[9]*MeterToPixel) )
     headPosition = (int(u[0]*MeterToPixel-PixelOffset+width/2), 
                     int(height-(u[1]+1.75*p.d)*MeterToPixel) )
-    #bC_rect = bC_rect.move(speed)
-    #if bC_rect.left < 0 or bC_rect.right > width:
-    #    speed[0] = -speed[0]
-    #if bC_rect.top < 0 or bC_rect.bottom > height:
-    #    speed[1] = -speed[1]
-
+    
+    # Draw the background, ball, head, player, and stool
     screen.fill(skyBlue)
     pygame.draw.circle(screen, pink, ballPosition, int(p.rb*MeterToPixel), 0)
     pygame.draw.circle(screen, darkGreen, headPosition, int(p.rb*MeterToPixel), 0)
@@ -106,3 +102,4 @@ while not game_over:
     
     #screen.blit(bigChair, bC_rect)
     pygame.display.flip()
+    # I want this to work ... pygame.time.Clock.tick(fs/2)
