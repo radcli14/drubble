@@ -171,15 +171,19 @@ def ControlLogic(t,u):
     # Subtract 1 secoond to get there early, and subtract 0.1 m to keep the
     # ball moving forward    
     ZEM = (xb-0.05) - u[0] - u[4]*np.abs(timeUntilBounce-1)
+    #print(xb)
+    #print(u[0])
+    #print(timeUntilBounce)
+    #error
     #print(ZEM)
     Bx = p.Gx*ZEM
     if Bx>1:
         Bx = 1
-    elif (Bx<-1) | (timeUntilBounce<0.2) & (timeUntilBounce>0):
+    elif (Bx<-1) or (timeUntilBounce<0.2) & (timeUntilBounce>0):
         Bx = -1
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
-    if (timeUntilBounce<0.6) & (timeUntilBounce>0.4):
+    if (timeUntilBounce<0.6) and (timeUntilBounce>0.4):
         By = -1
     elif np.abs(timeUntilBounce)<0.2:       
         By = 1
@@ -196,7 +200,7 @@ def ControlLogic(t,u):
     Bth = p.Qt*(wantAngle-u[3])
     if Bth>1:
         Bth = 1
-    elif Bth<-1 | ((tb-t)<0.2) & ((tb-t)>0):
+    elif Bth<-1 or ((tb-t)<0.2) & ((tb-t)>0):
         Bth = -1
         
     Q = np.matrix([[Bx*p.Qx],[By*p.Qy],[Bl*p.Ql],[Bth*p.Qt]])    
