@@ -20,8 +20,11 @@ class Bunch:
 
 # Parameters
 def parameters():
-    g  = 9.81 # Gravitational acceleration [m/s^2]
-    
+    # Game parameters
+    g   = 9.81 # Gravitational acceleration [m/s^2]
+    COR = 0.8  # Coefficient of restitution
+    rb  = 0.1  # Radius of the ball
+       
     # Player parameters
     mc = 50      # Mass of player [kg]
     mg = 2       # Mass of stool [kg]
@@ -50,9 +53,7 @@ def parameters():
     Cl = 2*zl*np.sqrt(Kl*m) # Arm damping [N-s/m]
     zt = 0.05    # Stool tilt damping ratio
     Ct = 2*zl*np.sqrt(Kt*m) # Tilt damping [N-m-s/rad]
-    COR = 0.8    # Coefficient of restitution
-    rb = 0.1     # Radius of the ball
-    
+
     # Stool parameters
     xs = np.array([-0.25,  0.25,  0.14, 
                     0.16, -0.16,  0.16, 
@@ -84,10 +85,6 @@ def BallPredict(u):
         tb = ta + np.sqrt(2*ya/p.g)
     else:
         # Solve for time that the ball would hit the stool
-        # a  = -0.5*p.g
-        # b  = dy
-        # c  = y - p.y0-p.d-p.l0
-        # tb = (-b - np.sqrt(b**2-4*a*c))/2/a
         tb = -(-dy - np.sqrt(dy**2+2*p.g*(y-p.y0-p.d-p.l0)))/p.g
         
     if np.isnan(tb):
@@ -101,7 +98,6 @@ def BallPredict(u):
     Tb = np.linspace(0,tb,20)
     Xb = x+dx*Tb
     Yb = y+dy*Tb-0.5*p.g*Tb**2
-    #print("xb=",xb)
     return xb,yb,tb,Xb,Yb
 
 # Equation of Motion
@@ -136,7 +132,7 @@ def PlayerAndStool(t,u):
     # print("freq    = ",np.sqrt(V)/2/np.pi)
     # print("phi     = \n",D)
     
-    # Coriolis and Centripetal Force Vector
+    # Centripetal [0,1] and Coriolis [3] Force Vector
     D = np.matrix([[-p.mg*dl*dth*c+p.mg*l*dth*dth*s], 
                    [-p.mg*dl*dth*s+p.mg*l*dth*dth*c], 
                    [0],
@@ -160,9 +156,9 @@ def PlayerAndStool(t,u):
     ddq = M.I*RHS
     
     # Output State Derivatives
-    du = [u[4],u[5],u[6],u[7],ddq[0,0],
-          ddq[1,0],ddq[2,0],ddq[3,0],
-          u[10],u[11],0,-p.g]
+    du = [u[4],u[5],u[6],u[7],ddq[0,0], # Player velocities
+          ddq[1,0],ddq[2,0],ddq[3,0],   # Player accelerations
+          u[10],u[11],0,-p.g]           # Ball velocities and accelerations
     return du
 
 def ControlLogic(t,u):
@@ -171,11 +167,6 @@ def ControlLogic(t,u):
     # Subtract 1 secoond to get there early, and subtract 0.1 m to keep the
     # ball moving forward    
     ZEM = (xb-0.05) - u[0] - u[4]*np.abs(timeUntilBounce-1)
-    #print(xb)
-    #print(u[0])
-    #print(timeUntilBounce)
-    #error
-    #print(ZEM)
     Bx = p.Gx*ZEM
     if Bx>1:
         Bx = 1
@@ -213,7 +204,7 @@ BallHitFloor.terminal = True
 
 def BallHitStool(t,u):
     # Get the stool locations using stickDude function
-    xv,yv,rf,lf,sx,sy = stickDude(u)
+    xv,yv,sx,sy = stickDude(u)
     
     # Vectors from the left edge of the stool to the right, and to the ball
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
@@ -241,7 +232,7 @@ BallHitStool.terminal = True
 
 def BallBounce(t,u):
     # Get the stool locations using stickDude function
-    xv,yv,rf,lf,sx,sy = stickDude(u)
+    xv,yv,sx,sy = stickDude(u)
     
     # Vectors from the left edge of the stool to the right, and to the ball
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
@@ -419,18 +410,16 @@ def stickDude(inp):
     xv = [rf[0],rk[0],w[0],lk[0],lf[0],lk[0],w[0],sh[0],re[0],rh[0],re[0],sh[0],le[0],lh[0]]
     yv = [rf[1],rk[1],w[1],lk[1],lf[1],lk[1],w[1],sh[1],re[1],rh[1],re[1],sh[1],le[1],lh[1]]
     
-    return xv,yv,rf,lf,sx,sy
+    return xv,yv,sx,sy
 
 def initPlots():
     LN, = plt.plot([], [], '-g', animated=True) # Stick figure
-    RF, = plt.plot([], [], '<k', animated=True) # Right foot
-    LF, = plt.plot([], [], '>k', animated=True) # Left foot
     HD, = plt.plot([], [], 'go', animated=True) # Head
     GD, = plt.plot([], [],'-bx', animated=True) # Ground
     ST, = plt.plot([], [], '-r', animated=True) # Stool
     BL, = plt.plot([], [], 'mo', animated=True) # Ball
     BA, = plt.plot([], [], ':k', animated=True) # Ball (arc)
-    return LN, RF, LF, HD, GD, ST, BL, BA,
+    return LN, HD, GD, ST, BL, BA,
 
 def init():
     ax.set_xlim(-1,11)
@@ -441,7 +430,7 @@ def init():
 
 def animate(n):
     # Get the plotting vectors using stickDude function
-    xv,yv,rf,lf,sx,sy = stickDude(Y[n,:])
+    xv,yv,sx,sy = stickDude(Y[n,:])
 
     # Get state variables
     x  = Y[n,0] # sol.y[0,n]
@@ -451,8 +440,6 @@ def animate(n):
 
     # Update the plot
     LN.set_data(xv, yv)
-    RF.set_data(rf[0],rf[1])
-    LF.set_data(lf[0],lf[1])
     HD.set_data(x,y+p.d*1.6)
     GD.set_data(np.round(x+np.linspace(-40,40,81)),0)
     ST.set_data(sx,sy)
@@ -472,4 +459,4 @@ def animate(n):
     ax.set_xlim(xrng)
     ax.set_ylim(yrng)
     
-    return LN, RF, LF, HD, GD, ST, BL, BA,
+    return LN, HD, GD, ST, BL, BA,

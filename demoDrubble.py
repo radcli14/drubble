@@ -2,7 +2,7 @@
 exec(open("./drubbleFunc.py").read())
 
 # Export Figures and Animations
-eboule = False
+eboule = True
 
 # Close figure windows
 plt.close('all')
@@ -21,7 +21,7 @@ u0 = [0,p.y0,p.l0,0,0,0,0,0,-4,8,3,12]
 [xb,yb,tb,Xb,Yb] = BallPredict(u0)
 
 # Time vector for test simulation
-tspan = [0, 50]
+tspan = [0, 25]
 fs = 30
 dt = 1/fs
 t  = np.linspace(tspan[0],tspan[1],fs*(tspan[1]-tspan[0])+1)
@@ -110,12 +110,10 @@ with PdfPages('demoDrubble.pdf') as pdf:
     for n in range(0,int(2*fs),int(fs/6)): 
     
         # Get the plotting vectors using stickDude function
-        xv,yv,rf,lf,sx,sy = stickDude(n)
+        xv,yv,sx,sy = stickDude(n)
         
         # Generate plot at time t[n]
         plt.plot(xv,yv)
-        plt.plot(rf[0],rf[1],'k>')
-        plt.plot(lf[0],lf[1],'k<')
         plt.plot(Y[n,0],Y[n,1]+p.d*1.6,'go')
         plt.plot(sx,sy,'-r')
     plt.tight_layout()    
@@ -125,12 +123,10 @@ with PdfPages('demoDrubble.pdf') as pdf:
     for n in range(int(2*fs+fs/6),int(2*fs+9*fs/6),int(fs/6)): 
         try:
             # Get the plotting vectors using stickDude function
-            xv,yv,rf,lf,sx,sy = stickDude(n)
+            xv,yv,sx,sy = stickDude(n)
             
             # Generate plot at time t[n]
             plt.plot(xv,yv)
-            plt.plot(rf[0],rf[1],'k>')
-            plt.plot(lf[0],lf[1],'k<')
             plt.plot(Y[n,0],Y[n,1]+p.d*1.6,'go')
             plt.plot(sx,sy,'-r')
         except:
@@ -152,7 +148,7 @@ fig = plt.figure()
 ax  = fig.add_axes([0,0,1,1])
 DPI = fig.get_dpi()
 fig.set_size_inches(width/float(DPI),height/float(DPI))
-LN, RF, LF, HD, GD, ST, BL, BA = initPlots()
+LN, HD, GD, ST, BL, BA = initPlots()
 
 ani = animation.FuncAnimation(fig, animate, np.size(t), interval=dt*1000, 
                               init_func=init, blit=True)
