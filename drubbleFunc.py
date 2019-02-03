@@ -65,9 +65,17 @@ def parameters():
                    -0.6 , -0.6 , -0.6 ,
                    -0.9 ,  0   ,   0  , -0.9 ])
     
+    M = np.matrix([[  m    , 0  , 0  , -mg*l0  ],
+                   [  0    , m  , mg ,    0    ],
+                   [  0    , mg , mg ,    0    ],
+                   [-mg*l0 , 0  , 0  , mg*l0**2]])
+    invM = M.I
+    linearMass = True
+    
     p = Bunch(g=g,mc=mc,mg=mg,m=m,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Gx=Gx,Qy=Qy,
               Ql=Ql,Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,Cx=Cx,
-              zy=zy,Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys,COR=COR,rb=rb)
+              zy=zy,Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys,COR=COR,rb=rb,
+              M=M,invM=invM,linearMass=linearMass)
     return p 
 
 # Predict
@@ -116,10 +124,11 @@ def PlayerAndStool(t,u):
     dq  = dq.T
 
     # Mass Matrix
-    M = np.matrix([[   p.m   ,    0    ,-p.mg*s,-p.mg*l*c],
-                   [    0    ,   p.m   , p.mg*c,-p.mg*l*s],
-                   [-p.mg*s  ,  p.mg*c , p.mg  ,   0     ],
-                   [-p.mg*l*c,-p.mg*l*s,   0   , p.mg*l*l]])
+    if not p.linearMass:     
+        M = np.matrix([[   p.m   ,    0    ,-p.mg*s,-p.mg*l*c],
+                       [    0    ,   p.m   , p.mg*c,-p.mg*l*s],
+                       [-p.mg*s  ,  p.mg*c , p.mg  ,   0     ],
+                       [-p.mg*l*c,-p.mg*l*s,   0   , p.mg*l*l]])
 
     # Damping Matrix     
     C = np.diag([p.Cx,p.Cy,p.Cl,p.Ct])
@@ -154,7 +163,10 @@ def PlayerAndStool(t,u):
     
     # Equation of Motion
     RHS = -C*dq-K*q+K*q0-D-G+Q
-    ddq = M.I*RHS
+    if p.linearMass:
+        ddq = p.invM*RHS
+    else:
+        ddq = M.I*RHS
     
     # Output State Derivatives
     du = [u[4],u[5],u[6],u[7],ddq[0,0], # Player velocities
