@@ -39,6 +39,12 @@ screen = pygame.display.set_mode(size)
 # Define the Events
 events = [BallHitStool,BallHitFloor]
 
+# Set the keyboard input and mouse defaults
+keyPush        = np.array([0,0,0,0])
+mousePos       = width/2,height/2 
+userControlled = True 
+ballMoves      = False
+
 # Run an infinite loop until stopped
 game_over = False
 u = u0
@@ -47,12 +53,29 @@ eventCount = 0
 while not game_over:
     ## USER INPUT
     for event in pygame.event.get():
-        print(event)
+        #print(event)
         if event.type == pygame.QUIT: 
             #sys.exit()
             game_over = True
             pygame.quit()
-
+        # Detect keyboard input    
+        if event.type == pygame.KEYDOWN:
+            # Start the ball moving!
+            if event.key == pygame.K_SPACE:
+                ballMoves = True
+                u[10] = u0[10]
+                u[11] = u0[11]
+            # Left and right control for Bx parameter
+            if event.key == pygame.K_LEFT:
+                keyPush[0] = -1
+            if event.key == pygame.K_RIGHT:
+                keyPush[0] = +1
+        if event.type == pygame.KEYUP:
+            if (event.key == pygame.K_LEFT) or (event.key == pygame.K_RIGHT):
+                keyPush[0] = 0
+            
+    #print(keyPush)   
+    
     ## SIMULATION
     # Time until event 
     timeUntilBounce = tb-t;
@@ -65,9 +88,18 @@ while not game_over:
         [xb,yb,tb,Xb,Yb] = BallPredict(sol.y[:,-1])
         tb = tb+te
         
-    t += dt    
-    n += 1
+    # Add solution into the state vector
     u = sol.y[:,-1].tolist()
+    
+    # Stop the ball from moving if the player hasn't hit space yet
+    if ballMoves:
+        t += dt    
+        n += 1
+    else:
+        u[8]  = u0[8]
+        u[9]  = u0[9]
+        u[10] = 0
+        u[11] = 0
     
     ## ANIMATION
     # Get the plotting vectors using stickDude function
@@ -103,3 +135,5 @@ while not game_over:
     #screen.blit(bigChair, bC_rect)
     pygame.display.flip()
     # I want this to work ... pygame.time.Clock.tick(fs/2)
+    
+    #input("This is here for debugging ... Press Enter to continue...")

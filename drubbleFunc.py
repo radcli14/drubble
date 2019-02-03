@@ -165,13 +165,16 @@ def ControlLogic(t,u):
 
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.1 m to keep the
-    # ball moving forward    
+    # ball moving forward 
     ZEM = (xb-0.05) - u[0] - u[4]*np.abs(timeUntilBounce-1)
-    Bx = p.Gx*ZEM
-    if Bx>1:
-        Bx = 1
-    elif (Bx<-1) or (timeUntilBounce<0.2) & (timeUntilBounce>0):
-        Bx = -1
+    if userControlled:
+        Bx = keyPush[0]
+    else:
+        Bx = p.Gx*ZEM
+        if Bx>1:
+            Bx = 1
+        elif (Bx<-1) or (timeUntilBounce<0.2) & (timeUntilBounce>0):
+            Bx = -1
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
     if (timeUntilBounce<0.6) and (timeUntilBounce>0.4):
@@ -287,13 +290,15 @@ def bhDebug(T,Y):
 
 def simThisStep(t,u,te):
 
-    # Prevent event detection if there was already one within 0.1 seconds
-    if (t-te)>0.1:
-        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u, 
+    # Prevent event detection if there was already one within 0.1 seconds, or 
+    # if the ball is far from the stool or ground
+    L = BallHitStool(t,u)
+    vball = np.array((u[10],u[11]))
+    if (t-te)>0.1 and (L<np.sqrt(vball@vball)*dt or u[9]<(-vball[1]*dt)):
+        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method='RK23', 
                             max_step=dt/2,events=events)
     else:
-        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u, 
-                            max_step=dt/2)    
+        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method='RK23')    
     
     # If an event occured, increment the counter, otherwise continue
     if sol.status:
