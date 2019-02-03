@@ -3,7 +3,7 @@ exec(open("./drubbleFunc.py").read())
 pygame.init()
 
 # Window size and color definition
-size = width, height = 1000, 600
+size = width, height = 1200, 600
 speed = [2, 2]
 red = (255,0,0)
 green = (0,255,0)
@@ -23,7 +23,7 @@ q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
 u0 = [0,p.y0,p.l0,0,0,0,0,0,-4,8,3,12]
 te = 0
 t  = 0
-fs = 30
+fs = 20
 dt = 1/fs
 
 # Predict position and time where ball hits stool
@@ -31,6 +31,7 @@ dt = 1/fs
 
 # Open display
 screen = pygame.display.set_mode(size)
+pygame.display.set_caption('dRuBbLe')
 
 # Import the Big Chair image
 #bigChair = pygame.image.load("bigChair.jpg")
@@ -40,9 +41,9 @@ screen = pygame.display.set_mode(size)
 events = [BallHitStool,BallHitFloor]
 
 # Set the keyboard input and mouse defaults
-keyPush        = np.array([0,0,0,0])
+keyPush        = np.zeros(8)
 mousePos       = width/2,height/2 
-userControlled = True 
+userControlled = np.array([True, True, True, True]) 
 ballMoves      = False
 
 # Run an infinite loop until stopped
@@ -50,6 +51,7 @@ game_over = False
 u = u0
 n = 0
 eventCount = 0
+clock = pygame.time.Clock()
 while not game_over:
     ## USER INPUT
     for event in pygame.event.get():
@@ -65,17 +67,57 @@ while not game_over:
                 ballMoves = True
                 u[10] = u0[10]
                 u[11] = u0[11]
+            # Reset the game
+            if event.key == pygame.K_ESCAPE:
+                t  = 0
+                te = 0
+                n  = 0
+                u  = u0
+                eventCount = 0
+                ballMoves = False
+                [xb,yb,tb,Xb,Yb] = BallPredict(u)
             # Left and right control for Bx parameter
             if event.key == pygame.K_LEFT:
-                keyPush[0] = -1
+                keyPush[0] = 1
             if event.key == pygame.K_RIGHT:
-                keyPush[0] = +1
+                keyPush[1] = 1
+            # Up and down control for By parameter
+            if event.key == pygame.K_UP:
+                keyPush[2] = 1
+            if event.key == pygame.K_DOWN:
+                keyPush[3] = 1
+            # W and S control for Bl parameter    
+            if event.key == pygame.K_w:
+                keyPush[4] = 1
+            if event.key == pygame.K_s:
+                keyPush[5] = 1    
+            # A and D control for Bth parameter
+            if event.key == pygame.K_a:
+                keyPush[6] = 1
+            if event.key == pygame.K_d:
+                keyPush[7] = 1    
+                
         if event.type == pygame.KEYUP:
-            if (event.key == pygame.K_LEFT) or (event.key == pygame.K_RIGHT):
+            if event.key == pygame.K_LEFT:
                 keyPush[0] = 0
-            
-    #print(keyPush)   
-    
+            if event.key == pygame.K_RIGHT:
+                keyPush[1] = 0
+            # Up and down control for By parameter
+            if event.key == pygame.K_UP:
+                keyPush[2] = 0
+            if event.key == pygame.K_DOWN:
+                keyPush[3] = 0
+            # W and S control for Bl parameter    
+            if event.key == pygame.K_w:
+                keyPush[4] = 0
+            if event.key == pygame.K_s:
+                keyPush[5] = 0    
+            # A and D control for Bth parameter
+            if event.key == pygame.K_a:
+                keyPush[6] = 0
+            if event.key == pygame.K_d:
+                keyPush[7] = 0             
+
     ## SIMULATION
     # Time until event 
     timeUntilBounce = tb-t;
@@ -134,6 +176,6 @@ while not game_over:
     
     #screen.blit(bigChair, bC_rect)
     pygame.display.flip()
-    # I want this to work ... pygame.time.Clock.tick(fs/2)
+    clock.tick(fs)
     
     #input("This is here for debugging ... Press Enter to continue...")

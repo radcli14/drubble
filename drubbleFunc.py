@@ -4,6 +4,7 @@ import sys
 import time
 import numpy as np
 import scipy.integrate as spi
+import scipy.special as scs
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.backends.backend_pdf import PdfPages
@@ -38,10 +39,10 @@ def parameters():
     fy = 0.8     # vertical frequency [Hz]
     Ky = m*(fy*2*np.pi)**2 # Leg stiffness [N/m]
     Qy = Ky*0.3  # Leg strength [N], to be updated
-    fl = 1.2     # Stool extension frequency
+    fl = 2.2     # Stool extension frequency
     Kl = mg*(fl*2*np.pi)**2 # Arm stiffness [N/m]
     Ql = Kl*0.3  # Arm strength [N]
-    ft = 0.5     # Stool tilt frequency [Hz]
+    ft = 1.5     # Stool tilt frequency [Hz]
     Kt = (mg*l0*l0)*(ft*2*np.pi)**2 # Tilt stiffnes [N-m/rad]
     Qt = 0.6*Kt  # Tilt strength [N-m]
     Gt = 0.8     # Control gain on Qt
@@ -167,8 +168,11 @@ def ControlLogic(t,u):
     # Subtract 1 secoond to get there early, and subtract 0.1 m to keep the
     # ball moving forward 
     ZEM = (xb-0.05) - u[0] - u[4]*np.abs(timeUntilBounce-1)
-    if userControlled:
-        Bx = keyPush[0]
+    if userControlled[0]:
+        if keyPush[0] +keyPush[1] == 0:
+            Bx = -scs.erf(u[4])
+        else:
+            Bx = keyPush[1]-keyPush[0]
     else:
         Bx = p.Gx*ZEM
         if Bx>1:
@@ -177,25 +181,34 @@ def ControlLogic(t,u):
             Bx = -1
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
-    if (timeUntilBounce<0.6) and (timeUntilBounce>0.4):
-        By = -1
-    elif np.abs(timeUntilBounce)<0.2:       
-        By = 1
+    if userControlled[1]:
+        By = keyPush[2]-keyPush[3]
     else:
-        By = 0
+        if (timeUntilBounce<0.6) and (timeUntilBounce>0.4):
+            By = -1
+        elif np.abs(timeUntilBounce)<0.2:       
+            By = 1
+        else:
+            By = 0
     
     # Control arm extension based on timing, turn on when impact in <0.2 sec
-    Bl = np.abs(timeUntilBounce)<0.2
+    if userControlled[2]:
+        Bl = keyPush[4]-keyPush[5]
+    else:
+        Bl = np.abs(timeUntilBounce)<0.2
     
     # Control stool angle by pointing at the ball
     xdiff = u[8]-u[0]
     ydiff = u[9]-u[1]-p.d
     wantAngle = np.arctan2(-xdiff,ydiff)
-    Bth = p.Qt*(wantAngle-u[3])
-    if Bth>1:
-        Bth = 1
-    elif Bth<-1 or ((tb-t)<0.2) & ((tb-t)>0):
-        Bth = -1
+    if userControlled[3]:
+        Bth = keyPush[6]-keyPush[7]
+    else:
+        Bth = p.Qt*(wantAngle-u[3])
+        if Bth>1:
+            Bth = 1
+        elif Bth<-1 or ((tb-t)<0.2) & ((tb-t)>0):
+            Bth = -1
         
     Q = np.matrix([[Bx*p.Qx],[By*p.Qy],[Bl*p.Ql],[Bth*p.Qt]])    
     
@@ -294,9 +307,9 @@ def simThisStep(t,u,te):
     # if the ball is far from the stool or ground
     L = BallHitStool(t,u)
     vball = np.array((u[10],u[11]))
-    if (t-te)>0.1 and (L<np.sqrt(vball@vball)*dt or u[9]<(-vball[1]*dt)):
+    if (t-te)>0.1: #and (L<np.sqrt(vball@vball)*dt or u[9]<(-vball[1]*dt)):
         sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method='RK23', 
-                            max_step=dt/2,events=events)
+                            max_step=dt/4,events=events)
     else:
         sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method='RK23')    
     
