@@ -23,7 +23,7 @@ def parameters():
     # Game parameters
     g   = 9.81 # Gravitational acceleration [m/s^2]
     COR = 0.8  # Coefficient of restitution
-    rb  = 0.1  # Radius of the ball
+    rb  = 0.2  # Radius of the ball
        
     # Player parameters
     mc = 50      # Mass of player [kg]
@@ -290,10 +290,10 @@ def simThisStep(t,u,te):
     # Prevent event detection if there was already one within 0.1 seconds
     if (t-te)>0.1:
         sol = spi.solve_ivp(PlayerAndStool,[0,dt],u, 
-                            max_step=0.005,events=events)
+                            max_step=dt/2,events=events)
     else:
         sol = spi.solve_ivp(PlayerAndStool,[0,dt],u, 
-                            max_step=0.005)    
+                            max_step=dt/2)    
     
     # If an event occured, increment the counter, otherwise continue
     if sol.status:
@@ -426,8 +426,20 @@ def init():
     ax.set_ylim(-1,5)
     
     #ax.set_aspect('equal')
-    return LN, RF, LF, HD, GD, ST, BL, BA,
+    return LN, HD, GD, ST, BL, BA,
 
+def setRanges(u):
+    maxy  = 1.25*np.max([u[9],u[1]+p.d+u[2]*np.cos(u[3]),12])
+    diffx = 1.25*np.abs(u[0]-u[8])
+    midx  = (u[0]+u[8])/2
+    if diffx>2*(maxy+1):
+        xrng = midx-0.5*diffx, midx+0.5*diffx
+        yrng = -1, 0.5*(diffx-0.5)
+    else:
+        xrng = midx-maxy-0.5, midx+maxy+0.5
+        yrng = -1, maxy
+    return xrng, yrng    
+        
 def animate(n):
     # Get the plotting vectors using stickDude function
     xv,yv,sx,sy = stickDude(Y[n,:])
@@ -447,15 +459,7 @@ def animate(n):
     BA.set_data(XB[n,:],YB[n,:])
     
     # Update Axis Limits
-    maxy  = 1.25*np.max([Y[n,9],y+p.d+l*np.cos(th),12])
-    diffx = 1.25*np.abs(x-Y[n,8])
-    midx  = (x+Y[n,8])/2
-    if diffx>2*(maxy+1):
-        xrng = midx-0.5*diffx, midx+0.5*diffx
-        yrng = -1, 0.5*(diffx-0.5)
-    else:
-        xrng = midx-maxy-0.5, midx+maxy+0.5
-        yrng = -1, maxy
+    xrng, yrng = setRanges(Y[n,:])
     ax.set_xlim(xrng)
     ax.set_ylim(yrng)
     
