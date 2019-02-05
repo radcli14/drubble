@@ -170,39 +170,31 @@ while not game_over:
                     int(height-(u[9]+1)*MeterToPixel) )
     headPosition = (int(u[0]*MeterToPixel-PixelOffset+width/2), 
                     int(height-(u[1]+1.75*p.d+1)*MeterToPixel) )
-    xr    = np.around(u[0],-1)
-    Ticks = ( ((xr-20)*MeterToPixel-PixelOffset+width/2,height-MeterToPixel) , 
-              ((xr-20)*MeterToPixel-PixelOffset+width/2,height)              ,
-              ((xr-10)*MeterToPixel-PixelOffset+width/2,height)              , 
-              ((xr-10)*MeterToPixel-PixelOffset+width/2,height-MeterToPixel) ,
-              (xr*MeterToPixel-PixelOffset+width/2,height-MeterToPixel)      ,
-              (xr*MeterToPixel-PixelOffset+width/2,height)                   ,
-              ((xr+10)*MeterToPixel-PixelOffset+width/2,height)              ,
-              ((xr+10)*MeterToPixel-PixelOffset+width/2,height-MeterToPixel) ,
-              ((xr+20)*MeterToPixel-PixelOffset+width/2,height-MeterToPixel) ,
-              ((xr+20)*MeterToPixel-PixelOffset+width/2,height) )
-    font   = pygame.font.SysFont("comicsansms", int(np.around(0.8*MeterToPixel)))
-    yard_m20 = font.render(str(int(xr-20)), True, black)
-    yard_m10 = font.render(str(int(xr-10)), True, black)
-    yard_0   = font.render(str(int(xr)), True, black)
-    yard_p10 = font.render(str(int(xr+10)), True, black)
-    yard_p20 = font.render(str(int(xr+20)), True, black)
-    
-    # Draw the background, ball, head, player, and stool
+
+    # Draw the background, ball, head, player,  stool, floor
     screen.fill(skyBlue)
     pygame.draw.circle(screen, pink, ballPosition, int(p.rb*MeterToPixel), 0)
     pygame.draw.circle(screen, darkGreen, headPosition, int(p.rb*MeterToPixel), 0)
     pygame.draw.lines(screen, pink, False, trajList, 1)
     pygame.draw.lines(screen, darkGreen, False, stickList, 3)
     pygame.draw.lines(screen, red, False, stoolList, 3)
-    pygame.draw.lines(screen, black, False, ((0,height-MeterToPixel),(width,height-MeterToPixel)),1)
-    pygame.draw.lines(screen, black, False,Ticks)
-    screen.blit(yard_m20,((xr-19.7)*MeterToPixel-PixelOffset+width/2, height-MeterToPixel))
-    screen.blit(yard_m10,((xr-9.7)*MeterToPixel-PixelOffset+width/2, height-MeterToPixel))
-    screen.blit(yard_0,((xr+0.3)*MeterToPixel-PixelOffset+width/2, height-MeterToPixel))
-    screen.blit(yard_p10,((xr+10.3)*MeterToPixel-PixelOffset+width/2, height-MeterToPixel))
-    screen.blit(yard_p20,((xr+20.3)*MeterToPixel-PixelOffset+width/2, height-MeterToPixel))
+    pygame.draw.line(screen, black, (0,height-0.5*MeterToPixel),
+                     (width,height-0.5*MeterToPixel),int(MeterToPixel))
     
+    # Draw meter markers
+    font   = pygame.font.SysFont("comicsansms", int(np.around(0.8*MeterToPixel)))
+    xrng_r = np.around(xrng,-1)
+    xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
+    for k in range(0,xrng_n):
+        xr = xrng_r[0]+10*k
+        start_pos = [xr*MeterToPixel-PixelOffset+width/2,height-MeterToPixel]
+        end_pos   = [xr*MeterToPixel-PixelOffset+width/2,height]
+        pygame.draw.line(screen, white, start_pos, end_pos)
+        meter = font.render(str(int(xr)), True, white)
+        start_pos[0]=start_pos[0]+0.2*MeterToPixel
+        start_pos[1]=start_pos[1]-0.1*MeterToPixel
+        screen.blit(meter,start_pos)
+
     #screen.blit(bigChair, bC_rect)
     pygame.display.flip()
     
