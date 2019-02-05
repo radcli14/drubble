@@ -319,13 +319,15 @@ def simThisStep(t,u,te):
     # if the ball is far from the stool or ground
     L = BallHitStool(t,u)
     vball = np.array((u[10],u[11]))
-    if (t-te)>0.1: #and (L<np.sqrt(vball@vball)*dt or u[9]<(-vball[1]*dt)):
+    if (t-te)>0.1: # and (L<2*np.sqrt(vball@vball)*dt or u[9]<2*(-vball[1]*dt)):
         sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method='RK23', 
                             max_step=dt/4,events=events)
     else:
         sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method='RK23')    
     
     # If an event occured, increment the counter, otherwise continue
+    StoolBounce = False
+    FloorBounce = False
     if sol.status:
         wasEvent = True
         
@@ -333,11 +335,9 @@ def simThisStep(t,u,te):
         if np.size(sol.t_events[0]):
             te = sol.t_events[0][0]+t
             StoolBounce = True
-            FloorBounce = False
             EventString = 'Awesome Stool Bounce!'
         elif np.size(sol.t_events[1]):
             te = sol.t_events[1][0]+t
-            StoolBounce = False
             FloorBounce = True
             EventString = 'Boring Floor Bounce :('
             
@@ -369,7 +369,7 @@ def simThisStep(t,u,te):
     else:
         wasEvent = False
     
-    return sol, wasEvent, te  
+    return sol, StoolBounce, FloorBounce, te  
 
 
 def ThirdPoint(P0,P1,L,SGN):
