@@ -69,14 +69,24 @@ def parameters():
                    [  0    , m  , mg ,    0    ],
                    [  0    , mg , mg ,    0    ],
                    [-mg*l0 , 0  , 0  , mg*l0**2]])
+    
+    # Parameter settings I'm using to try to improve running speed
     invM = M.I
     linearMass = True
+    odeMethod  = 'RK23' 
+    timeRun    = False
     
     p = Bunch(g=g,mc=mc,mg=mg,m=m,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Gx=Gx,Qy=Qy,
               Ql=Ql,Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,Cx=Cx,
               zy=zy,Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys,COR=COR,rb=rb,
-              M=M,invM=invM,linearMass=linearMass)
+              M=M,invM=invM,linearMass=linearMass,odeMethod=odeMethod,
+              timeRun=timeRun)
     return p 
+
+def setStats():
+    
+    stats = Bunch(t=t,)
+    return stats
 
 # Predict
 def BallPredict(u):
@@ -319,18 +329,16 @@ def simThisStep(t,u,te):
     # if the ball is far from the stool or ground
     L = BallHitStool(t,u)
     vball = np.array((u[10],u[11]))
-    if (t-te)>0.1: # and (L<2*np.sqrt(vball@vball)*dt or u[9]<2*(-vball[1]*dt)):
-        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method='RK23', 
+    if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or u[9]<2*(-vball[1]*dt)):
+        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod, 
                             max_step=dt/4,events=events)
     else:
-        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method='RK23')    
+        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod)    
     
     # If an event occured, increment the counter, otherwise continue
     StoolBounce = False
     FloorBounce = False
     if sol.status:
-        wasEvent = True
-        
         # Determine if the was stool or floor
         if np.size(sol.t_events[0]):
             te = sol.t_events[0][0]+t
@@ -361,7 +369,7 @@ def simThisStep(t,u,te):
             ue[9] = 0.001
         
             # Reverse direction of the ball
-            ue[10] = p.COR*ue[10]
+            ue[10] = +p.COR*ue[10]
             ue[11] = -p.COR*ue[11]       
      
         # Re-initialize from the event states

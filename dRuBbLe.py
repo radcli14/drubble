@@ -48,7 +48,7 @@ userControlled = np.array([True, True, True, True])
 ballMoves      = False
 
 # Run an infinite loop until stopped
-game_over = False
+gameQuit = False
 u = u0
 n = 0
 stoolCount = 0
@@ -56,15 +56,14 @@ stoolDist  = 0
 maxHeight  = 0
 floorCount = 0
 clock = pygame.time.Clock()
-clock.tick()
 averageStepTime = 0
-while not game_over:
+while not gameQuit:
     ## USER INPUT
     for event in pygame.event.get():
         #print(event)
         if event.type == pygame.QUIT: 
             #sys.exit()
-            game_over = True
+            gameQuit = True
         # Detect keyboard input    
         if event.type == pygame.KEYDOWN:
             # Start the ball moving!
@@ -82,6 +81,7 @@ while not game_over:
                 stoolDist  = 0
                 maxHeight  = 0
                 floorCount = 0
+                averageStepTime = 0
                 ballMoves  = False
                 [xb,yb,tb,Xb,Yb] = BallPredict(u)
             # Left and right control for Bx parameter
@@ -141,11 +141,7 @@ while not game_over:
      
     # Add solution into the state vector
     u = sol.y[:,-1].tolist()
-    if StoolBounce and stoolDist<u[0]:
-        stoolDist = u[0]
-    if maxHeight<u[9]:
-        maxHeight = u[9]
-        
+
     # Stop the ball from moving if the player hasn't hit space yet
     if ballMoves:
         t += dt    
@@ -155,6 +151,12 @@ while not game_over:
         u[9]  = u0[9]
         u[10] = 0
         u[11] = 0
+    
+    # Stats
+    if StoolBounce and stoolDist<u[0]:
+        stoolDist = u[0]
+    if maxHeight<u[9]:
+        maxHeight = u[9]   
     
     ## ANIMATION
     # Get the plotting vectors using stickDude function
@@ -184,8 +186,10 @@ while not game_over:
     pygame.draw.circle(screen, pink, ballPosition, int(p.rb*MeterToPixel), 0)
     pygame.draw.circle(screen, darkGreen, headPosition, int(p.rb*MeterToPixel), 0)
     pygame.draw.lines(screen, pink, False, trajList, 1)
-    pygame.draw.lines(screen, darkGreen, False, stickList, 3)
-    pygame.draw.lines(screen, red, False, stoolList, 3)
+    pygame.draw.lines(screen, darkGreen, False, stickList, 
+                      int(np.ceil(0.15*MeterToPixel)))
+    pygame.draw.lines(screen, red, False, stoolList, 
+                      int(np.ceil(0.1*MeterToPixel)))
     pygame.draw.line(screen, black, (0,height-0.5*MeterToPixel),
                      (width,height-0.5*MeterToPixel),int(MeterToPixel))
     
@@ -219,16 +223,13 @@ while not game_over:
         start_pos[1]=start_pos[1]-0.1*MeterToPixel
         screen.blit(meter,start_pos)
 
-    # Draw scores
-    
-
     #screen.blit(bigChair, bC_rect)
     pygame.display.flip()
     
     # Timing Variables
-    #thisStepTime = clock.tick()
-    #if n>0:
-    #    averageStepTime = (averageStepTime*(n-1) + thisStepTime)/n
+    if p.timeRun and n>0:
+        thisStepTime = clock.tick()
+        averageStepTime = (averageStepTime*(n-1) + thisStepTime)/n
     clock.tick(fs)
     
     #input("This is here for debugging ... Press Enter to continue...")
