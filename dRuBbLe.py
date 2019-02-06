@@ -21,7 +21,7 @@ p = parameters()
 
 # Initial States
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u0 = [0,p.y0,p.l0,0,0,0,0,0,-4,8,3,12]
+u0 = [5,p.y0,p.l0,0,0,0,0,0,0,0,3,16]
 te = 0
 t  = 0
 fs = 30
@@ -52,6 +52,8 @@ game_over = False
 u = u0
 n = 0
 stoolCount = 0
+stoolDist  = 0
+maxHeight  = 0
 floorCount = 0
 clock = pygame.time.Clock()
 clock.tick()
@@ -63,7 +65,6 @@ while not game_over:
         if event.type == pygame.QUIT: 
             #sys.exit()
             game_over = True
-            pygame.quit()
         # Detect keyboard input    
         if event.type == pygame.KEYDOWN:
             # Start the ball moving!
@@ -77,8 +78,11 @@ while not game_over:
                 te = 0
                 n  = 0
                 u  = u0
-                eventCount = 0
-                ballMoves = False
+                stoolCount = 0
+                stoolDist  = 0
+                maxHeight  = 0
+                floorCount = 0
+                ballMoves  = False
                 [xb,yb,tb,Xb,Yb] = BallPredict(u)
             # Left and right control for Bx parameter
             if event.key == pygame.K_LEFT:
@@ -134,10 +138,14 @@ while not game_over:
         # Recalculate ball position the next time it crosses top of stool
         [xb,yb,tb,Xb,Yb] = BallPredict(sol.y[:,-1])
         tb = tb+te
-        
+     
     # Add solution into the state vector
     u = sol.y[:,-1].tolist()
-    
+    if StoolBounce and stoolDist<u[0]:
+        stoolDist = u[0]
+    if maxHeight<u[9]:
+        maxHeight = u[9]
+        
     # Stop the ball from moving if the player hasn't hit space yet
     if ballMoves:
         t += dt    
@@ -181,6 +189,22 @@ while not game_over:
     pygame.draw.line(screen, black, (0,height-0.5*MeterToPixel),
                      (width,height-0.5*MeterToPixel),int(MeterToPixel))
     
+    # Draw the score line
+    pygame.draw.line(screen, black, (0,height/30), 
+                     (width,height/30),int(height/15))
+    font = pygame.font.SysFont("comicsansms", int(height/24))
+    time = font.render('Time = '+f'{t:.2f}', True, white)
+    screen.blit(time,(0.05*width,0))
+    dist = font.render('Distance = '+f'{stoolDist:.2f}', True, white)
+    screen.blit(dist,(0.23*width,0))
+    high = font.render('Height = '+f'{maxHeight:.2f}', True, white)
+    screen.blit(high,(0.45*width,0))
+    boing = font.render('Boing! = '+str(int(stoolCount)), True, white)
+    screen.blit(boing,(0.65*width,0))
+    score = font.render('Score = '+str(int(stoolDist*maxHeight*stoolCount)),
+                        True,white)
+    screen.blit(score,(0.8*width,0))
+    
     # Draw meter markers
     font   = pygame.font.SysFont("comicsansms", int(np.around(0.8*MeterToPixel)))
     xrng_r = np.around(xrng,-1)
@@ -195,6 +219,9 @@ while not game_over:
         start_pos[1]=start_pos[1]-0.1*MeterToPixel
         screen.blit(meter,start_pos)
 
+    # Draw scores
+    
+
     #screen.blit(bigChair, bC_rect)
     pygame.display.flip()
     
@@ -205,3 +232,6 @@ while not game_over:
     clock.tick(fs)
     
     #input("This is here for debugging ... Press Enter to continue...")
+
+# Exit the game after game_over
+pygame.quit()
