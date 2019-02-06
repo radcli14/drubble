@@ -197,9 +197,9 @@ while not gameQuit:
     pygame.draw.line(screen, black, (0,height/30), 
                      (width,height/30),int(height/15))
     font = pygame.font.SysFont("comicsansms", int(height/24))
-    time = font.render('Time = '+f'{t:.2f}', True, white)
+    time = font.render('Time = '+f'{t:.1f}', True, white)
     screen.blit(time,(0.05*width,0))
-    dist = font.render('Distance = '+f'{stoolDist:.2f}', True, white)
+    dist = font.render('Distance = '+f'{stoolDist:.1f}', True, white)
     screen.blit(dist,(0.23*width,0))
     high = font.render('Height = '+f'{maxHeight:.2f}', True, white)
     screen.blit(high,(0.45*width,0))

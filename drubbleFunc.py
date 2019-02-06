@@ -308,8 +308,20 @@ def BallBounce(t,u):
     
     # Velocity after bounce
     vBounce = -u2*delta_vb + np.array([u[10],u[11]])
+    
+    # Obtain the player recoil states
+    BounceImpulse = -p.mg*vBounce
+    c = np.cos(u[3])
+    s = np.sin(u[3])
+    l = u[2]
+    dRdq = np.matrix([[ 1  , 0  ],
+                      [ 0  , 1  ],
+                      [-s  , c  ],
+                      [-c*l,-s*l] ])
+    Qi = dRdq@BounceImpulse
+    vRecoil = p.invM@np.transpose(Qi)
 
-    return vBounce
+    return vBounce, vRecoil
 
 def bhDebug(T,Y):
     N = np.size(T)
@@ -360,11 +372,17 @@ def simThisStep(t,u,te):
             ue[9] = ue[9]+0.001
             
             # Obtain the bounce velocity
-            vBounce = BallBounce(te,ue)
+            vBounce,vRecoil = BallBounce(te,ue)
             print("vBounce=",vBounce)
             ue[10] = vBounce[0]
             ue[11] = vBounce[1]
-            #print(ue)
+            
+            # Add  the recoil to the player states
+            ue[4] = ue[4] + vRecoil[0]
+            ue[5] = ue[5] + vRecoil[1]
+            ue[6] = ue[6] + vRecoil[2]
+            ue[7] = ue[7] + vRecoil[3]
+            
         elif FloorBounce:
             ue[9] = 0.001
         
