@@ -29,9 +29,10 @@ def parameters():
     # Player parameters
     mc = 50      # Mass of player [kg]
     mg = 2       # Mass of stool [kg]
-    m  = mc+mg   # Total mass
-    y0 = 1.5     # Equilibrium position of player CG
-    d  = 0.3     # Relative position from player CG to stool rotation axis
+    m  = mc+mg   # Total mass [kg]
+    x0 = 5       # Initial player position [m]
+    y0 = 1.5     # Equilibrium position of player CG [m]
+    d  = 0.3     # Relative position from player CG to stool rotation axis [m]
     l0 = 1.5     # Equilibrium position of stool
     ax = 1       # Horizontal acceleration [g]
     Qx = ax*m*g; # Max horizontal force [N]
@@ -76,16 +77,16 @@ def parameters():
     odeMethod  = 'RK23' 
     timeRun    = False
     
-    p = Bunch(g=g,mc=mc,mg=mg,m=m,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Gx=Gx,Qy=Qy,
-              Ql=Ql,Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,Cx=Cx,
-              zy=zy,Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys,COR=COR,rb=rb,
-              M=M,invM=invM,linearMass=linearMass,odeMethod=odeMethod,
+    p = Bunch(g=g,mc=mc,mg=mg,m=m,x0=x0,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Gx=Gx,
+              Qy=Qy,Ql=Ql,Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,
+              Cx=Cx,zy=zy,Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys,COR=COR,
+              rb=rb,M=M,invM=invM,linearMass=linearMass,odeMethod=odeMethod,
               timeRun=timeRun)
     return p 
 
-def setStats():
-    
-    stats = Bunch(t=t,)
+def resetStats():
+    stats = Bunch(t=0,n=0,stoolCount=0,stoolDist=0,maxHeight=0,floorCount=0,
+                  score=0,averageStepTime=0)
     return stats
 
 # Predict
@@ -184,8 +185,55 @@ def PlayerAndStool(t,u):
           u[10],u[11],0,-p.g]           # Ball velocities and accelerations
     return du
 
-def ControlLogic(t,u):
+def playerControlInput(event):
+    if event.type == pygame.KEYDOWN:
+        # Left and right control for Bx parameter
+        if event.key == pygame.K_LEFT:
+            keyPush[0] = 1
+        if event.key == pygame.K_RIGHT:
+            keyPush[1] = 1
+        # Up and down control for By parameter
+        if event.key == pygame.K_UP:
+            keyPush[2] = 1
+        if event.key == pygame.K_DOWN:
+            keyPush[3] = 1
+        # W and S control for Bl parameter    
+        if event.key == pygame.K_w:
+            keyPush[4] = 1
+        if event.key == pygame.K_s:
+            keyPush[5] = 1    
+        # A and D control for Bth parameter
+        if event.key == pygame.K_a:
+            keyPush[6] = 1
+        if event.key == pygame.K_d:
+            keyPush[7] = 1    
+            
+    if event.type == pygame.KEYUP:
+        if event.key == pygame.K_LEFT:
+            keyPush[0] = 0
+        if event.key == pygame.K_RIGHT:
+            keyPush[1] = 0
+        # Up and down control for By parameter
+        if event.key == pygame.K_UP:
+            keyPush[2] = 0
+        if event.key == pygame.K_DOWN:
+            keyPush[3] = 0
+        # W and S control for Bl parameter    
+        if event.key == pygame.K_w:
+            keyPush[4] = 0
+        if event.key == pygame.K_s:
+            keyPush[5] = 0    
+        # A and D control for Bth parameter
+        if event.key == pygame.K_a:
+            keyPush[6] = 0
+        if event.key == pygame.K_d:
+            keyPush[7] = 0          
+    return keyPush
 
+def ControlLogic(t,u):
+    # Time until event 
+    timeUntilBounce = tb-t;
+    
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.1 m to keep the
     # ball moving forward 
@@ -343,9 +391,11 @@ def simThisStep(t,u,te):
     vball = np.array((u[10],u[11]))
     if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or u[9]<2*(-vball[1]*dt)):
         sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod, 
-                            max_step=dt/4,events=events)
+                            max_step=dt/4,first_step=dt/4,min_step=dt/8,
+                            events=events)
     else:
-        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod)    
+        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod,
+                            first_step=dt,min_step=dt/4)    
     
     # If an event occured, increment the counter, otherwise continue
     StoolBounce = False
