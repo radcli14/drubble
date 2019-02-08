@@ -1,11 +1,13 @@
 # Import required packages
+from IPython import get_ipython
+get_ipython().magic('reset -sf')
 exec(open("./drubbleFunc.py").read())
 pygame.init()
 pygame.font.init()
 
 # Window size and color definition
 size = width, height = 1200, 600
-speed = [2, 2]
+#speed = [2, 2]
 red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,255)
@@ -39,7 +41,6 @@ n  = 0
 # Open display
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('dRuBbLe')
-screen.fill(skyBlue)
 
 # Import the Big Chair image
 #bigChair = pygame.image.load("bigChair.jpg")
@@ -47,7 +48,17 @@ screen.fill(skyBlue)
 
 # Import the splash screen
 splash     = pygame.image.load('splash.png')
+splash     = pygame.transform.scale(splash, (int(0.84*width), int(0.9*height)))
 splashrect = splash.get_rect()
+splashrect.left   = int(-0.1*width)
+splashrect.bottom = int(0.9*height)
+
+diagram    = pygame.image.load('diagram.png')
+diagram    = pygame.transform.scale(diagram,(int(0.3*width),int(0.9*height)))
+diagrect   = diagram.get_rect();
+diagrect.left = int(width*0.75)
+diagrect.bottom = int(height+4)
+diagrect.height = int(height*0.1)
 
 # Define the Events
 events = [BallHitStool,BallHitFloor]
@@ -72,7 +83,7 @@ stats = resetStats()
 # 7 = Game over, resume option
 # 8 = Game over, high scores
 gameMode = 1
-
+showedSplash = False
 # Run an infinite loop until gameMode is zero
 clock = pygame.time.Clock()
 while gameMode>0:
@@ -85,6 +96,10 @@ while gameMode>0:
         # Detect keyboard input
         if event.type == pygame.KEYDOWN:
             # Start the ball moving!
+            if gameMode == 1 and event.key == pygame.K_SPACE:
+                gameMode = 3
+                clock.tick(10)
+                continue
             if gameMode == 3 and event.key == pygame.K_SPACE:
                 gameMode = 6
                 u[10] = vx0
@@ -105,10 +120,21 @@ while gameMode>0:
 
     # Show the Splash Sreen
     if gameMode==1:
-        screen.blit(splash, splashrect)
-        pygame.display.flip()
-        clock.tick(0.2)
-        gameMode=3
+        if showedSplash:
+            screen.fill(skyBlue)
+            screen.blit(splash, splashrect)
+            screen.blit(diagram, diagrect)
+            font = pygame.font.SysFont("comicsansms", int(height/12))
+            spc  = font.render('Press Space To Begin!', True, darkGreen)
+            screen.blit(spc,(0.22*width,int(0.88*height)))
+        else:
+            for splashNess in range(0,240,4):
+                screen.fill((splashNess,splashNess,splashNess))
+                screen.blit(splash, splashrect)
+                screen.blit(diagram, diagrect)
+                pygame.display.flip()
+                clock.tick(30)
+            showedSplash = True
         
     if gameMode==2 or gameMode==3 or gameMode==4 or gameMode==5 or gameMode==6:
         ## SIMULATION
