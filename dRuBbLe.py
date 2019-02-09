@@ -6,17 +6,16 @@ pygame.init()
 pygame.font.init()
 
 # Window size and color definition
-size = width, height = 1200, 600
-#speed = [2, 2]
-red = (255,0,0)
-green = (0,255,0)
-blue = (0,0,255)
-darkBlue = (0,0,128)
-white = (255,255,255)
-black = (0,0,0)
-pink = (255,100,100)
-skyBlue = (220, 255, 255)
-darkGreen = (0,120,0)
+size = width, height = 1000, 600
+red       = (255,0,0,1)
+green     = (0,255,0,1)
+blue      = (0,0,255,1)
+darkBlue  = (0,0,128,1)
+white     = (255,255,255,1)
+black     = (0,0,0,1)
+pink      = (255,100,100,1)
+skyBlue   = (150, 255, 255, 0.3)
+darkGreen = (0,120,0,1)
 
 # Obtain Parameters
 p = parameters()
@@ -40,11 +39,12 @@ n  = 0
 
 # Open display
 screen = pygame.display.set_mode(size)
+salpha = pygame.Surface(screen.get_size(), pygame.SRCALPHA, 32)
 pygame.display.set_caption('dRuBbLe')
 
 # Import the Big Chair image
-#bigChair = pygame.image.load("bigChair.jpg")
-#bC_rect = bigChair.get_rect()
+bigChair = pygame.image.load("bigChair.jpg")
+bC_rect = bigChair.get_rect()
 
 # Import the splash screen
 splash     = pygame.image.load('splash.png')
@@ -190,8 +190,16 @@ while gameMode>0:
                         int(height-(u[9]+1)*MeterToPixel) )
         headPosition = (int(u[0]*MeterToPixel-PixelOffset+width/2), 
                         int(height-(u[1]+1.75*p.d+1)*MeterToPixel) )
-    
+        
         # Draw the background, ball, head, player,  stool, floor
+        screen.fill(white)
+        bigChairNow    = pygame.transform.scale(bigChair,
+                          (int(0.03*width*MeterToPixel),
+                           int(0.04*height*MeterToPixel)))
+        bC_rect.left   = -15*MeterToPixel-PixelOffset+width/2
+        bC_rect.bottom = height-0.7*MeterToPixel
+        bC_rect.height = 0.04*height*MeterToPixel
+        screen.blit(bigChairNow, bC_rect)
         screen.fill(skyBlue)
         pygame.draw.circle(screen, pink, ballPosition, int(p.rb*MeterToPixel), 0)
         pygame.draw.circle(screen, darkGreen, headPosition, int(p.rb*MeterToPixel), 0)
