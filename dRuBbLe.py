@@ -5,18 +5,6 @@ exec(open("./drubbleFunc.py").read())
 pygame.init()
 pygame.font.init()
 
-# Window size and color definition
-size = width, height = 1000, 600
-red       = (255,0,0,1)
-green     = (0,255,0,1)
-blue      = (0,0,255,1)
-darkBlue  = (0,0,128,1)
-white     = (255,255,255,1)
-black     = (0,0,0,1)
-pink      = (255,100,100,1)
-skyBlue   = (150, 255, 255, 0.3)
-darkGreen = (0,120,0,1)
-
 # Obtain Parameters
 p = parameters()
 
@@ -39,26 +27,7 @@ n  = 0
 
 # Open display
 screen = pygame.display.set_mode(size)
-salpha = pygame.Surface(screen.get_size(), pygame.SRCALPHA, 32)
 pygame.display.set_caption('dRuBbLe')
-
-# Import the Big Chair image
-bigChair = pygame.image.load("bigChair.jpg")
-bC_rect = bigChair.get_rect()
-
-# Import the splash screen
-splash     = pygame.image.load('splash.png')
-splash     = pygame.transform.scale(splash, (int(0.84*width), int(0.9*height)))
-splashrect = splash.get_rect()
-splashrect.left   = int(-0.1*width)
-splashrect.bottom = int(0.9*height)
-
-diagram    = pygame.image.load('diagram.png')
-diagram    = pygame.transform.scale(diagram,(int(0.3*width),int(0.9*height)))
-diagrect   = diagram.get_rect();
-diagrect.left = int(width*0.75)
-diagrect.bottom = int(height+4)
-diagrect.height = int(height*0.1)
 
 # Define the Events
 events = [BallHitStool,BallHitFloor]
@@ -124,7 +93,7 @@ while gameMode>0:
             screen.fill(skyBlue)
             screen.blit(splash, splashrect)
             screen.blit(diagram, diagrect)
-            font = pygame.font.SysFont("comicsansms", int(height/12))
+            font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/12))
             spc  = font.render('Press Space To Begin!', True, darkGreen)
             screen.blit(spc,(0.22*width,int(0.88*height)))
         else:
@@ -192,15 +161,8 @@ while gameMode>0:
                         int(height-(u[1]+1.75*p.d+1)*MeterToPixel) )
         
         # Draw the background, ball, head, player,  stool, floor
-        screen.fill(white)
-        bigChairNow    = pygame.transform.scale(bigChair,
-                          (int(0.03*width*MeterToPixel),
-                           int(0.04*height*MeterToPixel)))
-        bC_rect.left   = -15*MeterToPixel-PixelOffset+width/2
-        bC_rect.bottom = height-0.7*MeterToPixel
-        bC_rect.height = 0.04*height*MeterToPixel
-        screen.blit(bigChairNow, bC_rect)
         screen.fill(skyBlue)
+        makeBackgroundImage()
         pygame.draw.circle(screen, pink, ballPosition, int(p.rb*MeterToPixel), 0)
         pygame.draw.circle(screen, darkGreen, headPosition, int(p.rb*MeterToPixel), 0)
         pygame.draw.lines(screen, pink, False, trajList, 1)
@@ -212,22 +174,23 @@ while gameMode>0:
                          (width,height-0.5*MeterToPixel),int(MeterToPixel))
         
         # Draw the score line
-        pygame.draw.line(screen, black, (0,height/30), 
-                         (width,height/30),int(height/15))
-        font = pygame.font.SysFont("comicsansms", int(height/24))
-        time = font.render('Time = '+f'{t:.1f}', True, white)
+        #pygame.draw.line(screen, black, (0,height/30), 
+        #                 (width,height/30),int(height/15))
+        font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/24))
+        time = font.render('Time = '+f'{t:.1f}', True, black)
         screen.blit(time,(0.05*width,0))
-        dist = font.render('Distance = '+f'{stats.stoolDist:.1f}', True, white)
+        dist = font.render('Distance = '+f'{stats.stoolDist:.1f}', True, black)
         screen.blit(dist,(0.23*width,0))
-        high = font.render('Height = '+f'{stats.maxHeight:.2f}', True, white)
+        high = font.render('Height = '+f'{stats.maxHeight:.2f}', True, black)
         screen.blit(high,(0.45*width,0))
-        boing = font.render('Boing! = '+str(int(stats.stoolCount)), True, white)
+        boing = font.render('Boing! = '+str(int(stats.stoolCount)), True, black)
         screen.blit(boing,(0.65*width,0))
-        score = font.render('Score = '+str(stats.score),True,white)
+        score = font.render('Score = '+str(stats.score),True,black)
         screen.blit(score,(0.8*width,0))
         
         # Draw meter markers
-        font   = pygame.font.SysFont("comicsansms", int(np.around(0.8*MeterToPixel)))
+        font   = pygame.font.SysFont(p.MacsFavoriteFont,
+                                     int(np.around(0.8*MeterToPixel)))
         xrng_r = np.around(xrng,-1)
         xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
         for k in range(0,xrng_n):
@@ -248,9 +211,6 @@ while gameMode>0:
         thisStepTime = clock.tick()
         averageStepTime = (averageStepTime*(n-1) + thisStepTime)/n
     clock.tick(fs)
-    
-    #input("This is here for debugging ... Press Enter to continue...")
 
-# Exit the game after game_over
-#sys.exit()    
+# Exit the game after game_over   
 pygame.quit()

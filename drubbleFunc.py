@@ -11,9 +11,74 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.cbook import get_sample_data
 import pygame
 
-# Import Image Data
-bigChair = plt.imread('bigChair.jpg')
+# Window size and color definition
+size = width, height = 1000, 600
+red       = (255,0,0)
+green     = (0,255,0)
+blue      = (0,0,255)
+darkBlue  = (0,0,128)
+white     = (255,255,255)
+black     = (0,0,0)
+pink      = (255,100,100)
+skyBlue   = (220, 230, 255)
+darkGreen = (0,120,0)
 
+## LOAD IMAGES, AND DEFINE FUNCTIONS TO DISPLAY THEM
+# Import the Big Chair image
+bigChair = pygame.image.load('bigChair.png')
+bC_rect  = bigChair.get_rect()
+
+# Import the Entertainment and Sports Arena image
+ESA      = pygame.image.load('esa.png')
+ESA_rect = ESA.get_rect()
+
+# Import the Anacostia River image
+river      = pygame.image.load('river.png')
+river_rect = river.get_rect()
+
+# Import the USS Barry image
+barry      = pygame.image.load('barry.png')
+barry_rect = river.get_rect()
+
+# Import the splash screen
+splash     = pygame.image.load('splash.png')
+splash     = pygame.transform.scale(splash, (int(0.84*width), int(0.9*height)))
+splashrect = splash.get_rect()
+splashrect.left   = int(-0.1*width)
+splashrect.bottom = int(0.9*height)
+
+diagram    = pygame.image.load('diagram.png')
+diagram    = pygame.transform.scale(diagram,(int(0.3*width),int(0.8*height)))
+diagrect   = diagram.get_rect();
+diagrect.left = int(width*0.75)
+diagrect.bottom = int(height+4)
+diagrect.height = int(height*0.1)
+
+def makeBackgroundImage():
+    # Draw the Big Chair
+    drawBackgroundImage(bigChair,bC_rect,-5,7,20)
+    
+    # Draw the Anacostia River
+    drawBackgroundImage(river,river_rect,100,10,25)
+    
+    # Draw the Entertainment and Sports Arena
+    drawBackgroundImage(ESA,ESA_rect,40,10,20)
+    
+    # Draw the USS Barry
+    drawBackgroundImage(barry,barry_rect,164,9,20)
+
+def drawBackgroundImage(image,rect,xpos,ypos,howTall):
+    w,h = rect.size
+    defPixNum = MeterToPixel # Default pixel number
+    numPixelHeight = howTall*defPixNum
+    scf = numPixelHeight/h # Scale Factor
+    W = int(scf*w)
+    H = int(scf*h)
+    imageNow    = pygame.transform.scale(image,(W,H))
+    rect.center = ((xpos*defPixNum-PixelOffset+width/2)*0.5,height-ypos*defPixNum)
+    rect.size = (W,H)
+    screen.blit(imageNow, rect)
+    
 # Define the bunch class
 class Bunch:
     def __init__(self, **kwds):
@@ -77,11 +142,14 @@ def parameters():
     odeMethod  = 'RK23' 
     timeRun    = False
     
+    # Font settings
+    MacsFavoriteFont = 'jokerman' #'poorrichard' 'rockwell' 'comicsansms'
+    
     p = Bunch(g=g,mc=mc,mg=mg,m=m,x0=x0,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Gx=Gx,
               Qy=Qy,Ql=Ql,Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,
               Cx=Cx,zy=zy,Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys,COR=COR,
               rb=rb,M=M,invM=invM,linearMass=linearMass,odeMethod=odeMethod,
-              timeRun=timeRun)
+              timeRun=timeRun,MacsFavoriteFont=MacsFavoriteFont)
     return p 
 
 def resetStats():
