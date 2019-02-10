@@ -10,9 +10,9 @@ p = parameters()
 
 # Initial states
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-vx0 = 3  # Initial ball horizontal velocity [m/s]
-vy0 = 16 # Initial ball vertical velocity [m/s]
-u0 = [p.x0,p.y0,p.l0,0.5,0,0,0,0,0,0,vx0,vy0]
+#vx0 = 3  # Initial ball horizontal velocity [m/s]
+#vy0 = 16 # Initial ball vertical velocity [m/s]
+u0 = [p.x0,p.y0,p.l0,0.5,0,0,0,0,0,0,0,0]
 u  = u0
 
 # Set timing
@@ -53,6 +53,14 @@ stats = resetStats()
 # 8 = Game over, high scores
 gameMode = 1
 showedSplash = False
+startAngle   = np.pi/4
+startSpeed   = 10
+phase        = 0
+msg = ['','','',
+       'Use arrow keys to control player, W-A-S-D keys to control stool. Press space to begin!',
+       'Press space to select starting angle',
+       'Press space to select starting speed','','','']
+
 # Run an infinite loop until gameMode is zero
 clock = pygame.time.Clock()
 while gameMode>0:
@@ -64,16 +72,29 @@ while gameMode>0:
         
         # Detect keyboard input
         if event.type == pygame.KEYDOWN:
-            # Start the ball moving!
+            # Exit the splash screen
             if gameMode == 1 and event.key == pygame.K_SPACE:
                 gameMode = 3
                 clock.tick(10)
                 continue
-            if gameMode == 3 and event.key == pygame.K_SPACE:
+            
+            # Progress through angle and speed selection
+            ismem = np.in1d(gameMode,[3,4])
+            if ismem[0] and event.key == pygame.K_SPACE:
+                gameMode += 1
+                phase = 0
+                startSpeed = 10
+                clock.tick(10)
+                continue
+            
+            # Start the ball moving!
+            if gameMode == 5 and event.key == pygame.K_SPACE:
                 gameMode = 6
                 u[10] = vx0
                 u[11] = vy0
-                
+                clock.tick(10)
+                continue
+            
             # Reset the game
             if gameMode == 6 and event.key == pygame.K_ESCAPE:
                 t  = 0
@@ -104,8 +125,23 @@ while gameMode>0:
                 pygame.display.flip()
                 clock.tick(30)
             showedSplash = True
-        
+    
     if gameMode==2 or gameMode==3 or gameMode==4 or gameMode==5 or gameMode==6:
+        screen.fill(skyBlue)
+        ## ANGLE AND SPEED SETTINGS
+        if gameMode == 4:
+            startAngle = 0.25*np.pi*(1 + np.sin(phase))
+        if gameMode == 5:
+            startSpeed = 10*(1 + np.sin(phase))
+        if gameMode == 4 or gameMode == 5:
+            phase += 0.05
+            vx0 = startSpeed*np.cos(startAngle)
+            vy0 = startSpeed*np.sin(startAngle)
+            u[10] = vx0
+            u[11] = vy0
+            [xb,yb,tb,Xb,Yb] = BallPredict(u)
+            tb = tb+te
+         
         ## SIMULATION
         sol, StoolBounce, FloorBounce, te = simThisStep(t,u,te) 
     
@@ -138,72 +174,25 @@ while gameMode>0:
             stats.score = int(stats.stoolDist*stats.maxHeight*stats.stoolCount)
         
         ## ANIMATION
-        # Get the plotting vectors using stickDude function
-        xv,yv,sx,sy = stickDude(u)
+        # Get the ranges in meters using the setRanges function
+        xrng, yrng, MeterToPixel, PixelOffset = setRanges(u)
         
-        # Get the ranges in meters using the setRange function
-        xrng, yrng = setRanges(u)
-        
-        # Convert locations in meters to pixels
-        MeterToPixel = width/(xrng[1]-xrng[0])
-        PixelOffset  = (xrng[0]+xrng[1])/2*MeterToPixel
-        xvp          = np.array(xv)*MeterToPixel-PixelOffset+width/2
-        yvp          = height-(np.array(yv)+1)*MeterToPixel
-        sxp          = np.array(sx)*MeterToPixel-PixelOffset+width/2
-        syp          = height-(np.array(sy)+1)*MeterToPixel
-        trajList     = list(zip(np.array(Xb)*MeterToPixel-PixelOffset+width/2,
-                                height-(np.array(Yb)+1)*MeterToPixel))
-        stickList    = list(zip(xvp,yvp))
-        stoolList    = list(zip(sxp,syp))
-        ballPosition = (int(u[8]*MeterToPixel-PixelOffset+width/2),
-                        int(height-(u[9]+1)*MeterToPixel) )
-        headPosition = (int(u[0]*MeterToPixel-PixelOffset+width/2), 
-                        int(height-(u[1]+1.75*p.d+1)*MeterToPixel) )
-        
-        # Draw the background, ball, head, player,  stool, floor
-        screen.fill(skyBlue)
+        # Draw the background
         makeBackgroundImage()
-        pygame.draw.circle(screen, pink, ballPosition, int(p.rb*MeterToPixel), 0)
-        pygame.draw.circle(screen, darkGreen, headPosition, int(p.rb*MeterToPixel), 0)
-        pygame.draw.lines(screen, pink, False, trajList, 1)
-        pygame.draw.lines(screen, darkGreen, False, stickList, 
-                          int(np.ceil(0.15*MeterToPixel)))
-        pygame.draw.lines(screen, red, False, stoolList, 
-                          int(np.ceil(0.1*MeterToPixel)))
-        pygame.draw.line(screen, black, (0,height-0.5*MeterToPixel),
-                         (width,height-0.5*MeterToPixel),int(MeterToPixel))
+        
+        # Draw the ball and player
+        makeGameImage()
         
         # Draw the score line
-        #pygame.draw.line(screen, black, (0,height/30), 
-        #                 (width,height/30),int(height/15))
-        font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/24))
-        time = font.render('Time = '+f'{t:.1f}', True, black)
-        screen.blit(time,(0.05*width,0))
-        dist = font.render('Distance = '+f'{stats.stoolDist:.1f}', True, black)
-        screen.blit(dist,(0.23*width,0))
-        high = font.render('Height = '+f'{stats.maxHeight:.2f}', True, black)
-        screen.blit(high,(0.45*width,0))
-        boing = font.render('Boing! = '+str(int(stats.stoolCount)), True, black)
-        screen.blit(boing,(0.65*width,0))
-        score = font.render('Score = '+str(stats.score),True,black)
-        screen.blit(score,(0.8*width,0))
+        makeScoreLine()
         
         # Draw meter markers
-        font   = pygame.font.SysFont(p.MacsFavoriteFont,
-                                     int(np.around(0.8*MeterToPixel)))
-        xrng_r = np.around(xrng,-1)
-        xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
-        for k in range(0,xrng_n):
-            xr = xrng_r[0]+10*k
-            start_pos = [xr*MeterToPixel-PixelOffset+width/2,height-MeterToPixel]
-            end_pos   = [xr*MeterToPixel-PixelOffset+width/2,height]
-            pygame.draw.line(screen, white, start_pos, end_pos)
-            meter = font.render(str(int(xr)), True, white)
-            start_pos[0]=start_pos[0]+0.2*MeterToPixel
-            start_pos[1]=start_pos[1]-0.1*MeterToPixel
-            screen.blit(meter,start_pos)
+        makeMarkers()
 
-    #screen.blit(bigChair, bC_rect)
+        # Show the Message Text
+        showMessage(msg[gameMode])  
+
+    # Update the display
     pygame.display.flip()
     
     # Timing Variables

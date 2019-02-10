@@ -11,6 +11,11 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.cbook import get_sample_data
 import pygame
 
+# Define the bunch class
+class Bunch:
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+
 # Window size and color definition
 size = width, height = 1000, 600
 red       = (255,0,0)
@@ -25,23 +30,23 @@ darkGreen = (0,120,0)
 
 ## LOAD IMAGES, AND DEFINE FUNCTIONS TO DISPLAY THEM
 # Import the Big Chair image
-bigChair = pygame.image.load('bigChair.png')
+bigChair = pygame.image.load('figs/bigChair.png')
 bC_rect  = bigChair.get_rect()
 
 # Import the Entertainment and Sports Arena image
-ESA      = pygame.image.load('esa.png')
+ESA      = pygame.image.load('figs/esa.png')
 ESA_rect = ESA.get_rect()
 
 # Import the Anacostia River image
-river      = pygame.image.load('river.png')
+river      = pygame.image.load('figs/river.png')
 river_rect = river.get_rect()
 
 # Import the USS Barry image
-barry      = pygame.image.load('barry.png')
+barry      = pygame.image.load('figs/barry.png')
 barry_rect = river.get_rect()
 
 # Import the splash screen
-splash     = pygame.image.load('splash.png')
+splash     = pygame.image.load('figs/splash.png')
 splash     = pygame.transform.scale(splash, (int(0.84*width), int(0.9*height)))
 splashrect = splash.get_rect()
 splashrect.left   = int(-0.1*width)
@@ -54,6 +59,11 @@ diagrect.left = int(width*0.75)
 diagrect.bottom = int(height+4)
 diagrect.height = int(height*0.1)
 
+def showMessage(msgText):
+    font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/32))
+    msgRend = font.render(msgText, True, black)
+    screen.blit(msgRend,(0.05*width,0.1*height))
+    
 def makeBackgroundImage():
     # Draw the Big Chair
     drawBackgroundImage(bigChair,bC_rect,-5,7,20)
@@ -65,7 +75,7 @@ def makeBackgroundImage():
     drawBackgroundImage(ESA,ESA_rect,40,10,20)
     
     # Draw the USS Barry
-    drawBackgroundImage(barry,barry_rect,164,9,20)
+    drawBackgroundImage(barry,barry_rect,163,9.5,20)
 
 def drawBackgroundImage(image,rect,xpos,ypos,howTall):
     w,h = rect.size
@@ -79,10 +89,64 @@ def drawBackgroundImage(image,rect,xpos,ypos,howTall):
     rect.size = (W,H)
     screen.blit(imageNow, rect)
     
-# Define the bunch class
-class Bunch:
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
+def makeGameImage():
+    # Get the plotting vectors using stickDude function
+    xv,yv,sx,sy = stickDude(u)
+        
+    # Convert to pixels
+    xvp          = np.array(xv)*MeterToPixel-PixelOffset+width/2
+    yvp          = height-(np.array(yv)+1)*MeterToPixel
+    sxp          = np.array(sx)*MeterToPixel-PixelOffset+width/2
+    syp          = height-(np.array(sy)+1)*MeterToPixel
+    trajList     = list(zip(np.array(Xb)*MeterToPixel-PixelOffset+width/2,
+                            height-(np.array(Yb)+1)*MeterToPixel))
+    stickList    = list(zip(xvp,yvp))
+    stoolList    = list(zip(sxp,syp))
+    ballPosition = (int(u[8]*MeterToPixel-PixelOffset+width/2),
+                    int(height-(u[9]+1)*MeterToPixel) )
+    headPosition = (int(u[0]*MeterToPixel-PixelOffset+width/2), 
+                    int(height-(u[1]+1.75*p.d+1)*MeterToPixel) )
+    
+    # Draw circles and lines
+    pygame.draw.circle(screen, pink, ballPosition, int(p.rb*MeterToPixel), 0)
+    pygame.draw.circle(screen, darkGreen, headPosition, int(p.rb*MeterToPixel), 0)
+    pygame.draw.lines(screen, pink, False, trajList, 1)
+    pygame.draw.lines(screen, darkGreen, False, stickList, 
+                      int(np.ceil(0.15*MeterToPixel)))
+    pygame.draw.lines(screen, red, False, stoolList, 
+                      int(np.ceil(0.1*MeterToPixel)))
+    pygame.draw.line(screen, black, (0,height-0.5*MeterToPixel),
+                     (width,height-0.5*MeterToPixel),int(MeterToPixel))
+
+def makeScoreLine():
+    #pygame.draw.line(screen, black, (0,height/30), 
+    #                 (width,height/30),int(height/15))
+    font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/24))
+    time = font.render('Time = '+f'{t:.1f}', True, black)
+    screen.blit(time,(0.05*width,0))
+    dist = font.render('Distance = '+f'{stats.stoolDist:.1f}', True, black)
+    screen.blit(dist,(0.23*width,0))
+    high = font.render('Height = '+f'{stats.maxHeight:.2f}', True, black)
+    screen.blit(high,(0.45*width,0))
+    boing = font.render('Boing! = '+str(int(stats.stoolCount)), True, black)
+    screen.blit(boing,(0.65*width,0))
+    score = font.render('Score = '+str(stats.score),True,black)
+    screen.blit(score,(0.8*width,0))
+
+def makeMarkers():
+    font   = pygame.font.SysFont(p.MacsFavoriteFont,
+                                 int(np.around(0.8*MeterToPixel)))
+    xrng_r = np.around(xrng,-1)
+    xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
+    for k in range(0,xrng_n):
+        xr = xrng_r[0]+10*k
+        start_pos = [xr*MeterToPixel-PixelOffset+width/2,height-MeterToPixel]
+        end_pos   = [xr*MeterToPixel-PixelOffset+width/2,height]
+        pygame.draw.line(screen, white, start_pos, end_pos)
+        meter = font.render(str(int(xr)), True, white)
+        start_pos[0]=start_pos[0]+0.2*MeterToPixel
+        start_pos[1]=start_pos[1]-0.1*MeterToPixel
+        screen.blit(meter,start_pos)
 
 # Parameters
 def parameters():
@@ -612,7 +676,10 @@ def setRanges(u):
     else:
         xrng = midx-maxy-0.5, midx+maxy+0.5
         yrng = -1, maxy
-    return xrng, yrng    
+        
+    MeterToPixel = width/(xrng[1]-xrng[0])
+    PixelOffset  = (xrng[0]+xrng[1])/2*MeterToPixel
+    return xrng, yrng, MeterToPixel, PixelOffset
         
 def animate(n):
     # Get the plotting vectors using stickDude function
