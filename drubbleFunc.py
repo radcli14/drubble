@@ -52,7 +52,7 @@ splashrect = splash.get_rect()
 splashrect.left   = int(-0.1*width)
 splashrect.bottom = int(0.9*height)
 
-diagram    = pygame.image.load('diagram.png')
+diagram    = pygame.image.load('figs/diagram.png')
 diagram    = pygame.transform.scale(diagram,(int(0.3*width),int(0.8*height)))
 diagrect   = diagram.get_rect();
 diagrect.left = int(width*0.75)
@@ -85,9 +85,10 @@ def drawBackgroundImage(image,rect,xpos,ypos,howTall):
     W = int(scf*w)
     H = int(scf*h)
     imageNow    = pygame.transform.scale(image,(W,H))
-    rect.center = ((xpos*defPixNum-PixelOffset+width/2)*0.5,height-ypos*defPixNum)
-    rect.size = (W,H)
-    screen.blit(imageNow, rect)
+    rectNow = rect
+    rectNow.center = ((xpos*defPixNum-PixelOffset+width/2)*0.5,height-ypos*defPixNum)
+    rectNow.size = (W,H)
+    screen.blit(imageNow, rectNow)
     
 def makeGameImage():
     # Get the plotting vectors using stickDude function
@@ -202,18 +203,21 @@ def parameters():
     
     # Parameter settings I'm using to try to improve running speed
     invM = M.I
-    linearMass = True
-    odeMethod  = 'RK23' 
-    timeRun    = False
+    linearMass  = False
+    odeMethod   = 'RK23' 
+    odeIsEuler  = True
+    nEulerSteps = 4
+    timeRun     = False
     
     # Font settings
-    MacsFavoriteFont = 'jokerman' #'poorrichard' 'rockwell' 'comicsansms'
+    MacsFavoriteFont = 'comicsansms' # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     p = Bunch(g=g,mc=mc,mg=mg,m=m,x0=x0,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Gx=Gx,
               Qy=Qy,Ql=Ql,Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,
               Cx=Cx,zy=zy,Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys,COR=COR,
               rb=rb,M=M,invM=invM,linearMass=linearMass,odeMethod=odeMethod,
-              timeRun=timeRun,MacsFavoriteFont=MacsFavoriteFont)
+              odeIsEuler=odeIsEuler,nEulerSteps=nEulerSteps,timeRun=timeRun,
+              MacsFavoriteFont=MacsFavoriteFont)
     return p 
 
 def resetStats():
@@ -516,39 +520,59 @@ def bhDebug(T,Y):
     plt.grid('on')
 
 def simThisStep(t,u,te):
-
-    # Prevent event detection if there was already one within 0.1 seconds, or 
-    # if the ball is far from the stool or ground
-    L = BallHitStool(t,u)
-    vball = np.array((u[10],u[11]))
-    if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or u[9]<2*(-vball[1]*dt)):
-        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod, 
-                            max_step=dt/4,first_step=dt/4,min_step=dt/8,
-                            events=events)
-    else:
-        sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod,
-                            first_step=dt,min_step=dt/4)    
-    
-    # If an event occured, increment the counter, otherwise continue
+    # Initial assumption, there was no event
     StoolBounce = False
     FloorBounce = False
-    if sol.status:
-        # Determine if the was stool or floor
-        if np.size(sol.t_events[0]):
-            te = sol.t_events[0][0]+t
-            StoolBounce = True
-            EventString = 'Awesome Stool Bounce!'
-        elif np.size(sol.t_events[1]):
-            te = sol.t_events[1][0]+t
-            FloorBounce = True
-            EventString = 'Boring Floor Bounce :('
-            
+    
+    # Prevent event detection if there was already one within 0.1 seconds, 
+    # or if the ball is far from the stool or ground
+    L = BallHitStool(t,u)
+    vball = np.array((u[10],u[11]))
+    
+    if p.odeIsEuler:
+        # Integrate using Euler method
+        sol = Bunch(y=np.zeros((12,p.nEulerSteps)),status=False)
+        sol.y[:,0] = u
+        for k in range(1,p.nEulerSteps):
+            dydt = PlayerAndStool(t,sol.y[:,k-1])
+            sol.y[:,k] = sol.y[:,k-1] + np.array(dydt)*dt/p.nEulerSteps
+            if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or u[9]<2*(-vball[1]*dt)):
+                if BallHitStool(t,sol.y[:,k])<0:
+                    StoolBounce = True
+                    EventString = 'Awesome Stool Bounce!'
+                if BallHitFloor(t,sol.y[:,k])<0:   
+                    FloorBounce = True
+                    EventString = 'Boring Floor Bounce :('
+                if StoolBounce or FloorBounce:
+                    te = t+k*dt
+                    ue = sol.y[:,k]
+                    break        
+    else:
+        if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or u[9]<2*(-vball[1]*dt)):
+            sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod, 
+                                max_step=dt/4,first_step=dt/4,min_step=dt/8,
+                                events=events)
+        else:
+            sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod,
+                                first_step=dt,min_step=dt/4)    
+            if sol.status:
+                # Determine if the was stool or floor
+                # and get states at time of event
+                ue = sol.y[:,-1].tolist()
+                if np.size(sol.t_events[0]):
+                    te = sol.t_events[0][0]+t
+                    StoolBounce = True
+                    EventString = 'Awesome Stool Bounce!'
+                elif np.size(sol.t_events[1]):
+                    te = sol.t_events[1][0]+t
+                    FloorBounce = True
+                    EventString = 'Boring Floor Bounce :('
+                    
+    # If an event occured, increment the counter, otherwise continue
+    if StoolBounce or FloorBounce:        
         # Print the time and type of event    
         print("te = ",te,' sec, ',EventString)
-        
-        # Get states at time of event
-        ue = sol.y[:,-1].tolist()
-    
+
         # Change ball states depending on if it was a stool or floor bounce
         if StoolBounce:
             ue[9] = ue[9]+0.001

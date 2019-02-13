@@ -178,7 +178,7 @@ while gameMode>0:
         xrng, yrng, MeterToPixel, PixelOffset = setRanges(u)
         
         # Draw the background
-        makeBackgroundImage()
+        # makeBackgroundImage()
         
         # Draw the ball and player
         makeGameImage()
@@ -198,7 +198,7 @@ while gameMode>0:
     # Timing Variables
     if p.timeRun and n>0:
         thisStepTime = clock.tick()
-        averageStepTime = (averageStepTime*(n-1) + thisStepTime)/n
+        stats.averageStepTime = (stats.averageStepTime*(n-1) + thisStepTime)/n
     clock.tick(fs)
 
 # Exit the game after game_over   
