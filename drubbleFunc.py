@@ -207,7 +207,7 @@ def parameters():
     odeMethod   = 'RK23' 
     odeIsEuler  = True
     nEulerSteps = 4
-    timeRun     = False
+    timeRun     = True
     
     # Font settings
     MacsFavoriteFont = 'comicsansms' # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
@@ -531,9 +531,9 @@ def simThisStep(t,u,te):
     
     if p.odeIsEuler:
         # Integrate using Euler method
-        sol = Bunch(y=np.zeros((12,p.nEulerSteps)),status=False)
+        sol = Bunch(y=np.zeros((12,p.nEulerSteps+1)),status=False)
         sol.y[:,0] = u
-        for k in range(1,p.nEulerSteps):
+        for k in range(1,p.nEulerSteps+1):
             dydt = PlayerAndStool(t,sol.y[:,k-1])
             sol.y[:,k] = sol.y[:,k-1] + np.array(dydt)*dt/p.nEulerSteps
             if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or u[9]<2*(-vball[1]*dt)):
