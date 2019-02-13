@@ -59,6 +59,24 @@ diagrect.left = int(width*0.75)
 diagrect.bottom = int(height+4)
 diagrect.height = int(height*0.1)
 
+def makeSplashScreen(showedSplash):
+    if showedSplash:
+        screen.fill(skyBlue)
+        screen.blit(splash, splashrect)
+        screen.blit(diagram, diagrect)
+        font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/12))
+        spc  = font.render('Press Space To Begin!', True, darkGreen)
+        screen.blit(spc,(0.22*width,int(0.88*height)))
+    else:
+        for splashNess in range(0,240,4):
+            screen.fill((splashNess,splashNess,splashNess))
+            screen.blit(splash, splashrect)
+            screen.blit(diagram, diagrect)
+            pygame.display.flip()
+            clock.tick(30)
+        showedSplash = True
+    return showedSplash
+
 def showMessage(msgText):
     font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/32))
     msgRend = font.render(msgText, True, black)

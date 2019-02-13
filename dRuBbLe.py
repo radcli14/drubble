@@ -110,21 +110,7 @@ while gameMode>0:
 
     # Show the Splash Sreen
     if gameMode==1:
-        if showedSplash:
-            screen.fill(skyBlue)
-            screen.blit(splash, splashrect)
-            screen.blit(diagram, diagrect)
-            font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/12))
-            spc  = font.render('Press Space To Begin!', True, darkGreen)
-            screen.blit(spc,(0.22*width,int(0.88*height)))
-        else:
-            for splashNess in range(0,240,4):
-                screen.fill((splashNess,splashNess,splashNess))
-                screen.blit(splash, splashrect)
-                screen.blit(diagram, diagrect)
-                pygame.display.flip()
-                clock.tick(30)
-            showedSplash = True
+        showedSplash = makeSplashScreen(showedSplash)
     
     if gameMode==2 or gameMode==3 or gameMode==4 or gameMode==5 or gameMode==6:
         screen.fill(skyBlue)
