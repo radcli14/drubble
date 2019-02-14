@@ -10,8 +10,6 @@ p = parameters()
 
 # Initial states
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-#vx0 = 3  # Initial ball horizontal velocity [m/s]
-#vy0 = 16 # Initial ball vertical velocity [m/s]
 u0 = [p.x0,p.y0,p.l0,0.5,0,0,0,0,0,0,0,0]
 u  = u0
 
@@ -164,7 +162,7 @@ while gameMode>0:
         xrng, yrng, MeterToPixel, PixelOffset = setRanges(u)
         
         # Draw the background
-        # makeBackgroundImage()
+        makeBackgroundImage()
         
         # Draw the ball and player
         makeGameImage()

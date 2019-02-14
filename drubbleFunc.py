@@ -29,21 +29,10 @@ skyBlue   = (220, 230, 255)
 darkGreen = (0,120,0)
 
 ## LOAD IMAGES, AND DEFINE FUNCTIONS TO DISPLAY THEM
-# Import the Big Chair image
-bigChair = pygame.image.load('figs/bigChair.png')
-bC_rect  = bigChair.get_rect()
-
-# Import the Entertainment and Sports Arena image
-ESA      = pygame.image.load('figs/esa.png')
-ESA_rect = ESA.get_rect()
-
-# Import the Anacostia River image
-river      = pygame.image.load('figs/river.png')
-river_rect = river.get_rect()
-
-# Import the USS Barry image
-barry      = pygame.image.load('figs/barry.png')
-barry_rect = river.get_rect()
+# Import the background image combining ESA, Big Chair, River, and USS Barry
+bg0 = pygame.image.load('figs/bg0.png')
+bg0 = pygame.transform.scale(bg0, (2400, 400))
+bg0_rect   = bg0.get_rect()
 
 # Import the splash screen
 splash     = pygame.image.load('figs/splash.png')
@@ -55,7 +44,7 @@ splashrect.bottom = int(0.9*height)
 diagram    = pygame.image.load('figs/diagram.png')
 diagram    = pygame.transform.scale(diagram,(int(0.3*width),int(0.8*height)))
 diagrect   = diagram.get_rect();
-diagrect.left = int(width*0.75)
+diagrect.left   = int(width*0.75)
 diagrect.bottom = int(height+4)
 diagrect.height = int(height*0.1)
 
@@ -83,30 +72,13 @@ def showMessage(msgText):
     screen.blit(msgRend,(0.05*width,0.1*height))
     
 def makeBackgroundImage():
-    # Draw the Big Chair
-    drawBackgroundImage(bigChair,bC_rect,-5,7,20)
-    
-    # Draw the Anacostia River
-    drawBackgroundImage(river,river_rect,100,10,25)
-    
-    # Draw the Entertainment and Sports Arena
-    drawBackgroundImage(ESA,ESA_rect,40,10,20)
-    
-    # Draw the USS Barry
-    drawBackgroundImage(barry,barry_rect,163,9.5,20)
+    # Draw the ESA, Big Chair, River, and USS Barry
+    drawBackgroundImage(bg0,bg0_rect,-0.25,-5,0)
 
 def drawBackgroundImage(image,rect,xpos,ypos,howTall):
-    w,h = rect.size
-    defPixNum = MeterToPixel # Default pixel number
-    numPixelHeight = howTall*defPixNum
-    scf = numPixelHeight/h # Scale Factor
-    W = int(scf*w)
-    H = int(scf*h)
-    imageNow    = pygame.transform.scale(image,(W,H))
-    rectNow = rect
-    rectNow.center = ((xpos*defPixNum-PixelOffset+width/2)*0.5,height-ypos*defPixNum)
-    rectNow.size = (W,H)
-    screen.blit(imageNow, rectNow)
+    rect.left = width*(-u[0]/120+xpos)
+    rect.bottom = height+(u[9]/40-0.9)*MeterToPixel
+    screen.blit(image,rect)
     
 def makeGameImage():
     # Get the plotting vectors using stickDude function
@@ -221,11 +193,11 @@ def parameters():
     
     # Parameter settings I'm using to try to improve running speed
     invM = M.I
-    linearMass  = False
+    linearMass  = True
     odeMethod   = 'RK23' 
     odeIsEuler  = True
     nEulerSteps = 4
-    timeRun     = True
+    timeRun     = False
     
     # Font settings
     MacsFavoriteFont = 'comicsansms' # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
