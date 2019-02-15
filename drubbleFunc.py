@@ -273,12 +273,6 @@ def PlayerAndStool(t,u):
     # Stiffness Matrix
     K = np.diag([0 ,p.Ky,p.Kl,p.Kt])
     
-    # Frequency Check
-    # V,D = np.linalg.eig(M.I*K)
-    # print("omega^2 = ",V)
-    # print("freq    = ",np.sqrt(V)/2/np.pi)
-    # print("phi     = \n",D)
-    
     # Centripetal [0,1] and Coriolis [3] Force Vector
     D = np.matrix([[-p.mg*dl*dth*c+p.mg*l*dth*dth*s], 
                    [-p.mg*dl*dth*s+p.mg*l*dth*dth*c], 
@@ -461,10 +455,8 @@ def BallBounce(t,u):
         ri = np.array([sx[0]+z*r1[0],sy[0]+z*r1[1]])
     
     # Velocity at the impact point 
-    print("ri=",ri)
     vi = np.array([u[4]-u[2]*np.sin(u[3])-(ri[1]-u[1])*u[7],
                    u[5]+u[2]*np.cos(u[3])+(ri[0]-u[0])*u[7]])
-    print("vi=",vi)
     
     # Velocity of the ball relative to impact point
     vbrel = np.array([u[10],u[11]])-vi
@@ -472,12 +464,8 @@ def BallBounce(t,u):
     # Vector from the closest point of impact to the center of the ball    
     r2 = np.array([u[8]-ri[0],u[9]-ri[1]])
     u2 = r2/np.sqrt(r2@r2)
-    print("r2=",r2)
-    print("u2=",u2)
-    
+
     # Delta ball velocity
-    print("vb=",[u[10],u[11]])
-    print("vbrel=",vbrel)
     delta_vb = 2*p.COR*(u2@vbrel)
     
     # Velocity after bounce
@@ -529,10 +517,8 @@ def simThisStep(t,u,te):
             if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or u[9]<2*(-vball[1]*dt)):
                 if BallHitStool(t,sol.y[:,k])<0:
                     StoolBounce = True
-                    EventString = 'Awesome Stool Bounce!'
                 if BallHitFloor(t,sol.y[:,k])<0:   
                     FloorBounce = True
-                    EventString = 'Boring Floor Bounce :('
                 if StoolBounce or FloorBounce:
                     te = t+k*dt
                     ue = sol.y[:,k]
@@ -552,24 +538,18 @@ def simThisStep(t,u,te):
                 if np.size(sol.t_events[0]):
                     te = sol.t_events[0][0]+t
                     StoolBounce = True
-                    EventString = 'Awesome Stool Bounce!'
                 elif np.size(sol.t_events[1]):
                     te = sol.t_events[1][0]+t
                     FloorBounce = True
-                    EventString = 'Boring Floor Bounce :('
                     
     # If an event occured, increment the counter, otherwise continue
     if StoolBounce or FloorBounce:        
-        # Print the time and type of event    
-        print("te = ",te,' sec, ',EventString)
-
         # Change ball states depending on if it was a stool or floor bounce
         if StoolBounce:
             ue[9] = ue[9]+0.001
             
             # Obtain the bounce velocity
             vBounce,vRecoil = BallBounce(te,ue)
-            print("vBounce=",vBounce)
             ue[10] = vBounce[0]
             ue[11] = vBounce[1]
             
