@@ -275,7 +275,7 @@ def PlayerAndStool(t,u):
     
     # Create player state vectors
     q   = np.matrix([[xp],[yp],[lp],[tp]])
-    dq  = np.matrix([[xp],[yp],[lp],[tp]])
+    dq  = np.matrix([[dxp],[dyp],[dlp],[dtp]])
 
     # Sines and cosines of the stool angle
     s   = np.sin(tp)
@@ -461,7 +461,6 @@ def BallHitStool(t,u):
     r2 = np.array([xb-ri[0],yb-ri[1]])
 
     # Calculate the distance to the outer radius of the ball t
-    #L  = np.sign(r2[1])*np.sqrt(r2@r2)-p.rb
     L = np.sqrt(r2@r2)-p.rb
     
     return L 
@@ -489,8 +488,8 @@ def BallBounce(t,u):
         ri = np.array([sx[0]+z*r1[0],sy[0]+z*r1[1]])
     
     # Velocity of the stool at the impact point 
-    vi = np.array([xp-dlp*np.sin(tp)-(ri[1]-yp)*dtp,
-                   yp+dlp*np.cos(tp)+(ri[0]-xp)*dtp])
+    vi = np.array([dxp-lp*np.sin(tp)-(ri[1]-yp)*dtp,
+                   dyp+lp*np.cos(tp)+(ri[0]-xp)*dtp])
     
     # Velocity of the ball relative to impact point
     vbrel = np.array([dxb,dyb])-vi

@@ -88,8 +88,8 @@ while gameMode>0:
             # Start the ball moving!
             if gameMode == 5 and event.key == pygame.K_SPACE:
                 gameMode = 6
-                u[10] = vx0
-                u[11] = vy0
+                u[2] = vx0
+                u[3] = vy0
                 clock.tick(10)
                 continue
             
