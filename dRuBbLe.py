@@ -10,7 +10,7 @@ p = parameters()
 
 # Initial states
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u0 = [p.x0,p.y0,p.l0,0.5,0,0,0,0,0,0,0,0]
+u0 = [0,0,0,0,p.x0,p.y0,p.l0,0,0,0,0,1]
 u  = u0
 
 # Set timing
@@ -21,7 +21,7 @@ t  = 0
 n  = 0
 
 # Predict position and time where ball hits stool
-[xb,yb,tb,Xb,Yb] = BallPredict(u0)
+[xI,yI,tI,xTraj,yTraj] = BallPredict(u0)
 
 # Open display
 screen = pygame.display.set_mode(size)
@@ -121,28 +121,28 @@ while gameMode>0:
             phase += 0.05
             vx0 = startSpeed*np.cos(startAngle)
             vy0 = startSpeed*np.sin(startAngle)
-            u[10] = vx0
-            u[11] = vy0
-            [xb,yb,tb,Xb,Yb] = BallPredict(u)
-            tb = tb+te
+            u[2] = vx0
+            u[3] = vy0
+            [xI,yI,tI,xTraj,yTraj] = BallPredict(u)
+            tI = tI+te
          
         ## SIMULATION
         sol, StoolBounce, FloorBounce, te = simThisStep(t,u,te) 
     
         if StoolBounce or FloorBounce:
             # Recalculate ball position the next time it crosses top of stool
-            [xb,yb,tb,Xb,Yb] = BallPredict(sol.y[:,-1])
-            tb = tb+te
+            [xI,yI,tI,xTraj,yTraj] = BallPredict(sol.y[:,-1])
+            tI = tI+te
          
         # Add solution into the state vector
         u = sol.y[:,-1].tolist()
     
         # Stop the ball from moving if the player hasn't hit space yet
         if gameMode==3 or gameMode==4 or gameMode==5:
-            u[8]  = u0[8]
-            u[9]  = u0[9]
-            u[10] = 0
-            u[11] = 0   
+            u[0] = u0[0]
+            u[1] = u0[1]
+            u[2] = 0
+            u[3] = 0   
         if gameMode==6:
             # Time increment
             t += dt    
@@ -151,8 +151,8 @@ while gameMode>0:
             # Stats
             if StoolBounce and stats.stoolDist<u[0]:
                 stats.stoolDist = u[0]
-            if stats.maxHeight<u[9]:
-                stats.maxHeight = u[9]   
+            if stats.maxHeight<u[1]:
+                stats.maxHeight = u[1]   
             stats.stoolCount += StoolBounce
             stats.floorCount += FloorBounce
             stats.score = int(stats.stoolDist*stats.maxHeight*stats.stoolCount)
