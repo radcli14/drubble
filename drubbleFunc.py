@@ -82,24 +82,24 @@ def drawBackgroundImage(image,rect,xpos,ypos,howTall):
     
 def makeGameImage():
     # Unpack the state variables
-    xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
+    #xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
     # Get the plotting vectors using stickDude function
-    xv,yv,sx,sy = stickDude(u)
+    xv,yv,sx,sy = stickDude(gs.u)
         
     # Convert to pixels
     xvp          = np.array(xv)*MeterToPixel-PixelOffset+width/2
     yvp          = height-(np.array(yv)+1)*MeterToPixel
     sxp          = np.array(sx)*MeterToPixel-PixelOffset+width/2
     syp          = height-(np.array(sy)+1)*MeterToPixel
-    trajList     = list(zip(np.array(xTraj)*MeterToPixel-PixelOffset+width/2,
-                            height-(np.array(yTraj)+1)*MeterToPixel))
+    trajList     = list(zip(np.array(gs.xTraj)*MeterToPixel-PixelOffset+width/2,
+                            height-(np.array(gs.yTraj)+1)*MeterToPixel))
     stickList    = list(zip(xvp,yvp))
     stoolList    = list(zip(sxp,syp))
-    ballPosition = (int(xb*MeterToPixel-PixelOffset+width/2),
-                    int(height-(yb+1)*MeterToPixel) )
-    headPosition = (int(xp*MeterToPixel-PixelOffset+width/2), 
-                    int(height-(yp+1.75*p.d+1)*MeterToPixel) )
+    ballPosition = (int(gs.xb*MeterToPixel-PixelOffset+width/2),
+                    int(height-(gs.yb+1)*MeterToPixel) )
+    headPosition = (int(gs.xp*MeterToPixel-PixelOffset+width/2), 
+                    int(height-(gs.yp+1.75*p.d+1)*MeterToPixel) )
     
     # Draw circles and lines
     pygame.draw.circle(screen, pink, ballPosition, int(p.rb*MeterToPixel), 0)
@@ -226,6 +226,22 @@ def varStates(obj):
     obj.dtp = obj.u[11] # Stool tilt rate [rad/s]
     return obj
 
+def unpackStates(u):
+    # xp, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
+    xb  = u[0]  # Ball distance [m]
+    yb  = u[1]  # Ball height [m]
+    dxb = u[2]  # Ball horizontal speed [m]
+    dyb = u[3]  # Ball vertical speed [m]
+    xp  = u[4]  # Player distance [m]
+    yp  = u[5]  # Player height [m]
+    lp  = u[6]  # Stool extension [m]
+    tp  = u[7]  # Stool tilt [rad]
+    dxp = u[8]  # Player horizontal speed [m/s]
+    dyp = u[9]  # Player vertical speed [m/s]
+    dlp = u[10] # Stool extension rate [m/s]
+    dtp = u[11] # Stool tilt rate [rad/s]
+    return xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp
+
 class gameState:
     # Initiate the state variables as a list, and as individual variables
     def __init__(self,u0):
@@ -234,10 +250,11 @@ class gameState:
         self.te = 0
         
         self.u  = u0[:]
-        self.ue = u0[:]
-        self.xI,self.yI,self.tI,self.xTraj,self.yTraj = BallPredict(u0)
         self = varStates(self)
        
+        self.ue = u0[:]
+        self.xI,self.yI,self.tI,self.xTraj,self.yTraj = BallPredict(self)
+        
     # Execute a simulation step of duration dt    
     def simStep(self):
         # Increment timing variables
@@ -258,7 +275,7 @@ class gameState:
         sol = Bunch(y=np.zeros((12,p.nEulerSteps+1)),status=False)
         sol.y[:,0] = self.u
         for k in range(1,p.nEulerSteps+1):
-            dydt = PlayerAndStool(t,sol.y[:,k-1])
+            dydt = PlayerAndStool(self.t,sol.y[:,k-1])
             sol.y[:,k] = sol.y[:,k-1] + np.array(dydt)*dt/p.nEulerSteps
             if (self.t-self.te)>0.1 and (L<2*sBall*dt or self.yb<2*self.dyb*dt):
                 if BallHitStool(self.t,sol.y[:,k])<0:
@@ -297,9 +314,10 @@ class gameState:
          
             # Re-initialize from the event states
             sol = spi.solve_ivp(PlayerAndStool,[0,dt-tBreak],self.ue)
-            
+           
+        if StoolBounce or FloorBounce or gameMode<6:    
             # Predict the future trajectory of the ball
-            self.xI,self.yI,self.tI,self.xTraj,self.yTraj = BallPredict(self.u)
+            self.xI,self.yI,self.tI,self.xTraj,self.yTraj = BallPredict(self)
             self.tI = self.tI+self.te
         
         # Update states
@@ -307,6 +325,8 @@ class gameState:
         
         # Stop the ball from moving if the player hasn't hit space yet
         if gameMode<6:
+            self.t = 0
+            self.n = 0
             self.u[0] = u0[0]
             self.u[1] = u0[1]
             self.u[2] = 0
@@ -315,54 +335,38 @@ class gameState:
         # Named states    
         self   = varStates(self)
 
-def unpackStates(u):
-    # xp, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
-    xb  = u[0]  # Ball distance [m]
-    yb  = u[1]  # Ball height [m]
-    dxb = u[2]  # Ball horizontal speed [m]
-    dyb = u[3]  # Ball vertical speed [m]
-    xp  = u[4]  # Player distance [m]
-    yp  = u[5]  # Player height [m]
-    lp  = u[6]  # Stool extension [m]
-    tp  = u[7]  # Stool tilt [rad]
-    dxp = u[8]  # Player horizontal speed [m/s]
-    dyp = u[9]  # Player vertical speed [m/s]
-    dlp = u[10] # Stool extension rate [m/s]
-    dtp = u[11] # Stool tilt rate [rad/s]
-    return xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp
-
 def resetStats():
     stats = Bunch(t=0,n=0,stoolCount=0,stoolDist=0,maxHeight=0,floorCount=0,
                   score=0,averageStepTime=0)
     return stats
 
 # Predict
-def BallPredict(u):
+def BallPredict(gs):
     # Unpack the state variables
-    xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
+    #xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
-    if (dyb>0) and (yb<p.y0+p.d+p.l0): 
+    if (gs.dyb>0) and (gs.yb<p.y0+p.d+p.l0): 
         # Solve for time and height at apogee
-        ta = dyb/p.g
+        ta = gs.dyb/p.g
         ya = 0.5*p.g*ta**2
 
         # Solve for time the ball would hit the stool
         tI = ta + np.sqrt(2*ya/p.g)
     else:
         # Solve for time that the ball would hit the stool
-        tI = -(-dyb - np.sqrt(dyb**2+2*p.g*(yb-p.y0-p.d-p.l0)))/p.g
+        tI = -(-gs.dyb - np.sqrt(gs.dyb**2+2*p.g*(gs.yb-p.y0-p.d-p.l0)))/p.g
         
     if np.isnan(tI):
         tI = 0
 
     # Solve for position that the ball would hit the stool
-    xI = xb+dxb*tI
-    yI = yb+dyb*tI-0.5*p.g*tI**2
+    xI = gs.xb+gs.dxb*tI
+    yI = gs.yb+gs.dyb*tI-0.5*p.g*tI**2
     
     # Solve for the arc
     T     = np.linspace(0,tI+1,40)
-    xTraj = xb+dxb*T
-    yTraj = yb+dyb*T-0.5*p.g*T**2
+    xTraj = gs.xb+gs.dxb*T
+    yTraj = gs.yb+gs.dyb*T-0.5*p.g*T**2
     
     # Output variables
     # xI = Ball distance at impact [m]
@@ -479,18 +483,18 @@ def playerControlInput(event):
 
 def ControlLogic(t,u):
     # Unpack the state variables
-    xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
+    #xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
     # Time until event 
-    timeUntilBounce = tI-t;
+    timeUntilBounce = gs.tI-t;
     
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.05 m to keep the
     # ball moving forward 
-    ZEM = (xI-0.05) - xp - dxp*np.abs(timeUntilBounce-1)
+    ZEM = (gs.xI-0.05) - gs.xp - gs.dxp*np.abs(timeUntilBounce-1)
     if userControlled[0]:
         if keyPush[0] +keyPush[1] == 0:
-            Bx = -scs.erf(dxp)
+            Bx = -scs.erf(gs.dxp)
         else:
             Bx = keyPush[1]-keyPush[0]
     else:
@@ -518,16 +522,16 @@ def ControlLogic(t,u):
         Bl = np.abs(timeUntilBounce)<0.2
     
     # Control stool angle by pointing at the ball
-    xdiff = xb-xp # Ball distance - player distance
-    ydiff = yb-yp-p.d
+    xdiff = gs.xb-gs.xp # Ball distance - player distance
+    ydiff = gs.yb-gs.yp-p.d
     wantAngle = np.arctan2(-xdiff,ydiff)
     if userControlled[3]:
         Bth = keyPush[6]-keyPush[7]
     else:
-        Bth = p.Qt*(wantAngle-tp)
+        Bth = p.Qt*(wantAngle-gs.tp)
         if Bth>1:
             Bth = 1
-        elif Bth<-1 or ((tI-t)<0.2) & ((tI-t)>0):
+        elif Bth<-1 or ((gs.tI-t)<0.2) & ((gs.tI-t)>0):
             Bth = -1
         
     Q = np.matrix([[Bx*p.Qx],[By*p.Qy],[Bl*p.Ql],[Bth*p.Qt]])    
@@ -633,84 +637,84 @@ def bhDebug(T,Y):
     plt.plot(T,Lf,'-rx')    
     plt.grid('on')
 
-def simThisStep(t,u,te):
-    # Unpack the state variables
-    xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
+#def simThisStep(t,u,te):
+#    # Unpack the state variables
+#    xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
         
-    # Initial assumption, there was no event
-    StoolBounce = False
-    FloorBounce = False
+#    # Initial assumption, there was no event
+#    StoolBounce = False
+#    FloorBounce = False
     
-    # Prevent event detection if there was already one within 0.1 seconds, 
-    # or if the ball is far from the stool or ground
-    L = BallHitStool(t,u)
-    vball = np.array((dxb,dyb))
+#    # Prevent event detection if there was already one within 0.1 seconds, 
+#    # or if the ball is far from the stool or ground
+#    L = BallHitStool(t,u)
+#    vball = np.array((dxb,dyb))
     
-    if p.odeIsEuler:
-        # Integrate using Euler method
-        sol = Bunch(y=np.zeros((12,p.nEulerSteps+1)),status=False)
-        sol.y[:,0] = u
-        for k in range(1,p.nEulerSteps+1):
-            dydt = PlayerAndStool(t,sol.y[:,k-1])
-            sol.y[:,k] = sol.y[:,k-1] + np.array(dydt)*dt/p.nEulerSteps
-            if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or yb<2*dyb*dt):
-                if BallHitStool(t,sol.y[:,k])<0:
-                    StoolBounce = True
-                if BallHitFloor(t,sol.y[:,k])<0:   
-                    FloorBounce = True
-                if StoolBounce or FloorBounce:
-                    te = t+k*dt
-                    ue = sol.y[:,k]
-                    break        
-    else:
-        if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or yb<2*dyb*dt):
-            sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod, 
-                                max_step=dt/4,first_step=dt/4,min_step=dt/8,
-                                events=events)
-        else:
-            sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod,
-                                first_step=dt,min_step=dt/4)    
-            if sol.status:
-                # Determine if the was stool or floor
-                # and get states at time of event
-                ue = sol.y[:,-1].tolist()
-                if np.size(sol.t_events[0]):
-                    te = sol.t_events[0][0]+t
-                    StoolBounce = True
-                elif np.size(sol.t_events[1]):
-                    te = sol.t_events[1][0]+t
-                    FloorBounce = True
+#    if p.odeIsEuler:
+#        # Integrate using Euler method
+#        sol = Bunch(y=np.zeros((12,p.nEulerSteps+1)),status=False)
+#        sol.y[:,0] = u
+#        for k in range(1,p.nEulerSteps+1):
+#            dydt = PlayerAndStool(t,sol.y[:,k-1])
+#            sol.y[:,k] = sol.y[:,k-1] + np.array(dydt)*dt/p.nEulerSteps
+#            if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or yb<2*dyb*dt):
+#                if BallHitStool(t,sol.y[:,k])<0:
+#                    StoolBounce = True
+#                if BallHitFloor(t,sol.y[:,k])<0:   
+#                    FloorBounce = True
+#                if StoolBounce or FloorBounce:
+#                    te = t+k*dt
+#                    ue = sol.y[:,k]
+#                    break        
+#    else:
+#        if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or yb<2*dyb*dt):
+#            sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod, 
+#                                max_step=dt/4,first_step=dt/4,min_step=dt/8,
+#                                events=events)
+#        else:
+#            sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod,
+#                                first_step=dt,min_step=dt/4)    
+#            if sol.status:
+#                # Determine if the was stool or floor
+#                # and get states at time of event
+#                ue = sol.y[:,-1].tolist()
+#                if np.size(sol.t_events[0]):
+#                    te = sol.t_events[0][0]+t
+#                    StoolBounce = True
+#                elif np.size(sol.t_events[1]):
+#                    te = sol.t_events[1][0]+t
+#                    FloorBounce = True
                     
-    # If an event occured, increment the counter, otherwise continue
-    if StoolBounce or FloorBounce:        
-        # Change ball states depending on if it was a stool or floor bounce
-        if StoolBounce:
-            ue[1] = ue[1]+0.001
+#    # If an event occured, increment the counter, otherwise continue
+#    if StoolBounce or FloorBounce:        
+#        # Change ball states depending on if it was a stool or floor bounce
+#        if StoolBounce:
+#            ue[1] = ue[1]+0.001
             
-            # Obtain the bounce velocity
-            vBounce,vRecoil = BallBounce(te,ue)
-            ue[2] = vBounce[0]
-            ue[3] = vBounce[1]
+#            # Obtain the bounce velocity
+#            vBounce,vRecoil = BallBounce(te,ue)
+#            ue[2] = vBounce[0]
+#            ue[3] = vBounce[1]
             
-            # Add  the recoil to the player states
-            ue[8]  = ue[8]  + vRecoil[0]
-            ue[9]  = ue[9]  + vRecoil[1]
-            ue[10] = ue[10] + vRecoil[2]
-            ue[11] = ue[11] + vRecoil[3]
+#            # Add  the recoil to the player states
+#            ue[8]  = ue[8]  + vRecoil[0]
+#            ue[9]  = ue[9]  + vRecoil[1]
+#            ue[10] = ue[10] + vRecoil[2]
+#            ue[11] = ue[11] + vRecoil[3]
             
-        elif FloorBounce:
-            ue[1] = 0.001
+#        elif FloorBounce:
+#            ue[1] = 0.001
         
-            # Reverse direction of the ball
-            ue[2] = +p.COR*ue[2]
-            ue[3] = -p.COR*ue[3]       
+#            # Reverse direction of the ball
+#            ue[2] = +p.COR*ue[2]
+#            ue[3] = -p.COR*ue[3]       
      
-        # Re-initialize from the event states
-        sol = spi.solve_ivp(PlayerAndStool,[0,dt],ue)
-    else:
-        wasEvent = False
+#        # Re-initialize from the event states
+#        sol = spi.solve_ivp(PlayerAndStool,[0,dt],ue)
+#    else:
+#        wasEvent = False
     
-    return sol, StoolBounce, FloorBounce, te  
+#    return sol, StoolBounce, FloorBounce, te  
 
 
 def ThirdPoint(P0,P1,L,SGN):

@@ -22,7 +22,7 @@ t  = 0
 n  = 0
 
 # Predict position and time where ball hits stool
-[xI,yI,tI,xTraj,yTraj] = BallPredict(u0)
+#[xI,yI,tI,xTraj,yTraj] = BallPredict(u0)
 
 # Open display
 screen = pygame.display.set_mode(size)
@@ -52,8 +52,10 @@ stats = resetStats()
 # 8 = Game over, high scores
 gameMode = 1
 showedSplash = False
-startAngle   = np.pi/4
-startSpeed   = 10
+sa           = np.pi/4
+startAngle   = sa
+ss           = 10
+startSpeed   = ss
 phase        = 0
 msg = ['','','',
        'Use arrow keys to control player, W-A-S-D keys to control stool. Press space to begin!',
@@ -89,20 +91,23 @@ while gameMode>0:
             # Start the ball moving!
             if gameMode == 5 and event.key == pygame.K_SPACE:
                 gameMode = 6
-                u[2] = vx0
-                u[3] = vy0
+                #u[2] = vx0
+                #u[3] = vy0
+                gs.u[2] = vx0
+                gs.u[3] = vy0
                 clock.tick(10)
                 continue
             
             # Reset the game
             if gameMode == 6 and event.key == pygame.K_ESCAPE:
-                t  = 0
-                n  = 0
-                te = 0
-                u  = u0
+                #t  = 0
+                #n  = 0
+                #te = 0
+                #u  = u0
                 stats = resetStats()
+                gs = gameState(u0)
                 gameMode = 3
-                [xI,yI,tI,xTraj,yTraj] = BallPredict(u)
+                #[xI,yI,tI,xTraj,yTraj] = BallPredict(u)
                 
         # Get player control inputs
         keyPush = playerControlInput(event)             
@@ -111,7 +116,7 @@ while gameMode>0:
     if gameMode==1:
         showedSplash = makeSplashScreen(showedSplash)
     
-    if gameMode==2 or gameMode==3 or gameMode==4 or gameMode==5 or gameMode==6:
+    if gameMode>1 and gameMode<7:
         screen.fill(skyBlue)
         ## ANGLE AND SPEED SETTINGS
         if gameMode == 4:
@@ -122,45 +127,49 @@ while gameMode>0:
             phase += 0.05
             vx0 = startSpeed*np.cos(startAngle)
             vy0 = startSpeed*np.sin(startAngle)
-            u[2] = vx0
-            u[3] = vy0
-            [xI,yI,tI,xTraj,yTraj] = BallPredict(u)
-            tI = tI+te
+            #u[2] = vx0
+            #u[3] = vy0
+            #[xI,yI,tI,xTraj,yTraj] = BallPredict(u)
+            #tI = tI+te
+            gs.u[2] = vx0
+            gs.u[3] = vy0
          
         ## SIMULATION
-        sol, StoolBounce, FloorBounce, te = simThisStep(t,u,te) 
-    
-        if StoolBounce or FloorBounce:
+        #sol, StoolBounce, FloorBounce, te = simThisStep(t,u,te) 
+        gs.simStep()
+        
+        #if StoolBounce or FloorBounce:
             # Recalculate ball position the next time it crosses top of stool
-            [xI,yI,tI,xTraj,yTraj] = BallPredict(sol.y[:,-1])
-            tI = tI+te
+            # [xI,yI,tI,xTraj,yTraj] = BallPredict(sol.y[:,-1])
+            # tI = tI+te
          
         # Add solution into the state vector
-        u = sol.y[:,-1].tolist()
+        # u = sol.y[:,-1].tolist()
     
         # Stop the ball from moving if the player hasn't hit space yet
-        if gameMode==3 or gameMode==4 or gameMode==5:
-            u[0] = u0[0]
-            u[1] = u0[1]
-            u[2] = 0
-            u[3] = 0   
-        if gameMode==6:
-            # Time increment
-            t += dt    
-            n += 1
-            
-            # Stats
-            if StoolBounce and stats.stoolDist<u[0]:
-                stats.stoolDist = u[0]
-            if stats.maxHeight<u[1]:
-                stats.maxHeight = u[1]   
-            stats.stoolCount += StoolBounce
-            stats.floorCount += FloorBounce
-            stats.score = int(stats.stoolDist*stats.maxHeight*stats.stoolCount)
+        #if gameMode==3 or gameMode==4 or gameMode==5:
+            #u[0] = u0[0]
+            #u[1] = u0[1]
+            #u[2] = 0
+            #u[3] = 0   
+        #if gameMode==6:
+        #    # Stats
+        #    if StoolBounce and stats.stoolDist<gs.u[0]:
+        #        stats.stoolDist = gs.u[0]
+        #    if stats.maxHeight<gs.u[1]:
+        #        stats.maxHeight = gs.u[1]   
+        #    stats.stoolCount += StoolBounce
+        #    stats.floorCount += FloorBounce
+        #    stats.score = int(stats.stoolDist*stats.maxHeight*stats.stoolCount)
         
+            # Time increment
+            #t += dt    
+            #n += 1
+            
+            
         ## ANIMATION
         # Get the ranges in meters using the setRanges function
-        xrng, yrng, MeterToPixel, PixelOffset = setRanges(u)
+        xrng, yrng, MeterToPixel, PixelOffset = setRanges(gs.u)
         
         # Draw the background
         makeBackgroundImage()
