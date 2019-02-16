@@ -12,6 +12,7 @@ p = parameters()
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
 u0 = [0,0,0,0,p.x0,p.y0,p.l0,0,0,0,0,1]
 u  = u0
+gs = gameState(u0)
 
 # Set timing
 fs = 30
@@ -101,7 +102,7 @@ while gameMode>0:
                 u  = u0
                 stats = resetStats()
                 gameMode = 3
-                [xb,yb,tb,Xb,Yb] = BallPredict(u)
+                [xI,yI,tI,xTraj,yTraj] = BallPredict(u)
                 
         # Get player control inputs
         keyPush = playerControlInput(event)             

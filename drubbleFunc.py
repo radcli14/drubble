@@ -17,7 +17,7 @@ class Bunch:
         self.__dict__.update(kwds)
 
 # Window size and color definition
-size = width, height = 1000, 600
+size      = width, height = 1000, 600
 red       = (255,0,0)
 green     = (0,255,0)
 blue      = (0,0,255)
@@ -211,6 +211,110 @@ def parameters():
               MacsFavoriteFont=MacsFavoriteFont)
     return p 
 
+def varStates(obj):
+    obj.xb  = obj.u[0]  # Ball distance [m]
+    obj.yb  = obj.u[1]  # Ball height [m]
+    obj.dxb = obj.u[2]  # Ball horizontal speed [m]
+    obj.dyb = obj.u[3]  # Ball vertical speed [m]
+    obj.xp  = obj.u[4]  # Player distance [m]
+    obj.yp  = obj.u[5]  # Player height [m]
+    obj.lp  = obj.u[6]  # Stool extension [m]
+    obj.tp  = obj.u[7]  # Stool tilt [rad]
+    obj.dxp = obj.u[8]  # Player horizontal speed [m/s]
+    obj.dyp = obj.u[9]  # Player vertical speed [m/s]
+    obj.dlp = obj.u[10] # Stool extension rate [m/s]
+    obj.dtp = obj.u[11] # Stool tilt rate [rad/s]
+    return obj
+
+class gameState:
+    # Initiate the state variables as a list, and as individual variables
+    def __init__(self,u0):
+        self.t  = 0
+        self.n  = 0
+        self.te = 0
+        
+        self.u  = u0[:]
+        self.ue = u0[:]
+        self.xI,self.yI,self.tI,self.xTraj,self.yTraj = BallPredict(u0)
+        self = varStates(self)
+       
+    # Execute a simulation step of duration dt    
+    def simStep(self):
+        # Increment timing variables
+        self.t += dt   
+        self.n += 1
+        
+        # Initial assumption, there was no event
+        StoolBounce = False
+        FloorBounce = False
+        
+        # Prevent event detection if there was already one within 0.1 seconds, 
+        # or if the ball is far from the stool or ground
+        L = BallHitStool(self.t,self.u)       # Distance to stool
+        vBall = np.array((self.dxb,self.dyb)) # Velocity
+        sBall = np.sqrt(vBall@vBall)          # Speed
+        
+        # Integrate using Euler method
+        sol = Bunch(y=np.zeros((12,p.nEulerSteps+1)),status=False)
+        sol.y[:,0] = self.u
+        for k in range(1,p.nEulerSteps+1):
+            dydt = PlayerAndStool(t,sol.y[:,k-1])
+            sol.y[:,k] = sol.y[:,k-1] + np.array(dydt)*dt/p.nEulerSteps
+            if (self.t-self.te)>0.1 and (L<2*sBall*dt or self.yb<2*self.dyb*dt):
+                if BallHitStool(self.t,sol.y[:,k])<0:
+                    StoolBounce = True
+                if BallHitFloor(self.t,sol.y[:,k])<0:   
+                    FloorBounce = True
+                if StoolBounce or FloorBounce:
+                    self.te = self.t+k*dt
+                    self.ue = sol.y[:,k].tolist()
+                    tBreak = k*dt
+                    break 
+        
+        # If an event occured, increment the counter, otherwise continue
+        if StoolBounce or FloorBounce:        
+            # Change ball states depending on if it was a stool or floor bounce
+            if StoolBounce:
+                self.ue[1] = self.ue[1]+0.001
+                
+                # Obtain the bounce velocity
+                vBounce,vRecoil = BallBounce(self.te,self.ue)
+                self.ue[2] = vBounce[0]
+                self.ue[3] = vBounce[1]
+                
+                # Add  the recoil to the player states
+                self.ue[8]  = self.ue[8]  + vRecoil[0]
+                self.ue[9]  = self.ue[9]  + vRecoil[1]
+                self.ue[10] = self.ue[10] + vRecoil[2]
+                self.ue[11] = self.ue[11] + vRecoil[3]
+                
+            elif FloorBounce:
+                self.ue[1] = 0.001
+            
+                # Reverse direction of the ball
+                self.ue[2] = +p.COR*self.ue[2]
+                self.ue[3] = -p.COR*self.ue[3]       
+         
+            # Re-initialize from the event states
+            sol = spi.solve_ivp(PlayerAndStool,[0,dt-tBreak],self.ue)
+            
+            # Predict the future trajectory of the ball
+            self.xI,self.yI,self.tI,self.xTraj,self.yTraj = BallPredict(self.u)
+            self.tI = self.tI+self.te
+        
+        # Update states
+        self.u = sol.y[:,-1].tolist()
+        
+        # Stop the ball from moving if the player hasn't hit space yet
+        if gameMode<6:
+            self.u[0] = u0[0]
+            self.u[1] = u0[1]
+            self.u[2] = 0
+            self.u[3] = 0   
+            
+        # Named states    
+        self   = varStates(self)
+
 def unpackStates(u):
     # xp, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     xb  = u[0]  # Ball distance [m]
@@ -256,7 +360,7 @@ def BallPredict(u):
     yI = yb+dyb*tI-0.5*p.g*tI**2
     
     # Solve for the arc
-    T     = np.linspace(0,tI+1,20)
+    T     = np.linspace(0,tI+1,40)
     xTraj = xb+dxb*T
     yTraj = yb+dyb*T-0.5*p.g*T**2
     
