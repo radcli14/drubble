@@ -162,5 +162,5 @@ while gameMode>0:
         stats.averageStepTime = (stats.averageStepTime*(gs.n-1) + thisStepTime)/gs.n
     clock.tick(fs)
 
-# Exit the game after game_over   
+# Exit the game   
 pygame.quit()
