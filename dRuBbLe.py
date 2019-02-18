@@ -1,6 +1,6 @@
 # Import required packages
-from IPython import get_ipython
-get_ipython().magic('reset -sf')
+#from IPython import get_ipython
+#get_ipython().magic('reset -sf')
 exec(open("./drubbleFunc.py").read())
 pygame.init()
 pygame.font.init()
@@ -11,19 +11,17 @@ p = parameters()
 # Initial states
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
 u0 = [0,0,0,0,p.x0,p.y0,p.l0,0,0,0,0,1]
-u  = u0
 gs = gameState(u0)
 
 # Set timing
 fs = 30
 dt = 1/fs
-te = 0
-t  = 0
-n  = 0
 
 # Open display
-screen = pygame.display.set_mode(size)
+screen = pygame.display.set_mode(size) #,pygame.FULLSCREEN) 
 pygame.display.set_caption('dRuBbLe')
+icon = pygame.image.load('figs/icon.png')
+pygame.display.set_icon(icon)
 
 # Define the Events
 events = [BallHitStool,BallHitFloor]
@@ -35,7 +33,7 @@ userControlled = np.array([True, True, True, True])
 #userControlled = np.array([False, False, False, False])
 
 # Initialize stats
-stats = resetStats()
+stats = gameScore()
 
 # Define Game Mode
 # 0 = Quit
@@ -52,9 +50,10 @@ showedSplash = False
 sa           = np.pi/4
 startAngle   = sa
 ss           = 10
-startSpeed   = ss
+startSpeed   = 2*ss
 phase        = 0
-msg = ['','','',
+msg = ['','',
+       'OPTIONS \n    Single Drubble \n\n\n Press space to begin!!!',
        'Use arrow keys to control player, W-A-S-D keys to control stool. Press space to begin!',
        'Press space to select starting angle',
        'Press space to select starting speed','','','']
@@ -70,15 +69,23 @@ while gameMode>0:
         
         # Detect keyboard input
         if event.type == pygame.KEYDOWN:
+            # Exit the game
+            if event.key == pygame.K_ESCAPE:
+                gameMode = 0
+            
             # Exit the splash screen
-            if gameMode == 1 and event.key == pygame.K_SPACE:
+            if gameMode==1 and event.key == pygame.K_SPACE:
+                gameMode = 2
+                clock.tick(10)
+                continue
+            
+            if gameMode==2 and event.key == pygame.K_SPACE:
                 gameMode = 3
                 clock.tick(10)
                 continue
             
             # Progress through angle and speed selection
-            ismem = np.in1d(gameMode,[3,4])
-            if ismem[0] and event.key == pygame.K_SPACE:
+            if (gameMode==3 or gameMode==4) and event.key == pygame.K_SPACE:
                 gameMode += 1
                 phase = 0
                 startSpeed = 10
@@ -94,10 +101,10 @@ while gameMode>0:
                 continue
             
             # Reset the game
-            if gameMode == 6 and event.key == pygame.K_ESCAPE:
-                stats = resetStats()
+            if gameMode == 6 and event.key == pygame.K_SPACE:
+                stats = gameScore()
                 gs = gameState(u0)
-                gameMode = 3
+                gameMode = 2
 
         # Get player control inputs
         keyPush = playerControlInput(event)             
@@ -112,7 +119,7 @@ while gameMode>0:
         if gameMode == 4:
             startAngle = 0.25*np.pi*(1 + np.sin(phase))
         if gameMode == 5:
-            startSpeed = 10*(1 + np.sin(phase))
+            startSpeed = ss*(1 + np.cos(phase))
         if gameMode == 4 or gameMode == 5:
             phase += 0.05
             vx0 = startSpeed*np.cos(startAngle)
@@ -123,16 +130,10 @@ while gameMode>0:
         ## SIMULATION
         gs.simStep()
         
+        # Update statistics
         if gameMode==6:
-            # Stats
-            if gs.StoolBounce and stats.stoolDist<gs.u[0]:
-                stats.stoolDist = gs.u[0]
-            if stats.maxHeight<gs.u[1]:
-                stats.maxHeight = gs.u[1]   
-            stats.stoolCount += gs.StoolBounce
-            stats.floorCount += gs.FloorBounce
-            stats.score = int(stats.stoolDist*stats.maxHeight*stats.stoolCount) 
-            
+            stats.update()
+ 
         ## ANIMATION
         # Get the ranges in meters using the setRanges function
         xrng, yrng, MeterToPixel, PixelOffset = setRanges(gs.u)
@@ -156,9 +157,9 @@ while gameMode>0:
     pygame.display.flip()
     
     # Timing Variables
-    if p.timeRun and n>0:
+    if p.timeRun and gs.n>0:
         thisStepTime = clock.tick()
-        stats.averageStepTime = (stats.averageStepTime*(n-1) + thisStepTime)/n
+        stats.averageStepTime = (stats.averageStepTime*(gs.n-1) + thisStepTime)/gs.n
     clock.tick(fs)
 
 # Exit the game after game_over   

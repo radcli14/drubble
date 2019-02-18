@@ -17,12 +17,13 @@ class Bunch:
         self.__dict__.update(kwds)
 
 # Window size and color definition
-size      = width, height = 1000, 600
+size      = width, height = 1200, 700
 red       = (255,0,0)
 green     = (0,255,0)
 blue      = (0,0,255)
 darkBlue  = (0,0,128)
 white     = (255,255,255)
+gray      = (160,160,160)
 black     = (0,0,0)
 pink      = (255,100,100)
 skyBlue   = (220, 230, 255)
@@ -36,17 +37,20 @@ bg0_rect   = bg0.get_rect()
 
 # Import the splash screen
 splash     = pygame.image.load('figs/splash.png')
-splash     = pygame.transform.scale(splash, (int(0.84*width), int(0.9*height)))
 splashrect = splash.get_rect()
-splashrect.left   = int(-0.1*width)
+scf        = 0.84*width/splashrect.width
+splash     = pygame.transform.scale(splash, 
+                 (int(splashrect.width*scf), int(int(splashrect.height*scf))))
+splashrect.left   = int(-0.07*width)
 splashrect.bottom = int(0.9*height)
 
 diagram    = pygame.image.load('figs/diagram.png')
-diagram    = pygame.transform.scale(diagram,(int(0.3*width),int(0.8*height)))
-diagrect   = diagram.get_rect();
+diagrect   = diagram.get_rect()
+scf        = 0.25*width/diagrect.width
+diagram    = pygame.transform.scale(diagram,
+                 (int(diagrect.width*scf),int(diagrect.height*scf)))
 diagrect.left   = int(width*0.75)
-diagrect.bottom = int(height+4)
-diagrect.height = int(height*0.1)
+diagrect.bottom = int(height+40)
 
 def makeSplashScreen(showedSplash):
     if showedSplash:
@@ -57,8 +61,8 @@ def makeSplashScreen(showedSplash):
         spc  = font.render('Press Space To Begin!', True, darkGreen)
         screen.blit(spc,(0.22*width,int(0.88*height)))
     else:
-        for splashNess in range(0,240,4):
-            screen.fill((splashNess,splashNess,splashNess))
+        for k in range(0,240,4):
+            screen.fill((skyBlue[0]*k/255,skyBlue[1]*k/255,skyBlue[2]*k/255))
             screen.blit(splash, splashrect)
             screen.blit(diagram, diagrect)
             pygame.display.flip()
@@ -76,8 +80,8 @@ def makeBackgroundImage():
     drawBackgroundImage(bg0,bg0_rect,-0.25,-5,0)
 
 def drawBackgroundImage(image,rect,xpos,ypos,howTall):
-    rect.left = width*(-gs.u[0]/120+xpos)
-    rect.bottom = height+(gs.u[9]/40-0.9)*MeterToPixel
+    rect.left = width*(-(gs.xb+gs.xp)/120+xpos)
+    rect.bottom = height+(gs.yb/40-0.9)*MeterToPixel
     screen.blit(image,rect)
     
 def makeGameImage():
@@ -99,28 +103,28 @@ def makeGameImage():
                     int(height-(gs.yp+1.75*p.d+1)*MeterToPixel) )
     
     # Draw circles and lines
-    pygame.draw.circle(screen, pink, ballPosition, int(p.rb*MeterToPixel), 0)
     pygame.draw.circle(screen, darkGreen, headPosition, int(p.rb*MeterToPixel), 0)
-    pygame.draw.lines(screen, pink, False, trajList, 1)
+    pygame.draw.lines(screen, gray, False, trajList, 1)
     pygame.draw.lines(screen, darkGreen, False, stickList, 
                       int(np.ceil(0.15*MeterToPixel)))
     pygame.draw.lines(screen, red, False, stoolList, 
                       int(np.ceil(0.1*MeterToPixel)))
     pygame.draw.line(screen, black, (0,height-0.5*MeterToPixel),
                      (width,height-0.5*MeterToPixel),int(MeterToPixel))
-
+    pygame.draw.circle(screen, pink, ballPosition, int(p.rb*MeterToPixel), 0)
+    
 def makeScoreLine():
     font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/24))
-    time = font.render('Time = '+f'{t:.1f}', True, black)
-    screen.blit(time,(0.05*width,0))
+    time = font.render('Time = '+f'{gs.t:.1f}', True, black)
+    screen.blit(time,(0.02*width,0))
     dist = font.render('Distance = '+f'{stats.stoolDist:.1f}', True, black)
-    screen.blit(dist,(0.23*width,0))
+    screen.blit(dist,(0.20*width,0))
     high = font.render('Height = '+f'{stats.maxHeight:.2f}', True, black)
-    screen.blit(high,(0.45*width,0))
+    screen.blit(high,(0.42*width,0))
     boing = font.render('Boing! = '+str(int(stats.stoolCount)), True, black)
-    screen.blit(boing,(0.65*width,0))
+    screen.blit(boing,(0.62*width,0))
     score = font.render('Score = '+str(stats.score),True,black)
-    screen.blit(score,(0.8*width,0))
+    screen.blit(score,(0.77*width,0))
 
 def makeMarkers():
     font   = pygame.font.SysFont(p.MacsFavoriteFont,
@@ -138,7 +142,7 @@ def makeMarkers():
         screen.blit(meter,start_pos)
 
 # Parameters
-def parameters():
+class parameters:
     # Game parameters
     g   = 9.81 # Gravitational acceleration [m/s^2]
     COR = 0.8  # Coefficient of restitution
@@ -192,22 +196,12 @@ def parameters():
     # Parameter settings I'm using to try to improve running speed
     invM = M.I
     linearMass  = True
-    odeMethod   = 'RK23' 
-    odeIsEuler  = True
     nEulerSteps = 4
     timeRun     = False
     
     # Font settings
     MacsFavoriteFont = 'comicsansms' # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
-    p = Bunch(g=g,mc=mc,mg=mg,m=m,x0=x0,y0=y0,d=d,l0=l0,ax=ax,Qx=Qx,Gx=Gx,
-              Qy=Qy,Ql=Ql,Qt=Qt,fy=fy,Ky=Ky,fl=fl,Kl=Kl,ft=ft,Kt=Kt,vx=vx,
-              Cx=Cx,zy=zy,Cy=Cy,zl=zl,Cl=Cl,zt=zt,Ct=Ct,xs=xs,ys=ys,COR=COR,
-              rb=rb,M=M,invM=invM,linearMass=linearMass,odeMethod=odeMethod,
-              odeIsEuler=odeIsEuler,nEulerSteps=nEulerSteps,timeRun=timeRun,
-              MacsFavoriteFont=MacsFavoriteFont)
-    return p 
-
 def varStates(obj):
     obj.xb  = obj.u[0]  # Ball distance [m]
     obj.yb  = obj.u[1]  # Ball height [m]
@@ -250,7 +244,7 @@ class gameState:
         self = varStates(self)
        
         self.ue = u0[:]
-        self.xI,self.yI,self.tI,self.xTraj,self.yTraj = BallPredict(self)
+        self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict()
         
     # Execute a simulation step of duration dt    
     def simStep(self):
@@ -268,13 +262,19 @@ class gameState:
         vBall = np.array((self.dxb,self.dyb)) # Velocity
         sBall = np.sqrt(vBall@vBall)          # Speed
         
-        # Integrate using Euler method
+        ## Integrate using Euler method
+        # Initialize state variables
         U = np.zeros((12,p.nEulerSteps+1))
         U[:,0] = self.u
         for k in range(1,p.nEulerSteps+1):
+            # Calculate the derivatives of states w.r.t. time
             dudt = PlayerAndStool(self.t,U[:,k-1])
+            
+            # Calculate the states at the next step
             U[:,k] = U[:,k-1] + np.array(dudt)*dt/p.nEulerSteps
-            if (self.t-self.te)>0.1: #and (L<2*sBall*dt or self.yb<2*self.dyb*dt):
+            
+            # Check for events
+            if (self.t-self.te)>0.1: 
                 if BallHitStool(self.t,U[:,k])<0:
                     self.StoolBounce = True
                 if BallHitFloor(self.t,U[:,k])<0:   
@@ -289,22 +289,19 @@ class gameState:
         if self.StoolBounce or self.FloorBounce:        
             # Change ball states depending on if it was a stool or floor bounce
             if self.StoolBounce:
-                #self.ue[1] = self.ue[1]+0.001
-                
                 # Obtain the bounce velocity
                 vBounce,vRecoil = BallBounce(self)
                 self.ue[2] = vBounce[0]
                 self.ue[3] = vBounce[1]
                 
-                # Add  the recoil to the player states
-                self.ue[8]  = self.ue[8]  + vRecoil[0]
-                self.ue[9]  = self.ue[9]  + vRecoil[1]
-                self.ue[10] = self.ue[10] + vRecoil[2]
-                self.ue[11] = self.ue[11] + vRecoil[3]
+                # Add  the recoil to the player 
+                ## TO BE UPDATED, NOT BEHAVING RIGHT
+                #self.ue[8]  = self.ue[8]  + vRecoil[0]
+                #self.ue[9]  = self.ue[9]  + vRecoil[1]
+                #self.ue[10] = self.ue[10] + vRecoil[2]
+                #self.ue[11] = self.ue[11] + vRecoil[3]
                 
             elif self.FloorBounce:
-                #self.ue[1] = 0.001
-            
                 # Reverse direction of the ball
                 self.ue[2] = +p.COR*self.ue[2]
                 self.ue[3] = -p.COR*self.ue[3]       
@@ -319,9 +316,8 @@ class gameState:
         # Generate the new ball trajectory prediction line
         if self.StoolBounce or self.FloorBounce or gameMode<7:    
             # Predict the future trajectory of the ball
-            self.xI,self.yI,self.tI,self.xTraj,self.yTraj = BallPredict(self)
-            self.tI = self.tI+self.te      
-        
+            self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict()
+
         # Stop the ball from moving if the player hasn't hit space yet
         if gameMode<6:
             self.t = 0
@@ -332,13 +328,32 @@ class gameState:
         # Named states    
         self   = varStates(self)
 
-def resetStats():
-    stats = Bunch(t=0,n=0,stoolCount=0,stoolDist=0,maxHeight=0,floorCount=0,
-                  score=0,averageStepTime=0)
-    return stats
+class gameScore:
+    # Initiate statistics as zeros
+    def __init__(self):
+        self.t = 0
+        self.n = 0
+        self.stoolCount = 0
+        self.stoolDist  = 0
+        self.maxHeight  = 0
+        self.floorCount = 0
+        self.score      = 0
+        self.averageStepTime = 0
+        
+    # Update statistics for the current game state    
+    def update(self):
+        self.t = gs.t
+        self.n = gs.n
+        if gs.StoolBounce and self.stoolDist<gs.xb:
+            self.stoolDist = gs.xb
+        if self.maxHeight<gs.yb:
+            self.maxHeight = gs.yb   
+        self.stoolCount += gs.StoolBounce
+        self.floorCount += gs.FloorBounce
+        self.score = int(self.stoolDist*self.maxHeight*self.stoolCount) 
 
 # Predict
-def BallPredict(gs):
+def BallPredict():
 
     if (gs.dyb>0) and (gs.yb<p.y0+p.d+p.l0): 
         # Solve for time and height at apogee
@@ -363,13 +378,17 @@ def BallPredict(gs):
     xTraj = gs.xb+gs.dxb*T
     yTraj = gs.yb+gs.dyb*T-0.5*p.g*T**2
     
+    # Time until event 
+    timeUntilBounce = tI;
+    tI = timeUntilBounce+gs.t
+    
     # Output variables
     # xI = Ball distance at impact [m]
     # yI = Ball height at impact [m]
     # tI = Time at impact [s]
     # xTraj = Ball trajectory distances [m]
     # yTraj = Ball trajectory heights [m]
-    return xI,yI,tI,xTraj,yTraj
+    return xI,yI,tI,xTraj,yTraj,timeUntilBounce
 
 # Equation of Motion
 def PlayerAndStool(t,u):
@@ -477,16 +496,10 @@ def playerControlInput(event):
     return keyPush
 
 def ControlLogic(t,u):
-    # Unpack the state variables
-    #xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
-    
-    # Time until event 
-    timeUntilBounce = gs.tI-t;
-    
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.05 m to keep the
     # ball moving forward 
-    ZEM = (gs.xI-0.05) - gs.xp - gs.dxp*np.abs(timeUntilBounce-1)
+    ZEM = (gs.xI-0.05) - gs.xp - gs.dxp*np.abs(gs.timeUntilBounce-1)
     if userControlled[0]:
         if keyPush[0] +keyPush[1] == 0:
             Bx = -scs.erf(gs.dxp)
@@ -496,16 +509,16 @@ def ControlLogic(t,u):
         Bx = p.Gx*ZEM
         if Bx>1:
             Bx = 1
-        elif (Bx<-1) or (timeUntilBounce<0.2) & (timeUntilBounce>0):
+        elif (Bx<-1) or (gs.timeUntilBounce<0.2) and (gs.timeUntilBounce>0):
             Bx = -1
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
     if userControlled[1]:
         By = keyPush[2]-keyPush[3]
     else:
-        if (timeUntilBounce<0.6) and (timeUntilBounce>0.4):
+        if (gs.timeUntilBounce<0.6) and (gs.timeUntilBounce>0.4):
             By = -1
-        elif np.abs(timeUntilBounce)<0.2:       
+        elif np.abs(gs.timeUntilBounce)<0.2:       
             By = 1
         else:
             By = 0
@@ -514,7 +527,7 @@ def ControlLogic(t,u):
     if userControlled[2]:
         Bl = keyPush[4]-keyPush[5]
     else:
-        Bl = np.abs(timeUntilBounce)<0.2
+        Bl = np.abs(gs.timeUntilBounce)<0.2
     
     # Control stool angle by pointing at the ball
     xdiff = gs.xb-gs.xp # Ball distance - player distance
@@ -526,7 +539,7 @@ def ControlLogic(t,u):
         Bth = p.Qt*(wantAngle-gs.tp)
         if Bth>1:
             Bth = 1
-        elif Bth<-1 or ((gs.tI-t)<0.2) & ((gs.tI-t)>0):
+        elif Bth<-1 or (gs.timeUntilBounce<0.2) and (gs.timeUntilBounce>0):
             Bth = -1
         
     Q = np.matrix([[Bx*p.Qx],[By*p.Qy],[Bl*p.Ql],[Bth*p.Qt]])    
