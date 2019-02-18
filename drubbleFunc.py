@@ -76,14 +76,11 @@ def makeBackgroundImage():
     drawBackgroundImage(bg0,bg0_rect,-0.25,-5,0)
 
 def drawBackgroundImage(image,rect,xpos,ypos,howTall):
-    rect.left = width*(-u[0]/120+xpos)
-    rect.bottom = height+(u[9]/40-0.9)*MeterToPixel
+    rect.left = width*(-gs.u[0]/120+xpos)
+    rect.bottom = height+(gs.u[9]/40-0.9)*MeterToPixel
     screen.blit(image,rect)
     
 def makeGameImage():
-    # Unpack the state variables
-    #xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
-    
     # Get the plotting vectors using stickDude function
     xv,yv,sx,sy = stickDude(gs.u)
         
@@ -262,8 +259,8 @@ class gameState:
         self.n += 1
         
         # Initial assumption, there was no event
-        StoolBounce = False
-        FloorBounce = False
+        self.StoolBounce = False
+        self.FloorBounce = False
         
         # Prevent event detection if there was already one within 0.1 seconds, 
         # or if the ball is far from the stool or ground
@@ -272,30 +269,30 @@ class gameState:
         sBall = np.sqrt(vBall@vBall)          # Speed
         
         # Integrate using Euler method
-        sol = Bunch(y=np.zeros((12,p.nEulerSteps+1)),status=False)
-        sol.y[:,0] = self.u
+        U = np.zeros((12,p.nEulerSteps+1))
+        U[:,0] = self.u
         for k in range(1,p.nEulerSteps+1):
-            dydt = PlayerAndStool(self.t,sol.y[:,k-1])
-            sol.y[:,k] = sol.y[:,k-1] + np.array(dydt)*dt/p.nEulerSteps
-            if (self.t-self.te)>0.1 and (L<2*sBall*dt or self.yb<2*self.dyb*dt):
-                if BallHitStool(self.t,sol.y[:,k])<0:
-                    StoolBounce = True
-                if BallHitFloor(self.t,sol.y[:,k])<0:   
-                    FloorBounce = True
-                if StoolBounce or FloorBounce:
+            dudt = PlayerAndStool(self.t,U[:,k-1])
+            U[:,k] = U[:,k-1] + np.array(dudt)*dt/p.nEulerSteps
+            if (self.t-self.te)>0.1: #and (L<2*sBall*dt or self.yb<2*self.dyb*dt):
+                if BallHitStool(self.t,U[:,k])<0:
+                    self.StoolBounce = True
+                if BallHitFloor(self.t,U[:,k])<0:   
+                    self.FloorBounce = True
+                if self.StoolBounce or self.FloorBounce:
                     self.te = self.t+k*dt
-                    self.ue = sol.y[:,k].tolist()
+                    self.ue = U[:,k] 
                     tBreak = k*dt
                     break 
         
         # If an event occured, increment the counter, otherwise continue
-        if StoolBounce or FloorBounce:        
+        if self.StoolBounce or self.FloorBounce:        
             # Change ball states depending on if it was a stool or floor bounce
-            if StoolBounce:
-                self.ue[1] = self.ue[1]+0.001
+            if self.StoolBounce:
+                #self.ue[1] = self.ue[1]+0.001
                 
                 # Obtain the bounce velocity
-                vBounce,vRecoil = BallBounce(self.te,self.ue)
+                vBounce,vRecoil = BallBounce(self)
                 self.ue[2] = vBounce[0]
                 self.ue[3] = vBounce[1]
                 
@@ -305,23 +302,25 @@ class gameState:
                 self.ue[10] = self.ue[10] + vRecoil[2]
                 self.ue[11] = self.ue[11] + vRecoil[3]
                 
-            elif FloorBounce:
-                self.ue[1] = 0.001
+            elif self.FloorBounce:
+                #self.ue[1] = 0.001
             
                 # Reverse direction of the ball
                 self.ue[2] = +p.COR*self.ue[2]
                 self.ue[3] = -p.COR*self.ue[3]       
          
             # Re-initialize from the event states
-            sol = spi.solve_ivp(PlayerAndStool,[0,dt-tBreak],self.ue)
-           
-        if StoolBounce or FloorBounce or gameMode<6:    
+            dudt = PlayerAndStool(self.t,self.ue)
+            self.u = self.ue + np.array(dudt)*(dt-tBreak)
+        else:   
+            # Update states
+            self.u = U[:,-1]  
+            
+        # Generate the new ball trajectory prediction line
+        if self.StoolBounce or self.FloorBounce or gameMode<7:    
             # Predict the future trajectory of the ball
             self.xI,self.yI,self.tI,self.xTraj,self.yTraj = BallPredict(self)
-            self.tI = self.tI+self.te
-        
-        # Update states
-        self.u = sol.y[:,-1].tolist()
+            self.tI = self.tI+self.te      
         
         # Stop the ball from moving if the player hasn't hit space yet
         if gameMode<6:
@@ -329,9 +328,7 @@ class gameState:
             self.n = 0
             self.u[0] = u0[0]
             self.u[1] = u0[1]
-            self.u[2] = 0
-            self.u[3] = 0   
-            
+
         # Named states    
         self   = varStates(self)
 
@@ -342,9 +339,7 @@ def resetStats():
 
 # Predict
 def BallPredict(gs):
-    # Unpack the state variables
-    #xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
-    
+
     if (gs.dyb>0) and (gs.yb<p.y0+p.d+p.l0): 
         # Solve for time and height at apogee
         ta = gs.dyb/p.g
@@ -574,18 +569,15 @@ def BallHitStool(t,u):
     return L 
 BallHitStool.terminal = True 
 
-def BallBounce(t,u):
-    # Unpack the state variables
-    xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
-        
+def BallBounce(gs):
     # Get the stool locations using stickDude function
-    xv,yv,sx,sy = stickDude(u)
+    xv,yv,sx,sy = stickDude(gs.u)
     
     # Vectors from the left edge of the stool to the right, and to the ball
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
     
     # Calculate z that minimizes the distance
-    z  = ( (xb-sx[0])*r1[0] + (yb-sy[0])*r1[1] )/( r1@r1 )
+    z  = ( (gs.xb-sx[0])*r1[0] + (gs.yb-sy[0])*r1[1] )/( r1@r1 )
     
     # Find the closest point of impact on the stool
     if z<0:
@@ -596,30 +588,30 @@ def BallBounce(t,u):
         ri = np.array([sx[0]+z*r1[0],sy[0]+z*r1[1]])
     
     # Velocity of the stool at the impact point 
-    vi = np.array([dxp-lp*np.sin(tp)-(ri[1]-yp)*dtp,
-                   dyp+lp*np.cos(tp)+(ri[0]-xp)*dtp])
+    vi = np.array([gs.dxp-gs.lp*np.sin(gs.tp)-(ri[1]-gs.yp)*gs.dtp,
+                   gs.dyp+gs.lp*np.cos(gs.tp)+(ri[0]-gs.xp)*gs.dtp])
     
     # Velocity of the ball relative to impact point
-    vbrel = np.array([dxb,dyb])-vi
+    vbrel = np.array([gs.dxb,gs.dyb])-vi
     
     # Vector from the closest point of impact to the center of the ball    
-    r2 = np.array([xb-ri[0],yb-ri[1]])
+    r2 = np.array([gs.xb-ri[0],gs.yb-ri[1]])
     u2 = r2/np.sqrt(r2@r2)
 
     # Delta ball velocity
     delta_vb = 2*p.COR*(u2@vbrel)
     
     # Velocity after bounce
-    vBounce = -u2*delta_vb + np.array([dxb,dyb])
+    vBounce = -u2*delta_vb + np.array([gs.dxb,gs.dyb])
     
     # Obtain the player recoil states
     BounceImpulse = -p.mg*vBounce
-    c = np.cos(tp)
-    s = np.sin(tp)
-    dRdq = np.matrix([[ 1   , 0   ],
-                      [ 0   , 1   ],
-                      [-s   , c   ],
-                      [-c*lp,-s*lp]])
+    c = np.cos(gs.tp)
+    s = np.sin(gs.tp)
+    dRdq = np.matrix([[ 1      , 0   ],
+                      [ 0      , 1   ],
+                      [-s      , c   ],
+                      [-c*gs.lp,-s*gs.lp]])
     Qi = dRdq@BounceImpulse
     vRecoil = p.invM@np.transpose(Qi)
 
@@ -636,86 +628,6 @@ def bhDebug(T,Y):
     plt.plot(T,Ls,'-bo')  
     plt.plot(T,Lf,'-rx')    
     plt.grid('on')
-
-#def simThisStep(t,u,te):
-#    # Unpack the state variables
-#    xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
-        
-#    # Initial assumption, there was no event
-#    StoolBounce = False
-#    FloorBounce = False
-    
-#    # Prevent event detection if there was already one within 0.1 seconds, 
-#    # or if the ball is far from the stool or ground
-#    L = BallHitStool(t,u)
-#    vball = np.array((dxb,dyb))
-    
-#    if p.odeIsEuler:
-#        # Integrate using Euler method
-#        sol = Bunch(y=np.zeros((12,p.nEulerSteps+1)),status=False)
-#        sol.y[:,0] = u
-#        for k in range(1,p.nEulerSteps+1):
-#            dydt = PlayerAndStool(t,sol.y[:,k-1])
-#            sol.y[:,k] = sol.y[:,k-1] + np.array(dydt)*dt/p.nEulerSteps
-#            if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or yb<2*dyb*dt):
-#                if BallHitStool(t,sol.y[:,k])<0:
-#                    StoolBounce = True
-#                if BallHitFloor(t,sol.y[:,k])<0:   
-#                    FloorBounce = True
-#                if StoolBounce or FloorBounce:
-#                    te = t+k*dt
-#                    ue = sol.y[:,k]
-#                    break        
-#    else:
-#        if (t-te)>0.1 and (L<2*np.sqrt(vball@vball)*dt or yb<2*dyb*dt):
-#            sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod, 
-#                                max_step=dt/4,first_step=dt/4,min_step=dt/8,
-#                                events=events)
-#        else:
-#            sol = spi.solve_ivp(PlayerAndStool,[0,dt],u,method=p.odeMethod,
-#                                first_step=dt,min_step=dt/4)    
-#            if sol.status:
-#                # Determine if the was stool or floor
-#                # and get states at time of event
-#                ue = sol.y[:,-1].tolist()
-#                if np.size(sol.t_events[0]):
-#                    te = sol.t_events[0][0]+t
-#                    StoolBounce = True
-#                elif np.size(sol.t_events[1]):
-#                    te = sol.t_events[1][0]+t
-#                    FloorBounce = True
-                    
-#    # If an event occured, increment the counter, otherwise continue
-#    if StoolBounce or FloorBounce:        
-#        # Change ball states depending on if it was a stool or floor bounce
-#        if StoolBounce:
-#            ue[1] = ue[1]+0.001
-            
-#            # Obtain the bounce velocity
-#            vBounce,vRecoil = BallBounce(te,ue)
-#            ue[2] = vBounce[0]
-#            ue[3] = vBounce[1]
-            
-#            # Add  the recoil to the player states
-#            ue[8]  = ue[8]  + vRecoil[0]
-#            ue[9]  = ue[9]  + vRecoil[1]
-#            ue[10] = ue[10] + vRecoil[2]
-#            ue[11] = ue[11] + vRecoil[3]
-            
-#        elif FloorBounce:
-#            ue[1] = 0.001
-        
-#            # Reverse direction of the ball
-#            ue[2] = +p.COR*ue[2]
-#            ue[3] = -p.COR*ue[3]       
-     
-#        # Re-initialize from the event states
-#        sol = spi.solve_ivp(PlayerAndStool,[0,dt],ue)
-#    else:
-#        wasEvent = False
-    
-#    return sol, StoolBounce, FloorBounce, te  
-
 
 def ThirdPoint(P0,P1,L,SGN):
 
