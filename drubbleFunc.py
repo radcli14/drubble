@@ -3,13 +3,17 @@
 import sys
 import time
 import numpy as np
-import scipy.integrate as spi
-import scipy.special as scs
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib.cbook import get_sample_data
-import pygame
+#import scipy.integrate as spi
+#import scipy.special as scs
+#import matplotlib.pyplot as plt
+#import matplotlib.animation as animation
+#from matplotlib.backends.backend_pdf import PdfPages
+#from matplotlib.cbook import get_sample_data
+engine = 'ista'
+if engine == 'pygame':
+    import pygame
+if engine == 'ista':
+	  from scene import *
 
 # Define the bunch class
 class Bunch:
@@ -30,27 +34,28 @@ skyBlue   = (220, 230, 255)
 darkGreen = (0,120,0)
 
 ## LOAD IMAGES, AND DEFINE FUNCTIONS TO DISPLAY THEM
-# Import the background image combining ESA, Big Chair, River, and USS Barry
-bg0 = pygame.image.load('figs/bg0.png')
-bg0 = pygame.transform.scale(bg0, (2400, 400))
-bg0_rect   = bg0.get_rect()
+if engine == 'pygame':
+		# Import the background image combining ESA, Big Chair, River, and USS Barry
+		bg0 = pygame.image.load('figs/bg0.png')
+		bg0 = pygame.transform.scale(bg0, (2400, 400))
+		bg0_rect   = bg0.get_rect()
 
-# Import the splash screen
-splash     = pygame.image.load('figs/splash.png')
-splashrect = splash.get_rect()
-scf        = 0.84*width/splashrect.width
-splash     = pygame.transform.scale(splash, 
-                 (int(splashrect.width*scf), int(int(splashrect.height*scf))))
-splashrect.left   = int(-0.07*width)
-splashrect.bottom = int(0.9*height)
-
-diagram    = pygame.image.load('figs/diagram.png')
-diagrect   = diagram.get_rect()
-scf        = 0.25*width/diagrect.width
-diagram    = pygame.transform.scale(diagram,
-                 (int(diagrect.width*scf),int(diagrect.height*scf)))
-diagrect.left   = int(width*0.75)
-diagrect.bottom = int(height+40)
+		# Import the splash screen
+		splash     = pygame.image.load('figs/splash.png')
+		splashrect = splash.get_rect()
+		scf        = 0.84*width/splashrect.width
+		splash     = pygame.transform.scale(splash, 
+		                 (int(splashrect.width*scf), int(int(splashrect.height*scf))))
+		splashrect.left   = int(-0.07*width)
+		splashrect.bottom = int(0.9*height)
+		
+		diagram    = pygame.image.load('figs/diagram.png')
+		diagrect   = diagram.get_rect()
+		scf        = 0.25*width/diagrect.width
+		diagram    = pygame.transform.scale(diagram,
+		                 (int(diagrect.width*scf),int(diagrect.height*scf)))
+		diagrect.left   = int(width*0.75)
+		diagrect.bottom = int(height+40)
 
 def makeSplashScreen(showedSplash):
     if showedSplash:
@@ -244,7 +249,7 @@ class gameState:
         self = varStates(self)
        
         self.ue = u0[:]
-        self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict()
+        self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict(self)
         
     # Execute a simulation step of duration dt    
     def simStep(self):
@@ -353,7 +358,7 @@ class gameScore:
         self.score = int(self.stoolDist*self.maxHeight*self.stoolCount) 
 
 # Predict
-def BallPredict():
+def BallPredict(gs):
 
     if (gs.dyb>0) and (gs.yb<p.y0+p.d+p.l0): 
         # Solve for time and height at apogee
@@ -661,19 +666,27 @@ def ThirdPoint(P0,P1,L,SGN):
 
 def stickDude(inp):
     # Get the state variables
-    if np.size(inp)<2:
+    if type(inp)==int:
         # States at time t[n]
-        x  = Y[n,4] # sol.y[0,n]
-        y  = Y[n,5] # sol.y[1,n]
-        l  = Y[n,6] # sol.y[2,n]
-        th = Y[n,7] # sol.y[3,n]
-        v  = Y[n,8] # sol.y[4,n]
-    else:
+        x  = Y[n,4] 
+        y  = Y[n,5] 
+        l  = Y[n,6] 
+        th = Y[n,7] 
+        v  = Y[n,8] 
+    elif type(inp)==list:
+    	  # States from u 
         x  = inp[4]
         y  = inp[5]
         l  = inp[6]
         th = inp[7]
         v  = inp[8]
+    elif type(inp)==gameState:
+        # States from gs
+        x  = inp.xp
+        y  = inp.yp
+        l  = inp.lp
+        th = inp.tp
+        v  = inp.dxp
         
     s = np.sin(th)
     c = np.cos(th)
@@ -740,8 +753,10 @@ def setRanges(u):
         yrng = -1, maxy
         
     MeterToPixel = width/(xrng[1]-xrng[0])
+    MeterToRatio = 1.0/(xrng[1]-xrng[0])
     PixelOffset  = (xrng[0]+xrng[1])/2*MeterToPixel
-    return xrng, yrng, MeterToPixel, PixelOffset
+    RatioOffset  = (xrng[0]+xrng[1])/2*MeterToRatio
+    return xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset
         
 def animate(n):
     # Get the plotting vectors using stickDude function
