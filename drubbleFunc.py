@@ -9,11 +9,14 @@ import numpy as np
 #import matplotlib.animation as animation
 #from matplotlib.backends.backend_pdf import PdfPages
 #from matplotlib.cbook import get_sample_data
-engine = 'ista'
+engine = 'pygame'
 if engine == 'pygame':
     import pygame
+    fs = 30
 if engine == 'ista':
-	  from scene import *
+    from scene import *
+    fs = 60
+dt = 1/fs
 
 # Define the bunch class
 class Bunch:
@@ -163,7 +166,7 @@ class parameters:
     l0 = 1.5     # Equilibrium position of stool
     ax = 1       # Horizontal acceleration [g]
     Qx = ax*m*g; # Max horizontal force [N]
-    Gx = 2.0;    # Control gain on Qx 
+    Gx = 1.5;    # Control gain on Qx 
     fy = 0.8     # vertical frequency [Hz]
     Ky = m*(fy*2*np.pi)**2 # Leg stiffness [N/m]
     Qy = Ky*0.3  # Leg strength [N], to be updated
@@ -173,7 +176,7 @@ class parameters:
     ft = 1.5     # Stool tilt frequency [Hz]
     Kt = (mg*l0*l0)*(ft*2*np.pi)**2 # Tilt stiffnes [N-m/rad]
     Qt = 0.6*Kt  # Tilt strength [N-m]
-    Gt = 0.8     # Control gain on Qt
+    Gt = 0.5     # Control gain on Qt
     vx = 10      # Horizontal top speed [m/s]
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio

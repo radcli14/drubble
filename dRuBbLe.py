@@ -12,10 +12,6 @@ q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
 u0 = [0,0,0,0,p.x0,p.y0,p.l0,0,0,0,0,1]
 gs = gameState(u0)
 
-# Set timing
-fs = 60
-dt = 1/fs
-
 # Open display
 if engine == 'pygame':
 		pygame.init()
@@ -31,8 +27,8 @@ if engine == 'pygame':
 # Set the keyboard input and mouse defaults
 keyPush        = np.zeros(8)
 mousePos       = width/2,height/2 
-#userControlled = np.array([True, True, True, True]) 
-userControlled = np.array([False, False, False, False])
+userControlled = np.array([True, True, True, True]) 
+#userControlled = np.array([False, False, False, False])
 
 # Initialize stats
 stats = gameScore()
@@ -139,7 +135,7 @@ if engine == 'pygame':
 		 
 		        ## ANIMATION
 		        # Get the ranges in meters using the setRanges function
-		        xrng, yrng, MeterToPixel, PixelOffset = setRanges(gs.u)
+		        xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset = setRanges(gs.u)
 		        
 		        # Draw the background
 		        makeBackgroundImage()
