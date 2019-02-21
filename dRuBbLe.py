@@ -13,7 +13,7 @@ u0 = [0,0,0,0,p.x0,p.y0,p.l0,0,0,0,0,1]
 gs = gameState(u0)
 
 # Set timing
-fs = 30
+fs = 60
 dt = 1/fs
 
 # Open display
@@ -31,8 +31,8 @@ if engine == 'pygame':
 # Set the keyboard input and mouse defaults
 keyPush        = np.zeros(8)
 mousePos       = width/2,height/2 
-userControlled = np.array([True, True, True, True]) 
-#userControlled = np.array([False, False, False, False])
+#userControlled = np.array([True, True, True, True]) 
+userControlled = np.array([False, False, False, False])
 
 # Initialize stats
 stats = gameScore()
@@ -169,8 +169,16 @@ if engine == 'pygame':
 		pygame.quit()
 		
 if engine == 'ista':
+	darkGreen = (0,120/255,0)
+	width, height = (736,414)
+	gameMode = 6
+	gs.u[2] = 3
+	gs.u[3] = 12
 	class Game (Scene):
 		def setup(self):
+			# Add the game state classes to the scene
+			self.gs = gs
+			
 			# Generate the sky blue background
 			self.background_color = '#acf9ee'
 			
@@ -188,17 +196,45 @@ if engine == 'ista':
 			self.ball.position = (gs.xb*MeterToPixel+PixelOffset, (gs.yb+p.rb)*MeterToPixel)
 			self.add_child(self.ball)
 			
-			# Initialize a player image
-			xv,yv,sx,sy = stickDude(gs)
-			self.player = ui.Path()
-			self.player.line_width = 0.2*MeterToPixel
-			self.player.line_join_style = ui.LINE_JOIN_ROUND
-			self.player.line_cap_style = ui.LINE_CAP_ROUND
-			self.player.move_to(xv[0]*MeterToPixel+PixelOffset,yv[0]*MeterToPixel)
-			for k in range(1,np.size(xv)-1):
-				self.player.line_to(xv[k]*MeterToPixel+PixelOffset,yv[k]*MeterToPixel)
+			# Initialize the player's head
+			spPix = 0.7*MeterToPixel
+			self.head = SpriteNode('emj:Slice_Of_Pizza')
+			self.head.size = (spPix,spPix)
+			self.head.anchor_point = (0.5, 0.0)
+			self.head.position = (gs.xp*MeterToPixel+PixelOffset, (gs.yp+p.d)*MeterToPixel)
+			self.add_child(self.head)
 			
-			self.player.stroke()
+		def update(self):
+			# Run one simulation step
+			self.gs.simStep()
+			xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset = setRanges(self.gs.u)
+			
+			# update the ball and head sprites
+			self.ball.position = (gs.xb*MeterToPixel-PixelOffset+width/2, (gs.yb+p.rb)*MeterToPixel)
+			self.head.position = (gs.xp*MeterToPixel-PixelOffset+width/2, (gs.yp+p.d)*MeterToPixel)
+			
+			
+		def draw(self):
+			xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset = setRanges(self.gs.u)
+			
+			# Generate a player image
+			xv,yv,sx,sy = stickDude(gs)
+			x=np.array(xv)*MeterToPixel-PixelOffset+width/2
+			y=np.array(yv)*MeterToPixel
+			stroke(darkGreen)
+			fill(darkGreen)
+			stroke_weight(3)
+			for k in range(1,np.size(xv)):
+				line(x[k-1],y[k-1],x[k],y[k])
+			
+			# Generate a stool image
+			x=np.array(sx)*MeterToPixel-PixelOffset+width/2
+			y=np.array(sy)*MeterToPixel
+			stroke(red)
+			fill(red)
+			stroke_weight(3)
+			for k in range(1,np.size(sx)):
+				line(x[k-1],y[k-1],x[k],y[k])
 						
 	if __name__ == '__main__':
 		run(Game(), LANDSCAPE, show_fps=True)

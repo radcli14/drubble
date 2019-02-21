@@ -265,7 +265,11 @@ class gameState:
         # or if the ball is far from the stool or ground
         L = BallHitStool(self.t,self.u)       # Distance to stool
         vBall = np.array((self.dxb,self.dyb)) # Velocity
-        sBall = np.sqrt(vBall@vBall)          # Speed
+        # Speed
+        try:
+        	sBall = np.sqrt(vBall@vBall)    
+        except:
+        	sBall = np.sqrt(np.sum(vBall*vBall))
         
         ## Integrate using Euler method
         # Initialize state variables
@@ -321,7 +325,7 @@ class gameState:
         # Generate the new ball trajectory prediction line
         if self.StoolBounce or self.FloorBounce or gameMode<7:    
             # Predict the future trajectory of the ball
-            self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict()
+            self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict(self)
 
         # Stop the ball from moving if the player hasn't hit space yet
         if gameMode<6:
@@ -507,7 +511,10 @@ def ControlLogic(t,u):
     ZEM = (gs.xI-0.05) - gs.xp - gs.dxp*np.abs(gs.timeUntilBounce-1)
     if userControlled[0]:
         if keyPush[0] +keyPush[1] == 0:
-            Bx = -scs.erf(gs.dxp)
+            try:
+            	Bx = -scs.erf(gs.dxp)
+            except:
+            	Bx = -gs.dxp
         else:
             Bx = keyPush[1]-keyPush[0]
     else:
@@ -568,7 +575,11 @@ def BallHitStool(t,u):
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
     
     # Calculate z that minimizes the distance
-    z  = ( (xb-sx[0])*r1[0] + (yb-sy[0])*r1[1] )/( r1@r1 )
+    try:
+    	r1mag2 = r1@r1
+    except:
+    	r1mag2 = np.sum(r1*r1)
+    z  = ( (xb-sx[0])*r1[0] + (yb-sy[0])*r1[1] )/r1mag2
     
     # Find the closest point of impact on the stool
     if z<0:
@@ -582,7 +593,11 @@ def BallHitStool(t,u):
     r2 = np.array([xb-ri[0],yb-ri[1]])
 
     # Calculate the distance to the outer radius of the ball t
-    L = np.sqrt(r2@r2)-p.rb
+    try:
+    	r2mag2 = r2@r2
+    except:
+    	r2mag2 = np.sum(r2*r2)
+    L = np.sqrt(r2mag2)-p.rb
     
     return L 
 BallHitStool.terminal = True 
@@ -595,7 +610,11 @@ def BallBounce(gs):
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
     
     # Calculate z that minimizes the distance
-    z  = ( (gs.xb-sx[0])*r1[0] + (gs.yb-sy[0])*r1[1] )/( r1@r1 )
+    try:
+    	r1amp2 = r1@r1
+    except:
+    	r1amp2 = np.sum(r1*r1)
+    z  = ( (gs.xb-sx[0])*r1[0] + (gs.yb-sy[0])*r1[1] )/r1amp2
     
     # Find the closest point of impact on the stool
     if z<0:
@@ -614,10 +633,18 @@ def BallBounce(gs):
     
     # Vector from the closest point of impact to the center of the ball    
     r2 = np.array([gs.xb-ri[0],gs.yb-ri[1]])
-    u2 = r2/np.sqrt(r2@r2)
+    try:
+    	r2amp2 = r2@r2
+    except:
+    	r2amp2 = np.sum(r2*r2)
+    u2 = r2/np.sqrt(r2amp2)
 
     # Delta ball velocity
-    delta_vb = 2*p.COR*(u2@vbrel)
+    try:
+    	u2vb = u2@vbrel
+    except:
+    	u2vb = np.sum(u2*vbrel)
+    delta_vb = 2*p.COR*u2vb
     
     # Velocity after bounce
     vBounce = -u2*delta_vb + np.array([gs.dxb,gs.dyb])
@@ -630,9 +657,11 @@ def BallBounce(gs):
                       [ 0      , 1   ],
                       [-s      , c   ],
                       [-c*gs.lp,-s*gs.lp]])
-    Qi = dRdq@BounceImpulse
-    vRecoil = p.invM@np.transpose(Qi)
-
+    try:
+    	Qi = dRdq@BounceImpulse
+    	vRecoil = p.invM@np.transpose(Qi)
+    except:
+    	vRecoil = np.array((0,0,0,0))
     return vBounce, vRecoil
 
 def bhDebug(T,Y):
@@ -673,7 +702,7 @@ def stickDude(inp):
         l  = Y[n,6] 
         th = Y[n,7] 
         v  = Y[n,8] 
-    elif type(inp)==list:
+    elif type(inp)==list or type(inp)==np.ndarray:
     	  # States from u 
         x  = inp[4]
         y  = inp[5]
@@ -751,7 +780,7 @@ def setRanges(u):
     else:
         xrng = midx-maxy-0.5, midx+maxy+0.5
         yrng = -1, maxy
-        
+
     MeterToPixel = width/(xrng[1]-xrng[0])
     MeterToRatio = 1.0/(xrng[1]-xrng[0])
     PixelOffset  = (xrng[0]+xrng[1])/2*MeterToPixel
