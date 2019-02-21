@@ -28,7 +28,7 @@ if engine == 'pygame':
 keyPush        = np.zeros(8)
 mousePos       = width/2,height/2 
 userControlled = np.array([True, True, True, True]) 
-#userControlled = np.array([False, False, False, False])
+userControlled = np.array([True, False, False, False])
 
 # Initialize stats
 stats = gameScore()
@@ -166,6 +166,7 @@ if engine == 'pygame':
 		
 if engine == 'ista':
 	darkGreen = (0,120/255,0)
+	gray = (0.7,0.7,0.7)
 	width, height = (736,414)
 	gameMode = 6
 	gs.u[2] = 3
@@ -201,36 +202,40 @@ if engine == 'ista':
 			self.add_child(self.head)
 			
 		def update(self):
+			# Get the gravity vector
+			g = gravity()
+			#print(np.around(g,2))
+			if np.abs(g[1])>0.05:
+				keyPush[0] = max(min(10*g[1],1),-1)
+			else:
+				keyPush[0] = 0
+			
 			# Run one simulation step
 			self.gs.simStep()
 			xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset = setRanges(self.gs.u)
 			
 			# update the ball and head sprites
-			self.ball.position = (gs.xb*MeterToPixel-PixelOffset+width/2, (gs.yb+p.rb)*MeterToPixel)
-			self.head.position = (gs.xp*MeterToPixel-PixelOffset+width/2, (gs.yp+p.d)*MeterToPixel)
+			self.ball.position = (gs.xb*MeterToPixel-PixelOffset+width/2, (gs.yb+p.rb)*MeterToPixel+height/20)
+			self.head.position = (gs.xp*MeterToPixel-PixelOffset+width/2, (gs.yp+p.d)*MeterToPixel+height/20)
 			
 			
 		def draw(self):
 			xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset = setRanges(self.gs.u)
 			
+			# Generate the trajectory
+			linePlot(gs.xTraj,gs.yTraj,MeterToPixel,PixelOffset,width,height,gray,1)
+			
+			# Generate the bottom line
+			stroke(black)
+			stroke_weight(height/20)
+			line(0,height/40,width,height/40)
+			
 			# Generate a player image
 			xv,yv,sx,sy = stickDude(gs)
-			x=np.array(xv)*MeterToPixel-PixelOffset+width/2
-			y=np.array(yv)*MeterToPixel
-			stroke(darkGreen)
-			fill(darkGreen)
-			stroke_weight(3)
-			for k in range(1,np.size(xv)):
-				line(x[k-1],y[k-1],x[k],y[k])
+			linePlot(xv,yv,MeterToPixel,PixelOffset,width,height,darkGreen,0.15*MeterToPixel)
 			
 			# Generate a stool image
-			x=np.array(sx)*MeterToPixel-PixelOffset+width/2
-			y=np.array(sy)*MeterToPixel
-			stroke(red)
-			fill(red)
-			stroke_weight(3)
-			for k in range(1,np.size(sx)):
-				line(x[k-1],y[k-1],x[k],y[k])
+			linePlot(sx,sy,MeterToPixel,PixelOffset,width,height,red,0.1*MeterToPixel)
 						
 	if __name__ == '__main__':
 		run(Game(), LANDSCAPE, show_fps=True)

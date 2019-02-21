@@ -9,13 +9,24 @@ import numpy as np
 #import matplotlib.animation as animation
 #from matplotlib.backends.backend_pdf import PdfPages
 #from matplotlib.cbook import get_sample_data
-engine = 'pygame'
+engine = 'ista'
 if engine == 'pygame':
     import pygame
     fs = 30
 if engine == 'ista':
     from scene import *
     fs = 60
+    def x2p(x,m2p,po,w):
+    	return np.array(x)*m2p-po+w/2
+    def y2p(y,m2p,h):
+    	return np.array(y)*m2p+h/20
+    def linePlot(x,y,m2p,po,w,h,clr,wgt):
+    	x = x2p(x,m2p,po,w)
+    	y = y2p(y,m2p,h)
+    	stroke(clr)
+    	stroke_weight(wgt)
+    	for k in range(1,np.size(x)):
+    		line(x[k-1],y[k-1],x[k],y[k])
 dt = 1/fs
 
 # Define the bunch class
@@ -176,7 +187,7 @@ class parameters:
     ft = 1.5     # Stool tilt frequency [Hz]
     Kt = (mg*l0*l0)*(ft*2*np.pi)**2 # Tilt stiffnes [N-m/rad]
     Qt = 0.6*Kt  # Tilt strength [N-m]
-    Gt = 0.5     # Control gain on Qt
+    Gt = 0.8     # Control gain on Qt
     vx = 10      # Horizontal top speed [m/s]
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio
@@ -509,9 +520,9 @@ def playerControlInput(event):
 
 def ControlLogic(t,u):
     # Control horizontal acceleration based on zero effort miss (ZEM)
-    # Subtract 1 secoond to get there early, and subtract 0.05 m to keep the
+    # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
-    ZEM = (gs.xI-0.05) - gs.xp - gs.dxp*np.abs(gs.timeUntilBounce-1)
+    ZEM = (gs.xI-0.1) - gs.xp - gs.dxp*np.abs(gs.timeUntilBounce-1)
     if userControlled[0]:
         if keyPush[0] +keyPush[1] == 0:
             try:
@@ -524,7 +535,7 @@ def ControlLogic(t,u):
         Bx = p.Gx*ZEM
         if Bx>1:
             Bx = 1
-        elif (Bx<-1) or (gs.timeUntilBounce<0.2) and (gs.timeUntilBounce>0):
+        elif (Bx<-1) or (gs.timeUntilBounce<0.1) and (gs.timeUntilBounce>0):
             Bx = -1
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
@@ -551,10 +562,10 @@ def ControlLogic(t,u):
     if userControlled[3]:
         Bth = keyPush[6]-keyPush[7]
     else:
-        Bth = p.Qt*(wantAngle-gs.tp)
+        Bth = p.Gt*(wantAngle-gs.tp)
         if Bth>1:
             Bth = 1
-        elif Bth<-1 or (gs.timeUntilBounce<0.2) and (gs.timeUntilBounce>0):
+        elif Bth<-1 or (gs.timeUntilBounce<0.017) and (gs.timeUntilBounce>0):
             Bth = -1
         
     Q = np.matrix([[Bx*p.Qx],[By*p.Qy],[Bl*p.Ql],[Bth*p.Qt]])    
