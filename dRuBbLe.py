@@ -33,17 +33,7 @@ userControlled = np.array([True, False, False, False])
 # Initialize stats
 stats = gameScore()
 
-# Define Game Mode
-# 0 = Quit
-# 1 = Splash screen
-# 2 = Options screen (TBD)
-# 3 = In game, pre-angle set
-# 4 = In game, angle set
-# 5 = In game, distance set
-# 6 = In game
-# 7 = Game over, resume option
-# 8 = Game over, high scores
-gameMode = 1
+# Settings for setting initial trjectory
 showedSplash = False
 sa           = np.pi/4
 startAngle   = sa
@@ -59,7 +49,7 @@ msg = ['','',
 # Run an infinite loop until gameMode is zero
 if engine == 'pygame':
 		clock = pygame.time.Clock()
-		while gameMode>0:
+		while gs.gameMode>0:
 		    ## USER INPUT
 		    for event in pygame.event.get():
 		        # Detect the quit event (window close)
@@ -109,17 +99,17 @@ if engine == 'pygame':
 		        keyPush = playerControlInput(event)             
 		
 		    # Show the Splash Sreen
-		    if gameMode==1:
+		    if gs.gameMode==1:
 		        showedSplash = makeSplashScreen(showedSplash)
 		    
-		    if gameMode>1 and gameMode<7:
+		    if gs.gameMode>1 and gs.gameMode<7:
 		        screen.fill(skyBlue)
 		        ## ANGLE AND SPEED SETTINGS
-		        if gameMode == 4:
+		        if gs.gameMode == 4:
 		            startAngle = 0.25*np.pi*(1 + np.sin(phase))
-		        if gameMode == 5:
+		        if gs.gameMode == 5:
 		            startSpeed = ss*(1 + np.cos(phase))
-		        if gameMode == 4 or gameMode == 5:
+		        if gs.gameMode == 4 or gs.gameMode == 5:
 		            phase += 0.05
 		            vx0 = startSpeed*np.cos(startAngle)
 		            vy0 = startSpeed*np.sin(startAngle)
@@ -130,7 +120,7 @@ if engine == 'pygame':
 		        gs.simStep()
 		        
 		        # Update statistics
-		        if gameMode==6:
+		        if gs.gameMode==6:
 		            stats.update()
 		 
 		        ## ANIMATION
@@ -168,7 +158,7 @@ if engine == 'ista':
 	darkGreen = (0,120/255,0)
 	gray = (0.7,0.7,0.7)
 	width, height = (736,414)
-	gameMode = 6
+	gs.gameMode = 6
 	gs.u[2] = 3
 	gs.u[3] = 12
 	class Game (Scene):

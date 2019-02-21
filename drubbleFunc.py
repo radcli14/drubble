@@ -265,6 +265,18 @@ class gameState:
         self.ue = u0[:]
         self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict(self)
         
+        # Define Game Mode
+        # 0 = Quit
+        # 1 = Splash screen
+        # 2 = Options screen (TBD)
+        # 3 = In game, pre-angle set
+        # 4 = In game, angle set
+        # 5 = In game, distance set
+        # 6 = In game
+        # 7 = Game over, resume option
+        # 8 = Game over, high scores
+        self.gameMode = 1
+        
     # Execute a simulation step of duration dt    
     def simStep(self):
         # Increment timing variables
@@ -280,10 +292,11 @@ class gameState:
         L = BallHitStool(self.t,self.u)       # Distance to stool
         vBall = np.array((self.dxb,self.dyb)) # Velocity
         # Speed
-        try:
-        	sBall = np.sqrt(vBall@vBall)    
-        except:
-        	sBall = np.sqrt(np.sum(vBall*vBall))
+        #try:
+        #	sBall = np.sqrt(vBall@vBall)    
+        #except:
+        #	sBall = np.sqrt(np.sum(vBall*vBall))
+        sBall = np.linalg.norm(vBall)
         
         ## Integrate using Euler method
         # Initialize state variables
@@ -337,12 +350,12 @@ class gameState:
             self.u = U[:,-1]  
             
         # Generate the new ball trajectory prediction line
-        if self.StoolBounce or self.FloorBounce or gameMode<7:    
+        if self.StoolBounce or self.FloorBounce or self.gameMode<7:    
             # Predict the future trajectory of the ball
             self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict(self)
 
         # Stop the ball from moving if the player hasn't hit space yet
-        if gameMode<6:
+        if self.gameMode<6:
             self.t = 0
             self.n = 0
             self.u[0] = u0[0]
@@ -589,11 +602,11 @@ def BallHitStool(t,u):
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
     
     # Calculate z that minimizes the distance
-    try:
-    	r1mag2 = r1@r1
-    except:
-    	r1mag2 = np.sum(r1*r1)
-    z  = ( (xb-sx[0])*r1[0] + (yb-sy[0])*r1[1] )/r1mag2
+    #try:
+    #	r1mag2 = r1@r1
+    #except:
+    #	r1mag2 = np.sum(r1*r1)
+    z  = ( (xb-sx[0])*r1[0] + (yb-sy[0])*r1[1] )/(r1.dot(r1))
     
     # Find the closest point of impact on the stool
     if z<0:
@@ -607,11 +620,11 @@ def BallHitStool(t,u):
     r2 = np.array([xb-ri[0],yb-ri[1]])
 
     # Calculate the distance to the outer radius of the ball t
-    try:
-    	r2mag2 = r2@r2
-    except:
-    	r2mag2 = np.sum(r2*r2)
-    L = np.sqrt(r2mag2)-p.rb
+    #try:
+    #	r2mag2 = r2@r2
+    #except:
+    #	r2mag2 = np.sum(r2*r2)
+    L = np.sqrt(r2.dot(r2))-p.rb
     
     return L 
 BallHitStool.terminal = True 
@@ -624,11 +637,11 @@ def BallBounce(gs):
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
     
     # Calculate z that minimizes the distance
-    try:
-    	r1amp2 = r1@r1
-    except:
-    	r1amp2 = np.sum(r1*r1)
-    z  = ( (gs.xb-sx[0])*r1[0] + (gs.yb-sy[0])*r1[1] )/r1amp2
+    #try:
+    #	r1amp2 = r1@r1
+    #except:
+    #	r1amp2 = np.sum(r1*r1)
+    z  = ( (gs.xb-sx[0])*r1[0] + (gs.yb-sy[0])*r1[1] )/(r1.dot(r1))
     
     # Find the closest point of impact on the stool
     if z<0:
@@ -647,18 +660,18 @@ def BallBounce(gs):
     
     # Vector from the closest point of impact to the center of the ball    
     r2 = np.array([gs.xb-ri[0],gs.yb-ri[1]])
-    try:
-    	r2amp2 = r2@r2
-    except:
-    	r2amp2 = np.sum(r2*r2)
-    u2 = r2/np.sqrt(r2amp2)
+    #try:
+    #	r2amp2 = r2@r2
+    #except:
+    #	r2amp2 = np.sum(r2*r2)
+    u2 = r2/np.sqrt(r2.dot(r2))
 
     # Delta ball velocity
-    try:
-    	u2vb = u2@vbrel
-    except:
-    	u2vb = np.sum(u2*vbrel)
-    delta_vb = 2*p.COR*u2vb
+    #try:
+    #	u2vb = u2@vbrel
+    #except:
+    #	u2vb = np.sum(u2*vbrel)
+    delta_vb = 2*p.COR*u2.dot(vbrel)
     
     # Velocity after bounce
     vBounce = -u2*delta_vb + np.array([gs.dxb,gs.dyb])
@@ -667,15 +680,17 @@ def BallBounce(gs):
     BounceImpulse = -p.mg*vBounce
     c = np.cos(gs.tp)
     s = np.sin(gs.tp)
-    dRdq = np.matrix([[ 1      , 0   ],
-                      [ 0      , 1   ],
-                      [-s      , c   ],
-                      [-c*gs.lp,-s*gs.lp]])
-    try:
-    	Qi = dRdq@BounceImpulse
-    	vRecoil = p.invM@np.transpose(Qi)
-    except:
-    	vRecoil = np.array((0,0,0,0))
+    dRdq = np.array([[ 1      , 0   ],
+                     [ 0      , 1   ],
+                     [-s      , c   ],
+                     [-c*gs.lp,-s*gs.lp]])
+    #try:
+    #	Qi = dRdq@BounceImpulse
+    #	vRecoil = p.invM@np.transpose(Qi)
+    #except:
+    	#vRecoil = np.array((0,0,0,0))
+    Qi = dRdq.dot(BounceImpulse)
+    vRecoil = np.dot(p.invM,Qi)
     return vBounce, vRecoil
 
 def bhDebug(T,Y):
