@@ -9,7 +9,7 @@ import numpy as np
 #import matplotlib.animation as animation
 #from matplotlib.backends.backend_pdf import PdfPages
 #from matplotlib.cbook import get_sample_data
-engine = 'ista'
+engine = 'pygame'
 if engine == 'pygame':
     import pygame
     fs = 30
@@ -25,6 +25,10 @@ if engine == 'pygame':
     pink      = (255,100,100)
     skyBlue   = (220, 230, 255)
     darkGreen = (0,120,0)
+    
+    def xy2p(x,y,m2p,po,w,h):
+    	return np.array(x)*m2p-po+w/2, h-(np.array(y)+1)*m2p
+    
 if engine == 'ista':
     from scene import *
     fs = 60
@@ -41,15 +45,10 @@ if engine == 'ista':
     skyBlue   = (220/255, 230/255, 1)
     darkGreen = (0,120/255,0)
     
-    #def x2p(x,m2p,po,w):
-    #	return np.array(x)*m2p-po+w/2
-    #def y2p(y,m2p,h):
-    #	return np.array(y)*m2p+h/20
     def xy2p(x,y,m2p,po,w,h):
     	return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
+    
     def linePlot(x,y,m2p,po,w,h,clr,wgt):
-    	#x = x2p(x,m2p,po,w)
-    	#y = y2p(y,m2p,h)
     	x,y = xy2p(x,y,m2p,po,w,h)
     	stroke(clr)
     	stroke_weight(wgt)
@@ -106,8 +105,13 @@ def makeSplashScreen(showedSplash):
 
 def showMessage(msgText):
     font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/32))
-    msgRend = font.render(msgText, True, black)
-    screen.blit(msgRend,(0.05*width,0.1*height))
+    if type(msgText)==str:
+        msgRend = font.render(msgText, True, black)
+        screen.blit(msgRend,(0.05*width,0.1*height))
+    elif type(msgText)==list:
+        for n in range(np.size(msgText)):
+            msgRend = font.render(msgText[n], True, black)
+            screen.blit(msgRend,(0.05*width,0.1*height+n*36))
     
 def makeBackgroundImage():
     # Draw the ESA, Big Chair, River, and USS Barry
@@ -115,7 +119,7 @@ def makeBackgroundImage():
 
 def drawBackgroundImage(image,rect,xpos,ypos,howTall):
     rect.left = width*(-(gs.xb+gs.xp)/120+xpos)
-    rect.bottom = height+(gs.yb/40-0.9)*MeterToPixel
+    rect.bottom = height+(gs.yb/40-0.9)*m2p
     screen.blit(image,rect)
     
 def makeGameImage():
@@ -123,29 +127,28 @@ def makeGameImage():
     xv,yv,sx,sy = stickDude(gs.u)
         
     # Convert to pixels
-    xvp          = np.array(xv)*MeterToPixel-PixelOffset+width/2
-    yvp          = height-(np.array(yv)+1)*MeterToPixel
-    sxp          = np.array(sx)*MeterToPixel-PixelOffset+width/2
-    syp          = height-(np.array(sy)+1)*MeterToPixel
-    trajList     = list(zip(np.array(gs.xTraj)*MeterToPixel-PixelOffset+width/2,
-                            height-(np.array(gs.yTraj)+1)*MeterToPixel))
+    xvp,yvp = xy2p(xv,yv,m2p,po,width,height)
+    sxp,syp = xy2p(sx,sy,m2p,po,width,height)
+
+    trajList     = list(zip(np.array(gs.xTraj)*m2p-po+width/2,
+                            height-(np.array(gs.yTraj)+1)*m2p))
     stickList    = list(zip(xvp,yvp))
     stoolList    = list(zip(sxp,syp))
-    ballPosition = (int(gs.xb*MeterToPixel-PixelOffset+width/2),
-                    int(height-(gs.yb+1)*MeterToPixel) )
-    headPosition = (int(gs.xp*MeterToPixel-PixelOffset+width/2), 
-                    int(height-(gs.yp+1.75*p.d+1)*MeterToPixel) )
+    ballPosition = (int(gs.xb*m2p-po+width/2),
+                    int(height-(gs.yb+1)*m2p) )
+    headPosition = (int(gs.xp*m2p-po+width/2), 
+                    int(height-(gs.yp+1.75*p.d+1)*m2p) )
     
     # Draw circles and lines
-    pygame.draw.circle(screen, darkGreen, headPosition, int(p.rb*MeterToPixel), 0)
+    pygame.draw.circle(screen, darkGreen, headPosition, int(p.rb*m2p), 0)
     pygame.draw.lines(screen, gray, False, trajList, 1)
     pygame.draw.lines(screen, darkGreen, False, stickList, 
-                      int(np.ceil(0.15*MeterToPixel)))
+                      int(np.ceil(0.15*m2p)))
     pygame.draw.lines(screen, red, False, stoolList, 
-                      int(np.ceil(0.1*MeterToPixel)))
-    pygame.draw.line(screen, black, (0,height-0.5*MeterToPixel),
-                     (width,height-0.5*MeterToPixel),int(MeterToPixel))
-    pygame.draw.circle(screen, pink, ballPosition, int(p.rb*MeterToPixel), 0)
+                      int(np.ceil(0.1*m2p)))
+    pygame.draw.line(screen, black, (0,height-0.5*m2p),
+                     (width,height-0.5*m2p),int(m2p))
+    pygame.draw.circle(screen, pink, ballPosition, int(p.rb*m2p), 0)
     
 def makeScoreLine():
     font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/24))
@@ -161,19 +164,17 @@ def makeScoreLine():
     screen.blit(score,(0.77*width,0))
 
 def makeMarkers():
-    font   = pygame.font.SysFont(p.MacsFavoriteFont,
-                                 int(np.around(0.8*MeterToPixel)))
+
+    font   = pygame.font.SysFont(p.MacsFavoriteFont,int(np.around(0.8*m2p)))
     xrng_r = np.around(xrng,-1)
     xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
     for k in range(0,xrng_n):
         xr = xrng_r[0]+10*k
-        start_pos = [xr*MeterToPixel-PixelOffset+width/2,height-MeterToPixel]
-        end_pos   = [xr*MeterToPixel-PixelOffset+width/2,height]
-        pygame.draw.line(screen, white, start_pos, end_pos)
+        [start_x,start_y] = xy2p(xr, 0,m2p,po,width,height) 
+        [end_x,end_y]     = xy2p(xr,-1,m2p,po,width,height) 
+        pygame.draw.line(screen, white, [start_x,start_y], [end_x,end_y])
         meter = font.render(str(int(xr)), True, white)
-        start_pos[0]=start_pos[0]+0.2*MeterToPixel
-        start_pos[1]=start_pos[1]-0.1*MeterToPixel
-        screen.blit(meter,start_pos)
+        screen.blit(meter,[start_x+0.2*m2p,start_y-0.1*m2p])
 
 # Parameters
 class parameters:
@@ -292,6 +293,11 @@ class gameState:
         # 8 = Game over, high scores
         self.gameMode = 1
         
+        # Angle and Speed Conditions
+        self.startAngle = sa
+        self.startSpeed = ss
+        self.phase      = 0
+                
     # Execute a simulation step of duration dt    
     def simStep(self):
         # Increment timing variables
@@ -373,6 +379,18 @@ class gameState:
 
         # Named states    
         self   = varStates(self)
+        
+    def setAngleSpeed(self):
+        if self.gameMode == 4:
+            self.startAngle = 0.25*np.pi*(1 + 0.75*np.sin(self.phase))
+        if self.gameMode == 5:
+            self.startSpeed = ss*(1 + 0.75*np.sin(self.phase))
+        if self.gameMode == 4 or self.gameMode == 5:
+            self.phase += 3*dt
+            vx0 = self.startSpeed*np.cos(self.startAngle)
+            vy0 = self.startSpeed*np.sin(self.startAngle)
+            self.u[2] = vx0
+            self.u[3] = vy0
 
 class gameScore:
     # Initiate statistics as zeros
@@ -820,7 +838,7 @@ def animate(n):
     BA.set_data(XB[n,:],YB[n,:])
     
     # Update Axis Limits
-    xrng, yrng = setRanges(Y[n,:])
+    xrng, yrng, m2p, po, m2r, ro = setRanges(Y[n,:])
     ax.set_xlim(xrng)
     ax.set_ylim(yrng)
     
