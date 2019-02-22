@@ -583,7 +583,6 @@ def ControlLogic(t,u):
             Bx = 1
         elif (Bx<-1) or (gs.timeUntilBounce<0.1) and (gs.timeUntilBounce>0):
             Bx = -1
-    print(dxp)
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
     if userControlled[1]:

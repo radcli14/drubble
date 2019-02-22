@@ -145,8 +145,8 @@ if engine == 'ista':
     class Game (Scene):
         def setup(self):
             # Add the game state classes to the scene
-            self.gs = gs
-            self.stats = stats
+            #self.gs = gs
+            #self.stats = stats
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
@@ -174,22 +174,24 @@ if engine == 'ista':
             self.add_child(self.head)
         
         def touch_began(self, touch):
+            gs = self.gs
             # Progress through angle and speed selection
-            if (self.gs.gameMode==3 or self.gs.gameMode==4): 
-                self.gs.gameMode += 1
-                self.gs.phase = 0
-                return
+            if (gs.gameMode==3 or self.gs.gameMode==4): 
+                gs.gameMode += 1
+                gs.phase = 0
+                return gs
             
             # Start the ball moving!
-            if self.gs.gameMode == 5:
-                self.gs.gameMode = 6
-                return
+            if gs.gameMode == 5:
+                gs.gameMode = 6
+                return gs
             
             # Reset the game
-            if self.gs.gameMode == 6:
-                self.stats = gameScore()
-                self.gs = gameState(u0)
-                self.gs.gameMode = 3
+            if gs.gameMode == 6:
+                stats = gameScore()
+                gs = gameState(u0)
+                gs.gameMode = 3
+                return gs, stats
         
         def update(self):
             # Get the gravity vector
@@ -203,27 +205,29 @@ if engine == 'ista':
             else:
                 keyPush[0] = 0
                 keyPush[1] = 0
-            #print(keyPush[:2])
             
             ## ANGLE AND SPEED SETTINGS
-            if self.gs.gameMode>2 and self.gs.gameMode<6:
-                self.gs.setAngleSpeed()
+            if gs.gameMode>2 and gs.gameMode<6:
+                gs.setAngleSpeed()
             
             # Run one simulation step
-            self.gs.simStep()
-            xrng, yrng, m2p, po, m2r, ro = setRanges(self.gs.u)
+            gs.simStep()
+            xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
             # update the ball and head sprites
-            self.ball.position = (self.gs.xb*m2p-po+width/2, 
-                                 (self.gs.yb+p.rb)*m2p+height/20)
-            self.head.position = (self.gs.xp*m2p-po+width/2, 
-                                 (self.gs.yp+p.d)*m2p+height/20)
+            self.ball.position = (gs.xb*m2p-po+width/2, 
+                                 (gs.yb+p.rb)*m2p+height/20)
+            self.head.position = (gs.xp*m2p-po+width/2, 
+                                 (gs.yp+p.d)*m2p+height/20)
+                                 
+            self.gs = gs
+            print(gs.gameMode)
             
         def draw(self):
-            xrng, yrng, m2p, po, m2r, ro = setRanges(self.gs.u)
+            xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
             # Generate the trajectory
-            linePlot(self.gs.xTraj,self.gs.yTraj,m2p,po,width,height,gray,1)
+            linePlot(gs.xTraj,gs.yTraj,m2p,po,width,height,gray,1)
             
             # Generate the bottom line
             stroke(black)
@@ -231,7 +235,7 @@ if engine == 'ista':
             line(0,height/40,width,height/40)
             
             # Generate a player image
-            xv,yv,sx,sy = stickDude(self.gs)
+            xv,yv,sx,sy = stickDude(gs)
             linePlot(xv,yv,m2p,po,width,height,darkGreen,0.15*m2p)
             
             # Generate a stool image
