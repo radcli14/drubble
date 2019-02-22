@@ -32,8 +32,6 @@ stats = gameScore()
 
 # Settings for setting initial trjectory
 showedSplash = False
-sa           = np.pi/4
-ss           = 10
 
 msg = ['','',
        ['OPTIONS','    Single Drubble','','','','Press space to begin!!!'],
@@ -161,18 +159,18 @@ if engine == 'ista':
             
             # Initialize the ball image
             self.ball = SpriteNode('emj:Red_Circle')
-            dbPix = 2*p.rb*MeterToPixel
+            dbPix = 2*p.rb*m2p
             self.ball.size = (dbPix,dbPix)
             self.ball.anchor_point = (0.5, 0.5)
-            self.ball.position = (gs.xb*MeterToPixel+PixelOffset, (gs.yb+p.rb)*MeterToPixel)
+            self.ball.position = (gs.xb*m2p+po, (gs.yb+p.rb)*m2p)
             self.add_child(self.ball)
             
             # Initialize the player's head
-            spPix = 0.7*MeterToPixel
+            spPix = 0.7*m2p
             self.head = SpriteNode('emj:Slice_Of_Pizza')
             self.head.size = (spPix,spPix)
             self.head.anchor_point = (0.5, 0.0)
-            self.head.position = (gs.xp*MeterToPixel+PixelOffset, (gs.yp+p.d)*MeterToPixel)
+            self.head.position = (gs.xp*m2p+po, (gs.yp+p.d)*m2p)
             self.add_child(self.head)
         
         def touch_began(self, touch):
@@ -180,10 +178,12 @@ if engine == 'ista':
             if (self.gs.gameMode==3 or self.gs.gameMode==4): 
                 self.gs.gameMode += 1
                 self.gs.phase = 0
+                return
             
             # Start the ball moving!
             if self.gs.gameMode == 5:
                 self.gs.gameMode = 6
+                return
             
             # Reset the game
             if self.gs.gameMode == 6:
@@ -194,32 +194,36 @@ if engine == 'ista':
         def update(self):
             # Get the gravity vector
             g = gravity()
-            gThreshold = 0.05
-            slope = 10
+            gThreshold = 0.1
+            slope = 5
             if g[1]>gThreshold:
                 keyPush[0] = min(slope*(g[1]-gThreshold),1)
             elif g[1]<-gThreshold:
-                keyPush[1] = max(slope*(g[1]+gThreshold),-1)
+                keyPush[1] = -max(slope*(g[1]+gThreshold),-1)
             else:
                 keyPush[0] = 0
                 keyPush[1] = 0
+            #print(keyPush[:2])
+            
+            ## ANGLE AND SPEED SETTINGS
+            if self.gs.gameMode>2 and self.gs.gameMode<6:
+                self.gs.setAngleSpeed()
             
             # Run one simulation step
             self.gs.simStep()
             xrng, yrng, m2p, po, m2r, ro = setRanges(self.gs.u)
             
             # update the ball and head sprites
-            self.ball.position = (gs.xb*m2p-po+width/2, 
-                                 (gs.yb+p.rb)*m2p+height/20)
-            self.head.position = (gs.xp*m2p-po+width/2, 
-                                 (gs.yp+p.d)*m2p+height/20)
-            
+            self.ball.position = (self.gs.xb*m2p-po+width/2, 
+                                 (self.gs.yb+p.rb)*m2p+height/20)
+            self.head.position = (self.gs.xp*m2p-po+width/2, 
+                                 (self.gs.yp+p.d)*m2p+height/20)
             
         def draw(self):
             xrng, yrng, m2p, po, m2r, ro = setRanges(self.gs.u)
             
             # Generate the trajectory
-            linePlot(gs.xTraj,gs.yTraj,m2p,po,width,height,gray,1)
+            linePlot(self.gs.xTraj,self.gs.yTraj,m2p,po,width,height,gray,1)
             
             # Generate the bottom line
             stroke(black)
@@ -227,7 +231,7 @@ if engine == 'ista':
             line(0,height/40,width,height/40)
             
             # Generate a player image
-            xv,yv,sx,sy = stickDude(gs)
+            xv,yv,sx,sy = stickDude(self.gs)
             linePlot(xv,yv,m2p,po,width,height,darkGreen,0.15*m2p)
             
             # Generate a stool image

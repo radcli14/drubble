@@ -228,6 +228,10 @@ class parameters:
                    [  0    , mg , mg ,    0    ],
                    [-mg*l0 , 0  , 0  , mg*l0**2]])
     
+    # startAngle (sa) and startSpeed (ss) initially
+    sa = np.pi/4
+    ss = 10
+    
     # Parameter settings I'm using to try to improve running speed
     invM = M.I
     linearMass  = True
@@ -294,8 +298,8 @@ class gameState:
         self.gameMode = 1
         
         # Angle and Speed Conditions
-        self.startAngle = sa
-        self.startSpeed = ss
+        self.startAngle = p.sa
+        self.startSpeed = p.ss
         self.phase      = 0
                 
     # Execute a simulation step of duration dt    
@@ -384,7 +388,7 @@ class gameState:
         if self.gameMode == 4:
             self.startAngle = 0.25*np.pi*(1 + 0.75*np.sin(self.phase))
         if self.gameMode == 5:
-            self.startSpeed = ss*(1 + 0.75*np.sin(self.phase))
+            self.startSpeed = p.ss*(1 + 0.75*np.sin(self.phase))
         if self.gameMode == 4 or self.gameMode == 5:
             self.phase += 3*dt
             self.u[2] = self.startSpeed*np.cos(self.startAngle)
@@ -558,16 +562,19 @@ def playerControlInput(event):
     return keyPush
 
 def ControlLogic(t,u):
+    # Unpack the state variables
+    xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
+	
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
-    ZEM = (gs.xI-0.1) - gs.xp - gs.dxp*np.abs(gs.timeUntilBounce-1)
+    ZEM = (gs.xI-0.1) - xp - dxp*np.abs(gs.timeUntilBounce-1)
     if userControlled[0]:
         if keyPush[0] +keyPush[1] == 0:
             try:
-            	Bx = -scs.erf(gs.dxp)
+            	Bx = -scs.erf(dxp)
             except:
-            	Bx = -gs.dxp
+            	Bx = -np.sign(dxp)
         else:
             Bx = keyPush[1]-keyPush[0]
     else:
@@ -576,6 +583,7 @@ def ControlLogic(t,u):
             Bx = 1
         elif (Bx<-1) or (gs.timeUntilBounce<0.1) and (gs.timeUntilBounce>0):
             Bx = -1
+    print(dxp)
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
     if userControlled[1]:
@@ -595,13 +603,13 @@ def ControlLogic(t,u):
         Bl = np.abs(gs.timeUntilBounce)<0.2
     
     # Control stool angle by pointing at the ball
-    xdiff = gs.xb-gs.xp # Ball distance - player distance
-    ydiff = gs.yb-gs.yp-p.d
+    xdiff = xb-xp # Ball distance - player distance
+    ydiff = yb-yp-p.d
     wantAngle = np.arctan2(-xdiff,ydiff)
     if userControlled[3]:
         Bth = keyPush[6]-keyPush[7]
     else:
-        Bth = p.Gt*(wantAngle-gs.tp)
+        Bth = p.Gt*(wantAngle-tp)
         if Bth>1:
             Bth = 1
         elif Bth<-1 or (gs.timeUntilBounce<0.017) and (gs.timeUntilBounce>0):
