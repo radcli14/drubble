@@ -13,16 +13,44 @@ engine = 'pygame'
 if engine == 'pygame':
     import pygame
     fs = 30
+    # Window size and color definition
+    size      = width, height = 1200, 700
+    red       = (255,0,0)
+    green     = (0,255,0)
+    blue      = (0,0,255)
+    darkBlue  = (0,0,128)
+    white     = (255,255,255)
+    gray      = (160,160,160)
+    black     = (0,0,0)
+    pink      = (255,100,100)
+    skyBlue   = (220, 230, 255)
+    darkGreen = (0,120,0)
 if engine == 'ista':
     from scene import *
     fs = 60
-    def x2p(x,m2p,po,w):
-    	return np.array(x)*m2p-po+w/2
-    def y2p(y,m2p,h):
-    	return np.array(y)*m2p+h/20
+    # Window size and color definition
+    size      = width, height = 736, 414
+    red       = (1,0,0)
+    green     = (0,1,0)
+    blue      = (0,0,1)
+    darkBlue  = (0,0,128/255)
+    white     = (1,1,1)
+    gray      = (160/255,160/255,160/255)
+    black     = (0,0,0)
+    pink      = (1,100/255,100/255)
+    skyBlue   = (220/255, 230/255, 1)
+    darkGreen = (0,120/255,0)
+    
+    #def x2p(x,m2p,po,w):
+    #	return np.array(x)*m2p-po+w/2
+    #def y2p(y,m2p,h):
+    #	return np.array(y)*m2p+h/20
+    def xy2p(x,y,m2p,po,w,h):
+        return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
     def linePlot(x,y,m2p,po,w,h,clr,wgt):
-    	x = x2p(x,m2p,po,w)
-    	y = y2p(y,m2p,h)
+    	#x = x2p(x,m2p,po,w)
+    	#y = y2p(y,m2p,h)
+        x,y = xy2p(x,y,m2p,po,w,h)
     	stroke(clr)
     	stroke_weight(wgt)
     	for k in range(1,np.size(x)):
@@ -33,19 +61,6 @@ dt = 1/fs
 class Bunch:
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
-
-# Window size and color definition
-size      = width, height = 1200, 700
-red       = (255,0,0)
-green     = (0,255,0)
-blue      = (0,0,255)
-darkBlue  = (0,0,128)
-white     = (255,255,255)
-gray      = (160,160,160)
-black     = (0,0,0)
-pink      = (255,100,100)
-skyBlue   = (220, 230, 255)
-darkGreen = (0,120,0)
 
 ## LOAD IMAGES, AND DEFINE FUNCTIONS TO DISPLAY THEM
 if engine == 'pygame':

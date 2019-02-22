@@ -155,9 +155,6 @@ if engine == 'pygame':
 		pygame.quit()
 		
 if engine == 'ista':
-	darkGreen = (0,120/255,0)
-	gray = (0.7,0.7,0.7)
-	width, height = (736,414)
 	gs.gameMode = 6
 	gs.u[2] = 3
 	gs.u[3] = 12
@@ -202,18 +199,20 @@ if engine == 'ista':
 			
 			# Run one simulation step
 			self.gs.simStep()
-			xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset = setRanges(self.gs.u)
+			xrng, yrng, m2p, po, m2r, ro = setRanges(self.gs.u)
 			
 			# update the ball and head sprites
-			self.ball.position = (gs.xb*MeterToPixel-PixelOffset+width/2, (gs.yb+p.rb)*MeterToPixel+height/20)
-			self.head.position = (gs.xp*MeterToPixel-PixelOffset+width/2, (gs.yp+p.d)*MeterToPixel+height/20)
+			self.ball.position = (gs.xb*m2p-po+width/2, 
+                                 (gs.yb+p.rb)*m2p+height/20)
+			self.head.position = (gs.xp*m2p-po+width/2, 
+                                 (gs.yp+p.d)*m2p+height/20)
 			
 			
 		def draw(self):
-			xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset = setRanges(self.gs.u)
+			xrng, yrng, m2p, po, m2r, ro = setRanges(self.gs.u)
 			
 			# Generate the trajectory
-			linePlot(gs.xTraj,gs.yTraj,MeterToPixel,PixelOffset,width,height,gray,1)
+			linePlot(gs.xTraj,gs.yTraj,m2p,po,width,height,gray,1)
 			
 			# Generate the bottom line
 			stroke(black)
@@ -222,10 +221,10 @@ if engine == 'ista':
 			
 			# Generate a player image
 			xv,yv,sx,sy = stickDude(gs)
-			linePlot(xv,yv,MeterToPixel,PixelOffset,width,height,darkGreen,0.15*MeterToPixel)
+			linePlot(xv,yv,m2p,po,width,height,darkGreen,0.15*m2p)
 			
 			# Generate a stool image
-			linePlot(sx,sy,MeterToPixel,PixelOffset,width,height,red,0.1*MeterToPixel)
+			linePlot(sx,sy,m2p,po,width,height,red,0.1*MeterToPixel)
 						
 	if __name__ == '__main__':
 		run(Game(), LANDSCAPE, show_fps=True)
