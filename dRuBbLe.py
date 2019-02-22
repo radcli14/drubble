@@ -224,7 +224,7 @@ if engine == 'ista':
 			linePlot(xv,yv,m2p,po,width,height,darkGreen,0.15*m2p)
 			
 			# Generate a stool image
-			linePlot(sx,sy,m2p,po,width,height,red,0.1*MeterToPixel)
+			linePlot(sx,sy,m2p,po,width,height,red,0.1*m2p)
 						
 	if __name__ == '__main__':
 		run(Game(), LANDSCAPE, show_fps=True)

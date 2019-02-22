@@ -9,7 +9,7 @@ import numpy as np
 #import matplotlib.animation as animation
 #from matplotlib.backends.backend_pdf import PdfPages
 #from matplotlib.cbook import get_sample_data
-engine = 'pygame'
+engine = 'ista'
 if engine == 'pygame':
     import pygame
     fs = 30
@@ -46,11 +46,11 @@ if engine == 'ista':
     #def y2p(y,m2p,h):
     #	return np.array(y)*m2p+h/20
     def xy2p(x,y,m2p,po,w,h):
-        return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
+    	return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
     def linePlot(x,y,m2p,po,w,h,clr,wgt):
     	#x = x2p(x,m2p,po,w)
     	#y = y2p(y,m2p,h)
-        x,y = xy2p(x,y,m2p,po,w,h)
+    	x,y = xy2p(x,y,m2p,po,w,h)
     	stroke(clr)
     	stroke_weight(wgt)
     	for k in range(1,np.size(x)):
