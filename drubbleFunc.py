@@ -9,7 +9,7 @@ import numpy as np
 #import matplotlib.animation as animation
 #from matplotlib.backends.backend_pdf import PdfPages
 #from matplotlib.cbook import get_sample_data
-engine = 'ista'
+engine = 'pygame'
 if engine == 'pygame':
     import pygame
     fs = 30
@@ -291,12 +291,7 @@ class gameState:
         # or if the ball is far from the stool or ground
         L = BallHitStool(self.t,self.u)       # Distance to stool
         vBall = np.array((self.dxb,self.dyb)) # Velocity
-        # Speed
-        #try:
-        #	sBall = np.sqrt(vBall@vBall)    
-        #except:
-        #	sBall = np.sqrt(np.sum(vBall*vBall))
-        sBall = np.linalg.norm(vBall)
+        sBall = np.linalg.norm(vBall)         # Speed
         
         ## Integrate using Euler method
         # Initialize state variables
@@ -602,10 +597,6 @@ def BallHitStool(t,u):
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
     
     # Calculate z that minimizes the distance
-    #try:
-    #	r1mag2 = r1@r1
-    #except:
-    #	r1mag2 = np.sum(r1*r1)
     z  = ( (xb-sx[0])*r1[0] + (yb-sy[0])*r1[1] )/(r1.dot(r1))
     
     # Find the closest point of impact on the stool
@@ -620,10 +611,6 @@ def BallHitStool(t,u):
     r2 = np.array([xb-ri[0],yb-ri[1]])
 
     # Calculate the distance to the outer radius of the ball t
-    #try:
-    #	r2mag2 = r2@r2
-    #except:
-    #	r2mag2 = np.sum(r2*r2)
     L = np.sqrt(r2.dot(r2))-p.rb
     
     return L 
@@ -637,10 +624,6 @@ def BallBounce(gs):
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
     
     # Calculate z that minimizes the distance
-    #try:
-    #	r1amp2 = r1@r1
-    #except:
-    #	r1amp2 = np.sum(r1*r1)
     z  = ( (gs.xb-sx[0])*r1[0] + (gs.yb-sy[0])*r1[1] )/(r1.dot(r1))
     
     # Find the closest point of impact on the stool
@@ -660,17 +643,9 @@ def BallBounce(gs):
     
     # Vector from the closest point of impact to the center of the ball    
     r2 = np.array([gs.xb-ri[0],gs.yb-ri[1]])
-    #try:
-    #	r2amp2 = r2@r2
-    #except:
-    #	r2amp2 = np.sum(r2*r2)
     u2 = r2/np.sqrt(r2.dot(r2))
 
     # Delta ball velocity
-    #try:
-    #	u2vb = u2@vbrel
-    #except:
-    #	u2vb = np.sum(u2*vbrel)
     delta_vb = 2*p.COR*u2.dot(vbrel)
     
     # Velocity after bounce
@@ -684,11 +659,6 @@ def BallBounce(gs):
                      [ 0      , 1   ],
                      [-s      , c   ],
                      [-c*gs.lp,-s*gs.lp]])
-    #try:
-    #	Qi = dRdq@BounceImpulse
-    #	vRecoil = p.invM@np.transpose(Qi)
-    #except:
-    	#vRecoil = np.array((0,0,0,0))
     Qi = dRdq.dot(BounceImpulse)
     vRecoil = np.dot(p.invM,Qi)
     return vBounce, vRecoil

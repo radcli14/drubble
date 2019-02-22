@@ -54,46 +54,46 @@ if engine == 'pygame':
 		    for event in pygame.event.get():
 		        # Detect the quit event (window close)
 		        if event.type == pygame.QUIT: 
-		            gameMode = 0
+		            gs.gameMode = 0
 		        
 		        # Detect keyboard input
 		        if event.type == pygame.KEYDOWN:
 		            # Exit the game
 		            if event.key == pygame.K_ESCAPE:
-		                gameMode = 0
+		                gs.gameMode = 0
 		            
 		            # Exit the splash screen
-		            if gameMode==1 and event.key == pygame.K_SPACE:
-		                gameMode = 2
+		            if gs.gameMode==1 and event.key == pygame.K_SPACE:
+		                gs.gameMode = 2
 		                clock.tick(10)
 		                continue
 		            
-		            if gameMode==2 and event.key == pygame.K_SPACE:
-		                gameMode = 3
+		            if gs.gameMode==2 and event.key == pygame.K_SPACE:
+		                gs.gameMode = 3
 		                clock.tick(10)
 		                continue
 		            
 		            # Progress through angle and speed selection
-		            if (gameMode==3 or gameMode==4) and event.key == pygame.K_SPACE:
-		                gameMode += 1
+		            if (gs.gameMode==3 or gs.gameMode==4) and event.key == pygame.K_SPACE:
+		                gs.gameMode += 1
 		                phase = 0
 		                startSpeed = 10
 		                clock.tick(10)
 		                continue
 		            
 		            # Start the ball moving!
-		            if gameMode == 5 and event.key == pygame.K_SPACE:
-		                gameMode = 6
+		            if gs.gameMode == 5 and event.key == pygame.K_SPACE:
+		                gs.gameMode = 6
 		                gs.u[2] = vx0
 		                gs.u[3] = vy0
 		                clock.tick(10)
 		                continue
 		            
 		            # Reset the game
-		            if gameMode == 6 and event.key == pygame.K_SPACE:
+		            if gs.gameMode == 6 and event.key == pygame.K_SPACE:
 		                stats = gameScore()
 		                gs = gameState(u0)
-		                gameMode = 2
+		                gs.gameMode = 2
 		
 		        # Get player control inputs
 		        keyPush = playerControlInput(event)             
@@ -106,11 +106,11 @@ if engine == 'pygame':
 		        screen.fill(skyBlue)
 		        ## ANGLE AND SPEED SETTINGS
 		        if gs.gameMode == 4:
-		            startAngle = 0.25*np.pi*(1 + np.sin(phase))
+		            startAngle = 0.25*np.pi*(1 + 0.75*np.sin(phase))
 		        if gs.gameMode == 5:
-		            startSpeed = ss*(1 + np.cos(phase))
+		            startSpeed = ss*(1 + 0.75*np.sin(phase))
 		        if gs.gameMode == 4 or gs.gameMode == 5:
-		            phase += 0.05
+		            phase += 3*dt
 		            vx0 = startSpeed*np.cos(startAngle)
 		            vy0 = startSpeed*np.sin(startAngle)
 		            gs.u[2] = vx0
@@ -140,7 +140,7 @@ if engine == 'pygame':
 		        makeMarkers()
 		
 		        # Show the Message Text
-		        showMessage(msg[gameMode])  
+		        showMessage(msg[gs.gameMode])  
 		
 		    # Update the display
 		    pygame.display.flip()
