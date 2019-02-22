@@ -72,15 +72,12 @@ if engine == 'pygame':
                 if (gs.gameMode==3 or gs.gameMode==4) and event.key == pygame.K_SPACE:
                     gs.gameMode += 1
                     gs.phase = 0
-                    gs.startSpeed = 10
                     clock.tick(10)
                     continue
                 
                 # Start the ball moving!
                 if gs.gameMode == 5 and event.key == pygame.K_SPACE:
                     gs.gameMode = 6
-                    gs.u[2] = vx0
-                    gs.u[3] = vy0
                     clock.tick(10)
                     continue
                 
@@ -97,13 +94,13 @@ if engine == 'pygame':
         if gs.gameMode==1:
             showedSplash = makeSplashScreen(showedSplash)
         
+        ## ANGLE AND SPEED SETTINGS
+        if gs.gameMode>2 and gs.gameMode<6:
+            gs.setAngleSpeed()
+        
         if gs.gameMode>1 and gs.gameMode<7:
-            
             # Create the sky
             screen.fill(skyBlue)
-            
-            ## ANGLE AND SPEED SETTINGS
-            gs.setAngleSpeed()
 
             ## SIMULATION
             gs.simStep()
@@ -144,13 +141,14 @@ if engine == 'pygame':
     pygame.quit()
         
 if engine == 'ista':
-    gs.gameMode = 6
-    gs.u[2] = 3
-    gs.u[3] = 12
+    gs.gameMode = 3
+    #gs.u[2] = 3
+    #gs.u[3] = 12
     class Game (Scene):
         def setup(self):
             # Add the game state classes to the scene
             self.gs = gs
+            self.stats = stats
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
@@ -176,15 +174,35 @@ if engine == 'ista':
             self.head.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp*MeterToPixel+PixelOffset, (gs.yp+p.d)*MeterToPixel)
             self.add_child(self.head)
+        
+        def touch_began(self, touch):
+            # Progress through angle and speed selection
+            if (self.gs.gameMode==3 or self.gs.gameMode==4): 
+                self.gs.gameMode += 1
+                self.gs.phase = 0
             
+            # Start the ball moving!
+            if self.gs.gameMode == 5:
+                self.gs.gameMode = 6
+            
+            # Reset the game
+            if self.gs.gameMode == 6:
+                self.stats = gameScore()
+                self.gs = gameState(u0)
+                self.gs.gameMode = 3
+        
         def update(self):
             # Get the gravity vector
             g = gravity()
-            #print(np.around(g,2))
-            if np.abs(g[1])>0.05:
-                keyPush[0] = max(min(10*g[1],1),-1)
+            gThreshold = 0.05
+            slope = 10
+            if g[1]>gThreshold:
+                keyPush[0] = min(slope*(g[1]-gThreshold),1)
+            elif g[1]<-gThreshold:
+                keyPush[1] = max(slope*(g[1]+gThreshold),-1)
             else:
                 keyPush[0] = 0
+                keyPush[1] = 0
             
             # Run one simulation step
             self.gs.simStep()

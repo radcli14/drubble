@@ -9,7 +9,7 @@ import numpy as np
 #import matplotlib.animation as animation
 #from matplotlib.backends.backend_pdf import PdfPages
 #from matplotlib.cbook import get_sample_data
-engine = 'pygame'
+engine = 'ista'
 if engine == 'pygame':
     import pygame
     fs = 30
@@ -387,10 +387,8 @@ class gameState:
             self.startSpeed = ss*(1 + 0.75*np.sin(self.phase))
         if self.gameMode == 4 or self.gameMode == 5:
             self.phase += 3*dt
-            vx0 = self.startSpeed*np.cos(self.startAngle)
-            vy0 = self.startSpeed*np.sin(self.startAngle)
-            self.u[2] = vx0
-            self.u[3] = vy0
+            self.u[2] = self.startSpeed*np.cos(self.startAngle)
+            self.u[3] = self.startSpeed*np.sin(self.startAngle)
 
 class gameScore:
     # Initiate statistics as zeros
