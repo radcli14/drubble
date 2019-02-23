@@ -2,8 +2,8 @@
 import numpy as np
 
 # Determine if you are running from a PC or from iPhone
-ps = platform.system()
 import platform
+ps = platform.system()
 if ps == 'Windows' or ps == 'Linux':
     engine = 'pygame'
 elif ps == 'Darwin':
@@ -212,6 +212,7 @@ def makeMarkers(xrng,m2p,po):
             stroke(white)
             stroke_weight(1)
             line(start_x,start_y,end_x,end_y)
+            text(str(int(xr)),font_name='futura',font_size=m2p,x=end_x-2,y=end_y-2,alignment=7)
 
 # Parameters
 class parameters:

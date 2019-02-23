@@ -135,9 +135,13 @@ if engine == 'pygame':
         
 if engine == 'ista':
     gs.gameMode = 3
-    stick = joystick(100, 200) 
-    stick.present('popover') 
-    stick.touch_ended(None)  # center the stick
+    #stick = joystick(100, 200) 
+    #stick.present('popover') 
+    #stick.touch_ended(None)  # center the stick
+
+    #bg0_texture = Texture(ui.Image('bg0.png'))
+    #SpriteNode('bg0.png')
+    
 
     class Game (Scene):
         def setup(self):
@@ -146,6 +150,10 @@ if engine == 'ista':
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
+            
+            # Initialize the background image
+            #self.bg0 = SpriteNode(bg0_texture)
+            #self.bg0.z_position = 0
             
             # Initialize the score line
             score_font = ('Futura', 12)
@@ -176,9 +184,6 @@ if engine == 'ista':
             
             # Get ranges for drawing the player and ball
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
-            
-            # Initialize the background image
-            # self.bg0 =
             
             # Initialize the ball image
             self.ball = SpriteNode('emj:Red_Circle')
