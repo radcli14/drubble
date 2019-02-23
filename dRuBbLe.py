@@ -140,7 +140,6 @@ if engine == 'pygame':
         
 if engine == 'ista':
     gs.gameMode = 3
-    
     def cycleModes(gs,stats):
         # Progress through angle and speed selection
         if (gs.gameMode==3 or gs.gameMode==4): 
@@ -168,6 +167,33 @@ if engine == 'ista':
             # Generate the sky blue background
             self.background_color = '#acf9ee'
             
+            # Initialize the score line
+            score_font = ('Futura', 12)
+            self.time_label = LabelNode('Time = '+f'{gs.t:.1f}', score_font, parent=self,color=black)
+            self.time_label.anchor_point = (0.0, 1.0)
+            self.time_label.position = (width*0.02, height - 2)
+            self.time_label.z_position = 1
+            
+            self.dist_label = LabelNode('Distance = '+f'{stats.stoolDist:.1f}', score_font, parent=self,color=black)
+            self.dist_label.anchor_point = (0.0, 1.0)
+            self.dist_label.position = (width*0.2, height - 2)
+            self.dist_label.z_position = 1
+            
+            self.high_label = LabelNode('Height = '+f'{stats.maxHeight:.1f}', score_font, parent=self,color=black)
+            self.high_label.anchor_point = (0.0, 1.0)
+            self.high_label.position = (width*0.42, height - 2)
+            self.high_label.z_position = 1
+            
+            self.boing_label = LabelNode('Boing! = '+str(int(stats.stoolCount)), score_font, parent=self,color=black)
+            self.boing_label.anchor_point = (0.0, 1.0)
+            self.boing_label.position = (width*0.62, height - 2)
+            self.boing_label.z_position = 1
+            
+            self.score_label = LabelNode('Score = '+str(stats.score), score_font, parent=self,color=black)
+            self.score_label.anchor_point = (0.0, 1.0)
+            self.score_label.position = (width*0.77, height - 2)
+            self.score_label.z_position = 1
+            
             # Get ranges for drawing the player and ball
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
@@ -183,8 +209,8 @@ if engine == 'ista':
             self.add_child(self.ball)
             
             # Initialize the player's head
-            spPix = 0.7*m2p
             self.head = SpriteNode('emj:Slice_Of_Pizza')
+            spPix = 0.7*m2p
             self.head.size = (spPix,spPix)
             self.head.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp*m2p+po, (gs.yp+p.d)*m2p)
@@ -214,16 +240,28 @@ if engine == 'ista':
             
             # Run one simulation step
             gs.simStep()
+            if gs.gameMode==6:
+                stats.update()
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
+            # Update score line
+            self.time_label.text = 'Time = '+f'{gs.t:.1f}'
+            self.dist_label.text = 'Distance = '+f'{stats.stoolDist:.2f}'
+            self.high_label.text = 'Height = '+f'{stats.maxHeight:.2f}'
+            self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
+            self.score_label.text = 'Score = '+str(stats.score)
+            
             # update the ball and head sprites
+            dbPix = 2*p.rb*m2p
+            self.ball.size = (dbPix,dbPix)
             self.ball.position = (gs.xb*m2p-po+width/2, 
                                  (gs.yb+p.rb)*m2p+height/20)
+            spPix = 0.7*m2p
+            self.head.size = (spPix,spPix)
             self.head.position = (gs.xp*m2p-po+width/2, 
                                  (gs.yp+p.d)*m2p+height/20)
                                  
-            #self.gs = gs
-            #print(gs.gameMode)
+            #print(get_screen_size())
             
         def draw(self):
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
@@ -236,6 +274,9 @@ if engine == 'ista':
             stroke_weight(height/20)
             line(0,height/40,width,height/40)
             
+            # Generate the markers
+            makeMarkers(xrng,m2p,po)
+            
             # Generate a player image
             xv,yv,sx,sy = stickDude(gs)
             linePlot(xv,yv,m2p,po,width,height,darkGreen,0.15*m2p)
@@ -245,9 +286,6 @@ if engine == 'ista':
                         
         def touch_began(self, touch):
             self.touchCycle = True
-            #self.cycleModes()
-            
-       
                 
     if __name__ == '__main__':
         run(Game(), LANDSCAPE, show_fps=True)

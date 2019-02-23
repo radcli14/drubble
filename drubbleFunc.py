@@ -32,8 +32,8 @@ if engine == 'pygame':
 if engine == 'ista':
     from scene import *
     fs = 60
-    # Window size and color definition
-    size      = width, height = 736, 414
+    width  = max(get_screen_size())
+    height = min(get_screen_size())
     red       = (1,0,0)
     green     = (0,1,0)
     blue      = (0,0,1)
@@ -163,18 +163,24 @@ def makeScoreLine():
     score = font.render('Score = '+str(stats.score),True,black)
     screen.blit(score,(0.77*width,0))
 
-def makeMarkers():
-
-    font   = pygame.font.SysFont(p.MacsFavoriteFont,int(np.around(0.8*m2p)))
+def makeMarkers(xrng,m2p,po):
+    
     xrng_r = np.around(xrng,-1)
     xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
     for k in range(0,xrng_n):
         xr = xrng_r[0]+10*k
+        
         [start_x,start_y] = xy2p(xr, 0,m2p,po,width,height) 
         [end_x,end_y]     = xy2p(xr,-1,m2p,po,width,height) 
-        pygame.draw.line(screen, white, [start_x,start_y], [end_x,end_y])
-        meter = font.render(str(int(xr)), True, white)
-        screen.blit(meter,[start_x+0.2*m2p,start_y-0.1*m2p])
+        if engine == 'pygame':
+            pygame.draw.line(screen, white, [start_x,start_y], [end_x,end_y])
+            font   = pygame.font.SysFont(p.MacsFavoriteFont,int(np.around(0.8*m2p)))
+            meter = font.render(str(int(xr)), True, white)
+            screen.blit(meter,[start_x+0.2*m2p,start_y-0.1*m2p])
+        elif engine == 'ista':
+            stroke(white)
+            stroke_weight(1)
+            line(start_x,start_y,end_x,end_y)
 
 # Parameters
 class parameters:
