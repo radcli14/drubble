@@ -1,8 +1,5 @@
-# Import required packages
-#from IPython import get_ipython
-#get_ipython().magic('reset -sf')
+# Execute drubbleFunc to get the supporting functions and classes
 exec(open('./drubbleFunc.py').read())
-#from drubbleFunc import *
 
 # Obtain Parameters
 p = parameters()
@@ -29,8 +26,6 @@ userControlled = np.array([True, False, False, False])
 
 # Initialize stats
 stats = gameScore()
-
-# Settings for setting initial trjectory
 showedSplash = False
 
 msg = ['','',
@@ -121,7 +116,7 @@ if engine == 'pygame':
             makeScoreLine()
             
             # Draw meter markers
-            makeMarkers()
+            makeMarkers(xrng,m2p,po)
     
             # Show the Message Text
             showMessage(msg[gs.gameMode])  
@@ -140,24 +135,9 @@ if engine == 'pygame':
         
 if engine == 'ista':
     gs.gameMode = 3
-    def cycleModes(gs,stats):
-        # Progress through angle and speed selection
-        if (gs.gameMode==3 or gs.gameMode==4): 
-            gs.gameMode += 1
-            gs.phase = 0
-            return
-            
-        # Start the ball moving!
-        if gs.gameMode == 5:
-            gs.gameMode = 6
-            return
-            
-        # Reset the game
-        if gs.gameMode == 6:
-            stats.__init__()
-            gs.__init__(u0)
-            gs.gameMode = 3
-            return
+    stick = joystick(100, 200) 
+    stick.present('popover') 
+    stick.touch_ended(None)  # center the stick
 
     class Game (Scene):
         def setup(self):
@@ -261,8 +241,6 @@ if engine == 'ista':
             self.head.position = (gs.xp*m2p-po+width/2, 
                                  (gs.yp+p.d)*m2p+height/20)
                                  
-            #print(get_screen_size())
-            
         def draw(self):
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             

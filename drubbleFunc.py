@@ -1,15 +1,14 @@
 # Import modules
-# import os
-import sys
-import time
 import numpy as np
-#import scipy.integrate as spi
-#import scipy.special as scs
-#import matplotlib.pyplot as plt
-#import matplotlib.animation as animation
-#from matplotlib.backends.backend_pdf import PdfPages
-#from matplotlib.cbook import get_sample_data
-engine = 'ista'
+
+# Determine if you are running from a PC or from iPhone
+ps = platform.system()
+import platform
+if ps == 'Windows' or ps == 'Linux':
+    engine = 'pygame'
+elif ps == 'Darwin':
+    engine = 'ista'
+        
 if engine == 'pygame':
     import pygame
     fs = 30
@@ -31,6 +30,7 @@ if engine == 'pygame':
     
 if engine == 'ista':
     from scene import *
+    import ui
     fs = 60
     width  = max(get_screen_size())
     height = min(get_screen_size())
@@ -54,6 +54,37 @@ if engine == 'ista':
     	stroke_weight(wgt)
     	for k in range(1,np.size(x)):
     		line(x[k-1],y[k-1],x[k],y[k])
+     
+    class joystick(ui.View): 
+    
+        def __init__(self, stick_size, size):
+            self.width = size 
+            self.height = size 
+            self.background_color = 'grey'
+            self.corner_radius = self.width/2
+            self.border_width = 1
+            stick = ui.View()
+            self.add_subview(stick)
+            stick.width, stick.height = stick_size, stick_size
+            stick.x, stick.y = self.width/2 - stick.width/2, self.height/2 - stick.height/2
+            stick.background_color = 'blue'
+            stick.corner_radius = stick_size/2
+            stick.name = 'stick'
+    
+        def calc_pos(self, touch):  
+            x_comp = touch.location[0] - touch.prev_location[0]
+            x = max(min(self['stick'].x + x_comp, self.width - self['stick'].width), 0)
+    
+            y_comp = touch.location[1] - touch.prev_location[1]
+            y = max(min(self['stick'].y + y_comp, self.height - self['stick'].height), 0)
+            return x, y
+    
+        def touch_moved(self, touch):
+            self['stick'].x, self['stick'].y = self.calc_pos(touch)
+    
+        def touch_ended(self, touch):
+            self['stick'].x, self['stick'].y = self.width/2 - self['stick'].width/2, self.height/2 - self['stick'].height/2        
+            
 dt = 1/fs
 
 # Define the bunch class
@@ -281,16 +312,6 @@ def unpackStates(u):
 class gameState:
     # Initiate the state variables as a list, and as individual variables
     def __init__(self,u0):
-        self.t  = 0
-        self.n  = 0
-        self.te = 0
-        
-        self.u  = u0[:]
-        self = varStates(self)
-       
-        self.ue = u0[:]
-        self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict(self)
-        
         # Define Game Mode
         # 0 = Quit
         # 1 = Splash screen
@@ -302,6 +323,19 @@ class gameState:
         # 7 = Game over, resume option
         # 8 = Game over, high scores
         self.gameMode = 1
+        
+        # Timing
+        self.t  = 0
+        self.n  = 0
+        self.te = 0
+        
+        # State variables
+        self.u  = u0[:]
+        self = varStates(self)
+       
+        # Event states
+        self.ue = u0[:]
+        self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict(self)
         
         # Angle and Speed Conditions
         self.startAngle = p.sa
@@ -400,6 +434,25 @@ class gameState:
             self.u[2] = self.startSpeed*np.cos(self.startAngle)
             self.u[3] = self.startSpeed*np.sin(self.startAngle)
 
+def cycleModes(gs,stats):
+    # Progress through angle and speed selection
+    if (gs.gameMode==3 or gs.gameMode==4): 
+        gs.gameMode += 1
+        gs.phase = 0
+        return
+        
+    # Start the ball moving!
+    if gs.gameMode == 5:
+        gs.gameMode = 6
+        return
+        
+    # Reset the game
+    if gs.gameMode == 6:
+        stats.__init__()
+        gs.__init__(u0)
+        gs.gameMode = 3
+        return
+
 class gameScore:
     # Initiate statistics as zeros
     def __init__(self):
@@ -427,7 +480,7 @@ class gameScore:
 # Predict
 def BallPredict(gs):
 
-    if (gs.dyb>0) and (gs.yb<p.y0+p.d+p.l0): 
+    if gs.gameMode>2 and (gs.dyb>0) and (gs.yb<p.y0+p.d+p.l0): 
         # Solve for time and height at apogee
         ta = gs.dyb/p.g
         ya = 0.5*p.g*ta**2
