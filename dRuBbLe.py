@@ -140,13 +140,30 @@ if engine == 'pygame':
         
 if engine == 'ista':
     gs.gameMode = 3
-    #gs.u[2] = 3
-    #gs.u[3] = 12
+    
+    def cycleModes(gs,stats):
+        # Progress through angle and speed selection
+        if (gs.gameMode==3 or gs.gameMode==4): 
+            gs.gameMode += 1
+            gs.phase = 0
+            return
+            
+        # Start the ball moving!
+        if gs.gameMode == 5:
+            gs.gameMode = 6
+            return
+            
+        # Reset the game
+        if gs.gameMode == 6:
+            stats.__init__()
+            gs.__init__(u0)
+            gs.gameMode = 3
+            return
+
     class Game (Scene):
         def setup(self):
             # Add the game state classes to the scene
-            #self.gs = gs
-            #self.stats = stats
+            self.touchCycle = False
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
@@ -173,30 +190,15 @@ if engine == 'ista':
             self.head.position = (gs.xp*m2p+po, (gs.yp+p.d)*m2p)
             self.add_child(self.head)
         
-        def touch_began(self, touch):
-            gs = self.gs
-            # Progress through angle and speed selection
-            if (gs.gameMode==3 or self.gs.gameMode==4): 
-                gs.gameMode += 1
-                gs.phase = 0
-                return gs
-            
-            # Start the ball moving!
-            if gs.gameMode == 5:
-                gs.gameMode = 6
-                return gs
-            
-            # Reset the game
-            if gs.gameMode == 6:
-                stats = gameScore()
-                gs = gameState(u0)
-                gs.gameMode = 3
-                return gs, stats
-        
         def update(self):
+            # Update if there was a touch
+            if self.touchCycle:
+                cycleModes(gs,stats)
+                self.touchCycle = False
+                
             # Get the gravity vector
             g = gravity()
-            gThreshold = 0.1
+            gThreshold = 0.05
             slope = 5
             if g[1]>gThreshold:
                 keyPush[0] = min(slope*(g[1]-gThreshold),1)
@@ -220,8 +222,8 @@ if engine == 'ista':
             self.head.position = (gs.xp*m2p-po+width/2, 
                                  (gs.yp+p.d)*m2p+height/20)
                                  
-            self.gs = gs
-            print(gs.gameMode)
+            #self.gs = gs
+            #print(gs.gameMode)
             
         def draw(self):
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
@@ -241,5 +243,11 @@ if engine == 'ista':
             # Generate a stool image
             linePlot(sx,sy,m2p,po,width,height,red,0.1*m2p)
                         
+        def touch_began(self, touch):
+            self.touchCycle = True
+            #self.cycleModes()
+            
+       
+                
     if __name__ == '__main__':
         run(Game(), LANDSCAPE, show_fps=True)
