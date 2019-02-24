@@ -22,7 +22,7 @@ if engine == 'pygame':
 keyPush        = np.zeros(8)
 mousePos       = width/2,height/2 
 userControlled = np.array([True, True, True, True]) 
-userControlled = np.array([True, False, False, False])
+userControlled = np.array([True, True, False, False])
 
 # Initialize stats
 stats = gameScore()
@@ -145,6 +145,9 @@ if engine == 'ista':
 
     class Game (Scene):
         def setup(self):
+            # Initialize the motion module
+            motion.start_updates()
+        	
             # Add the game state classes to the scene
             self.touchCycle = False
             
@@ -207,8 +210,9 @@ if engine == 'ista':
                 cycleModes(gs,stats)
                 self.touchCycle = False
                 
-            # Get the gravity vector
-            g = gravity()
+            # Get the gravity vector and acceleration
+            
+            g = motion.get_gravity()
             gThreshold = 0.05
             slope = 5
             if g[1]>gThreshold:
@@ -218,6 +222,15 @@ if engine == 'ista':
             else:
                 keyPush[0] = 0
                 keyPush[1] = 0
+                
+            a = motion.get_user_acceleration()
+            aScale=2
+            if a[1]>0:
+                keyPush[2]=max(aScale*a[1],1)
+                keyPush[3]=0
+            else:
+                keyPush[2]=0
+                keyPush[3]=max(-aScale*a[1],1)
             
             ## ANGLE AND SPEED SETTINGS
             if gs.gameMode>2 and gs.gameMode<6:
@@ -269,6 +282,13 @@ if engine == 'ista':
                         
         def touch_began(self, touch):
             self.touchCycle = True
+            
+        def stop(self):
+            motion.stop_updates()
                 
     if __name__ == '__main__':
         run(Game(), LANDSCAPE, show_fps=True)
+        
+        
+        
+        

@@ -30,6 +30,7 @@ if engine == 'pygame':
     
 if engine == 'ista':
     from scene import *
+    import motion
     import ui
     fs = 60
     width  = max(get_screen_size())
