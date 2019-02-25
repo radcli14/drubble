@@ -56,6 +56,25 @@ if engine == 'ista':
     	for k in range(1,np.size(x)):
     		line(x[k-1],y[k-1],x[k],y[k])
      
+    class ButtonNode(scene.SpriteNode):
+        def __init__(self, title, *args, **kwargs):
+            scene.SpriteNode.__init__(self, 'pzl:Button1', *args, **kwargs)
+            self.title = title
+            scene.LabelNode(title, color='blue', font=('Avenir Next', 20),
+                            parent=self, position=(0, 0))
+            
+        def touch_began(self, touch):
+            sprite = self.parent.sprite
+            x, y = sprite.position
+            if self.title == '←':
+                sprite.position = max(x - 20, 0), y
+            elif self.title == '→':
+                sprite.position = min(x + 20, self.parent.size.w), y
+            elif self.title == '↓':
+                sprite.position = x, max(y - 20, 0)
+            elif self.title == '↑':
+                sprite.position = x, min(y + 20, self.parent.size.h)    
+        
     class joystick(ui.View): 
     
         def __init__(self, stick_size, size):

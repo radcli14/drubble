@@ -151,6 +151,14 @@ if engine == 'ista':
             # Add the game state classes to the scene
             self.touchCycle = False
             
+            # Initialize the Button Nodes
+            center = self.size/2
+            self.sprite = scene.SpriteNode('Dog_Face', parent=self, position=center)
+            ButtonNode('←', parent=self, position=center - (300,  300))
+            ButtonNode('→', parent=self, position=center - (100,  300))
+            ButtonNode('↓', parent=self, position=center + (100, -300))
+            ButtonNode('↑', parent=self, position=center + (300, -300))
+            
             # Generate the sky blue background
             self.background_color = '#acf9ee'
             
@@ -243,9 +251,9 @@ if engine == 'ista':
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
             # Update score line
-            self.time_label.text = 'Time = '+f'{gs.t:.1f}'
-            self.dist_label.text = 'Distance = '+f'{stats.stoolDist:.2f}'
-            self.high_label.text = 'Height = '+f'{stats.maxHeight:.2f}'
+            self.time_label.text  = 'Time = '+f'{gs.t:.1f}'
+            self.dist_label.text  = 'Distance = '+f'{stats.stoolDist:.2f}'
+            self.high_label.text  = 'Height = '+f'{stats.maxHeight:.2f}'
             self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
             self.score_label.text = 'Score = '+str(stats.score)
             
@@ -282,6 +290,10 @@ if engine == 'ista':
                         
         def touch_began(self, touch):
             self.touchCycle = True
+            
+            for node in self.children:
+                if touch.location in node.frame and hasattr(node, 'touch_began'):
+                    node.touch_began(touch)
             
         def stop(self):
             motion.stop_updates()
