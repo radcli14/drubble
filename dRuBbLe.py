@@ -152,7 +152,7 @@ if engine == 'ista':
             self.touchCycle = False
             
             # Initialize the Button Nodes
-            self.K_LEFT = SpriteNode('img',parent=self,position=(0.9*width,0.1*height))
+            self.moveStick = SpriteNode('iob:arrow_move_256',parent=self,position=(0.9*width,0.2*height),scale=0.5)
 #            center = self.size/2
 #            self.sprite = SpriteNode('Dog_Face', parent=self, position=center)
 #            ButtonNode('leftArrow', parent=self, position=center - (300,  300))
