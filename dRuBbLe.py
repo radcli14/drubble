@@ -152,12 +152,13 @@ if engine == 'ista':
             self.touchCycle = False
             
             # Initialize the Button Nodes
-            center = self.size/2
-            self.sprite = SpriteNode('Dog_Face', parent=self, position=center)
-            ButtonNode('leftArrow', parent=self, position=center - (300,  300))
-            ButtonNode('rightArrow', parent=self, position=center - (100,  300))
-            ButtonNode('downArrow', parent=self, position=center + (100, -300))
-            ButtonNode('upArrow', parent=self, position=center + (300, -300))
+            self.K_LEFT = SpriteNode('img',parent=self,position=(0.9*width,0.1*height))
+#            center = self.size/2
+#            self.sprite = SpriteNode('Dog_Face', parent=self, position=center)
+#            ButtonNode('leftArrow', parent=self, position=center - (300,  300))
+#            ButtonNode('rightArrow', parent=self, position=center - (100,  300))
+#            ButtonNode('downArrow', parent=self, position=center + (100, -300))
+#            ButtonNode('upArrow', parent=self, position=center + (300, -300))
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
@@ -291,9 +292,9 @@ if engine == 'ista':
         def touch_began(self, touch):
             self.touchCycle = True
             
-            for node in self.children:
-                if touch.location in node.frame and hasattr(node, 'touch_began'):
-                    node.touch_began(touch)
+#            for node in self.children:
+#                if touch.location in node.frame and hasattr(node, 'touch_began'):
+#                    node.touch_began(touch)
             
         def stop(self):
             motion.stop_updates()

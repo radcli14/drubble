@@ -56,25 +56,25 @@ if engine == 'ista':
     	for k in range(1,np.size(x)):
     		line(x[k-1],y[k-1],x[k],y[k])
      
-    class ButtonNode(SpriteNode):
-        def __init__(self, title, *args, **kwargs):
-            SpriteNode.__init__(self, 'pzl:Blue6', *args, **kwargs)
-            self.title = title
-            LabelNode(title, color='blue', font=('Avenir Next', 20),
-                            parent=self, position=(0, 0))
-            
-        def touch_began(self, touch):
-            sprite = self.parent.sprite
-            x, y = sprite.position
-            if self.title == 'leftArrow':
-                sprite.position = max(x - 20, 0), y
-            elif self.title == 'rightArrow':
-                sprite.position = min(x + 20, self.parent.size.w), y
-            elif self.title == 'downArrow':
-                sprite.position = x, max(y - 20, 0)
-            elif self.title == 'upArrow':
-                sprite.position = x, min(y + 20, self.parent.size.h)    
-        
+#    class ButtonNode(SpriteNode):
+#        def __init__(self, title, *args, **kwargs):
+#            SpriteNode.__init__(self, 'pzl:Blue6', *args, **kwargs)
+#            self.title = title
+#            LabelNode(title, color='blue', font=('Avenir Next', 20),
+#                            parent=self, position=(0, 0))
+#            
+#        def touch_began(self, touch):
+#            sprite = self.parent.sprite
+#            x, y = sprite.position
+#            if self.title == 'leftArrow':
+#                sprite.position = max(x - 20, 0), y
+#            elif self.title == 'rightArrow':
+#                sprite.position = min(x + 20, self.parent.size.w), y
+#            elif self.title == 'downArrow':
+#                sprite.position = x, max(y - 20, 0)
+#            elif self.title == 'upArrow':
+#                sprite.position = x, min(y + 20, self.parent.size.h)    
+#        
     class joystick(ui.View): 
     
         def __init__(self, stick_size, size):
