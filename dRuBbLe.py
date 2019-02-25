@@ -22,7 +22,7 @@ if engine == 'pygame':
 keyPush        = np.zeros(8)
 mousePos       = width/2,height/2 
 userControlled = np.array([True, True, True, True]) 
-userControlled = np.array([True, True, False, False])
+#userControlled = np.array([True, True, False, False])
 
 # Initialize stats
 stats = gameScore()
@@ -151,14 +151,27 @@ if engine == 'ista':
             # Add the game state classes to the scene
             self.touchCycle = False
             
-            # Initialize the Button Nodes
-            self.moveStick = SpriteNode('iob:arrow_move_256',parent=self,position=(0.9*width,0.2*height),scale=0.5)
-#            center = self.size/2
-#            self.sprite = SpriteNode('Dog_Face', parent=self, position=center)
-#            ButtonNode('leftArrow', parent=self, position=center - (300,  300))
-#            ButtonNode('rightArrow', parent=self, position=center - (100,  300))
-#            ButtonNode('downArrow', parent=self, position=center + (100, -300))
-#            ButtonNode('upArrow', parent=self, position=center + (300, -300))
+            # Initialize the buttons
+            sz = (0.1*width,0.1*width)
+            ap = (1.0,0.0)
+            ps = (width,height/20)
+            self.moveStick = SpriteNode('iob:arrow_move_256',parent=self)
+            self.moveStick.alpha = 0.5
+            self.moveStick.size = sz
+            self.moveStick.anchor_point = ap
+            self.moveStick.position = ps
+            self.moveStick.x = (ps[0]-ap[0]*sz[0],ps[0]+(1-ap[0])*sz[0])
+            self.moveStick.y = (ps[1]-ap[1]*sz[1],ps[1]+(1-ap[1])*sz[1])
+            
+            ap = (0.0,0.0)
+            ps = (0,height/20)
+            self.tiltStick = SpriteNode('iob:arrow_move_256',parent=self)
+            self.tiltStick.alpha = 0.5
+            self.tiltStick.size = sz
+            self.tiltStick.anchor_point = ap
+            self.tiltStick.position = ps
+            self.tiltStick.x = (ps[0]-ap[0]*sz[0],ps[0]+(1-ap[0])*sz[0])
+            self.tiltStick.y = (ps[1]-ap[1]*sz[1],ps[1]+(1-ap[1])*sz[1])
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
@@ -290,12 +303,29 @@ if engine == 'ista':
             linePlot(sx,sy,m2p,po,width,height,red,0.1*m2p)
                         
         def touch_began(self, touch):
-            self.touchCycle = True
+            # Reset if necessary
+            if touch.location[1] > height/2:
+                self.touchCycle = True
             
-#            for node in self.children:
-#                if touch.location in node.frame and hasattr(node, 'touch_began'):
-#                    node.touch_began(touch)
-            
+            # Detect control inputs (touch conditions = tCnd)
+            tCnd = [touch.location[0] > self.moveStick.x[0],
+                    touch.location[0] < self.moveStick.x[1],
+                    touch.location[1] > self.moveStick.y[0],
+                    touch.location[1] < self.moveStick.y[1],
+                    touch.location[0] > self.tiltStick.x[0],
+                    touch.location[0] < self.tiltStick.x[1],
+                    touch.location[1] > self.tiltStick.y[0],
+                    touch.location[1] < self.tiltStick.y[1]]
+            # Touched inside the moveStick
+            if tCnd[0] and tCnd[1] and tCnd[2] and tCnd[3]:
+                print('touched!')
+        
+        def touch_moved(self,touch):
+            print('moved!')
+        
+        def touch_ended(self,touch):
+            print('ended!')
+        
         def stop(self):
             motion.stop_updates()
                 
