@@ -153,11 +153,11 @@ if engine == 'ista':
             
             # Initialize the Button Nodes
             center = self.size/2
-            self.sprite = scene.SpriteNode('Dog_Face', parent=self, position=center)
-            ButtonNode('←', parent=self, position=center - (300,  300))
-            ButtonNode('→', parent=self, position=center - (100,  300))
-            ButtonNode('↓', parent=self, position=center + (100, -300))
-            ButtonNode('↑', parent=self, position=center + (300, -300))
+            self.sprite = SpriteNode('Dog_Face', parent=self, position=center)
+            ButtonNode('leftArrow', parent=self, position=center - (300,  300))
+            ButtonNode('rightArrow', parent=self, position=center - (100,  300))
+            ButtonNode('downArrow', parent=self, position=center + (100, -300))
+            ButtonNode('upArrow', parent=self, position=center + (300, -300))
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
