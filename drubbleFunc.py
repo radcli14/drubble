@@ -75,6 +75,20 @@ if engine == 'ista':
 #            elif self.title == 'upArrow':
 #                sprite.position = x, min(y + 20, self.parent.size.h)    
 #        
+    def touchStick(loc,stick):
+        tCnd = [loc[0] > stick.x[0],
+                loc[0] < stick.x[1],
+                loc[1] > stick.y[0],
+                loc[1] < stick.y[1]]
+                    
+            # Touched inside the moveStick
+        if tCnd[0] and tCnd[1] and tCnd[2] and tCnd[3]:
+            x = 2*(loc[0]-stick.x[0])/stick.size[0] - 1
+            y = 2*(loc[1]-stick.y[0])/stick.size[1] - 1
+            return (x,y)
+        else:
+            return (0,0)
+    
     class joystick(ui.View): 
     
         def __init__(self, stick_size, size):
@@ -344,6 +358,13 @@ class gameState:
         # 7 = Game over, resume option
         # 8 = Game over, high scores
         self.gameMode = 1
+        
+        # Determine the control method
+        if engine == 'pygame':
+            self.ctrlMode = 'keys'
+        elif engine == 'ista':
+            self.ctrlMode = 'vStick'
+            #self.ctrlMode = 'motion'
         
         # Timing
         self.t  = 0

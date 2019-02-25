@@ -152,26 +152,30 @@ if engine == 'ista':
             self.touchCycle = False
             
             # Initialize the buttons
-            sz = (0.1*width,0.1*width)
+            sz = (0.2*width,0.2*width)
             ap = (1.0,0.0)
             ps = (width,height/20)
-            self.moveStick = SpriteNode('iob:arrow_move_256',parent=self)
-            self.moveStick.alpha = 0.5
+            self.moveStick = SpriteNode('iob:pinpoint_256',parent=self)
+            self.moveStick.alpha = 0.1
             self.moveStick.size = sz
             self.moveStick.anchor_point = ap
             self.moveStick.position = ps
             self.moveStick.x = (ps[0]-ap[0]*sz[0],ps[0]+(1-ap[0])*sz[0])
             self.moveStick.y = (ps[1]-ap[1]*sz[1],ps[1]+(1-ap[1])*sz[1])
+            self.moveStick.ctrl = (0,0)
+            self.moveStick.id = None
             
             ap = (0.0,0.0)
             ps = (0,height/20)
-            self.tiltStick = SpriteNode('iob:arrow_move_256',parent=self)
-            self.tiltStick.alpha = 0.5
+            self.tiltStick = SpriteNode('iob:pinpoint_256',parent=self)
+            self.tiltStick.alpha = 0.1
             self.tiltStick.size = sz
             self.tiltStick.anchor_point = ap
             self.tiltStick.position = ps
             self.tiltStick.x = (ps[0]-ap[0]*sz[0],ps[0]+(1-ap[0])*sz[0])
             self.tiltStick.y = (ps[1]-ap[1]*sz[1],ps[1]+(1-ap[1])*sz[1])
+            self.tiltStick.ctrl = (0,0)
+            self.tiltStick.id = None
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
@@ -227,33 +231,40 @@ if engine == 'ista':
             self.add_child(self.head)
         
         def update(self):
+            #print(str(self.tiltStick.ctrl)+str(self.moveStick.ctrl))
+            
             # Update if there was a touch
             if self.touchCycle:
                 cycleModes(gs,stats)
                 self.touchCycle = False
                 
             # Get the gravity vector and acceleration
-            
-            g = motion.get_gravity()
-            gThreshold = 0.05
-            slope = 5
-            if g[1]>gThreshold:
-                keyPush[0] = min(slope*(g[1]-gThreshold),1)
-            elif g[1]<-gThreshold:
-                keyPush[1] = -max(slope*(g[1]+gThreshold),-1)
-            else:
-                keyPush[0] = 0
-                keyPush[1] = 0
+            if gs.ctrlMode == 'motion':
+                g = motion.get_gravity()
+                gThreshold = 0.05
+                slope = 5
+                if g[1]>gThreshold:
+                    keyPush[0] = min(slope*(g[1]-gThreshold),1)
+                elif g[1]<-gThreshold:
+                    keyPush[1] = -max(slope*(g[1]+gThreshold),-1)
+                else:
+                    keyPush[0] = 0
+                    keyPush[1] = 0
                 
-            a = motion.get_user_acceleration()
-            aScale=2
-            if a[1]>0:
-                keyPush[2]=max(aScale*a[1],1)
-                keyPush[3]=0
-            else:
-                keyPush[2]=0
-                keyPush[3]=max(-aScale*a[1],1)
-            
+                a = motion.get_user_acceleration()
+                aScale=2
+                if a[1]>0:
+                    keyPush[2] = max(aScale*a[1],1)
+                    keyPush[3] = 0
+                else:
+                    keyPush[2] = 0
+                    keyPush[3]=max(-aScale*a[1],1)
+            elif gs.ctrlMode == 'vStick':
+                keyPush[1] = self.moveStick.ctrl[0]
+                keyPush[2] = self.moveStick.ctrl[1]
+                keyPush[4] = self.tiltStick.ctrl[1]
+                keyPush[7] = self.tiltStick.ctrl[0]
+                
             ## ANGLE AND SPEED SETTINGS
             if gs.gameMode>2 and gs.gameMode<6:
                 gs.setAngleSpeed()
@@ -307,24 +318,33 @@ if engine == 'ista':
             if touch.location[1] > height/2:
                 self.touchCycle = True
             
-            # Detect control inputs (touch conditions = tCnd)
-            tCnd = [touch.location[0] > self.moveStick.x[0],
-                    touch.location[0] < self.moveStick.x[1],
-                    touch.location[1] > self.moveStick.y[0],
-                    touch.location[1] < self.moveStick.y[1],
-                    touch.location[0] > self.tiltStick.x[0],
-                    touch.location[0] < self.tiltStick.x[1],
-                    touch.location[1] > self.tiltStick.y[0],
-                    touch.location[1] < self.tiltStick.y[1]]
-            # Touched inside the moveStick
-            if tCnd[0] and tCnd[1] and tCnd[2] and tCnd[3]:
-                print('touched!')
+            # Detect control inputs
+            xy = touchStick(touch.location,self.moveStick)
+            if xy[0] != 0:
+            	self.moveStick.ctrl = xy
+            	self.moveStick.id = touch.touch_id
+            	
+            xy = touchStick(touch.location,self.tiltStick)
+            if xy[0] != 0:
+            	self.tiltStick.ctrl = xy
+            	self.tiltStick.id = touch.touch_id	
         
         def touch_moved(self,touch):
-            print('moved!')
+            # Detect control inputs
+            xy = touchStick(touch.location,self.moveStick)
+            if touch.touch_id == self.moveStick.id and xy[0] != 0:
+                self.moveStick.ctrl = xy
+            
+            xy = touchStick(touch.location,self.tiltStick)
+            if touch.touch_id == self.tiltStick.id and xy[0] != 0:
+                self.tiltStick.ctrl = xy
         
         def touch_ended(self,touch):
-            print('ended!')
+            if touch.touch_id == self.moveStick.id:
+                self.moveStick.ctrl = (0,0)
+        
+            if touch.touch_id == self.tiltStick.id:
+                self.tiltStick.ctrl = (0,0)
         
         def stop(self):
             motion.stop_updates()
