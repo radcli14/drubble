@@ -25,6 +25,14 @@ if engine == 'pygame':
     skyBlue   = (220, 230, 255)
     darkGreen = (0,120,0)
     
+    # Open display
+    pygame.init()
+    pygame.font.init()
+    screen = pygame.display.set_mode(size) #,pygame.FULLSCREEN) 
+    pygame.display.set_caption('dRuBbLe')
+    icon = pygame.image.load('figs/icon.png')
+    pygame.display.set_icon(icon)
+    
     def xy2p(x,y,m2p,po,w,h):
     	return np.array(x)*m2p-po+w/2, h-(np.array(y)+1)*m2p
     
@@ -56,68 +64,19 @@ if engine == 'ista':
     	for k in range(1,np.size(x)):
     		line(x[k-1],y[k-1],x[k],y[k])
      
-#    class ButtonNode(SpriteNode):
-#        def __init__(self, title, *args, **kwargs):
-#            SpriteNode.__init__(self, 'pzl:Blue6', *args, **kwargs)
-#            self.title = title
-#            LabelNode(title, color='blue', font=('Avenir Next', 20),
-#                            parent=self, position=(0, 0))
-#            
-#        def touch_began(self, touch):
-#            sprite = self.parent.sprite
-#            x, y = sprite.position
-#            if self.title == 'leftArrow':
-#                sprite.position = max(x - 20, 0), y
-#            elif self.title == 'rightArrow':
-#                sprite.position = min(x + 20, self.parent.size.w), y
-#            elif self.title == 'downArrow':
-#                sprite.position = x, max(y - 20, 0)
-#            elif self.title == 'upArrow':
-#                sprite.position = x, min(y + 20, self.parent.size.h)    
-#        
     def touchStick(loc,stick):
         tCnd = [loc[0] > stick.x[0],
                 loc[0] < stick.x[1],
                 loc[1] > stick.y[0],
                 loc[1] < stick.y[1]]
                     
-            # Touched inside the moveStick
-        if tCnd[0] and tCnd[1] and tCnd[2] and tCnd[3]:
+        # Touched inside the stick
+        if all(tCnd):
             x = 2*(loc[0]-stick.x[0])/stick.size[0] - 1
             y = 2*(loc[1]-stick.y[0])/stick.size[1] - 1
             return (x,y)
         else:
             return (0,0)
-    
-    class joystick(ui.View): 
-    
-        def __init__(self, stick_size, size):
-            self.width = size 
-            self.height = size 
-            self.background_color = 'grey'
-            self.corner_radius = self.width/2
-            self.border_width = 1
-            stick = ui.View()
-            self.add_subview(stick)
-            stick.width, stick.height = stick_size, stick_size
-            stick.x, stick.y = self.width/2 - stick.width/2, self.height/2 - stick.height/2
-            stick.background_color = 'blue'
-            stick.corner_radius = stick_size/2
-            stick.name = 'stick'
-    
-        def calc_pos(self, touch):  
-            x_comp = touch.location[0] - touch.prev_location[0]
-            x = max(min(self['stick'].x + x_comp, self.width - self['stick'].width), 0)
-    
-            y_comp = touch.location[1] - touch.prev_location[1]
-            y = max(min(self['stick'].y + y_comp, self.height - self['stick'].height), 0)
-            return x, y
-    
-        def touch_moved(self, touch):
-            self['stick'].x, self['stick'].y = self.calc_pos(touch)
-    
-        def touch_ended(self, touch):
-            self['stick'].x, self['stick'].y = self.width/2 - self['stick'].width/2, self.height/2 - self['stick'].height/2        
             
 dt = 1/fs
 
@@ -246,7 +205,7 @@ def makeMarkers(xrng,m2p,po):
             stroke(white)
             stroke_weight(1)
             line(start_x,start_y,end_x,end_y)
-            text(str(int(xr)),font_name='futura',font_size=m2p,x=end_x-2,y=end_y-2,alignment=7)
+            text(str(int(xr)),font_name='futura',font_size=0.6*m2p,x=start_x-2,y=start_y+m2p/20,alignment=1)
 
 # Parameters
 class parameters:
@@ -909,7 +868,7 @@ def init():
     return LN, HD, GD, ST, BL, BA,
 
 def setRanges(u):
-    maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),12])
+    maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),8])
     diffx = 1.25*np.abs(u[0]-u[4])
     midx  = (u[0]+u[4])/2
     if diffx>2*(maxy+1):

@@ -6,23 +6,12 @@ p = parameters()
 
 # Initial states
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u0 = [0,0,0,0,p.x0,p.y0,p.l0,0,0,0,0,1]
+u0 = [0,0,0,0,p.x0,p.y0,p.l0,0,0,0,0,10]
 gs = gameState(u0)
-
-# Open display
-if engine == 'pygame':
-    pygame.init()
-    pygame.font.init()
-    screen = pygame.display.set_mode(size) #,pygame.FULLSCREEN) 
-    pygame.display.set_caption('dRuBbLe')
-    icon = pygame.image.load('figs/icon.png')
-    pygame.display.set_icon(icon)
 
 # Set the keyboard input and mouse defaults
 keyPush        = np.zeros(8)
-mousePos       = width/2,height/2 
 userControlled = np.array([True, True, True, True]) 
-#userControlled = np.array([True, True, False, False])
 
 # Initialize stats
 stats = gameScore()
@@ -135,14 +124,10 @@ if engine == 'pygame':
         
 if engine == 'ista':
     gs.gameMode = 3
-    #stick = joystick(100, 200) 
-    #stick.present('popover') 
-    #stick.touch_ended(None)  # center the stick
 
     #bg0_texture = Texture(ui.Image('bg0.png'))
     #SpriteNode('bg0.png')
     
-
     class Game (Scene):
         def setup(self):
             # Initialize the motion module
@@ -231,8 +216,6 @@ if engine == 'ista':
             self.add_child(self.head)
         
         def update(self):
-            #print(str(self.tiltStick.ctrl)+str(self.moveStick.ctrl))
-            
             # Update if there was a touch
             if self.touchCycle:
                 cycleModes(gs,stats)
