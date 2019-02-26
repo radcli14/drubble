@@ -33,6 +33,12 @@ if engine == 'pygame':
     icon = pygame.image.load('figs/icon.png')
     pygame.display.set_icon(icon)
     
+    msg = ['','',
+           ['OPTIONS','    Single Drubble','','','','Press space to begin!!!'],
+           'Use arrow keys to control player, W-A-S-D keys to control stool. Press space to begin!',
+           'Press space to select starting angle',
+           'Press space to select starting speed','','','']
+    
     def xy2p(x,y,m2p,po,w,h):
     	return np.array(x)*m2p-po+w/2, h-(np.array(y)+1)*m2p
     
@@ -121,8 +127,8 @@ if engine == 'pygame':
 		diagrect.left   = int(width*0.75)
 		diagrect.bottom = int(height+40)
 
-def makeSplashScreen(showedSplash):
-    if showedSplash:
+def makeSplashScreen():
+    if gs.showedSplash:
         screen.fill(skyBlue)
         screen.blit(splash, splashrect)
         screen.blit(diagram, diagrect)
@@ -136,8 +142,7 @@ def makeSplashScreen(showedSplash):
             screen.blit(diagram, diagrect)
             pygame.display.flip()
             clock.tick(30)
-        showedSplash = True
-    return showedSplash
+        gs.showedSplash = True
 
 def showMessage(msgText):
     font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/32))
@@ -324,7 +329,7 @@ class gameState:
         # Define Game Mode
         # 0 = Quit
         # 1 = Splash screen
-        # 2 = Options screen (TBD)
+        # 2 = Options screen
         # 3 = In game, pre-angle set
         # 4 = In game, angle set
         # 5 = In game, distance set
@@ -332,6 +337,7 @@ class gameState:
         # 7 = Game over, resume option
         # 8 = Game over, high scores
         self.gameMode = 1
+        self.showedSplash = False
         
         # Determine the control method
         if engine == 'pygame':
@@ -494,8 +500,9 @@ class gameScore:
 
 # Predict
 def BallPredict(gs):
-
-    if gs.gameMode>2 and (gs.dyb>0) and (gs.yb<p.y0+p.d+p.l0): 
+    if gs.dyb==0:
+        tI=0
+    elif gs.gameMode>2 and (gs.dyb>0) and (gs.yb<p.y0+p.d+p.l0): 
         # Solve for time and height at apogee
         ta = gs.dyb/p.g
         ya = 0.5*p.g*ta**2

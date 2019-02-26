@@ -15,13 +15,6 @@ userControlled = np.array([True, True, True, True])
 
 # Initialize stats
 stats = gameScore()
-showedSplash = False
-
-msg = ['','',
-       ['OPTIONS','    Single Drubble','','','','Press space to begin!!!'],
-       'Use arrow keys to control player, W-A-S-D keys to control stool. Press space to begin!',
-       'Press space to select starting angle',
-       'Press space to select starting speed','','','']
 
 # Run an infinite loop until gameMode is zero
 if engine == 'pygame':
@@ -74,7 +67,7 @@ if engine == 'pygame':
     
         # Show the Splash Sreen
         if gs.gameMode==1:
-            showedSplash = makeSplashScreen(showedSplash)
+            makeSplashScreen()
         
         ## ANGLE AND SPEED SETTINGS
         if gs.gameMode>2 and gs.gameMode<6:
