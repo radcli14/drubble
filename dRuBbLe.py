@@ -136,31 +136,9 @@ if engine == 'ista':
             # Add the game state classes to the scene
             self.touchCycle = False
             
-            # Initialize the buttons
-            sz = (0.2*width,0.2*width)
-            ap = (1.0,0.0)
-            ps = (width,height/20)
-            self.moveStick = SpriteNode('iob:pinpoint_256',parent=self)
-            self.moveStick.alpha = 0.1
-            self.moveStick.size = sz
-            self.moveStick.anchor_point = ap
-            self.moveStick.position = ps
-            self.moveStick.x = (ps[0]-ap[0]*sz[0],ps[0]+(1-ap[0])*sz[0])
-            self.moveStick.y = (ps[1]-ap[1]*sz[1],ps[1]+(1-ap[1])*sz[1])
-            self.moveStick.ctrl = (0,0)
-            self.moveStick.id = None
-            
-            ap = (0.0,0.0)
-            ps = (0,height/20)
-            self.tiltStick = SpriteNode('iob:pinpoint_256',parent=self)
-            self.tiltStick.alpha = 0.1
-            self.tiltStick.size = sz
-            self.tiltStick.anchor_point = ap
-            self.tiltStick.position = ps
-            self.tiltStick.x = (ps[0]-ap[0]*sz[0],ps[0]+(1-ap[0])*sz[0])
-            self.tiltStick.y = (ps[1]-ap[1]*sz[1],ps[1]+(1-ap[1])*sz[1])
-            self.tiltStick.ctrl = (0,0)
-            self.tiltStick.id = None
+            # Initialize the buttons or sticks
+            self.moveStick = initStick(self,0.1,0.2*width,(1,0),(width,height/20))
+            self.tiltStick = initStick(self,0.1,0.2*width,(0,0),(0,height/20))
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
@@ -279,7 +257,7 @@ if engine == 'ista':
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
             # Generate the trajectory
-            linePlot(gs.xTraj,gs.yTraj,m2p,po,width,height,gray,1)
+            linePlot(gs.xTraj,gs.yTraj+p.rb,m2p,po,width,height,gray,1)
             
             # Generate the bottom line
             stroke(black)

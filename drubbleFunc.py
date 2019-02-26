@@ -63,7 +63,19 @@ if engine == 'ista':
     	stroke_weight(wgt)
     	for k in range(1,np.size(x)):
     		line(x[k-1],y[k-1],x[k],y[k])
-     
+    
+    def initStick(self,alph,sz,ap,ps):
+        Stick = SpriteNode('iob:pinpoint_256',parent=self)
+        Stick.alpha = 0.1
+        Stick.size = (sz,sz)
+        Stick.anchor_point = ap
+        Stick.position = ps
+        Stick.x = (ps[0]-ap[0]*sz,ps[0]+(1-ap[0])*sz)
+        Stick.y = (ps[1]-ap[1]*sz,ps[1]+(1-ap[1])*sz)
+        Stick.ctrl = (0,0)
+        Stick.id = None
+        return Stick
+        
     def touchStick(loc,stick):
         tCnd = [loc[0] > stick.x[0],
                 loc[0] < stick.x[1],
@@ -72,8 +84,8 @@ if engine == 'ista':
                     
         # Touched inside the stick
         if all(tCnd):
-            x = 2*(loc[0]-stick.x[0])/stick.size[0] - 1
-            y = 2*(loc[1]-stick.y[0])/stick.size[1] - 1
+            x = min(max(p.tsens*(2*(loc[0]-stick.x[0])/stick.size[0] - 1),-1),1)
+            y = min(max(p.tsens*(2*(loc[1]-stick.y[0])/stick.size[1] - 1),-1),1)
             return (x,y)
         else:
             return (0,0)
@@ -259,13 +271,16 @@ class parameters:
                    [  0    , mg , mg ,    0    ],
                    [-mg*l0 , 0  , 0  , mg*l0**2]])
     
+    # Touch Stick Sensitivity
+    tsens = 2
+    
     # startAngle (sa) and startSpeed (ss) initially
     sa = np.pi/4
     ss = 10
     
     # Parameter settings I'm using to try to improve running speed
     invM = M.I
-    linearMass  = True
+    linearMass  = False
     nEulerSteps = 4
     timeRun     = False
     
@@ -392,11 +407,10 @@ class gameState:
                 self.ue[3] = vBounce[1]
                 
                 # Add  the recoil to the player 
-                ## TO BE UPDATED, NOT BEHAVING RIGHT
-                #self.ue[8]  = self.ue[8]  + vRecoil[0]
-                #self.ue[9]  = self.ue[9]  + vRecoil[1]
-                #self.ue[10] = self.ue[10] + vRecoil[2]
-                #self.ue[11] = self.ue[11] + vRecoil[3]
+                self.ue[8]  = self.ue[8]  + vRecoil[0,0]
+                self.ue[9]  = self.ue[9]  + vRecoil[0,1]
+                self.ue[10] = self.ue[10] + vRecoil[0,2]
+                self.ue[11] = self.ue[11] + vRecoil[0,3]
                 
             elif self.FloorBounce:
                 # Reverse direction of the ball
