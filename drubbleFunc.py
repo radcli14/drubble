@@ -46,6 +46,7 @@ if engine == 'ista':
     from scene import *
     import motion
     import ui
+    import scene_drawing
     fs = 60
     width  = max(get_screen_size())
     height = min(get_screen_size())
@@ -92,7 +93,11 @@ if engine == 'ista':
         if all(tCnd):
             x = min(max(p.tsens*(2*(loc[0]-stick.x[0])/stick.size[0] - 1),-1),1)
             y = min(max(p.tsens*(2*(loc[1]-stick.y[0])/stick.size[1] - 1),-1),1)
-            return (x,y)
+            
+            mag = np.sqrt(x**2+y**2)
+            ang = np.around(4*np.arctan2(y,x)/np.pi)*np.pi/4
+            
+            return (mag*np.cos(ang),mag*np.sin(ang))
         else:
             return (0,0)
             
@@ -156,12 +161,17 @@ def showMessage(msgText):
     
 def makeBackgroundImage():
     # Draw the ESA, Big Chair, River, and USS Barry
-    drawBackgroundImage(bg0,bg0_rect,-0.25,-5,0)
+    drawBackgroundImage(bg0,bg0_rect,-0.25,-5,m2p)
 
-def drawBackgroundImage(image,rect,xpos,ypos,howTall):
-    rect.left = width*(-(gs.xb+gs.xp)/120+xpos)
-    rect.bottom = height+(gs.yb/40-0.9)*m2p
-    screen.blit(image,rect)
+def drawBackgroundImage(img,rect,xpos,ypos,m2p):
+    if engine == 'pygame':
+        rect.left = width*(-(gs.xb+gs.xp)/120+xpos)
+        rect.bottom = height+(gs.yb/40-0.9)*m2p
+        screen.blit(img,rect)
+    elif engine == 'ista':
+        left = width*(-(gs.xb+gs.xp)/120+xpos)
+        bottom = -gs.yb*5+ypos+height/20
+        image(bg0,left,bottom,rect[0],rect[1])
     
 def makeGameImage():
     # Get the plotting vectors using stickDude function
@@ -277,7 +287,10 @@ class parameters:
                    [-mg*l0 , 0  , 0  , mg*l0**2]])
     
     # Touch Stick Sensitivity
-    tsens = 2
+    tsens = 1.5
+    
+    # Tolerance on last bounce speed before stopping motion
+    dybtol = 2
     
     # startAngle (sa) and startSpeed (ss) initially
     sa = np.pi/4
@@ -363,6 +376,9 @@ class gameState:
         self.startAngle = p.sa
         self.startSpeed = p.ss
         self.phase      = 0
+        
+        # Stuck condition
+        self.Stuck = False
                 
     # Execute a simulation step of duration dt    
     def simStep(self):
@@ -421,15 +437,25 @@ class gameState:
             elif self.FloorBounce:
                 # Reverse direction of the ball
                 self.ue[2] = +p.COR*self.ue[2]
-                self.ue[3] = -p.COR*self.ue[3]       
+                self.ue[3] = -p.COR*self.ue[3]     
+                
          
             # Re-initialize from the event states
             dudt = PlayerAndStool(self.t,self.ue)
             self.u = self.ue + np.array(dudt)*(dt-tBreak)
+            
+            # Stuck
+            if np.sqrt(self.u[2]**2+self.u[3]**2)<p.dybtol:
+                self.Stuck = True
         else:   
             # Update states
             self.u = U[:,-1]  
-            
+        
+        if self.Stuck:
+            self.u[1] = p.rb
+            self.u[2] = 0.99*self.u[2]
+            self.u[3] = 0
+        
         # Generate the new ball trajectory prediction line
         if self.StoolBounce or self.FloorBounce or self.gameMode<7:    
             # Predict the future trajectory of the ball
@@ -441,7 +467,6 @@ class gameState:
             self.n = 0
             self.u[0] = u0[0]
             self.u[1] = u0[1]
-
         # Named states    
         self   = varStates(self)
         
@@ -594,7 +619,7 @@ def PlayerAndStool(t,u):
           0,-p.g,                              # Ball accelerations
           dxp,dyp,dlp,dtp,                     # Player velocities
           ddq[0,0],ddq[1,0],ddq[2,0],ddq[3,0]] # Player accelerations
-          
+    
     return du
 
 def playerControlInput(event):

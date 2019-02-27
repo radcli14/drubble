@@ -6,7 +6,7 @@ p = parameters()
 
 # Initial states
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u0 = [0,0,0,0,p.x0,p.y0,p.l0,0,0,0,0,10]
+u0 = [0,p.rb,0,0,p.x0,p.y0,p.l0,0,0,0,0,10]
 gs = gameState(u0)
 
 # Set the keyboard input and mouse defaults
@@ -118,8 +118,13 @@ if engine == 'pygame':
 if engine == 'ista':
     gs.gameMode = 3
 
-    #bg0_texture = Texture(ui.Image('bg0.png'))
-    #SpriteNode('bg0.png')
+    # Initialize the background image
+    try:
+        bg0 = scene_drawing.load_image_file('figs/bg0.png')
+        bg0_sz = (6*height,height)
+        bgLoaded = True
+    except:
+        bgLoaded = False
     
     class Game (Scene):
         def setup(self):
@@ -135,10 +140,6 @@ if engine == 'ista':
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
-            
-            # Initialize the background image
-            #self.bg0 = SpriteNode(bg0_texture)
-            #self.bg0.z_position = 0
             
             # Initialize the score line
             score_font = ('Futura', 12)
@@ -239,18 +240,23 @@ if engine == 'ista':
             # update the ball and head sprites
             dbPix = 2*p.rb*m2p
             self.ball.size = (dbPix,dbPix)
-            self.ball.position = (gs.xb*m2p-po+width/2, 
-                                 (gs.yb+p.rb)*m2p+height/20)
+            x,y = xy2p(gs.xb,gs.yb,m2p,po,width,height)
+            self.ball.position = (x,y)
             spPix = 0.7*m2p
             self.head.size = (spPix,spPix)
-            self.head.position = (gs.xp*m2p-po+width/2, 
-                                 (gs.yp+p.d)*m2p+height/20)
+            x,y = xy2p(gs.xp,gs.yp+p.d,m2p,po,width,height)
+            self.head.position = (x,y)
                                  
         def draw(self):
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
+            # Generate the background
+            if bgLoaded:
+                drawBackgroundImage(bg0,bg0_sz,-0.25,-10,m2p)
+                
+            
             # Generate the trajectory
-            linePlot(gs.xTraj,gs.yTraj+p.rb,m2p,po,width,height,gray,1)
+            linePlot(gs.xTraj,gs.yTraj,m2p,po,width,height,white,2)
             
             # Generate the bottom line
             stroke(black)
