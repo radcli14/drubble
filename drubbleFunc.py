@@ -286,6 +286,12 @@ class parameters:
                    [  0    , mg , mg ,    0    ],
                    [-mg*l0 , 0  , 0  , mg*l0**2]])
     
+    # Damping Matrix     
+    C = np.diag([Cx,Cy,Cl,Ct])
+    
+    # Stiffness Matrix
+    K = np.diag([0,Ky,Kl,Kt])
+    
     # Touch Stick Sensitivity
     tsens = 1.5
     
@@ -310,14 +316,14 @@ def varStates(obj):
     obj.yb  = obj.u[1]  # Ball height [m]
     obj.dxb = obj.u[2]  # Ball horizontal speed [m]
     obj.dyb = obj.u[3]  # Ball vertical speed [m]
-    obj.xp  = obj.u[4]  # Player distance [m]
-    obj.yp  = obj.u[5]  # Player height [m]
-    obj.lp  = obj.u[6]  # Stool extension [m]
-    obj.tp  = obj.u[7]  # Stool tilt [rad]
-    obj.dxp = obj.u[8]  # Player horizontal speed [m/s]
-    obj.dyp = obj.u[9]  # Player vertical speed [m/s]
-    obj.dlp = obj.u[10] # Stool extension rate [m/s]
-    obj.dtp = obj.u[11] # Stool tilt rate [rad/s]
+    obj.xp  = obj.u[4:12:8]  # Player distance [m]
+    obj.yp  = obj.u[5:13:8]  # Player height [m]
+    obj.lp  = obj.u[6:14:8]  # Stool extension [m]
+    obj.tp  = obj.u[7:15:8]  # Stool tilt [rad]
+    obj.dxp = obj.u[8:16:8]  # Player horizontal speed [m/s]
+    obj.dyp = obj.u[9:17:8]  # Player vertical speed [m/s]
+    obj.dlp = obj.u[10:18:8] # Stool extension rate [m/s]
+    obj.dtp = obj.u[11:19:8] # Stool tilt rate [rad/s]
     return obj
 
 def unpackStates(u):
@@ -326,14 +332,14 @@ def unpackStates(u):
     yb  = u[1]  # Ball height [m]
     dxb = u[2]  # Ball horizontal speed [m]
     dyb = u[3]  # Ball vertical speed [m]
-    xp  = u[4]  # Player distance [m]
-    yp  = u[5]  # Player height [m]
-    lp  = u[6]  # Stool extension [m]
-    tp  = u[7]  # Stool tilt [rad]
-    dxp = u[8]  # Player horizontal speed [m/s]
-    dyp = u[9]  # Player vertical speed [m/s]
-    dlp = u[10] # Stool extension rate [m/s]
-    dtp = u[11] # Stool tilt rate [rad/s]
+    xp  = u[4:12:8]  # Player distance [m]
+    yp  = u[5:13:8]  # Player height [m]
+    lp  = u[6:14:8]  # Stool extension [m]
+    tp  = u[7:15:8]  # Stool tilt [rad]
+    dxp = u[8:16:8]  # Player horizontal speed [m/s]
+    dyp = u[9:17:8]  # Player vertical speed [m/s]
+    dlp = u[10:18:8] # Stool extension rate [m/s]
+    dtp = u[11:19:8] # Stool tilt rate [rad/s]
     return xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp
 
 class gameState:
@@ -382,8 +388,7 @@ class gameState:
                 
     # Execute a simulation step of duration dt    
     def simStep(self):
-        # Increment timing variables
-        self.t += dt   
+        # Increment n 
         self.n += 1
         
         # Initial assumption, there was no event
@@ -398,9 +403,12 @@ class gameState:
         
         ## Integrate using Euler method
         # Initialize state variables
-        U = np.zeros((12,p.nEulerSteps+1))
+        U = np.zeros((20,p.nEulerSteps+1))
         U[:,0] = self.u
         for k in range(1,p.nEulerSteps+1):
+            # Increment time
+            self.t += dt/p.nEulerSteps
+            
             # Calculate the derivatives of states w.r.t. time
             dudt = PlayerAndStool(self.t,U[:,k-1])
             
@@ -414,9 +422,9 @@ class gameState:
                 if BallHitFloor(self.t,U[:,k])<0:   
                     self.FloorBounce = True
                 if self.StoolBounce or self.FloorBounce:
-                    self.te = self.t+k*dt
+                    self.te = self.t
                     self.ue = U[:,k] 
-                    tBreak = k*dt
+                    tBreak = k*dt/p.nEulerSteps
                     break 
         
         # If an event occured, increment the counter, otherwise continue
@@ -441,11 +449,12 @@ class gameState:
                 
          
             # Re-initialize from the event states
+            self.t += dt-tBreak
             dudt = PlayerAndStool(self.t,self.ue)
             self.u = self.ue + np.array(dudt)*(dt-tBreak)
             
             # Stuck
-            if np.sqrt(self.u[2]**2+self.u[3]**2)<p.dybtol:
+            if np.sqrt(self.u[2]**2+self.u[3]**2)<p.dybtol and self.u[2]<1:
                 self.Stuck = True
         else:   
             # Update states
@@ -453,7 +462,7 @@ class gameState:
         
         if self.Stuck:
             self.u[1] = p.rb
-            self.u[2] = 0.99*self.u[2]
+            self.u[2] = 0.9999*self.u[2]
             self.u[3] = 0
         
         # Generate the new ball trajectory prediction line
@@ -567,60 +576,59 @@ def PlayerAndStool(t,u):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
+    # Initialize output
+    du = np.zeros(20)
+    du[0:4] = [dxb,dyb,0,-p.g] # Ball velocities and accelerations
+    
+    # Loop over players
+    k = 0
+    
     # Create player state vectors
-    q   = np.matrix([[xp],[yp],[lp],[tp]])
-    dq  = np.matrix([[dxp],[dyp],[dlp],[dtp]])
+    q  = np.matrix([[xp[k]],[yp[k]],[lp[k]],[tp[k]]])
+    dq = np.matrix([[dxp[k]],[dyp[k]],[dlp[k]],[dtp[k]]])
 
     # Sines and cosines of the stool angle
-    s   = np.sin(tp)
-    c   = np.cos(tp)
+    s = np.sin(tp[k])
+    c = np.cos(tp[k])
     
     # Mass Matrix
     if not p.linearMass:     
-        M = np.matrix([[   p.m    ,    0     ,-p.mg*s,-p.mg*lp*c ],
-                       [    0     ,   p.m    , p.mg*c,-p.mg*lp*s ],
+        M = np.matrix([[   p.m    ,    0     ,-p.mg*s,-p.mg*lp[k]*c ],
+                       [    0     ,   p.m    , p.mg*c,-p.mg*lp[k]*s ],
                        [-p.mg*s   ,  p.mg*c  , p.mg  ,   0       ],
-                       [-p.mg*lp*c,-p.mg*lp*s,   0   , p.mg*lp**2]])
-
-    # Damping Matrix     
-    C = np.diag([p.Cx,p.Cy,p.Cl,p.Ct])
-    
-    # Stiffness Matrix
-    K = np.diag([0 ,p.Ky,p.Kl,p.Kt])
+                       [-p.mg*lp[k]*c,-p.mg*lp[k]*s,   0   , p.mg*lp[k]**2]])
     
     # Centripetal [0,1] and Coriolis [3] Force Vector
-    D = np.matrix([[-p.mg*dlp*dtp*c+p.mg*lp*dtp*dtp*s], 
-                   [-p.mg*dlp*dtp*s+p.mg*lp*dtp*dtp*c], 
+    D = np.matrix([[-p.mg*dlp[k]*dtp[k]*c + p.mg*lp[k]*dtp[k]*dtp[k]*s], 
+                   [-p.mg*dlp[k]*dtp[k]*s +p.mg*lp[k]*dtp[k]*dtp[k]*c], 
                    [0],
-                   [2*p.mg*dtp]])
+                   [2*p.mg*dtp[k]]])
     
     # Gravitational Force Vector
     G = np.matrix([[ 0            ],
                    [ p.m*p.g      ],
                    [ p.mg*p.g*c   ],
-                   [-p.mg*p.g*lp*s]])         
+                   [-p.mg*p.g*lp[k]*s]])         
 
     # Fix the time, if supplied as tspan vector
     if np.size(t)>1:
         t = t[0]       
     
     # Control inputs form the generalized forces
-    Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = ControlLogic(t,u)
+    Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = ControlLogic(t,u,k)
     
     # Equation of Motion
-    RHS = -C*dq-K*q+K*q0-D-G+Q
+    RHS = -p.C*dq-p.K*q+p.K*q0-D-G+Q
     if p.linearMass:
         ddq = p.invM*RHS
     else:
         ddq = M.I*RHS
     
     # Output State Derivatives
-    du = [dxb,dyb,                             # Ball velocities
-          0,-p.g,                              # Ball accelerations
-          dxp,dyp,dlp,dtp,                     # Player velocities
-          ddq[0,0],ddq[1,0],ddq[2,0],ddq[3,0]] # Player accelerations
-    
-    return du
+    i1 = k*8+4
+    i2 = k*8+12
+    du[i1:i2] = [dxp[k],dyp[k],dlp[k],dtp[k],ddq[0,0],ddq[1,0],ddq[2,0],ddq[3,0]] # Player velocities and accelerations
+    return du.tolist()
 
 def playerControlInput(event):
     if event.type == pygame.KEYDOWN:
@@ -667,20 +675,20 @@ def playerControlInput(event):
             keyPush[7] = 0          
     return keyPush
 
-def ControlLogic(t,u):
+def ControlLogic(t,u,k):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
 	
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
-    ZEM = (gs.xI-0.1) - xp - dxp*np.abs(gs.timeUntilBounce-1)
-    if userControlled[0]:
+    ZEM = (gs.xI-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
+    if userControlled[0,0]:
         if keyPush[0] +keyPush[1] == 0:
             try:
-            	Bx = -scs.erf(dxp)
+            	Bx = -scs.erf(dxp[k])
             except:
-            	Bx = -np.sign(dxp)
+            	Bx = -np.sign(dxp[k])
         else:
             Bx = keyPush[1]-keyPush[0]
     else:
@@ -691,7 +699,7 @@ def ControlLogic(t,u):
             Bx = -1
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
-    if userControlled[1]:
+    if userControlled[0,1]:
         By = keyPush[2]-keyPush[3]
     else:
         if (gs.timeUntilBounce<0.6) and (gs.timeUntilBounce>0.4):
@@ -702,19 +710,19 @@ def ControlLogic(t,u):
             By = 0
     
     # Control arm extension based on timing, turn on when impact in <0.2 sec
-    if userControlled[2]:
+    if userControlled[0,2]:
         Bl = keyPush[4]-keyPush[5]
     else:
         Bl = np.abs(gs.timeUntilBounce)<0.2
     
     # Control stool angle by pointing at the ball
-    xdiff = xb-xp # Ball distance - player distance
-    ydiff = yb-yp-p.d
+    xdiff = xb-xp[k] # Ball distance - player distance
+    ydiff = yb-yp[k]-p.d
     wantAngle = np.arctan2(-xdiff,ydiff)
-    if userControlled[3]:
+    if userControlled[0,3]:
         Bth = keyPush[6]-keyPush[7]
     else:
-        Bth = p.Gt*(wantAngle-tp)
+        Bth = p.Gt*(wantAngle-tp[k])
         if Bth>1:
             Bth = 1
         elif Bth<-1 or (gs.timeUntilBounce<0.017) and (gs.timeUntilBounce>0):

@@ -6,15 +6,22 @@ p = parameters()
 
 # Initial states
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u0 = [0,p.rb,0,0,p.x0,p.y0,p.l0,0,0,0,0,10]
+u0 = [0,p.rb,0,0,p.x0,p.y0,p.l0,0,0,0,0,10,
+                 0   ,0   ,0   ,0,0,0,0,-10]
+nPlayer = 2
 gs = gameState(u0)
 
 # Set the keyboard input and mouse defaults
 keyPush        = np.zeros(8)
-userControlled = np.array([True, True, True, True]) 
+userControlled = np.array([[True, True, True, True ],
+                           [False,False,False,False]]) 
 
 # Initialize stats
 stats = gameScore()
+
+gs.simStep()
+#print(gs.u)
+#err
 
 # Run an infinite loop until gameMode is zero
 if engine == 'pygame':
