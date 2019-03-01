@@ -165,17 +165,18 @@ def makeBackgroundImage():
 
 def drawBackgroundImage(img,rect,xpos,ypos,m2p):
     if engine == 'pygame':
-        rect.left = width*(-(gs.xb+gs.xp)/120+xpos)
+        rect.left = width*(-(gs.xb+gs.xp[0])/120+xpos)
         rect.bottom = height+(gs.yb/40-0.9)*m2p
         screen.blit(img,rect)
     elif engine == 'ista':
-        left = width*(-(gs.xb+gs.xp)/120+xpos)
+        left = width*(-(gs.xb+gs.xp[0])/120+xpos)
         bottom = -gs.yb*5+ypos+height/20
         image(bg0,left,bottom,rect[0],rect[1])
     
 def makeGameImage():
+    k=0
     # Get the plotting vectors using stickDude function
-    xv,yv,sx,sy = stickDude(gs.u)
+    xv,yv,sx,sy = stickDude(gs.u,k)
         
     # Convert to pixels
     xvp,yvp = xy2p(xv,yv,m2p,po,width,height)
@@ -311,19 +312,23 @@ class parameters:
     # Font settings
     MacsFavoriteFont = 'comicsansms' # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
+    # Color settings
+    playerColor = (darkGreen,red)
+    stoolColor  = (red,black)
+    
 def varStates(obj):
     obj.xb  = obj.u[0]  # Ball distance [m]
     obj.yb  = obj.u[1]  # Ball height [m]
     obj.dxb = obj.u[2]  # Ball horizontal speed [m]
     obj.dyb = obj.u[3]  # Ball vertical speed [m]
-    obj.xp  = obj.u[4:12:8]  # Player distance [m]
-    obj.yp  = obj.u[5:13:8]  # Player height [m]
-    obj.lp  = obj.u[6:14:8]  # Stool extension [m]
-    obj.tp  = obj.u[7:15:8]  # Stool tilt [rad]
-    obj.dxp = obj.u[8:16:8]  # Player horizontal speed [m/s]
-    obj.dyp = obj.u[9:17:8]  # Player vertical speed [m/s]
-    obj.dlp = obj.u[10:18:8] # Stool extension rate [m/s]
-    obj.dtp = obj.u[11:19:8] # Stool tilt rate [rad/s]
+    obj.xp  = obj.u[4:13:8]  # Player distance [m]
+    obj.yp  = obj.u[5:14:8]  # Player height [m]
+    obj.lp  = obj.u[6:15:8]  # Stool extension [m]
+    obj.tp  = obj.u[7:16:8]  # Stool tilt [rad]
+    obj.dxp = obj.u[8:17:8]  # Player horizontal speed [m/s]
+    obj.dyp = obj.u[9:18:8]  # Player vertical speed [m/s]
+    obj.dlp = obj.u[10:19:8] # Stool extension rate [m/s]
+    obj.dtp = obj.u[11:20:8] # Stool tilt rate [rad/s]
     return obj
 
 def unpackStates(u):
@@ -332,14 +337,14 @@ def unpackStates(u):
     yb  = u[1]  # Ball height [m]
     dxb = u[2]  # Ball horizontal speed [m]
     dyb = u[3]  # Ball vertical speed [m]
-    xp  = u[4:12:8]  # Player distance [m]
-    yp  = u[5:13:8]  # Player height [m]
-    lp  = u[6:14:8]  # Stool extension [m]
-    tp  = u[7:15:8]  # Stool tilt [rad]
-    dxp = u[8:16:8]  # Player horizontal speed [m/s]
-    dyp = u[9:17:8]  # Player vertical speed [m/s]
-    dlp = u[10:18:8] # Stool extension rate [m/s]
-    dtp = u[11:19:8] # Stool tilt rate [rad/s]
+    xp  = u[4:13:8]  # Player distance [m]
+    yp  = u[5:14:8]  # Player height [m]
+    lp  = u[6:15:8]  # Stool extension [m]
+    tp  = u[7:16:8]  # Stool tilt [rad]
+    dxp = u[8:17:8]  # Player horizontal speed [m/s]
+    dyp = u[9:18:8]  # Player vertical speed [m/s]
+    dlp = u[10:19:8] # Stool extension rate [m/s]
+    dtp = u[11:20:8] # Stool tilt rate [rad/s]
     return xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp
 
 class gameState:
@@ -397,7 +402,7 @@ class gameState:
         
         # Prevent event detection if there was already one within 0.1 seconds, 
         # or if the ball is far from the stool or ground
-        L = BallHitStool(self.t,self.u)       # Distance to stool
+        L = BallHitStool(self.t,self.u,np.mod(stats.stoolCount,nPlayer))       # Distance to stool
         vBall = np.array((self.dxb,self.dyb)) # Velocity
         sBall = np.linalg.norm(vBall)         # Speed
         
@@ -417,7 +422,7 @@ class gameState:
             
             # Check for events
             if (self.t-self.te)>0.1: 
-                if BallHitStool(self.t,U[:,k])<0:
+                if BallHitStool(self.t,U[:,k],np.mod(stats.stoolCount,nPlayer))<0:
                     self.StoolBounce = True
                 if BallHitFloor(self.t,U[:,k])<0:   
                     self.FloorBounce = True
@@ -432,7 +437,7 @@ class gameState:
             # Change ball states depending on if it was a stool or floor bounce
             if self.StoolBounce:
                 # Obtain the bounce velocity
-                vBounce,vRecoil = BallBounce(self)
+                vBounce,vRecoil = BallBounce(self,np.mod(stats.stoolCount,nPlayer))
                 self.ue[2] = vBounce[0]
                 self.ue[3] = vBounce[1]
                 
@@ -738,12 +743,13 @@ def BallHitFloor(t,u):
     return yb-p.rb
 BallHitFloor.terminal = True
 
-def BallHitStool(t,u):
+def BallHitStool(t,u,k):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
         
+    k=0
     # Get the stool locations using stickDude function
-    xv,yv,sx,sy = stickDude(u)
+    xv,yv,sx,sy = stickDude(u,k)
     
     # Vectors from the left edge of the stool to the right, and to the ball
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
@@ -768,9 +774,9 @@ def BallHitStool(t,u):
     return L 
 BallHitStool.terminal = True 
 
-def BallBounce(gs):
+def BallBounce(gs,k):
     # Get the stool locations using stickDude function
-    xv,yv,sx,sy = stickDude(gs.u)
+    xv,yv,sx,sy = stickDude(gs.u,k)
     
     # Vectors from the left edge of the stool to the right, and to the ball
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
@@ -787,8 +793,8 @@ def BallBounce(gs):
         ri = np.array([sx[0]+z*r1[0],sy[0]+z*r1[1]])
     
     # Velocity of the stool at the impact point 
-    vi = np.array([gs.dxp-gs.lp*np.sin(gs.tp)-(ri[1]-gs.yp)*gs.dtp,
-                   gs.dyp+gs.lp*np.cos(gs.tp)+(ri[0]-gs.xp)*gs.dtp])
+    vi = np.array([gs.dxp-gs.lp[k]*np.sin(gs.tp[k])-(ri[1]-gs.yp[k])*gs.dtp[k],
+                   gs.dyp[k]+gs.lp[k]*np.cos(gs.tp[k])+(ri[0]-gs.xp[k])*gs.dtp[k]])
     
     # Velocity of the ball relative to impact point
     vbrel = np.array([gs.dxb,gs.dyb])-vi
@@ -805,12 +811,12 @@ def BallBounce(gs):
     
     # Obtain the player recoil states
     BounceImpulse = -p.mg*vBounce
-    c = np.cos(gs.tp)
-    s = np.sin(gs.tp)
+    c = np.cos(gs.tp[k])
+    s = np.sin(gs.tp[k])
     dRdq = np.array([[ 1      , 0   ],
                      [ 0      , 1   ],
                      [-s      , c   ],
-                     [-c*gs.lp,-s*gs.lp]])
+                     [-c*gs.lp[k],-s*gs.lp[k]]])
     Qi = dRdq.dot(BounceImpulse)
     vRecoil = np.dot(p.invM,Qi)
     return vBounce, vRecoil
@@ -844,29 +850,31 @@ def ThirdPoint(P0,P1,L,SGN):
         P3 = [x3,y3]
     return P3
 
-def stickDude(inp):
+def stickDude(inp,k):
+    k8=k*8
     # Get the state variables
     if type(inp)==int:
         # States at time t[n]
-        x  = Y[n,4] 
-        y  = Y[n,5] 
-        l  = Y[n,6] 
-        th = Y[n,7] 
-        v  = Y[n,8] 
+        x  = Y[n,4+k8] 
+        y  = Y[n,5+k8] 
+        l  = Y[n,6+k8] 
+        th = Y[n,7+k8] 
+        v  = Y[n,8+k8] 
     elif type(inp)==list or type(inp)==np.ndarray:
     	  # States from u 
-        x  = inp[4]
-        y  = inp[5]
-        l  = inp[6]
-        th = inp[7]
-        v  = inp[8]
+        x  = inp[4+k8]
+        y  = inp[5+k8]
+        l  = inp[6+k8]
+        th = inp[7+k8]
+        v  = inp[8+k8]
     elif type(inp)==gameState:
         # States from gs
-        x  = inp.xp
-        y  = inp.yp
-        l  = inp.lp
-        th = inp.tp
-        v  = inp.dxp
+        print(inp.xp)
+        x  = inp.xp[k]
+        y  = inp.yp[k]
+        l  = inp.lp[k]
+        th = inp.tp[k]
+        v  = inp.dxp[k]
         
     s = np.sin(th)
     c = np.cos(th)
@@ -892,8 +900,8 @@ def stickDude(inp):
     sy = y+p.d+(l+p.ys)*c+p.xs*s
     
     # Right Hand [rh] Left Hand [lh] Position 
-    rh = [sx[7], sy[7]] # [x-0.5*l*sp,y+p.d+0.5*l*cp]
-    lh = [sx[6], sy[6]] # [x-0.5*l*sm,y+p.d+0.5*l*cm]
+    rh = [sx[7], sy[7]] 
+    lh = [sx[6], sy[6]] 
     
     # Right Elbow [re] Left Elbow [le] Position
     re = ThirdPoint(sh,rh,1,1)

@@ -7,7 +7,7 @@ p = parameters()
 # Initial states
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
 u0 = [0,p.rb,0,0,p.x0,p.y0,p.l0,0,0,0,0,10,
-                 0   ,0   ,0   ,0,0,0,0,-10]
+                 0   ,p.y0,p.l0,0,0,0,0,-10]
 nPlayer = 2
 gs = gameState(u0)
 
@@ -19,7 +19,7 @@ userControlled = np.array([[True, True, True, True ],
 # Initialize stats
 stats = gameScore()
 
-gs.simStep()
+#gs.simStep()
 #print(gs.u)
 #err
 
@@ -178,6 +178,7 @@ if engine == 'ista':
             # Get ranges for drawing the player and ball
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
+            k=0
             # Initialize the ball image
             self.ball = SpriteNode('emj:Red_Circle')
             dbPix = 2*p.rb*m2p
@@ -191,7 +192,7 @@ if engine == 'ista':
             spPix = 0.7*m2p
             self.head.size = (spPix,spPix)
             self.head.anchor_point = (0.5, 0.0)
-            self.head.position = (gs.xp*m2p+po, (gs.yp+p.d)*m2p)
+            self.head.position = (gs.xp[k]*m2p+po, (gs.yp[k]+p.d)*m2p)
             self.add_child(self.head)
         
         def update(self):
@@ -244,6 +245,7 @@ if engine == 'ista':
             self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
             self.score_label.text = 'Score = '+str(stats.score)
             
+            k=0
             # update the ball and head sprites
             dbPix = 2*p.rb*m2p
             self.ball.size = (dbPix,dbPix)
@@ -251,7 +253,7 @@ if engine == 'ista':
             self.ball.position = (x,y)
             spPix = 0.7*m2p
             self.head.size = (spPix,spPix)
-            x,y = xy2p(gs.xp,gs.yp+p.d,m2p,po,width,height)
+            x,y = xy2p(gs.xp[k],gs.yp[k]+p.d,m2p,po,width,height)
             self.head.position = (x,y)
                                  
         def draw(self):
@@ -273,12 +275,14 @@ if engine == 'ista':
             # Generate the markers
             makeMarkers(xrng,m2p,po)
             
-            # Generate a player image
-            xv,yv,sx,sy = stickDude(gs)
-            linePlot(xv,yv,m2p,po,width,height,darkGreen,0.15*m2p)
+            for k in range(nPlayer):
+                # Generate a player image
+                print(k)
+                xv,yv,sx,sy = stickDude(gs,k)
+                linePlot(xv,yv,m2p,po,width,height,p.playerColor[k],0.15*m2p)
             
-            # Generate a stool image
-            linePlot(sx,sy,m2p,po,width,height,red,0.1*m2p)
+                # Generate a stool image
+                linePlot(sx,sy,m2p,po,width,height,p.stoolColor[k],0.1*m2p)
                         
         def touch_began(self, touch):
             # Reset if necessary
