@@ -178,7 +178,6 @@ if engine == 'ista':
             # Get ranges for drawing the player and ball
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
-            k=0
             # Initialize the ball image
             self.ball = SpriteNode('emj:Red_Circle')
             dbPix = 2*p.rb*m2p
@@ -188,6 +187,7 @@ if engine == 'ista':
             self.add_child(self.ball)
             
             # Initialize the player's head
+            k=0
             self.head = SpriteNode('emj:Slice_Of_Pizza')
             spPix = 0.7*m2p
             self.head.size = (spPix,spPix)
@@ -245,12 +245,15 @@ if engine == 'ista':
             self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
             self.score_label.text = 'Score = '+str(stats.score)
             
-            k=0
-            # update the ball and head sprites
+
+            # update the ball sprites
             dbPix = 2*p.rb*m2p
             self.ball.size = (dbPix,dbPix)
             x,y = xy2p(gs.xb,gs.yb,m2p,po,width,height)
             self.ball.position = (x,y)
+            
+            # Generate the head sprites
+            k=0
             spPix = 0.7*m2p
             self.head.size = (spPix,spPix)
             x,y = xy2p(gs.xp[k],gs.yp[k]+p.d,m2p,po,width,height)
@@ -277,7 +280,6 @@ if engine == 'ista':
             
             for k in range(nPlayer):
                 # Generate a player image
-                print(k)
                 xv,yv,sx,sy = stickDude(gs,k)
                 linePlot(xv,yv,m2p,po,width,height,p.playerColor[k],0.15*m2p)
             

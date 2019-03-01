@@ -174,32 +174,39 @@ def drawBackgroundImage(img,rect,xpos,ypos,m2p):
         image(bg0,left,bottom,rect[0],rect[1])
     
 def makeGameImage():
-    k=0
-    # Get the plotting vectors using stickDude function
-    xv,yv,sx,sy = stickDude(gs.u,k)
-        
-    # Convert to pixels
-    xvp,yvp = xy2p(xv,yv,m2p,po,width,height)
-    sxp,syp = xy2p(sx,sy,m2p,po,width,height)
-
-    trajList     = list(zip(np.array(gs.xTraj)*m2p-po+width/2,
-                            height-(np.array(gs.yTraj)+1)*m2p))
-    stickList    = list(zip(xvp,yvp))
-    stoolList    = list(zip(sxp,syp))
-    ballPosition = (int(gs.xb*m2p-po+width/2),
-                    int(height-(gs.yb+1)*m2p) )
-    headPosition = (int(gs.xp*m2p-po+width/2), 
-                    int(height-(gs.yp+1.75*p.d+1)*m2p) )
+    for k in range(nPlayer):
+        # Get the plotting vectors using stickDude function
+        xv,yv,sx,sy = stickDude(gs.u,k)
+            
+        # Convert to pixels
+        xvp,yvp = xy2p(xv,yv,m2p,po,width,height)
+        sxp,syp = xy2p(sx,sy,m2p,po,width,height)
     
-    # Draw circles and lines
-    pygame.draw.circle(screen, darkGreen, headPosition, int(p.rb*m2p), 0)
-    pygame.draw.lines(screen, gray, False, trajList, 1)
-    pygame.draw.lines(screen, darkGreen, False, stickList, 
-                      int(np.ceil(0.15*m2p)))
-    pygame.draw.lines(screen, red, False, stoolList, 
-                      int(np.ceil(0.1*m2p)))
+        trajList     = list(zip(np.array(gs.xTraj)*m2p-po+width/2,
+                                height-(np.array(gs.yTraj)+1)*m2p))
+        stickList    = list(zip(xvp,yvp))
+        stoolList    = list(zip(sxp,syp))
+        ballPosition = (int(gs.xb*m2p-po+width/2),
+                        int(height-(gs.yb+1)*m2p) )
+        headPosition = (int(gs.xp[k]*m2p-po+width/2), 
+                        int(height-(gs.yp[k]+1.75*p.d+1)*m2p) )
+        
+        # Draw player and stool
+        pygame.draw.circle(screen, p.playerColor[k], headPosition, 
+                           int(p.rb*m2p), 0)
+        pygame.draw.lines(screen, p.playerColor[k], False, stickList, 
+                          int(np.ceil(0.15*m2p)))
+        pygame.draw.lines(screen, p.stoolColor[k], False, stoolList, 
+                          int(np.ceil(0.1*m2p)))
+       
+    # Draw trajectory
+    pygame.draw.lines(screen, white, False, trajList, 2)
+        
+    # Draw bottom line
     pygame.draw.line(screen, black, (0,height-0.5*m2p),
-                     (width,height-0.5*m2p),int(m2p))
+                         (width,height-0.5*m2p),int(m2p))
+
+    # Draw ball
     pygame.draw.circle(screen, pink, ballPosition, int(p.rb*m2p), 0)
     
 def makeScoreLine():
@@ -586,53 +593,53 @@ def PlayerAndStool(t,u):
     du[0:4] = [dxb,dyb,0,-p.g] # Ball velocities and accelerations
     
     # Loop over players
-    k = 0
+    for k in range(nPlayer):
+        # Create player state vectors
+        q  = np.matrix([[xp[k]],[yp[k]],[lp[k]],[tp[k]]])
+        dq = np.matrix([[dxp[k]],[dyp[k]],[dlp[k]],[dtp[k]]])
     
-    # Create player state vectors
-    q  = np.matrix([[xp[k]],[yp[k]],[lp[k]],[tp[k]]])
-    dq = np.matrix([[dxp[k]],[dyp[k]],[dlp[k]],[dtp[k]]])
-
-    # Sines and cosines of the stool angle
-    s = np.sin(tp[k])
-    c = np.cos(tp[k])
+        # Sines and cosines of the stool angle
+        s = np.sin(tp[k])
+        c = np.cos(tp[k])
+        
+        # Mass Matrix
+        if not p.linearMass:     
+            M = np.matrix([[   p.m    ,    0     ,-p.mg*s,-p.mg*lp[k]*c ],
+                           [    0     ,   p.m    , p.mg*c,-p.mg*lp[k]*s ],
+                           [-p.mg*s   ,  p.mg*c  , p.mg  ,   0       ],
+                           [-p.mg*lp[k]*c,-p.mg*lp[k]*s,   0   , p.mg*lp[k]**2]])
+        
+        # Centripetal [0,1] and Coriolis [3] Force Vector
+        D = np.matrix([[-p.mg*dlp[k]*dtp[k]*c + p.mg*lp[k]*dtp[k]*dtp[k]*s], 
+                       [-p.mg*dlp[k]*dtp[k]*s +p.mg*lp[k]*dtp[k]*dtp[k]*c], 
+                       [0],
+                       [2*p.mg*dtp[k]]])
+        
+        # Gravitational Force Vector
+        G = np.matrix([[ 0            ],
+                       [ p.m*p.g      ],
+                       [ p.mg*p.g*c   ],
+                       [-p.mg*p.g*lp[k]*s]])         
     
-    # Mass Matrix
-    if not p.linearMass:     
-        M = np.matrix([[   p.m    ,    0     ,-p.mg*s,-p.mg*lp[k]*c ],
-                       [    0     ,   p.m    , p.mg*c,-p.mg*lp[k]*s ],
-                       [-p.mg*s   ,  p.mg*c  , p.mg  ,   0       ],
-                       [-p.mg*lp[k]*c,-p.mg*lp[k]*s,   0   , p.mg*lp[k]**2]])
+        # Fix the time, if supplied as tspan vector
+        if np.size(t)>1:
+            t = t[0]       
+        
+        # Control inputs form the generalized forces
+        Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = ControlLogic(t,u,k)
+        
+        # Equation of Motion
+        RHS = -p.C*dq-p.K*q+p.K*q0-D-G+Q
+        if p.linearMass:
+            ddq = p.invM*RHS
+        else:
+            ddq = M.I*RHS
+        
+        # Output State Derivatives
+        i1 = k*8+4
+        i2 = k*8+12
+        du[i1:i2] = [dxp[k],dyp[k],dlp[k],dtp[k],ddq[0,0],ddq[1,0],ddq[2,0],ddq[3,0]] # Player velocities and accelerations
     
-    # Centripetal [0,1] and Coriolis [3] Force Vector
-    D = np.matrix([[-p.mg*dlp[k]*dtp[k]*c + p.mg*lp[k]*dtp[k]*dtp[k]*s], 
-                   [-p.mg*dlp[k]*dtp[k]*s +p.mg*lp[k]*dtp[k]*dtp[k]*c], 
-                   [0],
-                   [2*p.mg*dtp[k]]])
-    
-    # Gravitational Force Vector
-    G = np.matrix([[ 0            ],
-                   [ p.m*p.g      ],
-                   [ p.mg*p.g*c   ],
-                   [-p.mg*p.g*lp[k]*s]])         
-
-    # Fix the time, if supplied as tspan vector
-    if np.size(t)>1:
-        t = t[0]       
-    
-    # Control inputs form the generalized forces
-    Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = ControlLogic(t,u,k)
-    
-    # Equation of Motion
-    RHS = -p.C*dq-p.K*q+p.K*q0-D-G+Q
-    if p.linearMass:
-        ddq = p.invM*RHS
-    else:
-        ddq = M.I*RHS
-    
-    # Output State Derivatives
-    i1 = k*8+4
-    i2 = k*8+12
-    du[i1:i2] = [dxp[k],dyp[k],dlp[k],dtp[k],ddq[0,0],ddq[1,0],ddq[2,0],ddq[3,0]] # Player velocities and accelerations
     return du.tolist()
 
 def playerControlInput(event):
@@ -687,8 +694,8 @@ def ControlLogic(t,u,k):
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
-    ZEM = (gs.xI-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
-    if userControlled[0,0]:
+    ZEM = (gs.xI+10*(nPlayer-1-np.mod(stats.stoolCount,2))-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
+    if userControlled[k,0]:
         if keyPush[0] +keyPush[1] == 0:
             try:
             	Bx = -scs.erf(dxp[k])
@@ -704,7 +711,7 @@ def ControlLogic(t,u,k):
             Bx = -1
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
-    if userControlled[0,1]:
+    if userControlled[k,1]:
         By = keyPush[2]-keyPush[3]
     else:
         if (gs.timeUntilBounce<0.6) and (gs.timeUntilBounce>0.4):
@@ -715,7 +722,7 @@ def ControlLogic(t,u,k):
             By = 0
     
     # Control arm extension based on timing, turn on when impact in <0.2 sec
-    if userControlled[0,2]:
+    if userControlled[k,2]:
         Bl = keyPush[4]-keyPush[5]
     else:
         Bl = np.abs(gs.timeUntilBounce)<0.2
@@ -724,7 +731,7 @@ def ControlLogic(t,u,k):
     xdiff = xb-xp[k] # Ball distance - player distance
     ydiff = yb-yp[k]-p.d
     wantAngle = np.arctan2(-xdiff,ydiff)
-    if userControlled[0,3]:
+    if userControlled[k,3]:
         Bth = keyPush[6]-keyPush[7]
     else:
         Bth = p.Gt*(wantAngle-tp[k])
@@ -747,7 +754,6 @@ def BallHitStool(t,u,k):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
         
-    k=0
     # Get the stool locations using stickDude function
     xv,yv,sx,sy = stickDude(u,k)
     
@@ -869,7 +875,6 @@ def stickDude(inp,k):
         v  = inp[8+k8]
     elif type(inp)==gameState:
         # States from gs
-        print(inp.xp)
         x  = inp.xp[k]
         y  = inp.yp[k]
         l  = inp.lp[k]
