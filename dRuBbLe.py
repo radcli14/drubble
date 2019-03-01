@@ -19,11 +19,7 @@ userControlled = np.array([[True, True, True, True ],
 # Initialize stats
 stats = gameScore()
 
-#gs.simStep()
-#print(gs.u)
-#err
-
-# Run an infinite loop until gameMode is zero
+# Run an infinite loop until gs.gameMode is zero
 if engine == 'pygame':
     clock = pygame.time.Clock()
     while gs.gameMode>0:
@@ -142,8 +138,8 @@ if engine == 'ista':
             self.touchCycle = False
             
             # Initialize the buttons or sticks
-            self.moveStick = initStick(self,0.1,0.2*width,(1,0),(width,height/20))
-            self.tiltStick = initStick(self,0.1,0.2*width,(0,0),(0,height/20))
+            self.moveStick,self.moveAura = initStick(self,0.1,0.2*width,(1,0),(width,height/20))
+            self.tiltStick,self.tiltAura = initStick(self,0.1,0.2*width,(0,0),(0,height/20))
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
@@ -187,13 +183,19 @@ if engine == 'ista':
             self.add_child(self.ball)
             
             # Initialize the player's head
-            k=0
             self.head = SpriteNode('emj:Slice_Of_Pizza')
             spPix = 0.7*m2p
             self.head.size = (spPix,spPix)
             self.head.anchor_point = (0.5, 0.0)
-            self.head.position = (gs.xp[k]*m2p+po, (gs.yp[k]+p.d)*m2p)
+            self.head.position = (gs.xp[0]*m2p+po, (gs.yp[0]+p.d)*m2p)
             self.add_child(self.head)
+            
+            if nPlayer>0:
+                self.head1 = SpriteNode('emj:Corn')
+                self.head1.size = (spPix,spPix)
+                self.head1.anchor_point = (0.5, 0.0)
+                self.head.position = (gs.xp[1]*m2p+po, (gs.yp[1]+p.d)*m2p)
+                self.add_child(self.head1)
         
         def update(self):
             # Update if there was a touch
@@ -245,7 +247,6 @@ if engine == 'ista':
             self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
             self.score_label.text = 'Score = '+str(stats.score)
             
-
             # update the ball sprites
             dbPix = 2*p.rb*m2p
             self.ball.size = (dbPix,dbPix)
@@ -253,11 +254,15 @@ if engine == 'ista':
             self.ball.position = (x,y)
             
             # Generate the head sprites
-            k=0
             spPix = 0.7*m2p
             self.head.size = (spPix,spPix)
-            x,y = xy2p(gs.xp[k],gs.yp[k]+p.d,m2p,po,width,height)
+            x,y = xy2p(gs.xp[0],gs.yp[0]+p.d,m2p,po,width,height)
             self.head.position = (x,y)
+            
+            if nPlayer>0:
+                self.head1.size = (spPix,spPix)
+                x,y = xy2p(gs.xp[1],gs.yp[1]+p.d,m2p,po,width,height)
+                self.head1.position = (x,y)
                                  
         def draw(self):
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)

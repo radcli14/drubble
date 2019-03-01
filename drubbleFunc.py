@@ -81,7 +81,15 @@ if engine == 'ista':
         Stick.y = (ps[1]-ap[1]*sz,ps[1]+(1-ap[1])*sz)
         Stick.ctrl = (0,0)
         Stick.id = None
-        return Stick
+        
+        Aura = SpriteNode('shp:aura')
+        Aura.alpha = 0.5
+        Aura.size = (0.5*sz,0.5*sz)
+        Aura.anchor_point = ap
+        Aura.position = ps
+        Aura.x = (ps[0]-ap[0]*sz,ps[0]+(1-ap[0])*sz)
+        Aura.y = (ps[1]-ap[1]*sz,ps[1]+(1-ap[1])*sz)
+        return Stick, Aura
         
     def touchStick(loc,stick):
         tCnd = [loc[0] > stick.x[0],
@@ -304,7 +312,7 @@ class parameters:
     tsens = 1.5
     
     # Tolerance on last bounce speed before stopping motion
-    dybtol = 2
+    dybtol = 1
     
     # startAngle (sa) and startSpeed (ss) initially
     sa = np.pi/4
@@ -403,13 +411,16 @@ class gameState:
         # Increment n 
         self.n += 1
         
+        # Active player
+        pAct = np.mod(stats.stoolCount,nPlayer)
+        
         # Initial assumption, there was no event
         self.StoolBounce = False
         self.FloorBounce = False
         
         # Prevent event detection if there was already one within 0.1 seconds, 
         # or if the ball is far from the stool or ground
-        L = BallHitStool(self.t,self.u,np.mod(stats.stoolCount,nPlayer))       # Distance to stool
+        L = BallHitStool(self.t,self.u,pAct)       # Distance to stool
         vBall = np.array((self.dxb,self.dyb)) # Velocity
         sBall = np.linalg.norm(vBall)         # Speed
         
@@ -429,7 +440,7 @@ class gameState:
             
             # Check for events
             if (self.t-self.te)>0.1: 
-                if BallHitStool(self.t,U[:,k],np.mod(stats.stoolCount,nPlayer))<0:
+                if BallHitStool(self.t,U[:,k],pAct)<0:
                     self.StoolBounce = True
                 if BallHitFloor(self.t,U[:,k])<0:   
                     self.FloorBounce = True
@@ -449,10 +460,10 @@ class gameState:
                 self.ue[3] = vBounce[1]
                 
                 # Add  the recoil to the player 
-                self.ue[8]  = self.ue[8]  + vRecoil[0,0]
-                self.ue[9]  = self.ue[9]  + vRecoil[0,1]
-                self.ue[10] = self.ue[10] + vRecoil[0,2]
-                self.ue[11] = self.ue[11] + vRecoil[0,3]
+                self.ue[8+pAct*8]  = self.ue[8+pAct*8]  + vRecoil[0,0]
+                self.ue[9+pAct*8]  = self.ue[9]  + vRecoil[0,1]
+                self.ue[10+pAct*8] = self.ue[10] + vRecoil[0,2]
+                self.ue[11+pAct*8] = self.ue[11] + vRecoil[0,3]
                 
             elif self.FloorBounce:
                 # Reverse direction of the ball
