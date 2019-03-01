@@ -79,16 +79,14 @@ if engine == 'ista':
         Stick.position = ps
         Stick.x = (ps[0]-ap[0]*sz,ps[0]+(1-ap[0])*sz)
         Stick.y = (ps[1]-ap[1]*sz,ps[1]+(1-ap[1])*sz)
+        Stick.cntr = ((Stick.x[0]+Stick.x[1])/2,(Stick.y[0]+Stick.y[1])/2)
         Stick.ctrl = (0,0)
         Stick.id = None
         
         Aura = SpriteNode('shp:aura')
-        Aura.alpha = 0.5
+        Aura.alpha = 0.3
         Aura.size = (0.5*sz,0.5*sz)
-        Aura.anchor_point = ap
-        Aura.position = ps
-        Aura.x = (ps[0]-ap[0]*sz,ps[0]+(1-ap[0])*sz)
-        Aura.y = (ps[1]-ap[1]*sz,ps[1]+(1-ap[1])*sz)
+        Aura.position = Stick.cntr
         return Stick, Aura
         
     def touchStick(loc,stick):
