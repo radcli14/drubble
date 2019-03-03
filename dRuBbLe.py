@@ -147,6 +147,8 @@ if engine == 'ista':
             # Initialize the buttons or sticks
             self.moveStick,self.moveAura = initStick(self,0.1,0.2*width,(1,0),(width,height/20))
             self.tiltStick,self.tiltAura = initStick(self,0.1,0.2*width,(0,0),(0,height/20))
+            self.add_child(self.moveAura)
+            self.add_child(self.tiltAura)
             
             # Generate the sky blue background
             self.background_color = '#acf9ee'
@@ -237,6 +239,12 @@ if engine == 'ista':
                 keyPush[4] = self.tiltStick.ctrl[1]
                 keyPush[7] = self.tiltStick.ctrl[0]
                 
+                # Move auras
+                xy = self.moveStick.ctrl
+                c = self.moveStick.cntr
+                s = self.moveStick.size[0]/3
+                self.moveAura.position = (c[0]+xy[0]*s,c[1]+xy[1]*s)
+                
             ## ANGLE AND SPEED SETTINGS
             if gs.gameMode>2 and gs.gameMode<6:
                 gs.setAngleSpeed()
@@ -308,11 +316,13 @@ if engine == 'ista':
             if xy[0] != 0:
             	self.moveStick.ctrl = xy
             	self.moveStick.id = touch.touch_id
+            	self.moveAura.alpha = 0.7
             	
             xy = touchStick(touch.location,self.tiltStick)
             if xy[0] != 0:
             	self.tiltStick.ctrl = xy
             	self.tiltStick.id = touch.touch_id	
+            	self.tiltAura.alpha = 0.7
         
         def touch_moved(self,touch):
             # Detect control inputs
@@ -323,13 +333,16 @@ if engine == 'ista':
             xy = touchStick(touch.location,self.tiltStick)
             if touch.touch_id == self.tiltStick.id and xy[0] != 0:
                 self.tiltStick.ctrl = xy
+                
         
         def touch_ended(self,touch):
             if touch.touch_id == self.moveStick.id:
                 self.moveStick.ctrl = (0,0)
+                self.moveAura.alpha = 0.3
         
             if touch.touch_id == self.tiltStick.id:
                 self.tiltStick.ctrl = (0,0)
+                self.tiltAura.alpha = 0.3
         
         def stop(self):
             motion.stop_updates()
