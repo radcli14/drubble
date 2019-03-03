@@ -19,6 +19,9 @@ userControlled = np.array([[True, True, True, True ],
 # Initialize stats
 stats = gameScore()
 
+# Initialize drums
+drums = drumBeat()
+
 # Run an infinite loop until gs.gameMode is zero
 if engine == 'pygame':
     clock = pygame.time.Clock()
@@ -105,6 +108,10 @@ if engine == 'pygame':
     
             # Show the Message Text
             showMessage(msg[gs.gameMode])  
+            
+        #if gs.gameMode==6:    
+            # Play the drums
+            #drums.play()
     
         # Update the display
         pygame.display.flip()

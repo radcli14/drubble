@@ -331,6 +331,26 @@ class parameters:
     playerColor = (darkGreen,red)
     stoolColor  = (red,black)
     
+class drumBeat:
+    def __init__(self):
+        self.bpm      = 120 # Beats per minute
+        self.npb      = np.around(fs*60/4/self.bpm) # frames per beat
+        self.nps      = 16*self.npb # frames per sequence
+        self.sequence = [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
+                         [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+                         [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]]
+        self.drum = ['','','']
+
+    def play(self):    
+        whichSequence   = np.floor(gs.n/self.nps)
+        whereInSequence = gs.n-whichSequence*self.nps
+        beat = whereInSequence/self.npb
+        if not np.mod(beat,1):
+            b = int(beat)
+            for k in range(3):
+                if self.sequence[k][b]:
+                    sound.play_effect(self.drum[k])
+    
 def varStates(obj):
     obj.xb  = obj.u[0]  # Ball distance [m]
     obj.yb  = obj.u[1]  # Ball height [m]
