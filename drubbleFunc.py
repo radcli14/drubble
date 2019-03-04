@@ -51,6 +51,8 @@ if engine == 'ista':
     import motion
     import ui
     import scene_drawing
+    import sound
+    
     fs = 60
     width  = max(get_screen_size())
     height = min(get_screen_size())
@@ -314,7 +316,7 @@ class parameters:
     tsens = 1.5
     
     # Tolerance on last bounce speed before stopping motion
-    dybtol = 1
+    dybtol = 2
     
     # startAngle (sa) and startSpeed (ss) initially
     sa = np.pi/4
@@ -331,7 +333,7 @@ class parameters:
     
     # Color settings
     playerColor = (darkGreen,red)
-    stoolColor  = (red,black)
+    stoolColor  = (white,black)
     
 class drumBeat:
     def __init__(self):

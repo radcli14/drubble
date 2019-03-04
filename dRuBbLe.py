@@ -244,6 +244,9 @@ if engine == 'ista':
                 c = self.moveStick.cntr
                 s = self.moveStick.size[0]/3
                 self.moveAura.position = (c[0]+xy[0]*s,c[1]+xy[1]*s)
+                xy = self.tiltStick.ctrl
+                c = self.tiltStick.cntr
+                self.tiltAura.position = (c[0]+xy[0]*s,c[1]+xy[1]*s)
                 
             ## ANGLE AND SPEED SETTINGS
             if gs.gameMode>2 and gs.gameMode<6:
@@ -254,7 +257,11 @@ if engine == 'ista':
             if gs.gameMode==6:
                 stats.update()
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
-            
+            if gs.StoolBounce:
+                sound.play_effect('digital:PhaseJump1')
+            if gs.FloorBounce and not gs.Stuck:
+                sound.play_effect('game:Error')
+                
             # Update score line
             self.time_label.text  = 'Time = '+f'{gs.t:.1f}'
             self.dist_label.text  = 'Distance = '+f'{stats.stoolDist:.2f}'
