@@ -13,6 +13,10 @@ else:
     print('Unrecognized system, trying pygame engine')
     engine = 'pygame'
         
+# Add the figures to the search path
+import sys
+sys.path.append('figs')    
+    
 if engine == 'pygame':
     import pygame
     fs = 30
@@ -123,7 +127,7 @@ class Bunch:
 ## LOAD IMAGES, AND DEFINE FUNCTIONS TO DISPLAY THEM
 if engine == 'pygame':
 		# Import the background image combining ESA, Big Chair, River, and USS Barry
-		bg0 = pygame.image.load('figs/bg0.png')
+		bg0 = pygame.image.load('bg0.png')
 		bg0 = pygame.transform.scale(bg0, (2400, 400))
 		bg0_rect   = bg0.get_rect()
 
