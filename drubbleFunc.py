@@ -47,6 +47,23 @@ if engine == 'pygame':
            'Press space to select starting angle',
            'Press space to select starting speed','','','']
     
+    def makeSplashScreen():
+        if gs.showedSplash:
+            screen.fill(skyBlue)
+            screen.blit(splash, splashrect)
+            screen.blit(diagram, diagrect)
+            font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/12))
+            spc  = font.render('Press Space To Begin!', True, darkGreen)
+            screen.blit(spc,(0.22*width,int(0.88*height)))
+        else:
+            for k in range(0,255,5):
+                screen.fill((skyBlue[0]*k/255,skyBlue[1]*k/255,skyBlue[2]*k/255))
+                screen.blit(splash, splashrect)
+                screen.blit(diagram, diagrect)
+                pygame.display.flip()
+                clock.tick(30)
+            gs.showedSplash = True
+    
     def xy2p(x,y,m2p,po,w,h):
     	return np.array(x)*m2p-po+w/2, h-(np.array(y)+1)*m2p
     
@@ -71,6 +88,21 @@ if engine == 'ista':
     skyBlue   = (220/255, 230/255, 1)
     darkGreen = (0,120/255,0)
     
+    def makeSplashScreen(obj):
+        if gs.showedSplash:
+            obj.background_color = skyBlue
+            image(splash,0,0.2*height,0.8*width,0.8*height)
+            #screen.blit(diagram, diagrect)
+            #font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/12))
+            #spc  = font.render('Tap To Begin!', True, darkGreen)
+            #screen.blit(spc,(0.22*width,int(0.88*height)))
+        else:
+            k = obj.kSplash
+            obj.background_color = (skyBlue[0]*k/255,skyBlue[1]*k/255,skyBlue[2]*k/255)
+            image(splash,0,0.2*height,0.8*width,0.8*height)
+            if k>=255:
+                gs.showedSplash = True
+            
     def xy2p(x,y,m2p,po,w,h):
     	return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
     
@@ -117,6 +149,33 @@ if engine == 'ista':
         else:
             return (0,0)
             
+    def toggleVisibleSprites(self,boule):
+        if boule:
+            self.moveStick.alpha = 0.1
+            self.moveAura.alpha = 0.3
+            self.tiltStick.alpha = 0.1
+            self.tiltAura.alpha = 0.3
+            self.ball.alpha = 1
+            self.head.alpha = 1
+            self.head1.alpha = 1
+            self.time_label.alpha = 1
+            self.dist_label.alpha = 1
+            self.high_label.alpha = 1
+            self.boing_label.alpha = 1
+            self.score_label.alpha = 1
+        else:
+            self.moveStick.alpha = 0
+            self.moveAura.alpha = 0
+            self.tiltStick.alpha = 0
+            self.tiltAura.alpha = 0
+            self.ball.alpha = 0
+            self.head.alpha = 0
+            self.head1.alpha = 0
+            self.time_label.alpha = 0
+            self.dist_label.alpha = 0
+            self.high_label.alpha = 0
+            self.boing_label.alpha = 0
+            self.score_label.alpha = 0
 dt = 1/fs
 
 # Define the bunch class
@@ -147,23 +206,6 @@ if engine == 'pygame':
 		                 (int(diagrect.width*scf),int(diagrect.height*scf)))
 		diagrect.left   = int(width*0.75)
 		diagrect.bottom = int(height+40)
-
-def makeSplashScreen():
-    if gs.showedSplash:
-        screen.fill(skyBlue)
-        screen.blit(splash, splashrect)
-        screen.blit(diagram, diagrect)
-        font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/12))
-        spc  = font.render('Press Space To Begin!', True, darkGreen)
-        screen.blit(spc,(0.22*width,int(0.88*height)))
-    else:
-        for k in range(0,240,4):
-            screen.fill((skyBlue[0]*k/255,skyBlue[1]*k/255,skyBlue[2]*k/255))
-            screen.blit(splash, splashrect)
-            screen.blit(diagram, diagrect)
-            pygame.display.flip()
-            clock.tick(30)
-        gs.showedSplash = True
 
 def showMessage(msgText):
     font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/32))
@@ -256,7 +298,7 @@ def makeMarkers(xrng,m2p,po):
             stroke(white)
             stroke_weight(1)
             line(start_x,start_y,end_x,end_y)
-            text(str(int(xr)),font_name='futura',font_size=0.6*m2p,x=start_x-2,y=start_y+m2p/20,alignment=1)
+            text(str(int(xr)),font_name=p.MacsFavoriteFont,font_size=0.6*m2p,x=start_x-2,y=start_y+m2p/20,alignment=1)
 
 # Parameters
 class parameters:
@@ -294,6 +336,9 @@ class parameters:
     Cl = 2*zl*np.sqrt(Kl*m) # Arm damping [N-s/m]
     zt = 0.05    # Stool tilt damping ratio
     Ct = 2*zl*np.sqrt(Kt*m) # Tilt damping [N-m-s/rad]
+
+    userControlled = np.array([[True, True, True, True ],
+                               [False,False,False,False]]) 
 
     # Stool parameters
     xs = np.array([-0.25,  0.25,  0.14, 
@@ -333,7 +378,7 @@ class parameters:
     timeRun     = False
     
     # Font settings
-    MacsFavoriteFont = 'comicsansms' # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
+    MacsFavoriteFont = 'Papyrus' # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Color settings
     playerColor = (darkGreen,red)
@@ -346,8 +391,9 @@ class drumBeat:
         self.nps      = 16*self.npb # frames per sequence
         self.sequence = [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
                          [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                         [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]]
-        self.drum = ['','','']
+                         [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+                         [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]]
+        self.drum = ['drums:Drums_01','drums:Drums_02','drums:Drums_07','8ve:8ve-beep-timber']
 
     def play(self):    
         whichSequence   = np.floor(gs.n/self.nps)
@@ -355,8 +401,8 @@ class drumBeat:
         beat = whereInSequence/self.npb
         if not np.mod(beat,1):
             b = int(beat)
-            for k in range(3):
-                if self.sequence[k][b]:
+            for k in range(4):
+                if self.sequence[k][b] or np.random.uniform()>0.9:
                     sound.play_effect(self.drum[k])
     
 def varStates(obj):
@@ -505,7 +551,7 @@ class gameState:
             self.u = self.ue + np.array(dudt)*(dt-tBreak)
             
             # Stuck
-            if np.sqrt(self.u[2]**2+self.u[3]**2)<p.dybtol and self.u[2]<1:
+            if np.sqrt(self.u[2]**2+self.u[3]**2)<p.dybtol and self.u[1]<1:
                 self.Stuck = True
         else:   
             # Update states
@@ -541,6 +587,14 @@ class gameState:
             self.u[3] = self.startSpeed*np.sin(self.startAngle)
 
 def cycleModes(gs,stats):
+    # Exit splash screen
+    if gs.gameMode == 1:
+        # Reset game
+        stats.__init__()
+        gs.__init__(u0)
+        gs.gameMode += 2
+        return
+        
     # Progress through angle and speed selection
     if (gs.gameMode==3 or gs.gameMode==4): 
         gs.gameMode += 1
@@ -734,7 +788,7 @@ def ControlLogic(t,u,k):
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
     ZEM = (gs.xI+10*(nPlayer-1-np.mod(stats.stoolCount,2))-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
-    if userControlled[k,0]:
+    if p.userControlled[k,0]:
         if keyPush[0] +keyPush[1] == 0:
             try:
             	Bx = -scs.erf(dxp[k])
@@ -746,11 +800,11 @@ def ControlLogic(t,u,k):
         Bx = p.Gx*ZEM
         if Bx>1:
             Bx = 1
-        elif (Bx<-1) or (gs.timeUntilBounce<0.1) and (gs.timeUntilBounce>0):
+        elif (Bx<-1) or (gs.timeUntilBounce<0 and gs.timeUntilBounce>0):
             Bx = -1
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
-    if userControlled[k,1]:
+    if p.userControlled[k,1]:
         By = keyPush[2]-keyPush[3]
     else:
         if (gs.timeUntilBounce<0.6) and (gs.timeUntilBounce>0.4):
@@ -761,7 +815,7 @@ def ControlLogic(t,u,k):
             By = 0
     
     # Control arm extension based on timing, turn on when impact in <0.2 sec
-    if userControlled[k,2]:
+    if p.userControlled[k,2]:
         Bl = keyPush[4]-keyPush[5]
     else:
         Bl = np.abs(gs.timeUntilBounce)<0.2
@@ -770,7 +824,7 @@ def ControlLogic(t,u,k):
     xdiff = xb-xp[k] # Ball distance - player distance
     ydiff = yb-yp[k]-p.d
     wantAngle = np.arctan2(-xdiff,ydiff)
-    if userControlled[k,3]:
+    if p.userControlled[k,3]:
         Bth = keyPush[6]-keyPush[7]
     else:
         Bth = p.Gt*(wantAngle-tp[k])

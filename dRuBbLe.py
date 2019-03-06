@@ -13,8 +13,6 @@ gs = gameState(u0)
 
 # Set the keyboard input and mouse defaults
 keyPush        = np.zeros(8)
-userControlled = np.array([[True, True, True, True ],
-                           [False,False,False,False]]) 
 
 # Initialize stats
 stats = gameScore()
@@ -126,15 +124,17 @@ if engine == 'pygame':
     pygame.quit()
         
 if engine == 'ista':
-    gs.gameMode = 3
+    #gs.gameMode = 3
 
     # Initialize the background image
     try:
+        splash = scene_drawing.load_image_file('figs/splash.png')
         bg0 = scene_drawing.load_image_file('figs/bg0.png')
         bg0_sz = (6*height,height)
         bgLoaded = True
     except:
         bgLoaded = False
+        gs.gameMode = 3
     
     class Game (Scene):
         def setup(self):
@@ -144,17 +144,20 @@ if engine == 'ista':
             # Add the game state classes to the scene
             self.touchCycle = False
             
+            # Initialize the counter for the splash screen
+            self.kSplash = 0
+            
+            # Generate the sky blue background
+            self.background_color = skyBlue
+            
             # Initialize the buttons or sticks
             self.moveStick,self.moveAura = initStick(self,0.1,0.2*width,(1,0),(width,height/20))
             self.tiltStick,self.tiltAura = initStick(self,0.1,0.2*width,(0,0),(0,height/20))
             self.add_child(self.moveAura)
             self.add_child(self.tiltAura)
             
-            # Generate the sky blue background
-            self.background_color = '#acf9ee'
-            
             # Initialize the score line
-            score_font = ('Futura', 12)
+            score_font = (p.MacsFavoriteFont, 12)
             self.time_label = LabelNode('Time = '+f'{gs.t:.1f}', score_font, parent=self,color=black)
             self.time_label.anchor_point = (0.0, 1.0)
             self.time_label.position = (width*0.02, height - 2)
@@ -205,15 +208,19 @@ if engine == 'ista':
                 self.head1.anchor_point = (0.5, 0.0)
                 self.head.position = (gs.xp[1]*m2p+po, (gs.yp[1]+p.d)*m2p)
                 self.add_child(self.head1)
-        
+            
+            toggleVisibleSprites(self,False)
+            
         def update(self):
             # Update if there was a touch
             if self.touchCycle:
                 cycleModes(gs,stats)
+                toggleVisibleSprites(self,True)
                 self.touchCycle = False
                 
-            # Get the gravity vector and acceleration
+            # Get control inputs
             if gs.ctrlMode == 'motion':
+                # Get the gravity vector and acceleration
                 g = motion.get_gravity()
                 gThreshold = 0.05
                 slope = 5
@@ -233,7 +240,7 @@ if engine == 'ista':
                 else:
                     keyPush[2] = 0
                     keyPush[3]=max(-aScale*a[1],1)
-            elif gs.ctrlMode == 'vStick':
+            elif gs.ctrlMode == 'vStick' and gs.gameMode>1:
                 keyPush[1] = self.moveStick.ctrl[0]
                 keyPush[2] = self.moveStick.ctrl[1]
                 keyPush[4] = self.tiltStick.ctrl[1]
@@ -258,9 +265,12 @@ if engine == 'ista':
                 stats.update()
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             if gs.StoolBounce:
-                sound.play_effect('digital:PhaseJump1')
+                sound.play_effect('digital:PhaseJump3')
             if gs.FloorBounce and not gs.Stuck:
                 sound.play_effect('game:Error')
+                
+            if gs.gameMode == 6:
+                drums.play()
                 
             # Update score line
             self.time_label.text  = 'Time = '+f'{gs.t:.1f}'
@@ -281,37 +291,42 @@ if engine == 'ista':
             x,y = xy2p(gs.xp[0],gs.yp[0]+p.d,m2p,po,width,height)
             self.head.position = (x,y)
             
-            if nPlayer>0:
-                self.head1.size = (spPix,spPix)
-                x,y = xy2p(gs.xp[1],gs.yp[1]+p.d,m2p,po,width,height)
-                self.head1.position = (x,y)
+            self.head1.size = (spPix,spPix)
+            x,y = xy2p(gs.xp[1],gs.yp[1]+p.d,m2p,po,width,height)
+            self.head1.position = (x,y)
                                  
         def draw(self):
-            xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
+            # Show the splash screen
+            if gs.gameMode == 1 and bgLoaded:
+                makeSplashScreen(self)
+                if not gs.showedSplash:
+                    self.kSplash += 2
+            else:
+                xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
-            # Generate the background
-            if bgLoaded:
-                drawBackgroundImage(bg0,bg0_sz,-0.25,-10,m2p)
+                # Generate the background
+                if bgLoaded and gs.gameMode>2:
+                    drawBackgroundImage(bg0,bg0_sz,-0.25,-10,m2p)
                 
+                # Generate the trajectory
+                linePlot(gs.xTraj,gs.yTraj,m2p,po,width,height,white,2)
             
-            # Generate the trajectory
-            linePlot(gs.xTraj,gs.yTraj,m2p,po,width,height,white,2)
+                if gs.gameMode>2:
+                    # Generate the bottom line
+                    stroke(black)
+                    stroke_weight(height/20)
+                    line(0,height/40,width,height/40)
             
-            # Generate the bottom line
-            stroke(black)
-            stroke_weight(height/20)
-            line(0,height/40,width,height/40)
+                    # Generate the markers
+                    makeMarkers(xrng,m2p,po)
             
-            # Generate the markers
-            makeMarkers(xrng,m2p,po)
+                for k in range(nPlayer):
+                    # Generate a player image
+                    xv,yv,sx,sy = stickDude(gs,k)
+                    linePlot(xv,yv,m2p,po,width,height,p.playerColor[k],0.15*m2p)
             
-            for k in range(nPlayer):
-                # Generate a player image
-                xv,yv,sx,sy = stickDude(gs,k)
-                linePlot(xv,yv,m2p,po,width,height,p.playerColor[k],0.15*m2p)
-            
-                # Generate a stool image
-                linePlot(sx,sy,m2p,po,width,height,p.stoolColor[k],0.1*m2p)
+                    # Generate a stool image
+                    linePlot(sx,sy,m2p,po,width,height,p.stoolColor[k],0.1*m2p)
                         
         def touch_began(self, touch):
             # Reset if necessary
@@ -350,12 +365,12 @@ if engine == 'ista':
             if touch.touch_id == self.tiltStick.id:
                 self.tiltStick.ctrl = (0,0)
                 self.tiltAura.alpha = 0.3
-        
+                
         def stop(self):
             motion.stop_updates()
                 
     if __name__ == '__main__':
-        run(Game(), LANDSCAPE, show_fps=True)
+        run(Game(), LANDSCAPE, show_fps=False)
         
         
         
