@@ -66,9 +66,9 @@ if engine == 'pygame':
                     gs = gameState(u0)
                     gs.gameMode = 2
     
-            # Get player control inputs
-            keyPush = playerControlInput(event)             
-    
+            # Get player control inputs          
+            gs.setControl(keyPush=playerControlInput(event))
+            
         # Show the Splash Sreen
         if gs.gameMode==1:
             makeSplashScreen()
@@ -221,30 +221,34 @@ if engine == 'ista':
             # Get control inputs
             if gs.ctrlMode == 'motion':
                 # Get the gravity vector and acceleration
-                g = motion.get_gravity()
-                gThreshold = 0.05
-                slope = 5
-                if g[1]>gThreshold:
-                    keyPush[0] = min(slope*(g[1]-gThreshold),1)
-                elif g[1]<-gThreshold:
-                    keyPush[1] = -max(slope*(g[1]+gThreshold),-1)
-                else:
-                    keyPush[0] = 0
-                    keyPush[1] = 0
-                
-                a = motion.get_user_acceleration()
-                aScale=2
-                if a[1]>0:
-                    keyPush[2] = max(aScale*a[1],1)
-                    keyPush[3] = 0
-                else:
-                    keyPush[2] = 0
-                    keyPush[3]=max(-aScale*a[1],1)
+#                g = motion.get_gravity()
+#                gThreshold = 0.05
+#                slope = 5
+#                if g[1]>gThreshold:
+#                    keyPush[0] = min(slope*(g[1]-gThreshold),1)
+#                elif g[1]<-gThreshold:
+#                    keyPush[1] = -max(slope*(g[1]+gThreshold),-1)
+#                else:
+#                    keyPush[0] = 0
+#                    keyPush[1] = 0
+#                
+#                a = motion.get_user_acceleration()
+#                aScale=2
+#                if a[1]>0:
+#                    keyPush[2] = max(aScale*a[1],1)
+#                    keyPush[3] = 0
+#                else:
+#                    keyPush[2] = 0
+#                    keyPush[3] = max(-aScale*a[1],1)
+                gs.setControl(g=motion.get_gravity(),
+                              a=motion.get_user_acceleration())    
             elif gs.ctrlMode == 'vStick' and gs.gameMode>1:
-                keyPush[1] = self.moveStick.ctrl[0]
-                keyPush[2] = self.moveStick.ctrl[1]
-                keyPush[4] = self.tiltStick.ctrl[1]
-                keyPush[7] = self.tiltStick.ctrl[0]
+                #keyPush[1] = self.moveStick.ctrl[0]
+                #keyPush[2] = self.moveStick.ctrl[1]
+                #keyPush[4] = self.tiltStick.ctrl[1]
+                #keyPush[7] = self.tiltStick.ctrl[0]
+                gs.setControl(moveStick=self.moveStick.ctrl,
+                              tiltStick=self.tiltStick.ctrl)
                 
                 # Move auras
                 xy = self.moveStick.ctrl

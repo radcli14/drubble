@@ -1,22 +1,27 @@
 #:kivy 1.0.9
 
-<drubbleGame>:    
+<drubbleGame>:  
+    # Create the bottom line 
     canvas:
         Color:
-            rgba: 0.86, 0.9, 1, 1
+            rgba: 0, 0, 0, 1
         Rectangle:
             pos: 0, 0
-            size: self.width, self.height
-            
-#    canvas:
-#        Color:
-#            rgba: 0, 0, 0, 1
-#        Rectangle:
-#            pos: 0, 0
-#            size: root.width, root.height/10
+            size: root.width, root.height/20     
+     
+    # Create the player one stick dude 
+    canvas:
+        Color:
+            rgba: 0, 0.47, 0, 1
+        Line:
+            width: 2.
+            bezier:
+                (self.x, self.y, self.center_x - 40, self.y + 100,
+                self.center_x + 40, self.y - 100, self.right, self.y)     
                    
+    # Create the labels               
     Label:
-        font_size: 12  
-        pos: root.width*0.02, root.top-60
+        font_size: root.height/20  
+        pos: root.width*0.02, 0.9*root.height-20
         text: 'Time = '
         color: 0, 0, 0, 1

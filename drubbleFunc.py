@@ -7,21 +7,49 @@ ps = platform.system()
 pm = platform.machine()
 if ps == 'Windows' or ps == 'Linux' or pm == 'x86_64':
     engine = 'pygame'
+    import pygame
+    #engine = 'kivy'
 elif ps == 'Darwin':
     engine = 'ista'
+    from scene import *
+    import motion
+    import ui
+    import scene_drawing
+    import sound   
 else:
     print('Unrecognized system, trying pygame engine')
     engine = 'pygame'
         
 # Add the figures to the search path
-import sys
-sys.path.append('figs')    
-    
-if engine == 'pygame':
-    import pygame
+# import sys
+# sys.path.append('figs')    
+
+# Frame rate
+if engine == 'kivy' or engine == 'ista':
+    fs = 60
+elif engine == 'pygame':
     fs = 30
-    # Window size and color definition
+
+# Window size
+if engine == 'kivy' or engine == 'pygame':
     size      = width, height = 1200, 700
+elif engine == 'ista':
+    width  = max(get_screen_size())
+    height = min(get_screen_size())
+    
+# Color definition    
+if engine == 'kivy' or engine == 'ista':
+    red       = (1,0,0)
+    green     = (0,1,0)
+    blue      = (0,0,1)
+    darkBlue  = (0,0,128/255)
+    white     = (1,1,1)
+    gray      = (160/255,160/255,160/255)
+    black     = (0,0,0)
+    pink      = (1,100/255,100/255)
+    skyBlue   = (220/255, 230/255, 1)
+    darkGreen = (0,120/255,0)
+elif engine == 'pygame':
     red       = (255,0,0)
     green     = (0,255,0)
     blue      = (0,0,255)
@@ -33,6 +61,16 @@ if engine == 'pygame':
     skyBlue   = (220, 230, 255)
     darkGreen = (0,120,0)
     
+# Convert physical coordinates to pixels
+if engine == 'kivy' or engine == 'ista':    
+    def xy2p(x,y,m2p,po,w,h):
+    	return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
+elif engine == 'pygame':
+    def xy2p(x,y,m2p,po,w,h):
+    	return np.array(x)*m2p-po+w/2, h-(np.array(y)+1)*m2p
+ 
+# Initiate pygame screen and message    
+if engine == 'pygame':
     # Open display
     pygame.init()
     pygame.font.init()
@@ -64,30 +102,8 @@ if engine == 'pygame':
                 clock.tick(30)
             gs.showedSplash = True
     
-    def xy2p(x,y,m2p,po,w,h):
-    	return np.array(x)*m2p-po+w/2, h-(np.array(y)+1)*m2p
-    
 if engine == 'ista':
-    from scene import *
-    import motion
-    import ui
-    import scene_drawing
-    import sound
-    
-    fs = 60
-    width  = max(get_screen_size())
-    height = min(get_screen_size())
-    red       = (1,0,0)
-    green     = (0,1,0)
-    blue      = (0,0,1)
-    darkBlue  = (0,0,128/255)
-    white     = (1,1,1)
-    gray      = (160/255,160/255,160/255)
-    black     = (0,0,0)
-    pink      = (1,100/255,100/255)
-    skyBlue   = (220/255, 230/255, 1)
-    darkGreen = (0,120/255,0)
-    
+
     def makeSplashScreen(obj):
         if gs.showedSplash:
             obj.background_color = skyBlue
@@ -103,9 +119,6 @@ if engine == 'ista':
             if k>=255:
                 gs.showedSplash = True
             
-    def xy2p(x,y,m2p,po,w,h):
-    	return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
-    
     def linePlot(x,y,m2p,po,w,h,clr,wgt):
     	x,y = xy2p(x,y,m2p,po,w,h)
     	stroke(clr)
@@ -186,7 +199,7 @@ class Bunch:
 ## LOAD IMAGES, AND DEFINE FUNCTIONS TO DISPLAY THEM
 if engine == 'pygame':
 		# Import the background image combining ESA, Big Chair, River, and USS Barry
-		bg0 = pygame.image.load('bg0.png')
+		bg0 = pygame.image.load('figs/bg0.png')
 		bg0 = pygame.transform.scale(bg0, (2400, 400))
 		bg0_rect   = bg0.get_rect()
 
@@ -452,12 +465,16 @@ class gameState:
         self.gameMode = 1
         self.showedSplash = False
         
-        # Determine the control method
+        # Determine the control method, and initialize ctrl variable
         if engine == 'pygame':
             self.ctrlMode = 'keys'
+            self.ctrlFunc = 0
         elif engine == 'ista':
-            self.ctrlMode = 'vStick'
             #self.ctrlMode = 'motion'
+            #self.ctrlFunc = 1
+            self.ctrlMode = 'vStick'
+            self.ctrlFunc = 2
+        self.ctrl = [0,0,0,0]
         
         # Timing
         self.t  = 0
@@ -479,7 +496,41 @@ class gameState:
         
         # Stuck condition
         self.Stuck = False
+         
+    # Get control input from external source
+    def setControl(self,keyPush=np.zeros(8),
+                   moveStick=[0,0],tiltStick=[0,0],
+                   g=[0,0,0],a=[0,0,0]):
+        
+        if self.ctrlFunc == 0:
+            # Key press control
+            self.ctrl = [keyPush[1]-keyPush[0],keyPush[2]-keyPush[3],
+                         keyPush[4]-keyPush[5],keyPush[6]-keyPush[7]]
+            
+        elif self.ctrlFunc == 1:
+            # Motion control scale factors
+            gThreshold = 0.05
+            slope = 5
+            aScale = 2
+
+            # Run left/right
+            if g[1]>gThreshold:
+                self.ctrl[0] = -min(slope*(g[1]-gThreshold),1)
+            elif g[1]<-gThreshold:
+                self.ctrl[0] = -max(slope*(g[1]+gThreshold),-1)
+            else:
+                self.ctrl[0]
                 
+            # Push up/down    
+            if a[1]>0:
+                self.ctrl[1] = min(aScale*a[1],1)
+            else:
+                self.ctrl[1] = max(aScale*a[1],-1)
+                    
+        elif self.ctrlFunc == 2:
+            # Virtual stick control
+            self.ctrl = [moveStick[0],moveStick[1],tiltStick[0],tiltStick[1]]
+        
     # Execute a simulation step of duration dt    
     def simStep(self):
         # Increment n 
@@ -789,13 +840,13 @@ def ControlLogic(t,u,k):
     # ball moving forward 
     ZEM = (gs.xI+10*(nPlayer-1-np.mod(stats.stoolCount,2))-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
     if p.userControlled[k,0]:
-        if keyPush[0] +keyPush[1] == 0:
+        if gs.ctrl[0] == 0:
             try:
             	Bx = -scs.erf(dxp[k])
             except:
             	Bx = -np.sign(dxp[k])
         else:
-            Bx = keyPush[1]-keyPush[0]
+            Bx = gs.ctrl[0]
     else:
         Bx = p.Gx*ZEM
         if Bx>1:
@@ -805,7 +856,7 @@ def ControlLogic(t,u,k):
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
     if p.userControlled[k,1]:
-        By = keyPush[2]-keyPush[3]
+        By = gs.ctrl[1]
     else:
         if (gs.timeUntilBounce<0.6) and (gs.timeUntilBounce>0.4):
             By = -1
@@ -816,7 +867,7 @@ def ControlLogic(t,u,k):
     
     # Control arm extension based on timing, turn on when impact in <0.2 sec
     if p.userControlled[k,2]:
-        Bl = keyPush[4]-keyPush[5]
+        Bl = gs.ctrl[2]
     else:
         Bl = np.abs(gs.timeUntilBounce)<0.2
     
@@ -825,7 +876,7 @@ def ControlLogic(t,u,k):
     ydiff = yb-yp[k]-p.d
     wantAngle = np.arctan2(-xdiff,ydiff)
     if p.userControlled[k,3]:
-        Bth = keyPush[6]-keyPush[7]
+        Bth = gs.ctrl[3]
     else:
         Bth = p.Gt*(wantAngle-tp[k])
         if Bth>1:
@@ -920,18 +971,8 @@ def BallBounce(gs,k):
     vRecoil = np.dot(p.invM,Qi)
     return vBounce, vRecoil
 
-def bhDebug(T,Y):
-    N = np.size(T)
-    Ls = np.zeros(N)
-    Lf = np.zeros(N)
-    for n in range(N):
-        Ls[n] = BallHitStool(T[n],Y[n,:])
-        Lf[n] = BallHitFloor(T[n],Y[n,:])
-    plt.figure()
-    plt.plot(T,Ls,'-bo')  
-    plt.plot(T,Lf,'-rx')    
-    plt.grid('on')
-
+# Solves for the location of the knee or elbow based upon the two other 
+# end-points of the triangle 
 def ThirdPoint(P0,P1,L,SGN):
 
     Psub = [P0[0]-P1[0],P0[1]-P1[1]]
@@ -949,6 +990,7 @@ def ThirdPoint(P0,P1,L,SGN):
         P3 = [x3,y3]
     return P3
 
+# Solve for the vertices that make up the stick man and stool
 def stickDude(inp,k):
     k8=k*8
     # Get the state variables
@@ -1011,22 +1053,9 @@ def stickDude(inp,k):
     
     return xv,yv,sx,sy
 
-def initPlots():
-    LN, = plt.plot([], [], '-g', animated=True) # Stick figure
-    HD, = plt.plot([], [], 'go', animated=True) # Head
-    GD, = plt.plot([], [],'-bx', animated=True) # Ground
-    ST, = plt.plot([], [], '-r', animated=True) # Stool
-    BL, = plt.plot([], [], 'mo', animated=True) # Ball
-    BA, = plt.plot([], [], ':k', animated=True) # Ball (arc)
-    return LN, HD, GD, ST, BL, BA,
-
-def init():
-    ax.set_xlim(-1,11)
-    ax.set_ylim(-1,5)
-    
-    #ax.set_aspect('equal')
-    return LN, HD, GD, ST, BL, BA,
-
+# Solve for the x and y ranges to include in the plot, scale factors to 
+# convert from meters to pixels, and pixel offset to the center line
+# Ratio refers to normalized positions in the window on the scale [0 0 1 1]
 def setRanges(u):
     maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),8])
     diffx = 1.25*np.abs(u[0]-u[4])
@@ -1043,28 +1072,62 @@ def setRanges(u):
     PixelOffset  = (xrng[0]+xrng[1])/2*MeterToPixel
     RatioOffset  = (xrng[0]+xrng[1])/2*MeterToRatio
     return xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset
+ 
+# Below this line are the functions I created when I started demoDrubble,
+# these are basically obsolete, eventually will be deleted
+defObsoleteDemoFuncs = False
+if defObsoleteDemoFuncs:
+    
+    # Used for debuggin the output of the "Ball Hit" functions, but unused now
+    def bhDebug(T,Y):
+        N = np.size(T)
+        Ls = np.zeros(N)
+        Lf = np.zeros(N)
+        for n in range(N):
+            Ls[n] = BallHitStool(T[n],Y[n,:])
+            Lf[n] = BallHitFloor(T[n],Y[n,:])
+        plt.figure()
+        plt.plot(T,Ls,'-bo')  
+        plt.plot(T,Lf,'-rx')    
+        plt.grid('on')
+    
+    def initPlots():
+        LN, = plt.plot([], [], '-g', animated=True) # Stick figure
+        HD, = plt.plot([], [], 'go', animated=True) # Head
+        GD, = plt.plot([], [],'-bx', animated=True) # Ground
+        ST, = plt.plot([], [], '-r', animated=True) # Stool
+        BL, = plt.plot([], [], 'mo', animated=True) # Ball
+        BA, = plt.plot([], [], ':k', animated=True) # Ball (arc)
+        return LN, HD, GD, ST, BL, BA,
+    
+    def init():
+        ax.set_xlim(-1,11)
+        ax.set_ylim(-1,5)
         
-def animate(n):
-    # Get the plotting vectors using stickDude function
-    xv,yv,sx,sy = stickDude(Y[n,:])
-
-    # Get state variables
-    x  = Y[n,4] # sol.y[0,n]
-    y  = Y[n,5] # sol.y[1,n]
-    l  = Y[n,6] # sol.y[2,n]
-    th = Y[n,7] # sol.y[3,n]
-
-    # Update the plot
-    LN.set_data(xv, yv)
-    HD.set_data(x,y+p.d*1.6)
-    GD.set_data(np.round(x+np.linspace(-40,40,81)),0)
-    ST.set_data(sx,sy)
-    BL.set_data(Y[n,8],Y[n,9])
-    BA.set_data(XB[n,:],YB[n,:])
+        #ax.set_aspect('equal')
+        return LN, HD, GD, ST, BL, BA,
+           
+    def animate(n):
+        # Get the plotting vectors using stickDude function
+        xv,yv,sx,sy = stickDude(Y[n,:])
     
-    # Update Axis Limits
-    xrng, yrng, m2p, po, m2r, ro = setRanges(Y[n,:])
-    ax.set_xlim(xrng)
-    ax.set_ylim(yrng)
+        # Get state variables
+        x  = Y[n,4] # sol.y[0,n]
+        y  = Y[n,5] # sol.y[1,n]
+        l  = Y[n,6] # sol.y[2,n]
+        th = Y[n,7] # sol.y[3,n]
     
-    return LN, HD, GD, ST, BL, BA,
+        # Update the plot
+        LN.set_data(xv, yv)
+        HD.set_data(x,y+p.d*1.6)
+        GD.set_data(np.round(x+np.linspace(-40,40,81)),0)
+        ST.set_data(sx,sy)
+        BL.set_data(Y[n,8],Y[n,9])
+        BA.set_data(XB[n,:],YB[n,:])
+        
+        # Update Axis Limits
+        xrng, yrng, m2p, po, m2r, ro = setRanges(Y[n,:])
+        ax.set_xlim(xrng)
+        ax.set_ylim(yrng)
+        
+        return LN, HD, GD, ST, BL, BA,
