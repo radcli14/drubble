@@ -6,9 +6,9 @@ import platform
 ps = platform.system()
 pm = platform.machine()
 if ps == 'Windows' or ps == 'Linux' or pm == 'x86_64':
-    engine = 'pygame'
-    import pygame
-    #engine = 'kivy'
+    #engine = 'pygame'
+    #import pygame
+    engine = 'kivy'
 elif ps == 'Darwin':
     engine = 'ista'
     from scene import *
@@ -32,7 +32,7 @@ elif engine == 'pygame':
 
 # Window size
 if engine == 'kivy' or engine == 'pygame':
-    size      = width, height = 1200, 700
+    size      = width, height = 800, 500
 elif engine == 'ista':
     width  = max(get_screen_size())
     height = min(get_screen_size())
@@ -1073,6 +1073,12 @@ def setRanges(u):
     RatioOffset  = (xrng[0]+xrng[1])/2*MeterToRatio
     return xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset
  
+def intersperse(list1,list2):    
+    result = [None]*(len(list1)+len(list2))
+    result[::2] = list1
+    result[1::2] = list2    
+    return result
+
 # Below this line are the functions I created when I started demoDrubble,
 # these are basically obsolete, eventually will be deleted
 defObsoleteDemoFuncs = False
