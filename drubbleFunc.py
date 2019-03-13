@@ -466,7 +466,7 @@ class gameState:
         self.showedSplash = False
         
         # Determine the control method, and initialize ctrl variable
-        if engine == 'pygame':
+        if engine == 'pygame' or engine == 'kivy':
             self.ctrlMode = 'keys'
             self.ctrlFunc = 0
         elif engine == 'ista':
@@ -1078,6 +1078,29 @@ def intersperse(list1,list2):
     result[::2] = list1
     result[1::2] = list2    
     return result
+
+class playerLines():
+    def __init__(self,pnum):
+        self.pnum = pnum
+        self.update(gs)
+
+    def update(self,gs):
+        # Get the player stick figure
+        self.xv, self.yv, self.sx, self.sy = stickDude(gs,self.pnum)
+        
+        # Get ranges for drawing the player and ball
+        self.xrng, self.yrng, self.m2p, self.po, m2r, ro = setRanges(gs.u)
+        
+        # Convert to pixels
+        self.player_x,self.player_y = xy2p(self.xv,self.yv,self.m2p,self.po,
+                                           width,height)
+        self.stool_x,self.stool_y = xy2p(self.sx,self.sy,self.m2p,self.po,
+                                         width,height)
+        
+        # Convert to format used for Kivy line
+        self.player = intersperse(self.player_x,self.player_y)
+        self.stool  = intersperse(self.stool_x,self.stool_y)
+
 
 # Below this line are the functions I created when I started demoDrubble,
 # these are basically obsolete, eventually will be deleted

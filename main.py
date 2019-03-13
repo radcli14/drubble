@@ -37,54 +37,49 @@ stats = gameScore()
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
 Window.size = (width, height)
 
-class playerLines():
-    def __init__(self,gs,pnum):
-        # Get the player stick figure
-        xv, yv, sx, sy = stickDude(gs,pnum)
-        
-        # Get ranges for drawing the player and ball
-        xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
-        
-        # Convert to pixels
-        x,y = xy2p(xv,yv,m2p,po,width,height)
-        xs,ys = xy2p(sx,sy,m2p,po,width,height)
-        
-        # Convert to format used for Kivy line
-        self.m2p = m2p
-        self.player = intersperse(x,y)
-        self.stool  = intersperse(xs,ys)
-        
-    def update(self,gs):
-        # Get the player stick figure
-        xv, yv, sx, sy = stickDude(gs,0)
-        
-        # Get ranges for drawing the player and ball
-        xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
-        
-        # Convert to pixels
-        x,y = xy2p(xv,yv,m2p,po,width,height)
-        xs,ys = xy2p(sx,sy,m2p,po,width,height)
-        
-        # Convert to format used for Kivy line
-        self.m2p = m2p
-        self.player = intersperse(x,y)
-        self.stool  = intersperse(xs,ys)
-
-p1 = playerLines(gs,0)
+# Initialize the players
+p1 = playerLines(0)
+p2 = playerLines(1)
 
 class drubbleGame(Widget):
     def __init__(self,**kwargs):
         super(drubbleGame, self).__init__(**kwargs)
         self.bind(pos=self.update_canvas)
         self.bind(size=self.update_canvas)
-    n = 0
-       
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+        self._keyboard.bind(on_key_down=self._on_keyboard_down)
+    
+    def _keyboard_closed(self):
+        self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+        self._keyboard = None
+    
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        keyPush = np.zeros(8)
+        if keycode[1] == 'w':
+            keyPush[4] = 1
+        elif keycode[1] == 's':
+            keyPush[5] = 1
+        elif keycode[1] == 'a':
+            keyPush[6] = 1
+        elif keycode[1] == 'd':
+            keyPush[7] = 1
+        elif keycode[1] == 'up':
+            keyPush[2] = 1
+        elif keycode[1] == 'down':
+            keyPush[3] = 1
+        elif keycode[1] == 'left':
+            keyPush[0] = 1
+        elif keycode[1] == 'right':
+            keyPush[1] = 1
+        gs.setControl(keyPush=keyPush)
+        return True
+    
     # Internal properties of the game widget
     def update_canvas(self,*args):
         self.canvas.clear()
         with self.canvas:
             # Draw Bottom Line
-            Color(0,0,0,1)
+            Color(black[0], black[1], black[2],1)
             Rectangle(pos=(0,0),size=(self.width, self.height/20))
             
             # Draw Player One
@@ -92,11 +87,18 @@ class drubbleGame(Widget):
             Line(points=p1.player,width=0.075*p1.m2p)
             Color(white[0], white[1], white[2], 1)
             Line(points=p1.stool,width=0.05*p1.m2p)
+            
+            if nPlayer>1:
+                Color(red[0], red[1], red[2], 1)
+                Line(points=p2.player,width=0.075*p2.m2p)
+                Color(black[0], black[1], black[2], 1)
+                Line(points=p2.stool,width=0.05*p2.m2p)
             #Ellipse(pos=self.pos,size=self.size)
     
     def update(self,dt):
         gs.simStep()
         p1.update(gs)
+        p2.update(gs)
         
         self.update_canvas()
     pass
