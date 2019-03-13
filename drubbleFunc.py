@@ -529,7 +529,7 @@ class gameState:
                     
         elif self.ctrlFunc == 2:
             # Virtual stick control
-            self.ctrl = [moveStick[0],moveStick[1],tiltStick[0],tiltStick[1]]
+            self.ctrl = [moveStick[0],moveStick[1],tiltStick[1],-tiltStick[0]]
         
     # Execute a simulation step of duration dt    
     def simStep(self):
