@@ -8,6 +8,7 @@ Created on Tue Mar  5 21:18:17 2019
 # Import the Kivy modules
 from kivy.app import App
 from kivy.uix.widget import Widget
+from kivy.uix.label import Label
 from kivy.properties import NumericProperty, ReferenceListProperty
 from kivy.core.window import Window
 from kivy.vector import Vector
@@ -48,30 +49,20 @@ class drubbleGame(Widget):
         self.bind(size=self.update_canvas)
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
-    
+        self._keyboard.bind(on_key_up = self._on_keyboard_up)
+        
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
         self._keyboard = None
     
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        keyPush = np.zeros(8)
-        if keycode[1] == 'w':
-            keyPush[4] = 1
-        elif keycode[1] == 's':
-            keyPush[5] = 1
-        elif keycode[1] == 'a':
-            keyPush[6] = 1
-        elif keycode[1] == 'd':
-            keyPush[7] = 1
-        elif keycode[1] == 'up':
-            keyPush[2] = 1
-        elif keycode[1] == 'down':
-            keyPush[3] = 1
-        elif keycode[1] == 'left':
-            keyPush[0] = 1
-        elif keycode[1] == 'right':
-            keyPush[1] = 1
-        gs.setControl(keyPush=keyPush)
+        keyPush = ctrl2keyPush(gs)
+        gs.setControl(keyPush=kvUpdateKey(keyPush,keycode,1))
+        return True
+    
+    def _on_keyboard_up(self, keyboard, keycode):
+        keyPush = ctrl2keyPush(gs)
+        gs.setControl(keyPush=kvUpdateKey(keyPush,keycode,0))
         return True
     
     # Internal properties of the game widget
@@ -81,6 +72,7 @@ class drubbleGame(Widget):
             # Draw Bottom Line
             Color(black[0], black[1], black[2],1)
             Rectangle(pos=(0,0),size=(self.width, self.height/20))
+            makeMarkers(p1,self.width,self.height)
             
             # Draw Player One
             Color(darkGreen[0], darkGreen[1], darkGreen[2], 1)
@@ -94,7 +86,9 @@ class drubbleGame(Widget):
                 Color(black[0], black[1], black[2], 1)
                 Line(points=p2.stool,width=0.05*p2.m2p)
             #Ellipse(pos=self.pos,size=self.size)
-    
+            
+        #makeMarkerText(p1,width,height)
+        
     def update(self,dt):
         gs.simStep()
         p1.update(gs)

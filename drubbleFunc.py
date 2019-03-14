@@ -293,26 +293,55 @@ def makeScoreLine():
     score = font.render('Score = '+str(stats.score),True,black)
     screen.blit(score,(0.77*width,0))
 
-def makeMarkers(xrng,m2p,po):
-    
-    xrng_r = np.around(xrng,-1)
-    xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
-    for k in range(0,xrng_n):
-        xr = xrng_r[0]+10*k
+
+if engine == 'pygame':
+    def makeMarkers(xrng,m2p,po):
         
-        [start_x,start_y] = xy2p(xr, 0,m2p,po,width,height) 
-        [end_x,end_y]     = xy2p(xr,-1,m2p,po,width,height) 
-        if engine == 'pygame':
+        xrng_r = np.around(xrng,-1)
+        xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
+        for k in range(0,xrng_n):
+            xr = xrng_r[0]+10*k
+            
+            [start_x,start_y] = xy2p(xr, 0,m2p,po,width,height) 
+            [end_x,end_y]     = xy2p(xr,-1,m2p,po,width,height) 
+        
             pygame.draw.line(screen, white, [start_x,start_y], [end_x,end_y])
             font   = pygame.font.SysFont(p.MacsFavoriteFont,int(np.around(0.8*m2p)))
             meter = font.render(str(int(xr)), True, white)
             screen.blit(meter,[start_x+0.2*m2p,start_y-0.1*m2p])
-        elif engine == 'ista':
+        
+if engine == 'ista':        
+    def makeMarkers(xrng,m2p,po):
+                
+        xrng_r = np.around(xrng,-1)
+        xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
+        for k in range(0,xrng_n):
+            xr = xrng_r[0]+10*k
+            
+            [start_x,start_y] = xy2p(xr, 0,m2p,po,width,height) 
+            [end_x,end_y]     = xy2p(xr,-1,m2p,po,width,height) 
             stroke(white)
             stroke_weight(1)
             line(start_x,start_y,end_x,end_y)
             text(str(int(xr)),font_name=p.MacsFavoriteFont,font_size=0.6*m2p,x=start_x-2,y=start_y+m2p/20,alignment=1)
+            
+if engine == 'kivy':
+    def makeMarkers(p,width,height):
+                
+        xrng_r = np.around(p.xrng,-1)
+        xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
 
+        for k in range(0,xrng_n):
+            xr = xrng_r[0]+10*k
+            
+            [start_x,start_y] = xy2p(xr, 0,p.m2p,p.po,width,height) 
+            [end_x,end_y]     = xy2p(xr,-1,p.m2p,p.po,width,height)     
+            Color(white[0],white[1],white[2],1)
+            Line(points=(start_x,start_y,end_x,end_y))
+            Label(font_size=int(0.6*p.m2p),
+                           pos=(int(start_x),int(start_y)),
+                           text=str(int(xr)),color=(1,0,0,1))
+            
 # Parameters
 class parameters:
     # Game parameters
@@ -831,6 +860,45 @@ def playerControlInput(event):
             keyPush[7] = 0          
     return keyPush
 
+def ctrl2keyPush(gs):
+    keyPush = np.zeros(8)
+    if gs.ctrl[0]<0:
+        keyPush[0] = -gs.ctrl[0]
+    elif gs.ctrl[0]>0:
+        keyPush[1] = gs.ctrl[0]
+    if gs.ctrl[1]>0:
+        keyPush[2] = gs.ctrl[1]
+    elif gs.ctrl[1]<0:
+        keyPush[3] = -gs.ctrl[1]    
+    if gs.ctrl[2]>0:
+        keyPush[4] = gs.ctrl[2]
+    elif gs.ctrl[2]<0:
+        keyPush[5] = -gs.ctrl[2]
+    if gs.ctrl[3]>0:
+        keyPush[6] = gs.ctrl[3]
+    elif gs.ctrl[3]<0:
+        keyPush[7] = -gs.ctrl[3]  
+    return keyPush
+
+def kvUpdateKey(keyPush,keycode,val):
+    if keycode[1] == 'w':
+        keyPush[4] = val
+    elif keycode[1] == 's':
+        keyPush[5] = val
+    elif keycode[1] == 'a':
+        keyPush[6] = val
+    elif keycode[1] == 'd':
+        keyPush[7] = val
+    elif keycode[1] == 'up':
+        keyPush[2] = val
+    elif keycode[1] == 'down':
+        keyPush[3] = val
+    elif keycode[1] == 'left':
+        keyPush[0] = val
+    elif keycode[1] == 'right':
+        keyPush[1] = val
+    return keyPush
+            
 def ControlLogic(t,u,k):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
