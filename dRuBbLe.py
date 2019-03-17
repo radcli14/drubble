@@ -318,13 +318,13 @@ if engine == 'ista':
             if xy[0] != 0:
             	self.moveStick.ctrl = xy
             	self.moveStick.id = touch.touch_id
-            	self.moveAura.alpha = 0.7
+            	self.moveAura.alpha = 1
             	
             xy = touchStick(touch.location,self.tiltStick)
             if xy[0] != 0:
             	self.tiltStick.ctrl = xy
             	self.tiltStick.id = touch.touch_id	
-            	self.tiltAura.alpha = 0.7
+            	self.tiltAura.alpha = 1
         
         def touch_moved(self,touch):
             # Detect control inputs
@@ -340,11 +340,11 @@ if engine == 'ista':
         def touch_ended(self,touch):
             if touch.touch_id == self.moveStick.id:
                 self.moveStick.ctrl = (0,0)
-                self.moveAura.alpha = 0.3
+                self.moveAura.alpha = 0.5
         
             if touch.touch_id == self.tiltStick.id:
                 self.tiltStick.ctrl = (0,0)
-                self.tiltAura.alpha = 0.3
+                self.tiltAura.alpha = 0.5
                 
         def stop(self):
             motion.stop_updates()
