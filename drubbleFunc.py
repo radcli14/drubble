@@ -6,9 +6,9 @@ import platform
 ps = platform.system()
 pm = platform.machine()
 if ps == 'Windows' or ps == 'Linux' or pm == 'x86_64':
-    #engine = 'pygame'
-    #import pygame
-    engine = 'kivy'
+    engine = 'pygame'
+    import pygame
+    #engine = 'kivy'
 elif ps == 'Darwin':
     engine = 'ista'
     from scene import *
@@ -47,7 +47,7 @@ if engine == 'kivy' or engine == 'ista':
     gray      = (160/255,160/255,160/255)
     black     = (0,0,0)
     pink      = (1,100/255,100/255)
-    skyBlue   = (220/255, 230/255, 1)
+    skyBlue   = (135/255, 206/255, 235/255)
     darkGreen = (0,120/255,0)
 elif engine == 'pygame':
     red       = (255,0,0)
@@ -58,7 +58,7 @@ elif engine == 'pygame':
     gray      = (160,160,160)
     black     = (0,0,0)
     pink      = (255,100,100)
-    skyBlue   = (220, 230, 255)
+    skyBlue   = (135, 206, 235)
     darkGreen = (0,120,0)
     
 # Convert physical coordinates to pixels
