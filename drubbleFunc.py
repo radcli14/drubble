@@ -6,9 +6,9 @@ import platform
 ps = platform.system()
 pm = platform.machine()
 if ps == 'Windows' or ps == 'Linux' or pm == 'x86_64':
-    #engine = 'pygame'
-    #import pygame
-    engine = 'kivy'
+    engine = 'pygame'
+    import pygame
+    #engine = 'kivy'
 elif ps == 'Darwin':
     engine = 'ista'
     from scene import *
