@@ -72,7 +72,7 @@ class drubbleGame(Widget):
             # Draw Bottom Line
             Color(black[0], black[1], black[2],1)
             Rectangle(pos=(0,0),size=(self.width, self.height/20))
-            makeMarkers(p1,self.width,self.height)
+            makeMarkers(self,p1)
             
             # Draw Player One
             Color(darkGreen[0], darkGreen[1], darkGreen[2], 1)
@@ -81,13 +81,11 @@ class drubbleGame(Widget):
             Line(points=p1.stool,width=0.05*p1.m2p)
             
             if nPlayer>1:
+                # Draw Player Two
                 Color(red[0], red[1], red[2], 1)
                 Line(points=p2.player,width=0.075*p2.m2p)
                 Color(black[0], black[1], black[2], 1)
                 Line(points=p2.stool,width=0.05*p2.m2p)
-            #Ellipse(pos=self.pos,size=self.size)
-            
-        #makeMarkerText(p1,width,height)
         
     def update(self,dt):
         gs.simStep()
