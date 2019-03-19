@@ -50,6 +50,8 @@ class drubbleGame(Widget):
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
         self._keyboard.bind(on_key_up = self._on_keyboard_up)
+        self.nMarks = 0
+        self.yardMark = []
         
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)

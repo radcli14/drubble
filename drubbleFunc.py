@@ -323,21 +323,36 @@ if engine == 'ista':
             text(str(int(xr)),font_name=p.MacsFavoriteFont,font_size=0.6*m2p,x=start_x-2,y=start_y+m2p/20,alignment=1)
             
 if engine == 'kivy':
-    def makeMarkers(obj,p):
-                
+    def makeMarkers(self,p):
+        
+        # xrng_r is the first and last markers on the screen, xrng_n is the 
+        # number of markers
         xrng_r = np.around(p.xrng,-1)
         xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
 
-        for k in range(0,xrng_n):
+        # Loop through each yard marker, drawing the line, and placing numbers
+        for k in range(xrng_n):
+            # Current yardage
             xr = xrng_r[0]+10*k
             
-            [start_x,start_y] = xy2p(xr, 0,p.m2p,p.po,obj.width,obj.height) 
-            [end_x,end_y]     = xy2p(xr,-1,p.m2p,p.po,obj.width,obj.height)     
+            # Lines
+            [start_x,start_y] = xy2p(xr, 0,p.m2p,p.po,self.width,self.height) 
+            [end_x,end_y]     = xy2p(xr,-1,p.m2p,p.po,self.width,self.height)     
             Color(white[0],white[1],white[2],1)
-            Line(points=(start_x,start_y,end_x,end_y))
-            #obj.add_widget(Label(font_size=int(0.6*p.m2p),
-            #                     pos=(int(start_x),int(start_y)),
-            #                     text=str(int(xr)),color=(1,0,0,1)))
+            Line(points=(start_x,start_y,end_x,end_y),width=1.5)
+            
+            # Numbers
+            if k >= self.nMarks:
+                self.yardMark.append(Label(font_size=int(0.6*p.m2p),
+                                           pos=(int(start_x),int(start_y)),
+                                           text=str(int(xr)),color=(1,1,1,1)))
+                self.add_widget(self.yardMark[k])
+                self.nMarks += 1
+            else:
+                self.yardMark[k].font_size = int(0.6*p.m2p)
+                self.yardMark[k].pos = (int(start_x),int(start_y))
+                self.yardMark[k].text = str(int(xr))
+
 # Parameters
 class parameters:
     # Game parameters
