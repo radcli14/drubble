@@ -1161,8 +1161,10 @@ def intersperse(list1,list2):
 class playerLines():
     def __init__(self,pnum):
         self.pnum = pnum
+        self.width = width
+        self.height = height
         self.update(gs)
-
+        
     def update(self,gs):
         # Get the player stick figure
         self.xv, self.yv, self.sx, self.sy = stickDude(gs,self.pnum)
@@ -1172,9 +1174,9 @@ class playerLines():
         
         # Convert to pixels
         self.player_x,self.player_y = xy2p(self.xv,self.yv,self.m2p,self.po,
-                                           width,height)
+                                           self.width,self.height)
         self.stool_x,self.stool_y = xy2p(self.sx,self.sy,self.m2p,self.po,
-                                         width,height)
+                                         self.width,self.height)
         
         # Convert to format used for Kivy line
         self.player = intersperse(self.player_x,self.player_y)

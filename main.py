@@ -60,6 +60,8 @@ class drubbleGame(Widget):
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         keyPush = ctrl2keyPush(gs)
         gs.setControl(keyPush=kvUpdateKey(keyPush,keycode,1))
+        if keycode[1] == 'spacebar':
+            cycleModes(gs,stats)
         return True
     
     def _on_keyboard_up(self, keyboard, keycode):
@@ -89,8 +91,28 @@ class drubbleGame(Widget):
                 Color(black[0], black[1], black[2], 1)
                 Line(points=p2.stool,width=0.05*p2.m2p)
         
+            # Draw the ball
+            Color(pink[0], pink[1], pink[2], 1)
+            x,y = xy2p(gs.xb,gs.yb,p1.m2p,p1.po,self.width,self.height)
+            Ellipse(pos=(x-p1.m2p*p.rb,y-p1.m2p*p.rb),
+                    size=(2.0*p1.m2p*p.rb,2.0*p1.m2p*p.rb))
+            
     def update(self,dt):
+        ## ANGLE AND SPEED SETTINGS
+        if gs.gameMode>2 and gs.gameMode<6:
+            gs.setAngleSpeed()
+        
         gs.simStep()
+        
+        if gs.gameMode==6:
+            stats.update()
+                
+        # Player drawing settings        
+        xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
+            
+        p1.width = p2.width = self.width
+        p1.height = p2.height = self.height
+        
         p1.update(gs)
         p2.update(gs)
         
