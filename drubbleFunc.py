@@ -1136,7 +1136,7 @@ def stickDude(inp,k):
 # convert from meters to pixels, and pixel offset to the center line
 # Ratio refers to normalized positions in the window on the scale [0 0 1 1]
 def setRanges(u):
-    maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),8])
+    maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),4])
     diffx = 1.25*np.abs(u[0]-u[4])
     midx  = (u[0]+u[4])/2
     if diffx>2*(maxy+1):
