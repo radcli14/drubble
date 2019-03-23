@@ -11,7 +11,6 @@ from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.properties import NumericProperty, ReferenceListProperty
 from kivy.core.window import Window
-#from 
 from kivy.vector import Vector
 from kivy.clock import Clock
 from kivy.graphics import *
@@ -30,7 +29,7 @@ nPlayer = 2
 gs = gameState(u0)
 
 # Set the keyboard input and mouse defaults
-keyPush        = np.zeros(8)
+keyPush = np.zeros(8)
 
 # Initialize stats
 stats = gameScore()
@@ -43,27 +42,38 @@ Window.size = (width, height)
 p1 = playerLines(0)
 p2 = playerLines(1)
 
-class titleLine(Widget):
-    pass
-
 class MyBackground(Widget):
     def __init__(self, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
+        self.xpos = 0
         with self.canvas:
+            # Import the background image
             self.bg = Rectangle(source='figs/bg0.png', 
                                 pos=(0,0), size=(2400,400))
 
              # Draw the bottom line
             Color(black[0], black[1], black[2],1)
             self.bl = Rectangle(pos=(0,0),size=(width, height/20))
-        
-        self.bind(pos=self.update_bg)
-        self.bind(size=self.update_bg)
 
-    def update_bg(self, *args):
-        self.bg.pos = self.pos
-        self.bg.size = self.size
-        self.bl.size = (self.width,self.height/20)
+    def update(self, x, y, w, h):
+        self.bg.pos = (w*(-x/60+self.xpos),-y*5+h/20)
+        self.bl.size = (w,h/20)
+
+def get_stick_pos(ch):
+    return ch.pos[0]+ch.size[0]/2.0, ch.pos[1]+ch.size[1]/2.0, ch.size[0] 
+
+class stick(Widget):
+    def __init__(self,**kwargs):
+        super(stick, self).__init__(**kwargs)
+        with self.canvas:
+            self.ch = Rectangle(source='figs/crossHair.png',**kwargs)    
+            ch_x, ch_y, ch_s = get_stick_pos(self.ch)
+            self.el = Ellipse(pos=(ch_x-ch_s/4.0,ch_y-ch_s/4.0),
+                              size=(ch_s/2.0,ch_s/2.0))
+
+    def update_el(self,x,y):
+        ch_x, ch_y, ch_s = get_stick_pos(self.ch)
+        self.el.pos = (ch_x-ch_s/4.0+ch_s*x/4.0,ch_y-ch_s/4.0+ch_s*y/4.0)
 
 class drubbleGame(Widget):
     def __init__(self,**kwargs):
@@ -78,10 +88,18 @@ class drubbleGame(Widget):
         
         # Add score line widgets
         with self.canvas:
+            # Initialize the background
+            self.bg = MyBackground()
+            self.add_widget(self.bg)
             
-            self.bg0 = MyBackground()
-            self.add_widget(self.bg0)
+            # Initialize the sticks
+            sz = 0.2*width
+            self.moveStick = stick(size=(sz,sz), pos=(0.8*width,0.05*height))
+            self.add_widget(self.moveStick)
+            self.tiltStick = stick(size=(sz,sz), pos=(0,0.05*height))
+            self.add_widget(self.tiltStick)
             
+            # Initialize the score line
             self.time_label = Label(font_size=18,pos=(10,420),halign='left',
                                     text='Time = ',color=(0,0,0,1))
             self.add_widget(self.time_label)
@@ -169,6 +187,10 @@ class drubbleGame(Widget):
         
         p1.update(gs)
         p2.update(gs)
+        
+        self.bg.update((gs.xb+gs.xp[0])/2.0,gs.yb,self.width,self.height)
+        self.moveStick.update_el(gs.ctrl[0],gs.ctrl[1])
+        self.tiltStick.update_el(-gs.ctrl[3],gs.ctrl[2])
         
         self.update_canvas()
     pass
