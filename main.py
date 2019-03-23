@@ -11,6 +11,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.properties import NumericProperty, ReferenceListProperty
 from kivy.core.window import Window
+#from 
 from kivy.vector import Vector
 from kivy.clock import Clock
 from kivy.graphics import *
@@ -45,6 +46,25 @@ p2 = playerLines(1)
 class titleLine(Widget):
     pass
 
+class MyBackground(Widget):
+    def __init__(self, **kwargs):
+        super(MyBackground, self).__init__(**kwargs)
+        with self.canvas:
+            self.bg = Rectangle(source='figs/bg0.png', 
+                                pos=(0,0), size=(2400,400))
+
+             # Draw the bottom line
+            Color(black[0], black[1], black[2],1)
+            self.bl = Rectangle(pos=(0,0),size=(width, height/20))
+        
+        self.bind(pos=self.update_bg)
+        self.bind(size=self.update_bg)
+
+    def update_bg(self, *args):
+        self.bg.pos = self.pos
+        self.bg.size = self.size
+        self.bl.size = (self.width,self.height/20)
+
 class drubbleGame(Widget):
     def __init__(self,**kwargs):
         super(drubbleGame, self).__init__(**kwargs)
@@ -58,6 +78,10 @@ class drubbleGame(Widget):
         
         # Add score line widgets
         with self.canvas:
+            
+            self.bg0 = MyBackground()
+            self.add_widget(self.bg0)
+            
             self.time_label = Label(font_size=18,pos=(10,420),halign='left',
                                     text='Time = ',color=(0,0,0,1))
             self.add_widget(self.time_label)
@@ -100,8 +124,6 @@ class drubbleGame(Widget):
             Line(points=intersperse(x,y),width=1.5)
             
             # Draw Bottom Line
-            Color(black[0], black[1], black[2],1)
-            Rectangle(pos=(0,0),size=(self.width, self.height/20))
             makeMarkers(self,p1)
             
             # Draw Player One

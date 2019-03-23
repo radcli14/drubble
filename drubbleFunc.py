@@ -330,10 +330,12 @@ if engine == 'kivy':
         xrng_r = np.around(p.xrng,-1)
         xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
 
-        # Loop through each yard marker, drawing the line, and placing numbers
+        for k in range(self.nMarks):
+            self.yardMark[k].text = ''
+        
         for k in range(xrng_n):
             # Current yardage
-            xr = xrng_r[0]+10*k
+            xr = int(xrng_r[0]+10*k)
             
             # Lines
             [start_x,start_y] = xy2p(xr, 0,p.m2p,p.po,self.width,self.height) 
@@ -342,16 +344,22 @@ if engine == 'kivy':
             Line(points=(start_x,start_y,end_x,end_y),width=1.5)
             
             # Numbers
+            strxr = str(xr)                               # String form of xr
+            fsize = min(24,int(p.m2p))                    # Font size
+            xypos = (int(start_x+5),self.height/20-fsize) # Position of text 
+            lsize = (len(strxr)*fsize/2.0,fsize)          # Label size
             if k >= self.nMarks:
-                self.yardMark.append(Label(font_size=int(0.6*p.m2p),
-                                           pos=(int(start_x),int(start_y)),
-                                           text=str(int(xr)),color=(1,1,1,1)))
+                self.yardMark.append(Label(font_size=fsize,
+                                           size=lsize,pos=xypos,
+                                           text=strxr,color=(1,1,1,1),
+                                           halign='left',valign='top'))
                 self.add_widget(self.yardMark[k])
                 self.nMarks += 1
             else:
-                self.yardMark[k].font_size = int(0.6*p.m2p)
-                self.yardMark[k].pos = (int(start_x),int(start_y))
-                self.yardMark[k].text = str(int(xr))
+                self.yardMark[k].font_size = fsize
+                self.yardMark[k].size = lsize
+                self.yardMark[k].pos  = xypos
+                self.yardMark[k].text = strxr
 
 # Parameters
 class parameters:
@@ -722,7 +730,7 @@ class gameScore:
         self.n = gs.n
         if gs.StoolBounce and self.stoolDist<gs.xb:
             self.stoolDist = gs.xb
-        if self.maxHeight<gs.yb:
+        if self.maxHeight<gs.yb and self.stoolCount>0:
             self.maxHeight = gs.yb   
         self.stoolCount += gs.StoolBounce
         self.floorCount += gs.FloorBounce
@@ -730,18 +738,21 @@ class gameScore:
 
 # Predict
 def BallPredict(gs):
-    if gs.dyb==0:
+    if gs.dyb==0 or gs.gameMode<=2:
+        # Ball is not moving, impact time is zero
         tI=0
-    elif gs.gameMode>2 and (gs.dyb>0) and (gs.yb<p.y0+p.d+p.l0): 
+    elif gs.gameMode>2 and (gs.dyb>0) and (gs.yb<gs.yp[0]+p.d+gs.lp[0]): 
+        # Ball is in play, moving upward and below the stool
         # Solve for time and height at apogee
         ta = gs.dyb/p.g
         ya = 0.5*p.g*ta**2
 
-        # Solve for time the ball would hit the stool
-        tI = ta + np.sqrt(2*ya/p.g)
+        # Solve for time the ball would hit the ground
+        tI = ta + np.sqrt(2.0*ya/p.g)
     else:
+        # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
-        tI = -(-gs.dyb - np.sqrt(gs.dyb**2+2*p.g*(gs.yb-p.y0-p.d-p.l0)))/p.g
+        tI = -(-gs.dyb - np.sqrt(gs.dyb**2+2.0*p.g*(gs.yb-gs.yp[0]-p.d-gs.lp[0])))/p.g
         
     if np.isnan(tI):
         tI = 0
@@ -750,8 +761,11 @@ def BallPredict(gs):
     xI = gs.xb+gs.dxb*tI
     yI = gs.yb+gs.dyb*tI-0.5*p.g*tI**2
     
-    # Solve for the arc
-    T     = np.linspace(0,tI+1,40)
+    # Solve for time that the ball would hit the ground
+    tG = -(-gs.dyb-np.sqrt(gs.dyb**2+2.0*p.g*gs.yb))/p.g
+
+    # Solve for the arc for the next one second, or until ball hits ground
+    T     = np.linspace(0,min(1.0,tG),20)
     xTraj = gs.xb+gs.dxb*T
     yTraj = gs.yb+gs.dyb*T-0.5*p.g*T**2
     
