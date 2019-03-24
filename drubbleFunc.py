@@ -108,10 +108,6 @@ if engine == 'ista':
         if gs.showedSplash:
             obj.background_color = skyBlue
             image(splash,0,0.2*height,0.8*width,0.8*height)
-            #screen.blit(diagram, diagrect)
-            #font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/12))
-            #spc  = font.render('Tap To Begin!', True, darkGreen)
-            #screen.blit(spc,(0.22*width,int(0.88*height)))
         else:
             k = obj.kSplash
             obj.background_color = (skyBlue[0]*k/255,skyBlue[1]*k/255,skyBlue[2]*k/255)
@@ -187,6 +183,8 @@ if engine == 'ista':
             self.high_label.alpha = 0
             self.boing_label.alpha = 0
             self.score_label.alpha = 0
+            
+            
 dt = 1/fs
 
 # Define the bunch class
@@ -360,6 +358,7 @@ if engine == 'kivy':
                 self.yardMark[k].size = lsize
                 self.yardMark[k].pos  = xypos
                 self.yardMark[k].text = strxr
+                #print(self.yardMark[k].text_size)
 
 # Parameters
 class parameters:

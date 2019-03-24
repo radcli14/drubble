@@ -14,6 +14,7 @@ from kivy.core.window import Window
 from kivy.vector import Vector
 from kivy.clock import Clock
 from kivy.graphics import *
+from kivy.config import Config
 
 # Execute drubbleFunc to get the supporting functions and classes
 exec(open('./drubbleFunc.py').read())
@@ -38,6 +39,9 @@ stats = gameScore()
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
 Window.size = (width, height)
 
+# Set the icon
+Config.window_icon = 'figs/icon.png'
+
 # Initialize the players
 p1 = playerLines(0)
 p2 = playerLines(1)
@@ -58,6 +62,22 @@ class MyBackground(Widget):
     def update(self, x, y, w, h):
         self.bg.pos = (w*(-x/60+self.xpos),-y*5+h/20)
         self.bl.size = (w,h/20)
+
+class splashScreen(Widget):
+    def __init__(self, **kwargs):
+        super(splashScreen, self).__init__(**kwargs) 
+        self.k = 0
+            
+    def update(self):    
+        if not gs.showedSplash:
+            self.k += 1
+            self.canvas.clear()
+            Color(skyBlue[0]*self.k,skyBlue[1]*self.k,skyBlue[2]*self.k,1)
+            Rectangle(pos=(0,0),size=(width,height))
+            Rectangle(source='figs/splash.png',pos=(0,0.2*height), 
+                      size=(0.8*width,0.8*height))
+        if self.k>=255:
+            gs.showedSplash = True       
 
 def get_stick_pos(ch):
     return ch.pos[0]+ch.size[0]/2.0, ch.pos[1]+ch.size[1]/2.0, ch.size[0] 
@@ -85,15 +105,20 @@ class drubbleGame(Widget):
         self._keyboard.bind(on_key_up = self._on_keyboard_up)
         self.nMarks = 0
         self.yardMark = []
+        self.weHaveWidgets = False
+        with self.canvas:
+            self.splash = splashScreen()
+            self.add_widget(self.splash)
         
-        # Add score line widgets
+    def add_game_widgets(self): 
+        # Add game widgets
         with self.canvas:
             # Initialize the background
             self.bg = MyBackground()
             self.add_widget(self.bg)
             
             # Initialize the sticks
-            sz = 0.2*width
+            sz = 0.2*self.width
             self.moveStick = stick(size=(sz,sz), pos=(0.8*width,0.05*height))
             self.add_widget(self.moveStick)
             self.tiltStick = stick(size=(sz,sz), pos=(0,0.05*height))
@@ -125,6 +150,10 @@ class drubbleGame(Widget):
         gs.setControl(keyPush=kvUpdateKey(keyPush,keycode,1))
         if keycode[1] == 'spacebar':
             cycleModes(gs,stats)
+            if not self.weHaveWidgets:
+                self.add_game_widgets()
+                self.remove_widget(self.splash)
+                self.weHaveWidgets = True
         return True
     
     def _on_keyboard_up(self, keyboard, keycode):
@@ -164,6 +193,9 @@ class drubbleGame(Widget):
                     size=(2.0*p1.m2p*p.rb,2.0*p1.m2p*p.rb))
 
     def update(self,dt):
+        if gs.gameMode == 1:
+            self.splash.update()
+        
         ## ANGLE AND SPEED SETTINGS
         if gs.gameMode>2 and gs.gameMode<6:
             gs.setAngleSpeed()
@@ -171,13 +203,13 @@ class drubbleGame(Widget):
         gs.simStep()
         if gs.gameMode==6:
             stats.update()
-          
-        # Update score line
-        self.time_label.text  = 'Time = '+f'{gs.t:.1f}'
-        self.dist_label.text  = 'Distance = '+f'{stats.stoolDist:.2f}'
-        self.high_label.text  = 'Height = '+f'{stats.maxHeight:.2f}'
-        self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
-        self.score_label.text = 'Score = '+str(stats.score)    
+
+            # Update score line
+            self.time_label.text  = 'Time = '+f'{gs.t:.1f}'
+            self.dist_label.text  = 'Distance = '+f'{stats.stoolDist:.2f}'
+            self.high_label.text  = 'Height = '+f'{stats.maxHeight:.2f}'
+            self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
+            self.score_label.text = 'Score = '+str(stats.score)    
             
         # Player drawing settings        
         xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
@@ -188,14 +220,15 @@ class drubbleGame(Widget):
         p1.update(gs)
         p2.update(gs)
         
-        self.bg.update((gs.xb+gs.xp[0])/2.0,gs.yb,self.width,self.height)
-        self.moveStick.update_el(gs.ctrl[0],gs.ctrl[1])
-        self.tiltStick.update_el(-gs.ctrl[3],gs.ctrl[2])
-        
-        self.update_canvas()
-    pass
+        if gs.gameMode>1:
+            self.bg.update((gs.xb+gs.xp[0])/2.0,gs.yb,self.width,self.height)
+            self.moveStick.update_el(gs.ctrl[0],gs.ctrl[1])
+            self.tiltStick.update_el(-gs.ctrl[3],gs.ctrl[2])
+            
+            self.update_canvas()
 
 class drubbleApp(App):
+    icon = 'figs/icon.png'
     def build(self):
         game = drubbleGame()
         Clock.schedule_interval(game.update, 1.0/fs)
