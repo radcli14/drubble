@@ -68,15 +68,17 @@ class splashScreen(Widget):
         super(splashScreen, self).__init__(**kwargs) 
         self.k = 0
             
-    def update(self):    
+    def update(self,showSplash):  
         if not gs.showedSplash:
             self.k += 1
             self.canvas.clear()
-            Color(skyBlue[0]*self.k,skyBlue[1]*self.k,skyBlue[2]*self.k,1)
-            Rectangle(pos=(0,0),size=(width,height))
-            Rectangle(source='figs/splash.png',pos=(0,0.2*height), 
-                      size=(0.8*width,0.8*height))
-        if self.k>=255:
+            with self.canvas:
+                Color(skyBlue[0]*self.k/255,skyBlue[1]*self.k/255,skyBlue[2]*self.k/255,1)
+                Rectangle(pos=(0,0),size=(width,height))
+                if showSplash:
+                    Rectangle(source='figs/splash.png',pos=(0,0.2*height), 
+                              size=(0.8*width,0.8*height))
+        if self.k >= 255:
             gs.showedSplash = True       
 
 def get_stick_pos(ch):
@@ -140,7 +142,7 @@ class drubbleGame(Widget):
             self.score_label = Label(font_size=18,pos=(610,420),halign='left',
                                     text='Score = ',color=(0,0,0,1))
             self.add_widget(self.score_label)
-        
+
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
         self._keyboard = None
@@ -150,10 +152,6 @@ class drubbleGame(Widget):
         gs.setControl(keyPush=kvUpdateKey(keyPush,keycode,1))
         if keycode[1] == 'spacebar':
             cycleModes(gs,stats)
-            if not self.weHaveWidgets:
-                self.add_game_widgets()
-                self.remove_widget(self.splash)
-                self.weHaveWidgets = True
         return True
     
     def _on_keyboard_up(self, keyboard, keycode):
@@ -163,39 +161,46 @@ class drubbleGame(Widget):
     
     # Internal properties of the game widget
     def update_canvas(self,*args):
-        self.canvas.clear()
-        with self.canvas:                       
-            # Draw the tracer line
-            Color(white[0], white[1], white[2], 1)
-            x,y = xy2p(gs.xTraj,gs.yTraj,p1.m2p,p1.po,self.width,self.height)
-            Line(points=intersperse(x,y),width=1.5)
+        if self.weHaveWidgets:
+            self.canvas.clear()
+            with self.canvas:                       
+                # Draw the tracer line
+                Color(white[0], white[1], white[2], 1)
+                x,y = xy2p(gs.xTraj,gs.yTraj,p1.m2p,p1.po,self.width,self.height)
+                Line(points=intersperse(x,y),width=1.5)
+                
+                # Draw Bottom Line
+                makeMarkers(self,p1)
+                
+                # Draw Player One
+                Color(darkGreen[0], darkGreen[1], darkGreen[2], 1)
+                Line(points=p1.player,width=0.075*p1.m2p)
+                Color(white[0], white[1], white[2], 1)
+                Line(points=p1.stool,width=0.05*p1.m2p)
+                
+                if nPlayer>1:
+                    # Draw Player Two
+                    Color(red[0], red[1], red[2], 1)
+                    Line(points=p2.player,width=0.075*p2.m2p)
+                    Color(black[0], black[1], black[2], 1)
+                    Line(points=p2.stool,width=0.05*p2.m2p)
             
-            # Draw Bottom Line
-            makeMarkers(self,p1)
-            
-            # Draw Player One
-            Color(darkGreen[0], darkGreen[1], darkGreen[2], 1)
-            Line(points=p1.player,width=0.075*p1.m2p)
-            Color(white[0], white[1], white[2], 1)
-            Line(points=p1.stool,width=0.05*p1.m2p)
-            
-            if nPlayer>1:
-                # Draw Player Two
-                Color(red[0], red[1], red[2], 1)
-                Line(points=p2.player,width=0.075*p2.m2p)
-                Color(black[0], black[1], black[2], 1)
-                Line(points=p2.stool,width=0.05*p2.m2p)
-        
-            # Draw the ball
-            Color(pink[0], pink[1], pink[2], 1)
-            x,y = xy2p(gs.xb,gs.yb,p1.m2p,p1.po,self.width,self.height)
-            Ellipse(pos=(x-p1.m2p*p.rb,y-p1.m2p*p.rb),
-                    size=(2.0*p1.m2p*p.rb,2.0*p1.m2p*p.rb))
+                # Draw the ball
+                Color(pink[0], pink[1], pink[2], 1)
+                x,y = xy2p(gs.xb,gs.yb,p1.m2p,p1.po,self.width,self.height)
+                Ellipse(pos=(x-p1.m2p*p.rb,y-p1.m2p*p.rb),
+                        size=(2.0*p1.m2p*p.rb,2.0*p1.m2p*p.rb))
 
     def update(self,dt):
+        # Either update the splash, or add the widgets
         if gs.gameMode == 1:
-            self.splash.update()
-        
+            self.splash.update(True)
+        elif not self.weHaveWidgets:
+            self.add_game_widgets()
+            self.splash.update(False)
+            self.remove_widget(self.splash)
+            self.weHaveWidgets = True
+
         ## ANGLE AND SPEED SETTINGS
         if gs.gameMode>2 and gs.gameMode<6:
             gs.setAngleSpeed()

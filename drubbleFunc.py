@@ -359,6 +359,8 @@ if engine == 'kivy':
                 self.yardMark[k].pos  = xypos
                 self.yardMark[k].text = strxr
                 #print(self.yardMark[k].text_size)
+                
+            #print(self.yardMark[k].text+' '+str(xypos))              
 
 # Parameters
 class parameters:
