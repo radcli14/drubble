@@ -9,7 +9,7 @@ Created on Tue Mar  5 21:18:17 2019
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
-from kivy.properties import NumericProperty, ReferenceListProperty
+from kivy.properties import NumericProperty, ReferenceListProperty, OptionProperty
 from kivy.core.window import Window
 from kivy.vector import Vector
 from kivy.clock import Clock
@@ -38,9 +38,12 @@ stats = gameScore()
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
 Window.size = (width, height)
+#width, height = Window.size
+leftAlign = OptionProperty('left')
 
-# Set the icon
+# Set the icon (neither are working...)
 Config.window_icon = 'figs/icon.png'
+Window.icon = 'figs/icon.png'
 
 # Initialize the players
 p1 = playerLines(0)
@@ -59,8 +62,11 @@ class MyBackground(Widget):
             Color(black[0], black[1], black[2],1)
             self.bl = Rectangle(pos=(0,0),size=(width, height/20))
 
-    def update(self, x, y, w, h):
-        self.bg.pos = (w*(-x/60+self.xpos),-y*5+h/20)
+    def update(self, x, y, w, h, m2p): 
+        scf = (m2p/70)**0.5
+        posInBG = x/60-self.xpos # Position in the Background
+        self.bg.size = (int(2400*scf),int(400*scf))
+        self.bg.pos = (w*(-posInBG)-(2400*posInBG-self.bg.size[0])/2.0,h/20)
         self.bl.size = (w,h/20)
 
 class splashScreen(Widget):
@@ -70,7 +76,7 @@ class splashScreen(Widget):
             
     def update(self,showSplash):  
         if not gs.showedSplash:
-            self.k += 1
+            self.k += 2
             self.canvas.clear()
             with self.canvas:
                 Color(skyBlue[0]*self.k/255,skyBlue[1]*self.k/255,skyBlue[2]*self.k/255,1)
@@ -78,6 +84,10 @@ class splashScreen(Widget):
                 if showSplash:
                     Rectangle(source='figs/splash.png',pos=(0,0.2*height), 
                               size=(0.8*width,0.8*height))
+                    if self.k >= 255:
+                        Label(font_size=48,pos=(0,0),size=(width,0.2*height),
+                              color=(darkGreen[0],darkGreen[1],darkGreen[2],1),
+                              halign='center',text='Press Space to Begin!')
         if self.k >= 255:
             gs.showedSplash = True       
 
@@ -102,6 +112,7 @@ class drubbleGame(Widget):
         super(drubbleGame, self).__init__(**kwargs)
         self.bind(pos=self.update_canvas)
         self.bind(size=self.update_canvas)
+        self.bind(size=self.resize_canvas)
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
         self._keyboard.bind(on_key_up = self._on_keyboard_up)
@@ -127,22 +138,34 @@ class drubbleGame(Widget):
             self.add_widget(self.tiltStick)
             
             # Initialize the score line
-            self.time_label = Label(font_size=18,pos=(10,420),halign='left',
-                                    text='Time = ',color=(0,0,0,1))
+            self.time_label = Label(font_size=18,halign='left',
+                                    pos=(0.0*self.width,self.height-20),
+                                    size=(0.2*self.width,18),
+                                    text='Time = 0.0',color=(0,0,0,1))
             self.add_widget(self.time_label)
-            self.dist_label = Label(font_size=18,pos=(160,420),halign='left',
-                                    text='Distance = ',color=(0,0,0,1))
+            self.dist_label = Label(font_size=18,halign='left',
+                                    pos=(0.2*self.width,self.height-20),
+                                    size=(0.2*self.width,18),
+                                    text='Distance = 0.00',color=(0,0,0,1))
             self.add_widget(self.dist_label)
-            self.high_label = Label(font_size=18,pos=(310,420),halign='left',
-                                    text='Height = ',color=(0,0,0,1))
+            self.high_label = Label(font_size=18,halign='left',
+                                    pos=(0.4*self.width,self.height-20),
+                                    size=(0.2*self.width,18),
+                                    text='Height = 0.00',color=(0,0,0,1))
             self.add_widget(self.high_label)
-            self.boing_label = Label(font_size=18,pos=(460,420),halign='left',
-                                    text='Boing! = ',color=(0,0,0,1))
+            self.boing_label = Label(font_size=18,halign='left',
+                                    pos=(0.6*self.width,self.height-20),
+                                    size=(0.2*self.width,18),
+                                    text='Boing! = 0',color=(0,0,0,1))
             self.add_widget(self.boing_label)
-            self.score_label = Label(font_size=18,pos=(610,420),halign='left',
-                                    text='Score = ',color=(0,0,0,1))
+            self.score_label = Label(font_size=18,halign='left',
+                                    pos=(0.8*self.width,self.height-20),
+                                    size=(0.2*self.width,18),
+                                    text='Score = 0',color=(0,0,0,1))
             self.add_widget(self.score_label)
+            dir(self.score_label)
 
+    ## Controls
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
         self._keyboard = None
@@ -159,7 +182,40 @@ class drubbleGame(Widget):
         gs.setControl(keyPush=kvUpdateKey(keyPush,keycode,0))
         return True
     
-    # Internal properties of the game widget
+    def on_touch_down(self, touch):
+        # Reset if necessary
+        if touch.y > self.height/2:
+            self.touchCycle = True
+        
+        # Detect control inputs
+        xy = touchStick((touch.x,touch.y),self.moveStick)
+        if xy[0] != 0:
+        	self.moveStick.ctrl = xy
+        	self.moveStick.id = touch.id
+
+        xy = touchStick((touch.x,touch.y),self.tiltStick)
+        if xy[0] != 0:
+        	self.tiltStick.ctrl = xy
+        	self.tiltStick.id = touch.id	
+
+    def on_touch_move(self,touch):
+        # Detect control inputs
+        xy = touchStick((touch.x,touch.y),self.moveStick)
+        if touch.id == self.moveStick.id and xy[0] != 0:
+            self.moveStick.ctrl = xy
+        
+        xy = touchStick((touch.x,touch.y),self.tiltStick)
+        if touch.id == self.tiltStick.id and xy[0] != 0:
+            self.tiltStick.ctrl = xy
+                
+    def on_touch_up(self,touch):
+        if touch.id == self.moveStick.id:
+            self.moveStick.ctrl = (0,0)
+
+        if touch.id == self.tiltStick.id:
+            self.tiltStick.ctrl = (0,0)
+
+    #3 Drawing commands
     def update_canvas(self,*args):
         if self.weHaveWidgets:
             self.canvas.clear()
@@ -190,7 +246,20 @@ class drubbleGame(Widget):
                 x,y = xy2p(gs.xb,gs.yb,p1.m2p,p1.po,self.width,self.height)
                 Ellipse(pos=(x-p1.m2p*p.rb,y-p1.m2p*p.rb),
                         size=(2.0*p1.m2p*p.rb,2.0*p1.m2p*p.rb))
+                
+    def resize_canvas(self,*args):
+        if self.weHaveWidgets:
+            self.time_label.pos=(0.0*self.width,self.height-20)
+            self.dist_label.pos=(0.2*self.width,self.height-20)
+            self.high_label.pos=(0.4*self.width,self.height-20)
+            self.boing_label.pos=(0.6*self.width,self.height-20)
+            self.score_label.pos=(0.8*self.width,self.height-20)
+            
+            sz = self.moveStick.ch.size[0]
+            self.moveStick.ch.pos = (self.width-sz,0.05*self.height)       
+            self.tiltStick.ch.pos = (0,0.05*self.height)
 
+    ## Time step the game
     def update(self,dt):
         # Either update the splash, or add the widgets
         if gs.gameMode == 1:
@@ -226,7 +295,8 @@ class drubbleGame(Widget):
         p2.update(gs)
         
         if gs.gameMode>1:
-            self.bg.update((gs.xb+gs.xp[0])/2.0,gs.yb,self.width,self.height)
+            xMean = (gs.xb+gs.xp[0])/2.0
+            self.bg.update(xMean,gs.yb,self.width,self.height,m2p)
             self.moveStick.update_el(gs.ctrl[0],gs.ctrl[1])
             self.tiltStick.update_el(-gs.ctrl[3],gs.ctrl[2])
             
