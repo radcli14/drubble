@@ -137,7 +137,7 @@ if engine == 'ista':
         Aura.size = (0.5*sz,0.5*sz)
         Aura.position = Stick.cntr
         return Stick, Aura
-        
+
     def touchStick(loc,stick):
         tCnd = [loc[0] > stick.x[0],
                 loc[0] < stick.x[1],
@@ -154,8 +154,9 @@ if engine == 'ista':
             
             return (mag*np.cos(ang),mag*np.sin(ang))
         else:
-            return (0,0)
+            return (0,0)    
             
+     
     def toggleVisibleSprites(self,boule):
         if boule:
             self.moveStick.alpha = 0.5
@@ -183,8 +184,26 @@ if engine == 'ista':
             self.high_label.alpha = 0
             self.boing_label.alpha = 0
             self.score_label.alpha = 0
+
+if  engine == 'kivy':    
+    def touchStick(loc,stick):
+        tCnd = [loc[0] > stick.ts_x[0],
+                loc[0] < stick.ts_x[1],
+                loc[1] > stick.ts_y[0],
+                loc[1] < stick.ts_y[1]]
+                    
+        # Touched inside the stick
+        if all(tCnd):
+            x = min(max(p.tsens*(2*(loc[0]-stick.ts_x[0])/stick.size[0] - 1),-1),1)
+            y = min(max(p.tsens*(2*(loc[1]-stick.ts_y[0])/stick.size[1] - 1),-1),1)
             
+            mag = np.sqrt(x**2+y**2)
+            ang = np.around(4*np.arctan2(y,x)/np.pi)*np.pi/4
             
+            return (mag*np.cos(ang),mag*np.sin(ang))
+        else:
+            return (0,0)    
+    
 dt = 1/fs
 
 # Define the bunch class
@@ -689,10 +708,15 @@ class gameState:
 def cycleModes(gs,stats):
     # Exit splash screen
     if gs.gameMode == 1:
+        gs.gameMode += 1
+        return
+    
+    # Exit options screen 
+    if gs.gameMode == 2:
         # Reset game
         stats.__init__()
         gs.__init__(u0)
-        gs.gameMode += 2
+        gs.gameMode = 3
         return
         
     # Progress through angle and speed selection

@@ -9,12 +9,13 @@ Created on Tue Mar  5 21:18:17 2019
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
-from kivy.properties import NumericProperty, ReferenceListProperty, OptionProperty
+from kivy.uix.button import Button
+#from kivy.properties import NumericProperty, ReferenceListProperty, OptionProperty
 from kivy.core.window import Window
-from kivy.vector import Vector
+#from kivy.vector import Vector
 from kivy.clock import Clock
 from kivy.graphics import *
-from kivy.config import Config
+#from kivy.config import Config
 
 # Execute drubbleFunc to get the supporting functions and classes
 exec(open('./drubbleFunc.py').read())
@@ -39,10 +40,10 @@ stats = gameScore()
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
 Window.size = (width, height)
 #width, height = Window.size
-leftAlign = OptionProperty('left')
+#leftAlign = OptionProperty('left')
 
 # Set the icon (neither are working...)
-Config.window_icon = 'figs/icon.png'
+#Config.window_icon = 'figs/icon.png'
 Window.icon = 'figs/icon.png'
 
 # Initialize the players
@@ -89,8 +90,14 @@ class splashScreen(Widget):
                               color=(darkGreen[0],darkGreen[1],darkGreen[2],1),
                               halign='center',text='Press Space to Begin!')
         if self.k >= 255:
-            gs.showedSplash = True       
+            gs.showedSplash = True    
+            
+    def clear(self):
+        with self.canvas:
+            Color(skyBlue[0]*self.k/255,skyBlue[1]*self.k/255,skyBlue[2]*self.k/255,1)
+            Rectangle(pos=(0,0),size=(width,height))            
 
+# Returns the center_x, center_y, and diameter of the stick
 def get_stick_pos(ch):
     return ch.pos[0]+ch.size[0]/2.0, ch.pos[1]+ch.size[1]/2.0, ch.size[0] 
 
@@ -102,10 +109,16 @@ class stick(Widget):
             ch_x, ch_y, ch_s = get_stick_pos(self.ch)
             self.el = Ellipse(pos=(ch_x-ch_s/4.0,ch_y-ch_s/4.0),
                               size=(ch_s/2.0,ch_s/2.0))
+        
+        self.ts_x = (ch_x-ch_s/2.0,ch_x+ch_s/2.0)
+        self.ts_y = (ch_y-ch_s/2.0,ch_y+ch_s/2.0)
+        self.cntr = (ch_x,ch_y)
+        self.ctrl = (0,0)
 
     def update_el(self,x,y):
         ch_x, ch_y, ch_s = get_stick_pos(self.ch)
         self.el.pos = (ch_x-ch_s/4.0+ch_s*x/4.0,ch_y-ch_s/4.0+ch_s*y/4.0)
+        self.ctrl = (x,y)
 
 class drubbleGame(Widget):
     def __init__(self,**kwargs):
@@ -119,6 +132,7 @@ class drubbleGame(Widget):
         self.nMarks = 0
         self.yardMark = []
         self.weHaveWidgets = False
+        self.weHaveButtons = False
         with self.canvas:
             self.splash = splashScreen()
             self.add_widget(self.splash)
@@ -165,6 +179,22 @@ class drubbleGame(Widget):
             self.add_widget(self.score_label)
             dir(self.score_label)
 
+    def add_option_buttons(self):
+        w,h = (self.width,self.height)
+        # Add option screen buttons
+        with self.canvas:
+            self.singleDrubbleButt = Button(text='Single Drubble',
+                                            size=(0.8*w,0.2*h),
+                                            pos=(0.1*w,0.7*h),
+                                            font_size=0.1*h)
+            self.doubleDrubbleButt = Button(text='Double Drubble',
+                                            size=(0.8*w,0.2*h),
+                                            pos=(0.1*w,0.4*h),
+                                            font_size=0.1*h)
+            self.tripleDrubbleButt = Button(text='Triple Drubble',
+                                            size=(0.8*w,0.2*h),
+                                            pos=(0.1*w,0.1*h),
+                                            font_size=0.1*h)
     ## Controls
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
@@ -183,37 +213,54 @@ class drubbleGame(Widget):
         return True
     
     def on_touch_down(self, touch):
-        # Reset if necessary
-        if touch.y > self.height/2:
-            self.touchCycle = True
-        
-        # Detect control inputs
-        xy = touchStick((touch.x,touch.y),self.moveStick)
-        if xy[0] != 0:
-        	self.moveStick.ctrl = xy
-        	self.moveStick.id = touch.id
+        if gs.gameMode==2 and touch.y>self.height*0.67:
+            nPlayer=1
+            print('nPlayer=',str(nPlayer))
+            cycleModes(gs,stats)
+        elif gs.gameMode==2 and touch.y>self.height*0.33:
+            nPlayer=2
+            print('nPlayer=',str(nPlayer))
+            cycleModes(gs,stats)
+        elif gs.gameMode>2:
+            # Cycle through modes if touch above the halfway point
+            if touch.y > self.height/2:
+                cycleModes(gs,stats)
 
-        xy = touchStick((touch.x,touch.y),self.tiltStick)
-        if xy[0] != 0:
-        	self.tiltStick.ctrl = xy
-        	self.tiltStick.id = touch.id	
+            # Detect control inputs
+            xy = touchStick((touch.x,touch.y),self.moveStick)
+            if xy[0] != 0:
+                self.moveStick.id = touch.id
+                self.moveStick.update_el(xy[0],xy[1])
+                gs.ctrl[0:2] = xy
+            
+            xy = touchStick((touch.x,touch.y),self.tiltStick)
+            if xy[0] != 0:
+                self.tiltStick.id = touch.id    
+                self.tiltStick.update_el(xy[0],xy[1])
+                gs.ctrl[2:4] = [xy[1],-xy[0]]
 
     def on_touch_move(self,touch):
-        # Detect control inputs
-        xy = touchStick((touch.x,touch.y),self.moveStick)
-        if touch.id == self.moveStick.id and xy[0] != 0:
-            self.moveStick.ctrl = xy
-        
-        xy = touchStick((touch.x,touch.y),self.tiltStick)
-        if touch.id == self.tiltStick.id and xy[0] != 0:
-            self.tiltStick.ctrl = xy
-                
-    def on_touch_up(self,touch):
-        if touch.id == self.moveStick.id:
-            self.moveStick.ctrl = (0,0)
+        if gs.gameMode>2 and self.weHaveWidgets: 
+            # Detect control inputs
+            xy = touchStick((touch.x,touch.y),self.moveStick)
+            if touch.id == self.moveStick.id and xy[0] != 0:
+                self.moveStick.update_el(xy[0],xy[1])
+                gs.ctrl[0:2] = xy
 
-        if touch.id == self.tiltStick.id:
-            self.tiltStick.ctrl = (0,0)
+            xy = touchStick((touch.x,touch.y),self.tiltStick)
+            if touch.id == self.tiltStick.id and xy[0] != 0:
+                self.tiltStick.update_el(xy[0],xy[1])
+                gs.ctrl[2:4] = [xy[1],-xy[0]]
+
+    def on_touch_up(self,touch):
+        if gs.gameMode>2 and self.weHaveWidgets:
+            if touch.id == self.moveStick.id:
+                self.moveStick.update_el(0,0)
+                gs.ctrl[0:2] = [0,0]
+                
+            if touch.id == self.tiltStick.id:
+                self.tiltStick.update_el(0,0)
+                gs.ctrl[2:4] = [0,0]
 
     #3 Drawing commands
     def update_canvas(self,*args):
@@ -264,12 +311,16 @@ class drubbleGame(Widget):
         # Either update the splash, or add the widgets
         if gs.gameMode == 1:
             self.splash.update(True)
-        elif not self.weHaveWidgets:
-            self.add_game_widgets()
-            self.splash.update(False)
+        elif gs.gameMode == 2 and not self.weHaveButtons:
+            self.add_option_buttons()
+            self.splash.clear()
             self.remove_widget(self.splash)
-            self.weHaveWidgets = True
-
+            self.weHaveButtons = True
+        elif gs.gameMode>2 and not self.weHaveWidgets:
+            self.add_game_widgets()            
+            self.weHaveWidgets = True            
+            print('nPlayer=',str(nPlayer))   
+            
         ## ANGLE AND SPEED SETTINGS
         if gs.gameMode>2 and gs.gameMode<6:
             gs.setAngleSpeed()
@@ -294,7 +345,7 @@ class drubbleGame(Widget):
         p1.update(gs)
         p2.update(gs)
         
-        if gs.gameMode>1:
+        if gs.gameMode>2:
             xMean = (gs.xb+gs.xp[0])/2.0
             self.bg.update(xMean,gs.yb,self.width,self.height,m2p)
             self.moveStick.update_el(gs.ctrl[0],gs.ctrl[1])
