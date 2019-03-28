@@ -260,7 +260,7 @@ def drawBackgroundImage(img,rect,xpos,ypos,m2p):
         image(bg0,left,bottom,rect[0],rect[1])
     
 def makeGameImage():
-    for k in range(nPlayer):
+    for k in range(p.nPlayer):
         # Get the plotting vectors using stickDude function
         xv,yv,sx,sy = stickDude(gs.u,k)
             
@@ -418,8 +418,10 @@ class parameters:
     zt = 0.05    # Stool tilt damping ratio
     Ct = 2*zl*np.sqrt(Kt*m) # Tilt damping [N-m-s/rad]
 
+    # Gameplay settings
     userControlled = np.array([[True, True, True, True ],
                                [False,False,False,False]]) 
+    nPlayer = 1
 
     # Stool parameters
     xs = np.array([-0.25,  0.25,  0.14, 
@@ -605,7 +607,7 @@ class gameState:
         self.n += 1
         
         # Active player
-        pAct = np.mod(stats.stoolCount,nPlayer)
+        pAct = np.mod(stats.stoolCount,p.nPlayer)
         
         # Initial assumption, there was no event
         self.StoolBounce = False
@@ -648,7 +650,7 @@ class gameState:
             # Change ball states depending on if it was a stool or floor bounce
             if self.StoolBounce:
                 # Obtain the bounce velocity
-                vBounce,vRecoil = BallBounce(self,np.mod(stats.stoolCount,nPlayer))
+                vBounce,vRecoil = BallBounce(self,np.mod(stats.stoolCount,p.nPlayer))
                 self.ue[2] = vBounce[0]
                 self.ue[3] = vBounce[1]
                 
@@ -789,8 +791,8 @@ def BallPredict(gs):
     # Solve for time that the ball would hit the ground
     tG = -(-gs.dyb-np.sqrt(gs.dyb**2+2.0*p.g*gs.yb))/p.g
 
-    # Solve for the arc for the next one second, or until ball hits ground
-    T     = np.linspace(0,min(1.0,tG),20)
+    # Solve for the arc for the next 1.2 seconds, or until ball hits ground
+    T     = np.linspace(0,min(1.2,tG),20)
     xTraj = gs.xb+gs.dxb*T
     yTraj = gs.yb+gs.dyb*T-0.5*p.g*T**2
     
@@ -816,7 +818,7 @@ def PlayerAndStool(t,u):
     du[0:4] = [dxb,dyb,0,-p.g] # Ball velocities and accelerations
     
     # Loop over players
-    for k in range(nPlayer):
+    for k in range(p.nPlayer):
         # Create player state vectors
         q  = np.matrix([[xp[k]],[yp[k]],[lp[k]],[tp[k]]])
         dq = np.matrix([[dxp[k]],[dyp[k]],[dlp[k]],[dtp[k]]])
@@ -956,7 +958,7 @@ def ControlLogic(t,u,k):
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
-    ZEM = (gs.xI+10*(nPlayer-1-np.mod(stats.stoolCount,2))-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
+    ZEM = (gs.xI+10*(p.nPlayer-1-np.mod(stats.stoolCount,2))-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
     if p.userControlled[k,0]:
         if gs.ctrl[0] == 0:
             try:

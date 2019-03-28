@@ -27,7 +27,6 @@ p = parameters()
 q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
 u0 = [0,p.rb,0,0,p.x0,p.y0,p.l0,0,0,0,0,10,
                  0   ,p.y0,p.l0,0,0,0,0,-10]
-nPlayer = 2
 gs = gameState(u0)
 
 # Set the keyboard input and mouse defaults
@@ -54,10 +53,11 @@ class MyBackground(Widget):
     def __init__(self, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
         self.xpos = 0
+        self.sz_orig = self.w_orig,self.h_orig = (2400,400)
         with self.canvas:
             # Import the background image
             self.bg = Rectangle(source='figs/bg0.png', 
-                                pos=(0,0), size=(2400,400))
+                                pos=(0,0), size=self.sz_orig)
 
              # Draw the bottom line
             Color(black[0], black[1], black[2],1)
@@ -65,9 +65,9 @@ class MyBackground(Widget):
 
     def update(self, x, y, w, h, m2p): 
         scf = (m2p/70)**0.5
-        posInBG = x/60-self.xpos # Position in the Background
-        self.bg.size = (int(2400*scf),int(400*scf))
-        self.bg.pos = (w*(-posInBG)-(2400*posInBG-self.bg.size[0])/2.0,h/20)
+        posInBG = x/100*scf*(self.w_orig-self.xpos) # Position in the Background
+        self.bg.size = (int(self.w_orig*scf),int(self.h_orig*scf))
+        self.bg.pos = (w/2.0-posInBG,0)
         self.bl.size = (w,h/20)
 
 class splashScreen(Widget):
@@ -214,12 +214,12 @@ class drubbleGame(Widget):
     
     def on_touch_down(self, touch):
         if gs.gameMode==2 and touch.y>self.height*0.67:
-            nPlayer=1
-            print('nPlayer=',str(nPlayer))
+            p.nPlayer=1
+            print('nPlayer=',str(p.nPlayer))
             cycleModes(gs,stats)
         elif gs.gameMode==2 and touch.y>self.height*0.33:
-            nPlayer=2
-            print('nPlayer=',str(nPlayer))
+            p.nPlayer=2
+            print('p.nPlayer=',str(p.nPlayer))
             cycleModes(gs,stats)
         elif gs.gameMode>2:
             # Cycle through modes if touch above the halfway point
@@ -281,7 +281,7 @@ class drubbleGame(Widget):
                 Color(white[0], white[1], white[2], 1)
                 Line(points=p1.stool,width=0.05*p1.m2p)
                 
-                if nPlayer>1:
+                if p.nPlayer>1:
                     # Draw Player Two
                     Color(red[0], red[1], red[2], 1)
                     Line(points=p2.player,width=0.075*p2.m2p)
@@ -319,7 +319,7 @@ class drubbleGame(Widget):
         elif gs.gameMode>2 and not self.weHaveWidgets:
             self.add_game_widgets()            
             self.weHaveWidgets = True            
-            print('nPlayer=',str(nPlayer))   
+            print('nPlayer=',str(p.nPlayer))   
             
         ## ANGLE AND SPEED SETTINGS
         if gs.gameMode>2 and gs.gameMode<6:
