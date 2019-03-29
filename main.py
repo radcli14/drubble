@@ -15,6 +15,7 @@ from kivy.core.window import Window
 #from kivy.vector import Vector
 from kivy.clock import Clock
 from kivy.graphics import *
+from kivy.core.audio import SoundLoader
 #from kivy.config import Config
 
 # Execute drubbleFunc to get the supporting functions and classes
@@ -34,6 +35,9 @@ keyPush = np.zeros(8)
 
 # Initialize stats
 stats = gameScore()
+
+# Initialize drums
+# drums = drumBeat()
 
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
@@ -388,6 +392,7 @@ class drubbleApp(App):
     def build(self):
         game = drubbleGame()
         Clock.schedule_interval(game.update, 1.0/fs)
+        #Clock.schedule_interval(drums.play_kivy, 1.0/4.0)
         return game
 
 if __name__ == '__main__':

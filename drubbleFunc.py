@@ -9,7 +9,7 @@ if ps == 'Windows' or ps == 'Linux' or pm == 'x86_64':
     #engine = 'pygame'
     #import pygame
     engine = 'kivy'
-elif ps == 'Darwin':
+elif ps == 'Darwin':    
     engine = 'ista'
     from scene import *
     import motion
@@ -64,10 +64,10 @@ elif engine == 'pygame':
 # Convert physical coordinates to pixels
 if engine == 'kivy' or engine == 'ista':    
     def xy2p(x,y,m2p,po,w,h):
-    	return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
+        return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
 elif engine == 'pygame':
     def xy2p(x,y,m2p,po,w,h):
-    	return np.array(x)*m2p-po+w/2, h-(np.array(y)+1)*m2p
+        return np.array(x)*m2p-po+w/2, h-(np.array(y)+1)*m2p
  
 # Initiate pygame screen and message    
 if engine == 'pygame':
@@ -116,11 +116,11 @@ if engine == 'ista':
                 gs.showedSplash = True
             
     def linePlot(x,y,m2p,po,w,h,clr,wgt):
-    	x,y = xy2p(x,y,m2p,po,w,h)
-    	stroke(clr)
-    	stroke_weight(wgt)
-    	for k in range(1,np.size(x)):
-    		line(x[k-1],y[k-1],x[k],y[k])
+        x,y = xy2p(x,y,m2p,po,w,h)
+        stroke(clr)
+        stroke_weight(wgt)
+        for k in range(1,np.size(x)):
+            line(x[k-1],y[k-1],x[k],y[k])
     
     def initStick(self,alph,sz,ap,ps):
         Stick = SpriteNode('iob:pinpoint_256',parent=self)
@@ -213,27 +213,27 @@ class Bunch:
 
 ## LOAD IMAGES, AND DEFINE FUNCTIONS TO DISPLAY THEM
 if engine == 'pygame':
-		# Import the background image combining ESA, Big Chair, River, and USS Barry
-		bg0 = pygame.image.load('figs/bg0.png')
-		bg0 = pygame.transform.scale(bg0, (2400, 400))
-		bg0_rect   = bg0.get_rect()
+        # Import the background image combining ESA, Big Chair, River, and USS Barry
+        bg0 = pygame.image.load('figs/bg0.png')
+        bg0 = pygame.transform.scale(bg0, (2400, 400))
+        bg0_rect   = bg0.get_rect()
 
-		# Import the splash screen
-		splash     = pygame.image.load('figs/splash.png')
-		splashrect = splash.get_rect()
-		scf        = 0.84*width/splashrect.width
-		splash     = pygame.transform.scale(splash, 
-		                 (int(splashrect.width*scf), int(int(splashrect.height*scf))))
-		splashrect.left   = int(-0.07*width)
-		splashrect.bottom = int(0.9*height)
-		
-		diagram    = pygame.image.load('figs/diagram.png')
-		diagrect   = diagram.get_rect()
-		scf        = 0.25*width/diagrect.width
-		diagram    = pygame.transform.scale(diagram,
-		                 (int(diagrect.width*scf),int(diagrect.height*scf)))
-		diagrect.left   = int(width*0.75)
-		diagrect.bottom = int(height+40)
+        # Import the splash screen
+        splash     = pygame.image.load('figs/splash.png')
+        splashrect = splash.get_rect()
+        scf        = 0.84*width/splashrect.width
+        splash     = pygame.transform.scale(splash, 
+                         (int(splashrect.width*scf), int(int(splashrect.height*scf))))
+        splashrect.left   = int(-0.07*width)
+        splashrect.bottom = int(0.9*height)
+        
+        diagram    = pygame.image.load('figs/diagram.png')
+        diagrect   = diagram.get_rect()
+        scf        = 0.25*width/diagrect.width
+        diagram    = pygame.transform.scale(diagram,
+                         (int(diagrect.width*scf),int(diagrect.height*scf)))
+        diagrect.left   = int(width*0.75)
+        diagrect.bottom = int(height+40)
 
 def showMessage(msgText):
     font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/32))
@@ -469,6 +469,7 @@ class parameters:
     
 class drumBeat:
     def __init__(self):
+        self.n        = 0
         self.bpm      = 120 # Beats per minute
         self.npb      = np.around(fs*60/4/self.bpm) # frames per beat
         self.nps      = 16*self.npb # frames per sequence
@@ -476,17 +477,43 @@ class drumBeat:
                          [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
                          [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
                          [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]]
-        self.drum = ['drums:Drums_01','drums:Drums_02','drums:Drums_07','8ve:8ve-beep-timber']
-
-    def play(self):    
+        if engine == 'ista':
+            self.drum = ['drums:Drums_01',
+                         'drums:Drums_02',
+                         'drums:Drums_07',
+                         '8ve:8ve-beep-timber']
+        elif engine == 'kivy':
+            self.drum = []
+            self.drum.append(SoundLoader.load('dc/Go-Go Drum Kit/GoGo kick.wav')) # Kick
+            self.drum.append(SoundLoader.load('dc/Go-Go Drum Kit/GoGo snare 1.wav')) # Snare
+            self.drum.append(SoundLoader.load('dc/Go-Go Drum Kit/GoGo hat 1.wav')) # Hi-hat
+            self.drum.append(SoundLoader.load('dc/Go-Go Drum Kit/GoGo timbale flam 1.wav')) # Treble
+            
+        self.m = np.size(self.drum)     
+        self.randFactor = 0.9
+       
+    def play_ista(self):    
         whichSequence   = np.floor(gs.n/self.nps)
         whereInSequence = gs.n-whichSequence*self.nps
         beat = whereInSequence/self.npb
         if not np.mod(beat,1):
             b = int(beat)
             for k in range(4):
-                if self.sequence[k][b] or np.random.uniform()>0.9:
+                if self.sequence[k][b] or np.random.uniform()>self.randFactor:
                     sound.play_effect(self.drum[k])
+                    
+    def play_kivy(self):
+#        whichSequence   = np.floor(gs.n/self.nps)
+#        whereInSequence = gs.n-whichSequence*self.nps
+#        beat = whereInSequence/self.npb
+#        if not np.mod(beat,1):
+#            b = int(beat)
+        for k in range(self.m):
+            if self.sequence[k][self.n] or np.random.uniform()>self.randFactor:
+                self.drum[k].play() 
+        self.n += 1
+        if self.n>self.nps:
+            self.n = 0            
     
 def varStates(obj):
     obj.xb  = obj.u[0]  # Ball distance [m]
@@ -954,7 +981,7 @@ def kvUpdateKey(keyPush,keycode,val):
 def ControlLogic(t,u,k):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
-	
+    
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
@@ -962,9 +989,9 @@ def ControlLogic(t,u,k):
     if p.userControlled[k,0]:
         if gs.ctrl[0] == 0:
             try:
-            	Bx = -scs.erf(dxp[k])
+                Bx = -scs.erf(dxp[k])
             except:
-            	Bx = -np.sign(dxp[k])
+                Bx = -np.sign(dxp[k])
         else:
             Bx = gs.ctrl[0]
     else:
@@ -1122,7 +1149,7 @@ def stickDude(inp,k):
         th = Y[n,7+k8] 
         v  = Y[n,8+k8] 
     elif type(inp)==list or type(inp)==np.ndarray:
-    	  # States from u 
+          # States from u 
         x  = inp[4+k8]
         y  = inp[5+k8]
         l  = inp[6+k8]
