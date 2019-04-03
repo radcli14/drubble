@@ -37,7 +37,10 @@ keyPush = np.zeros(8)
 stats = gameScore()
 
 # Initialize drums
-# drums = drumBeat()
+drums = drumBeat()
+# dt means delta-time
+def drums_callback(dt):
+    drums.play_kivy()
 
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
@@ -370,6 +373,9 @@ class drubbleGame(Widget):
             self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
             self.score_label.text = 'Score = '+str(stats.score)    
             
+            # Play the drums
+            #drums.play_kivy()
+                
         # Player drawing settings        
         xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
@@ -392,8 +398,10 @@ class drubbleApp(App):
     def build(self):
         game = drubbleGame()
         Clock.schedule_interval(game.update, 1.0/fs)
-        #Clock.schedule_interval(drums.play_kivy, 1.0/4.0)
+        Clock.schedule_interval(drums_callback, 1.0/5.0)
         return game
 
 if __name__ == '__main__':
     drubbleApp().run()
+    
+pygame.mixer.quit()    

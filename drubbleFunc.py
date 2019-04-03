@@ -7,7 +7,9 @@ ps = platform.system()
 pm = platform.machine()
 if ps == 'Windows' or ps == 'Linux' or pm == 'x86_64':
     #engine = 'pygame'
-    #import pygame
+    import pygame
+    #pygame.mixer.pre_init(44100, 16, 4, 4096) #frequency, size, channels, buffersize
+    pygame.mixer.init(channels=8)
     engine = 'kivy'
 elif ps == 'Darwin':    
     engine = 'ista'
@@ -473,10 +475,14 @@ class drumBeat:
         self.bpm      = 120 # Beats per minute
         self.npb      = np.around(fs*60/4/self.bpm) # frames per beat
         self.nps      = 16*self.npb # frames per sequence
-        self.sequence = [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
+        #self.sequence = [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
+        #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+        #                 [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        #                 [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]]
+        self.sequence = [[1,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0],
                          [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                         [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
-                         [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]]
+                         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                         [0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0]]
         if engine == 'ista':
             self.drum = ['drums:Drums_01',
                          'drums:Drums_02',
@@ -484,13 +490,13 @@ class drumBeat:
                          '8ve:8ve-beep-timber']
         elif engine == 'kivy':
             self.drum = []
-            self.drum.append(SoundLoader.load('dc/Go-Go Drum Kit/GoGo kick.wav')) # Kick
-            self.drum.append(SoundLoader.load('dc/Go-Go Drum Kit/GoGo snare 1.wav')) # Snare
-            self.drum.append(SoundLoader.load('dc/Go-Go Drum Kit/GoGo hat 1.wav')) # Hi-hat
-            self.drum.append(SoundLoader.load('dc/Go-Go Drum Kit/GoGo timbale flam 1.wav')) # Treble
+            self.drum.append(pygame.mixer.Sound(file='dc/kick.wav'))
+            self.drum.append(pygame.mixer.Sound(file='dc/snare1.wav'))
+            self.drum.append(pygame.mixer.Sound(file='dc/hat1.wav'))
+            self.drum.append(pygame.mixer.Sound(file='dc/timbaleFlam1.wav'))
             
-        self.m = np.size(self.drum)     
-        self.randFactor = 0.9
+        self.m = 4     
+        self.randFactor = 1.0
        
     def play_ista(self):    
         whichSequence   = np.floor(gs.n/self.nps)
@@ -503,16 +509,12 @@ class drumBeat:
                     sound.play_effect(self.drum[k])
                     
     def play_kivy(self):
-#        whichSequence   = np.floor(gs.n/self.nps)
-#        whereInSequence = gs.n-whichSequence*self.nps
-#        beat = whereInSequence/self.npb
-#        if not np.mod(beat,1):
-#            b = int(beat)
         for k in range(self.m):
             if self.sequence[k][self.n] or np.random.uniform()>self.randFactor:
                 self.drum[k].play() 
+                
         self.n += 1
-        if self.n>self.nps:
+        if self.n>=16: 
             self.n = 0            
     
 def varStates(obj):
