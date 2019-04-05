@@ -20,108 +20,6 @@ stats = gameScore()
 # Initialize drums
 drums = drumBeat()
 
-# Run an infinite loop until gs.gameMode is zero
-if engine == 'pygame':
-    clock = pygame.time.Clock()
-    while gs.gameMode>0:
-        ## USER INPUT
-        for event in pygame.event.get():
-            # Detect the quit event (window close)
-            if event.type == pygame.QUIT: 
-                gs.gameMode = 0
-            
-            # Detect keyboard input
-            if event.type == pygame.KEYDOWN:
-                # Exit the game
-                if event.key == pygame.K_ESCAPE:
-                    gs.gameMode = 0
-                
-                # Exit the splash screen
-                if gs.gameMode==1 and event.key == pygame.K_SPACE:
-                    gs.gameMode = 2
-                    clock.tick(10)
-                    continue
-                
-                if gs.gameMode==2 and event.key == pygame.K_SPACE:
-                    gs.gameMode = 3
-                    clock.tick(10)
-                    continue
-                
-                # Progress through angle and speed selection
-                if (gs.gameMode==3 or gs.gameMode==4) and event.key == pygame.K_SPACE:
-                    gs.gameMode += 1
-                    gs.phase = 0
-                    clock.tick(10)
-                    continue
-                
-                # Start the ball moving!
-                if gs.gameMode == 5 and event.key == pygame.K_SPACE:
-                    gs.gameMode = 6
-                    clock.tick(10)
-                    continue
-                
-                # Reset the game
-                if gs.gameMode == 6 and event.key == pygame.K_SPACE:
-                    stats = gameScore()
-                    gs = gameState(u0)
-                    gs.gameMode = 2
-    
-            # Get player control inputs          
-            gs.setControl(keyPush=playerControlInput(event))
-            
-        # Show the Splash Sreen
-        if gs.gameMode==1:
-            makeSplashScreen()
-        
-        ## ANGLE AND SPEED SETTINGS
-        if gs.gameMode>2 and gs.gameMode<6:
-            gs.setAngleSpeed()
-        
-        if gs.gameMode>1 and gs.gameMode<7:
-            # Create the sky
-            screen.fill(skyBlue)
-
-            ## SIMULATION
-            gs.simStep()
-            
-            # Update statistics
-            if gs.gameMode==6:
-                stats.update()
-     
-            ## ANIMATION
-            # Get the ranges in meters using the setRanges function
-            xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
-            
-            # Draw the background
-            makeBackgroundImage()
-            
-            # Draw the ball and player
-            makeGameImage()
-            
-            # Draw the score line
-            makeScoreLine()
-            
-            # Draw meter markers
-            makeMarkers(xrng,m2p,po)
-    
-            # Show the Message Text
-            showMessage(msg[gs.gameMode])  
-            
-        #if gs.gameMode==6:    
-            # Play the drums
-            #drums.play()
-    
-        # Update the display
-        pygame.display.flip()
-        
-        # Timing Variables
-        if p.timeRun and gs.n>0:
-            thisStepTime = clock.tick()
-            stats.averageStepTime = (stats.averageStepTime*(gs.n-1) + thisStepTime)/gs.n
-        clock.tick(fs)
-    
-    # Exit the game   
-    pygame.quit()
         
 if engine == 'ista':
     #gs.gameMode = 3
@@ -250,7 +148,7 @@ if engine == 'ista':
                 sound.play_effect('game:Error')
                 
             if gs.gameMode == 6:
-                drums.play()
+                drums.play_ista()
                 
             # Update score line
             self.time_label.text  = 'Time = '+f'{gs.t:.1f}'

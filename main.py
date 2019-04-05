@@ -404,4 +404,4 @@ class drubbleApp(App):
 if __name__ == '__main__':
     drubbleApp().run()
     
-pygame.mixer.quit()    
+mixer.quit()    

@@ -7,9 +7,10 @@ ps = platform.system()
 pm = platform.machine()
 if ps == 'Windows' or ps == 'Linux' or pm == 'x86_64':
     #engine = 'pygame'
-    import pygame
+    #import pygame
     #pygame.mixer.pre_init(44100, 16, 4, 4096) #frequency, size, channels, buffersize
-    pygame.mixer.init(channels=8)
+    from pygame import mixer
+    mixer.init(frequency=44100,channels=8)
     engine = 'kivy'
 elif ps == 'Darwin':    
     engine = 'ista'
@@ -18,92 +19,38 @@ elif ps == 'Darwin':
     import ui
     import scene_drawing
     import sound   
-else:
-    print('Unrecognized system, trying pygame engine')
-    engine = 'pygame'
         
 # Add the figures to the search path
 # import sys
 # sys.path.append('figs')    
 
 # Frame rate
-if engine == 'kivy' or engine == 'ista':
-    fs = 60
-elif engine == 'pygame':
-    fs = 30
+fs = 60
 
 # Window size
-if engine == 'kivy' or engine == 'pygame':
+if engine == 'kivy':
     size      = width, height = 800, 500
 elif engine == 'ista':
     width  = max(get_screen_size())
     height = min(get_screen_size())
     
 # Color definition    
-if engine == 'kivy' or engine == 'ista':
-    red       = (1,0,0)
-    green     = (0,1,0)
-    blue      = (0,0,1)
-    darkBlue  = (0,0,128/255)
-    white     = (1,1,1)
-    gray      = (160/255,160/255,160/255)
-    black     = (0,0,0)
-    pink      = (1,100/255,100/255)
-    skyBlue   = (135/255, 206/255, 235/255)
-    darkGreen = (0,120/255,0)
-elif engine == 'pygame':
-    red       = (255,0,0)
-    green     = (0,255,0)
-    blue      = (0,0,255)
-    darkBlue  = (0,0,128)
-    white     = (255,255,255)
-    gray      = (160,160,160)
-    black     = (0,0,0)
-    pink      = (255,100,100)
-    skyBlue   = (135, 206, 235)
-    darkGreen = (0,120,0)
+red       = (1,0,0)
+green     = (0,1,0)
+blue      = (0,0,1)
+darkBlue  = (0,0,128/255)
+white     = (1,1,1)
+gray      = (160/255,160/255,160/255)
+black     = (0,0,0)
+pink      = (1,100/255,100/255)
+skyBlue   = (135/255, 206/255, 235/255)
+darkGreen = (0,120/255,0)
     
 # Convert physical coordinates to pixels
-if engine == 'kivy' or engine == 'ista':    
-    def xy2p(x,y,m2p,po,w,h):
-        return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
-elif engine == 'pygame':
-    def xy2p(x,y,m2p,po,w,h):
-        return np.array(x)*m2p-po+w/2, h-(np.array(y)+1)*m2p
- 
+def xy2p(x,y,m2p,po,w,h):
+    return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
+
 # Initiate pygame screen and message    
-if engine == 'pygame':
-    # Open display
-    pygame.init()
-    pygame.font.init()
-    screen = pygame.display.set_mode(size) #,pygame.FULLSCREEN) 
-    pygame.display.set_caption('dRuBbLe')
-    icon = pygame.image.load('figs/icon.png')
-    pygame.display.set_icon(icon)
-    
-    msg = ['','',
-           ['OPTIONS','    Single Drubble','','','','Press space to begin!!!'],
-           'Use arrow keys to control player, W-A-S-D keys to control stool. Press space to begin!',
-           'Press space to select starting angle',
-           'Press space to select starting speed','','','']
-    
-    def makeSplashScreen():
-        if gs.showedSplash:
-            screen.fill(skyBlue)
-            screen.blit(splash, splashrect)
-            screen.blit(diagram, diagrect)
-            font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/12))
-            spc  = font.render('Press Space To Begin!', True, darkGreen)
-            screen.blit(spc,(0.22*width,int(0.88*height)))
-        else:
-            for k in range(0,255,5):
-                screen.fill((skyBlue[0]*k/255,skyBlue[1]*k/255,skyBlue[2]*k/255))
-                screen.blit(splash, splashrect)
-                screen.blit(diagram, diagrect)
-                pygame.display.flip()
-                clock.tick(30)
-            gs.showedSplash = True
-    
 if engine == 'ista':
 
     def makeSplashScreen(obj):
@@ -213,30 +160,6 @@ class Bunch:
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
 
-## LOAD IMAGES, AND DEFINE FUNCTIONS TO DISPLAY THEM
-if engine == 'pygame':
-        # Import the background image combining ESA, Big Chair, River, and USS Barry
-        bg0 = pygame.image.load('figs/bg0.png')
-        bg0 = pygame.transform.scale(bg0, (2400, 400))
-        bg0_rect   = bg0.get_rect()
-
-        # Import the splash screen
-        splash     = pygame.image.load('figs/splash.png')
-        splashrect = splash.get_rect()
-        scf        = 0.84*width/splashrect.width
-        splash     = pygame.transform.scale(splash, 
-                         (int(splashrect.width*scf), int(int(splashrect.height*scf))))
-        splashrect.left   = int(-0.07*width)
-        splashrect.bottom = int(0.9*height)
-        
-        diagram    = pygame.image.load('figs/diagram.png')
-        diagrect   = diagram.get_rect()
-        scf        = 0.25*width/diagrect.width
-        diagram    = pygame.transform.scale(diagram,
-                         (int(diagrect.width*scf),int(diagrect.height*scf)))
-        diagrect.left   = int(width*0.75)
-        diagrect.bottom = int(height+40)
-
 def showMessage(msgText):
     font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/32))
     if type(msgText)==str:
@@ -309,23 +232,7 @@ def makeScoreLine():
     screen.blit(boing,(0.62*width,0))
     score = font.render('Score = '+str(stats.score),True,black)
     screen.blit(score,(0.77*width,0))
-
-if engine == 'pygame':
-    def makeMarkers(xrng,m2p,po):
-        
-        xrng_r = np.around(xrng,-1)
-        xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
-        for k in range(0,xrng_n):
-            xr = xrng_r[0]+10*k
-            
-            [start_x,start_y] = xy2p(xr, 0,m2p,po,width,height) 
-            [end_x,end_y]     = xy2p(xr,-1,m2p,po,width,height) 
-        
-            pygame.draw.line(screen, white, [start_x,start_y], [end_x,end_y])
-            font   = pygame.font.SysFont(p.MacsFavoriteFont,int(np.around(0.8*m2p)))
-            meter = font.render(str(int(xr)), True, white)
-            screen.blit(meter,[start_x+0.2*m2p,start_y-0.1*m2p])
-        
+     
 if engine == 'ista':        
     def makeMarkers(xrng,m2p,po):
                 
@@ -479,10 +386,10 @@ class drumBeat:
         #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
         #                 [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
         #                 [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]]
-        self.sequence = [[1,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0],
+        self.sequence = [[1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0],
                          [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                         [0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0]]
+                         [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,1],
+                         [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0]]
         if engine == 'ista':
             self.drum = ['drums:Drums_01',
                          'drums:Drums_02',
@@ -490,10 +397,10 @@ class drumBeat:
                          '8ve:8ve-beep-timber']
         elif engine == 'kivy':
             self.drum = []
-            self.drum.append(pygame.mixer.Sound(file='dc/kick.wav'))
-            self.drum.append(pygame.mixer.Sound(file='dc/snare1.wav'))
-            self.drum.append(pygame.mixer.Sound(file='dc/hat1.wav'))
-            self.drum.append(pygame.mixer.Sound(file='dc/timbaleFlam1.wav'))
+            self.drum.append(mixer.Sound(file='dc/kick.wav'))
+            self.drum.append(mixer.Sound(file='dc/snare1.wav'))
+            self.drum.append(mixer.Sound(file='dc/hat1.wav'))
+            self.drum.append(mixer.Sound(file='dc/timbaleFlam1.wav'))
             
         self.m = 4     
         self.randFactor = 1.0
@@ -565,7 +472,7 @@ class gameState:
         self.showedSplash = False
         
         # Determine the control method, and initialize ctrl variable
-        if engine == 'pygame' or engine == 'kivy':
+        if engine == 'kivy':
             self.ctrlMode = 'keys'
             self.ctrlFunc = 0
         elif engine == 'ista':
