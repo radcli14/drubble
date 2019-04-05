@@ -386,10 +386,10 @@ class drumBeat:
         #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
         #                 [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
         #                 [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]]
-        self.sequence = [[1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0],
+        self.sequence = [[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
                          [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                         [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,1],
-                         [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0]]
+                         [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
+                         [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]]
         if engine == 'ista':
             self.drum = ['drums:Drums_01',
                          'drums:Drums_02',
@@ -399,8 +399,8 @@ class drumBeat:
             self.drum = []
             self.drum.append(mixer.Sound(file='dc/kick.wav'))
             self.drum.append(mixer.Sound(file='dc/snare1.wav'))
-            self.drum.append(mixer.Sound(file='dc/hat1.wav'))
-            self.drum.append(mixer.Sound(file='dc/timbaleFlam1.wav'))
+            self.drum.append(mixer.Sound(file='dc/openHat6.wav'))
+            self.drum.append(mixer.Sound(file='dc/hiConga1.wav'))
             
         self.m = 4     
         self.randFactor = 1.0

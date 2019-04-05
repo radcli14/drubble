@@ -398,7 +398,7 @@ class drubbleApp(App):
     def build(self):
         game = drubbleGame()
         Clock.schedule_interval(game.update, 1.0/fs)
-        Clock.schedule_interval(drums_callback, 1.0/5.0)
+        Clock.schedule_interval(drums_callback, 1.0/7.0)
         return game
 
 if __name__ == '__main__':
