@@ -10,6 +10,7 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.image import Image
 #from kivy.properties import NumericProperty, ReferenceListProperty, OptionProperty
 from kivy.core.window import Window
 #from kivy.vector import Vector
@@ -90,14 +91,14 @@ class MyBackground(Widget):
         posInBG = xmod*scf*self.w_orig
 
         if xmod>=0 and xmod<0.5:
-            self.bg[0].pos = (w/2.0-posInBG,0)
-            self.bg[1].pos = (w/2.0-posInBG-self.w_orig*scf,0)
+            self.bg[0].pos = (w/2.0-posInBG,h/20)
+            self.bg[1].pos = (w/2.0-posInBG-self.w_orig*scf,h/20)
         elif xmod>=0.5 and xmod<1.5:
-            self.bg[0].pos = (w/2.0-posInBG,0)
-            self.bg[1].pos = (w/2.0-posInBG+self.w_orig*scf,0)
+            self.bg[0].pos = (w/2.0-posInBG,h/20)
+            self.bg[1].pos = (w/2.0-posInBG+self.w_orig*scf,h/20)
         elif xmod>=1.5 and xmod<=2.0:
-            self.bg[0].pos = (w/2.0-posInBG+self.num_bg*self.w_orig*scf,0)
-            self.bg[1].pos = (w/2.0-posInBG+self.w_orig*scf,0)
+            self.bg[0].pos = (w/2.0-posInBG+self.num_bg*self.w_orig*scf,h/20)
+            self.bg[1].pos = (w/2.0-posInBG+self.w_orig*scf,h/20)
             
         # Size of the background
         sz_mod = (int(self.w_orig*scf),int(self.h_orig*scf))
@@ -134,6 +135,19 @@ class splashScreen(Widget):
             Color(skyBlue[0]*self.k/255,skyBlue[1]*self.k/255,skyBlue[2]*self.k/255,1)
             Rectangle(pos=(0,0),size=(width,height))            
 
+class myFace(Widget):
+    def __init__(self, **kwargs):
+        super(myFace, self).__init__(**kwargs)   
+        with self.canvas:
+            self.myFace = Image(source='figs/myFace.png',
+                                    size=(100,100),pos=(100,100))
+            
+    def update(self,x,y,m2p,po,w,h):
+        xp,yp = xy2p(x,y,m2p,po,w,h)
+        sz = int(m2p*0.5)
+        self.myFace.size = (sz,sz)
+        self.myFace.pos  = (int(xp-sz*0.5),int(yp))
+
 # Returns the center_x, center_y, and diameter of the stick
 def get_stick_pos(ch):
     return ch.pos[0]+ch.size[0]/2.0, ch.pos[1]+ch.size[1]/2.0, ch.size[0] 
@@ -142,8 +156,9 @@ class stick(Widget):
     def __init__(self,**kwargs):
         super(stick, self).__init__(**kwargs)
         with self.canvas:
-            self.ch = Rectangle(source='figs/crossHair.png',**kwargs)    
+            self.ch = Image(source='figs/crossHair.png',**kwargs)    
             ch_x, ch_y, ch_s = get_stick_pos(self.ch)
+            Color(1,1,1,0.5)
             self.el = Ellipse(pos=(ch_x-ch_s/4.0,ch_y-ch_s/4.0),
                               size=(ch_s/2.0,ch_s/2.0))
         
@@ -187,6 +202,10 @@ class drubbleGame(Widget):
             self.add_widget(self.moveStick)
             self.tiltStick = stick(size=(sz,sz), pos=(0,0.05*height))
             self.add_widget(self.tiltStick)
+            
+            # Initialize my face
+            self.myFace = myFace()
+            self.add_widget(self.myFace)
             
             # Initialize the score line
             self.time_label = Label(font_size=18,halign='left',
@@ -390,7 +409,8 @@ class drubbleGame(Widget):
             self.bg.update(xMean,gs.yb,self.width,self.height,m2p)
             self.moveStick.update_el(gs.ctrl[0],gs.ctrl[1])
             self.tiltStick.update_el(-gs.ctrl[3],gs.ctrl[2])
-            
+            self.myFace.update(gs.xp[0],gs.yp[0]+1.5*p.d,m2p,po,
+                               self.width,self.height)
             self.update_canvas()
 
 class drubbleApp(App):
@@ -398,7 +418,7 @@ class drubbleApp(App):
     def build(self):
         game = drubbleGame()
         Clock.schedule_interval(game.update, 1.0/fs)
-        Clock.schedule_interval(drums_callback, 1.0/7.0)
+        #Clock.schedule_interval(drums_callback, 1.0/7.0)
         return game
 
 if __name__ == '__main__':
