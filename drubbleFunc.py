@@ -222,15 +222,24 @@ def makeGameImage():
     
 def makeScoreLine():
     font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/24))
-    time = font.render('Time = '+f'{gs.t:.1f}', True, black)
-    screen.blit(time,(0.02*width,0))
-    dist = font.render('Distance = '+f'{stats.stoolDist:.1f}', True, black)
-    screen.blit(dist,(0.20*width,0))
-    high = font.render('Height = '+f'{stats.maxHeight:.2f}', True, black)
-    screen.blit(high,(0.42*width,0))
-    boing = font.render('Boing! = '+str(int(stats.stoolCount)), True, black)
-    screen.blit(boing,(0.62*width,0))
-    score = font.render('Score = '+str(stats.score),True,black)
+    # This works in Python 3.6
+    # time = font.render('Time = '+f'{gs.t:.1f}', True, black)
+    # dist = font.render('Distance = '+f'{stats.stoolDist:.1f}', True, black)
+    # high = font.render('Height = '+f'{stats.maxHeight:.2f}', True, black)
+    # boing = font.render('Boing! = '+str(int(stats.stoolCount)), True, black)
+    # score = font.render('Score = '+str(stats.score),True,black)
+
+    # This works in all Python versions
+    time = font.render('Time = %5.1f' % gs.t, True, black)
+    dist = font.render('Distance = %5.1f' % stats.stoolDist, True, black)
+    high = font.render('Height = %5.2f' % stats.maxHeight, True, black)
+    boing = font.render('Boing! = %5.0f' % stats.stoolCount, True, black)
+    score = font.render('Score = %10.0f' % stats.score, True, black)
+
+    screen.blit(time, (0.02 * width, 0))
+    screen.blit(dist, (0.20 * width, 0))
+    screen.blit(high, (0.42 * width, 0))
+    screen.blit(boing, (0.62 * width, 0))
     screen.blit(score,(0.77*width,0))
      
 if engine == 'ista':        
@@ -397,10 +406,10 @@ class drumBeat:
                          '8ve:8ve-beep-timber']
         elif engine == 'kivy':
             self.drum = []
-            self.drum.append(mixer.Sound(file='dc/kick.wav'))
-            self.drum.append(mixer.Sound(file='dc/snare1.wav'))
-            self.drum.append(mixer.Sound(file='dc/openHat6.wav'))
-            self.drum.append(mixer.Sound(file='dc/hiConga1.wav'))
+            self.drum.append(mixer.Sound(file='dc/kick.ogg'))
+            self.drum.append(mixer.Sound(file='dc/snare2.ogg'))
+            self.drum.append(mixer.Sound(file='dc/openHat6.ogg'))
+            self.drum.append(mixer.Sound(file='dc/hiConga1.ogg'))
             
         self.m = 4     
         self.randFactor = 1.0

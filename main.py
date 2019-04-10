@@ -17,7 +17,7 @@ from kivy.core.window import Window
 from kivy.clock import Clock
 from kivy.graphics import *
 from kivy.core.audio import SoundLoader
-#from kivy.config import Config
+from kivy.config import Config
 
 # Execute drubbleFunc to get the supporting functions and classes
 exec(open('./drubbleFunc.py').read())
@@ -50,8 +50,8 @@ Window.size = (width, height)
 #leftAlign = OptionProperty('left')
 
 # Set the icon (neither are working...)
-#Config.window_icon = 'figs/icon.png'
-Window.icon = 'figs/icon.png'
+Config.window_icon = 'figs/icon.png'
+#Window.icon = 'figs/icon.png'
 
 # Initialize the players
 p1 = playerLines(0)
@@ -386,12 +386,19 @@ class drubbleGame(Widget):
             stats.update()
 
             # Update score line
-            self.time_label.text  = 'Time = '+f'{gs.t:.1f}'
-            self.dist_label.text  = 'Distance = '+f'{stats.stoolDist:.2f}'
-            self.high_label.text  = 'Height = '+f'{stats.maxHeight:.2f}'
-            self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
-            self.score_label.text = 'Score = '+str(stats.score)    
-            
+            # This works in Python 3.6
+            # self.time_label.text  = 'Time = '+f'{gs.t:.1f}'
+            # self.dist_label.text  = 'Distance = '+f'{stats.stoolDist:.2f}'
+            # self.high_label.text  = 'Height = '+f'{stats.maxHeight:.2f}'
+            # self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
+            # self.score_label.text = 'Score = '+str(stats.score)
+            # This works in Python 2.7
+            self.time_label.text  = 'Time = %5.1f' % gs.t
+            self.dist_label.text  = 'Distance = %5.1f' % stats.stoolDist
+            self.high_label.text  = 'Height = %5.2f' % stats.maxHeight
+            self.boing_label.text = 'Boing! = %5.0f' % stats.stoolCount
+            self.score_label.text = 'Score = %10.0f' % stats.score
+
             # Play the drums
             #drums.play_kivy()
                 
