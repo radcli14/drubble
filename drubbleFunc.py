@@ -6,8 +6,8 @@ import platform
 ps = platform.system()
 pm = platform.machine()
 if ps == 'Windows' or ps == 'Linux' or pm == 'x86_64':
-    from pygame import mixer
-    mixer.init(frequency=44100,channels=8)
+    #from pygame import mixer
+    #mixer.init(frequency=44100,channels=8)
     engine = 'kivy'
 elif ps == 'Darwin':    
     engine = 'ista'
@@ -327,12 +327,16 @@ class drumBeat:
                          '8ve:8ve-beep-timber']
         elif engine == 'kivy':
             self.drum = []
-            self.drum.append(mixer.Sound(file='dc/kick.ogg'))
-            self.drum.append(mixer.Sound(file='dc/snare2.ogg'))
-            self.drum.append(mixer.Sound(file='dc/openHat6.ogg'))
-            self.drum.append(mixer.Sound(file='dc/hiConga1.ogg'))
-            
-        self.m = 4     
+            #self.drum.append(mixer.Sound(file='dc/kick.ogg'))
+            #self.drum.append(mixer.Sound(file='dc/snare2.ogg'))
+            #self.drum.append(mixer.Sound(file='dc/openHat6.ogg'))
+            #self.drum.append(mixer.Sound(file='dc/hiConga1.ogg'))
+            self.drum.append(SoundLoader.load('dc/kick.ogg'))
+            self.drum.append(SoundLoader.load('dc/snare2.ogg'))
+            self.drum.append(SoundLoader.load('dc/openHat6.ogg'))
+            self.drum.append(SoundLoader.load('dc/hiConga1.ogg'))
+
+        self.m = 4
         self.randFactor = 1.0
        
     def play_ista(self):    
