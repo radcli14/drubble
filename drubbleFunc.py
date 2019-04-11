@@ -6,9 +6,6 @@ import platform
 ps = platform.system()
 pm = platform.machine()
 if ps == 'Windows' or ps == 'Linux' or pm == 'x86_64':
-    #engine = 'pygame'
-    #import pygame
-    #pygame.mixer.pre_init(44100, 16, 4, 4096) #frequency, size, channels, buffersize
     from pygame import mixer
     mixer.init(frequency=44100,channels=8)
     engine = 'kivy'
@@ -19,10 +16,6 @@ elif ps == 'Darwin':
     import ui
     import scene_drawing
     import sound   
-        
-# Add the figures to the search path
-# import sys
-# sys.path.append('figs')    
 
 # Frame rate
 fs = 60
@@ -134,7 +127,7 @@ if engine == 'ista':
             self.boing_label.alpha = 0
             self.score_label.alpha = 0
 
-if  engine == 'kivy':    
+if engine == 'kivy':
     def touchStick(loc,stick):
         tCnd = [loc[0] > stick.ts_x[0],
                 loc[0] < stick.ts_x[1],
@@ -155,36 +148,17 @@ if  engine == 'kivy':
     
 dt = 1.0/fs
 
-# Define the bunch class
-#class Bunch:
-#    def __init__(self, **kwds):
-#        self.__dict__.update(kwds)
 
-#def showMessage(msgText):
-#    font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/32))
-#    if type(msgText)==str:
-#        msgRend = font.render(msgText, True, black)
-#        screen.blit(msgRend,(0.05*width,0.1*height))
-#    elif type(msgText)==list:
-#        for n in range(np.size(msgText)):
-#            msgRend = font.render(msgText[n], True, black)
-#            screen.blit(msgRend,(0.05*width,0.1*height+n*36))
-    
+### CHECK WHETHER THESE OR NEEDED FOR ISTA, PROBABLY SWITCH TO THE NEW BACKGROUND CLASS
 def makeBackgroundImage():
     # Draw the ESA, Big Chair, River, and USS Barry
     drawBackgroundImage(bg0,bg0_rect,-0.25,-5,m2p)
 
 def drawBackgroundImage(img,rect,xpos,ypos,m2p):
-    if engine == 'pygame':
-        rect.left = width*(-(gs.xb+gs.xp[0])/120.0+xpos)
-        rect.bottom = height+(gs.yb/40.0-0.9)*m2p
-        screen.blit(img,rect)
-    elif engine == 'ista':
-        left = width*(-(gs.xb+gs.xp[0])/120.0+xpos)
-        bottom = -gs.yb*5.0+ypos+height/20.0
-        image(bg0,left,bottom,rect[0],rect[1])
-    
-I thi
+    left = width*(-(gs.xb+gs.xp[0])/120.0+xpos)
+    bottom = -gs.yb*5.0+ypos+height/20.0
+    image(bg0,left,bottom,rect[0],rect[1])
+
 if engine == 'ista':        
     def makeMarkers(xrng,m2p,po):
                 
@@ -238,9 +212,6 @@ if engine == 'kivy':
                 self.yardMark[k].size = lsize
                 self.yardMark[k].pos  = xypos
                 self.yardMark[k].text = strxr
-                #print(self.yardMark[k].text_size)
-                
-            #print(self.yardMark[k].text+' '+str(xypos))              
 
 # Parameters
 class parameters:
@@ -765,51 +736,6 @@ def PlayerAndStool(t,u):
     
     return du.tolist()
 
-def playerControlInput(event):
-    if event.type == pygame.KEYDOWN:
-        # Left and right control for Bx parameter
-        if event.key == pygame.K_LEFT:
-            keyPush[0] = 1
-        if event.key == pygame.K_RIGHT:
-            keyPush[1] = 1
-        # Up and down control for By parameter
-        if event.key == pygame.K_UP:
-            keyPush[2] = 1
-        if event.key == pygame.K_DOWN:
-            keyPush[3] = 1
-        # W and S control for Bl parameter    
-        if event.key == pygame.K_w:
-            keyPush[4] = 1
-        if event.key == pygame.K_s:
-            keyPush[5] = 1    
-        # A and D control for Bth parameter
-        if event.key == pygame.K_a:
-            keyPush[6] = 1
-        if event.key == pygame.K_d:
-            keyPush[7] = 1    
-            
-    if event.type == pygame.KEYUP:
-        if event.key == pygame.K_LEFT:
-            keyPush[0] = 0
-        if event.key == pygame.K_RIGHT:
-            keyPush[1] = 0
-        # Up and down control for By parameter
-        if event.key == pygame.K_UP:
-            keyPush[2] = 0
-        if event.key == pygame.K_DOWN:
-            keyPush[3] = 0
-        # W and S control for Bl parameter    
-        if event.key == pygame.K_w:
-            keyPush[4] = 0
-        if event.key == pygame.K_s:
-            keyPush[5] = 0    
-        # A and D control for Bth parameter
-        if event.key == pygame.K_a:
-            keyPush[6] = 0
-        if event.key == pygame.K_d:
-            keyPush[7] = 0          
-    return keyPush
-
 def ctrl2keyPush(gs):
     keyPush = np.zeros(8)
     if gs.ctrl[0]<0:
@@ -1133,7 +1059,69 @@ class playerLines():
 # these are basically obsolete, eventually will be deleted
 defObsoleteDemoFuncs = False
 if defObsoleteDemoFuncs:
-    
+
+    # Define the bunch class
+    class Bunch:
+        def __init__(self, **kwds):
+            self.__dict__.update(kwds)
+
+
+    def showMessage(msgText):
+        font = pygame.font.SysFont(p.MacsFavoriteFont, int(height / 32))
+        if type(msgText) == str:
+            msgRend = font.render(msgText, True, black)
+            screen.blit(msgRend, (0.05 * width, 0.1 * height))
+        elif type(msgText) == list:
+            for n in range(np.size(msgText)):
+                msgRend = font.render(msgText[n], True, black)
+                screen.blit(msgRend, (0.05 * width, 0.1 * height + n * 36))
+
+
+    def playerControlInput(event):
+        if event.type == pygame.KEYDOWN:
+            # Left and right control for Bx parameter
+            if event.key == pygame.K_LEFT:
+                keyPush[0] = 1
+            if event.key == pygame.K_RIGHT:
+                keyPush[1] = 1
+            # Up and down control for By parameter
+            if event.key == pygame.K_UP:
+                keyPush[2] = 1
+            if event.key == pygame.K_DOWN:
+                keyPush[3] = 1
+            # W and S control for Bl parameter
+            if event.key == pygame.K_w:
+                keyPush[4] = 1
+            if event.key == pygame.K_s:
+                keyPush[5] = 1
+                # A and D control for Bth parameter
+            if event.key == pygame.K_a:
+                keyPush[6] = 1
+            if event.key == pygame.K_d:
+                keyPush[7] = 1
+
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT:
+                keyPush[0] = 0
+            if event.key == pygame.K_RIGHT:
+                keyPush[1] = 0
+            # Up and down control for By parameter
+            if event.key == pygame.K_UP:
+                keyPush[2] = 0
+            if event.key == pygame.K_DOWN:
+                keyPush[3] = 0
+            # W and S control for Bl parameter
+            if event.key == pygame.K_w:
+                keyPush[4] = 0
+            if event.key == pygame.K_s:
+                keyPush[5] = 0
+                # A and D control for Bth parameter
+            if event.key == pygame.K_a:
+                keyPush[6] = 0
+            if event.key == pygame.K_d:
+                keyPush[7] = 0
+        return keyPush
+
     # Used for debuggin the output of the "Ball Hit" functions, but unused now
     def bhDebug(T,Y):
         N = np.size(T)
