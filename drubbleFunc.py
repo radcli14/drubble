@@ -38,13 +38,13 @@ elif engine == 'ista':
 red       = (1,0,0)
 green     = (0,1,0)
 blue      = (0,0,1)
-darkBlue  = (0,0,128/255)
+darkBlue  = (0,0,128.0/255.0)
 white     = (1,1,1)
-gray      = (160/255,160/255,160/255)
+gray      = (160.0/255.0,160.0/255.0,160.0/255.0)
 black     = (0,0,0)
-pink      = (1,100/255,100/255)
-skyBlue   = (135/255, 206/255, 235/255)
-darkGreen = (0,120/255,0)
+pink      = (1,100.0/255.0,100.0/255.0)
+skyBlue   = (135.0/255.0, 206.0/255.0, 235.0/255.0)
+darkGreen = (0,120.0/255.0,0)
     
 # Convert physical coordinates to pixels
 def xy2p(x,y,m2p,po,w,h):
@@ -58,10 +58,10 @@ if engine == 'ista':
             obj.background_color = skyBlue
             image(splash,0,0.2*height,0.8*width,0.8*height)
         else:
-            k = obj.kSplash
-            obj.background_color = (skyBlue[0]*k/255,skyBlue[1]*k/255,skyBlue[2]*k/255)
+            k = float(obj.kSplash)/255.0
+            obj.background_color = (skyBlue[0]*k,skyBlue[1]*k,skyBlue[2]*k)
             image(splash,0,0.2*height,0.8*width,0.8*height)
-            if k>=255:
+            if k>=1:
                 gs.showedSplash = True
             
     def linePlot(x,y,m2p,po,w,h,clr,wgt):
@@ -143,32 +143,32 @@ if  engine == 'kivy':
                     
         # Touched inside the stick
         if all(tCnd):
-            x = min(max(p.tsens*(2*(loc[0]-stick.ts_x[0])/stick.size[0] - 1),-1),1)
-            y = min(max(p.tsens*(2*(loc[1]-stick.ts_y[0])/stick.size[1] - 1),-1),1)
+            x = min(max(p.tsens*(2.0*(loc[0]-stick.ts_x[0])/stick.size[0] - 1),-1),1)
+            y = min(max(p.tsens*(2.0*(loc[1]-stick.ts_y[0])/stick.size[1] - 1),-1),1)
             
             mag = np.sqrt(x**2+y**2)
-            ang = np.around(4*np.arctan2(y,x)/np.pi)*np.pi/4
+            ang = np.around(4.0*np.arctan2(y,x)/np.pi)*np.pi/4
             
             return (mag*np.cos(ang),mag*np.sin(ang))
         else:
             return (0,0)    
     
-dt = 1/fs
+dt = 1.0/fs
 
 # Define the bunch class
-class Bunch:
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
+#class Bunch:
+#    def __init__(self, **kwds):
+#        self.__dict__.update(kwds)
 
-def showMessage(msgText):
-    font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/32))
-    if type(msgText)==str:
-        msgRend = font.render(msgText, True, black)
-        screen.blit(msgRend,(0.05*width,0.1*height))
-    elif type(msgText)==list:
-        for n in range(np.size(msgText)):
-            msgRend = font.render(msgText[n], True, black)
-            screen.blit(msgRend,(0.05*width,0.1*height+n*36))
+#def showMessage(msgText):
+#    font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/32))
+#    if type(msgText)==str:
+#        msgRend = font.render(msgText, True, black)
+#        screen.blit(msgRend,(0.05*width,0.1*height))
+#    elif type(msgText)==list:
+#        for n in range(np.size(msgText)):
+#            msgRend = font.render(msgText[n], True, black)
+#            screen.blit(msgRend,(0.05*width,0.1*height+n*36))
     
 def makeBackgroundImage():
     # Draw the ESA, Big Chair, River, and USS Barry
@@ -176,77 +176,20 @@ def makeBackgroundImage():
 
 def drawBackgroundImage(img,rect,xpos,ypos,m2p):
     if engine == 'pygame':
-        rect.left = width*(-(gs.xb+gs.xp[0])/120+xpos)
-        rect.bottom = height+(gs.yb/40-0.9)*m2p
+        rect.left = width*(-(gs.xb+gs.xp[0])/120.0+xpos)
+        rect.bottom = height+(gs.yb/40.0-0.9)*m2p
         screen.blit(img,rect)
     elif engine == 'ista':
-        left = width*(-(gs.xb+gs.xp[0])/120+xpos)
-        bottom = -gs.yb*5+ypos+height/20
+        left = width*(-(gs.xb+gs.xp[0])/120.0+xpos)
+        bottom = -gs.yb*5.0+ypos+height/20.0
         image(bg0,left,bottom,rect[0],rect[1])
     
-def makeGameImage():
-    for k in range(p.nPlayer):
-        # Get the plotting vectors using stickDude function
-        xv,yv,sx,sy = stickDude(gs.u,k)
-            
-        # Convert to pixels
-        xvp,yvp = xy2p(xv,yv,m2p,po,width,height)
-        sxp,syp = xy2p(sx,sy,m2p,po,width,height)
-    
-        trajList     = list(zip(np.array(gs.xTraj)*m2p-po+width/2,
-                                height-(np.array(gs.yTraj)+1)*m2p))
-        stickList    = list(zip(xvp,yvp))
-        stoolList    = list(zip(sxp,syp))
-        ballPosition = (int(gs.xb*m2p-po+width/2),
-                        int(height-(gs.yb+1)*m2p) )
-        headPosition = (int(gs.xp[k]*m2p-po+width/2), 
-                        int(height-(gs.yp[k]+1.75*p.d+1)*m2p) )
-        
-        # Draw player and stool
-        pygame.draw.circle(screen, p.playerColor[k], headPosition, 
-                           int(p.rb*m2p), 0)
-        pygame.draw.lines(screen, p.playerColor[k], False, stickList, 
-                          int(np.ceil(0.15*m2p)))
-        pygame.draw.lines(screen, p.stoolColor[k], False, stoolList, 
-                          int(np.ceil(0.1*m2p)))
-       
-    # Draw trajectory
-    pygame.draw.lines(screen, white, False, trajList, 2)
-        
-    # Draw bottom line
-    pygame.draw.line(screen, black, (0,height-0.5*m2p),
-                         (width,height-0.5*m2p),int(m2p))
-
-    # Draw ball
-    pygame.draw.circle(screen, pink, ballPosition, int(p.rb*m2p), 0)
-    
-def makeScoreLine():
-    font = pygame.font.SysFont(p.MacsFavoriteFont, int(height/24))
-    # This works in Python 3.6
-    # time = font.render('Time = '+f'{gs.t:.1f}', True, black)
-    # dist = font.render('Distance = '+f'{stats.stoolDist:.1f}', True, black)
-    # high = font.render('Height = '+f'{stats.maxHeight:.2f}', True, black)
-    # boing = font.render('Boing! = '+str(int(stats.stoolCount)), True, black)
-    # score = font.render('Score = '+str(stats.score),True,black)
-
-    # This works in all Python versions
-    time = font.render('Time = %5.1f' % gs.t, True, black)
-    dist = font.render('Distance = %5.1f' % stats.stoolDist, True, black)
-    high = font.render('Height = %5.2f' % stats.maxHeight, True, black)
-    boing = font.render('Boing! = %5.0f' % stats.stoolCount, True, black)
-    score = font.render('Score = %10.0f' % stats.score, True, black)
-
-    screen.blit(time, (0.02 * width, 0))
-    screen.blit(dist, (0.20 * width, 0))
-    screen.blit(high, (0.42 * width, 0))
-    screen.blit(boing, (0.62 * width, 0))
-    screen.blit(score,(0.77*width,0))
-     
+I thi
 if engine == 'ista':        
     def makeMarkers(xrng,m2p,po):
                 
         xrng_r = np.around(xrng,-1)
-        xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
+        xrng_n = int((xrng_r[1]-xrng_r[0])/10.0)+1
         for k in range(0,xrng_n):
             xr = xrng_r[0]+10*k
             
@@ -255,7 +198,7 @@ if engine == 'ista':
             stroke(white)
             stroke_weight(1)
             line(start_x,start_y,end_x,end_y)
-            text(str(int(xr)),font_name=p.MacsFavoriteFont,font_size=0.6*m2p,x=start_x-2,y=start_y+m2p/20,alignment=1)
+            text(str(int(xr)),font_name=p.MacsFavoriteFont,font_size=0.6*m2p,x=start_x-2,y=start_y+m2p/20.0,alignment=1)
             
 if engine == 'kivy':
     def makeMarkers(self,p):
@@ -263,7 +206,7 @@ if engine == 'kivy':
         # xrng_r is the first and last markers on the screen, xrng_n is the 
         # number of markers
         xrng_r = np.around(p.xrng,-1)
-        xrng_n = int((xrng_r[1]-xrng_r[0])/10)+1
+        xrng_n = int((xrng_r[1]-xrng_r[0])/10.0)+1
 
         for k in range(self.nMarks):
             self.yardMark[k].text = ''
@@ -307,16 +250,16 @@ class parameters:
     rb  = 0.2  # Radius of the ball
        
     # Player parameters
-    mc = 50      # Mass of player [kg]
-    mg = 2       # Mass of stool [kg]
+    mc = 50.0    # Mass of player [kg]
+    mg = 2.0     # Mass of stool [kg]
     m  = mc+mg   # Total mass [kg]
-    x0 = 5       # Initial player position [m]
+    x0 = 5.0     # Initial player position [m]
     y0 = 1.5     # Equilibrium position of player CG [m]
     d  = 0.3     # Relative position from player CG to stool rotation axis [m]
     l0 = 1.5     # Equilibrium position of stool
-    ax = 1       # Horizontal acceleration [g]
-    Qx = ax*m*g; # Max horizontal force [N]
-    Gx = 1.5;    # Control gain on Qx 
+    ax = 1.0     # Horizontal acceleration [g]
+    Qx = ax*m*g  # Max horizontal force [N]
+    Gx = 1.5     # Control gain on Qx
     fy = 0.8     # vertical frequency [Hz]
     Ky = m*(fy*2*np.pi)**2 # Leg stiffness [N/m]
     Qy = Ky*0.3  # Leg strength [N], to be updated
@@ -327,14 +270,19 @@ class parameters:
     Kt = (mg*l0*l0)*(ft*2*np.pi)**2 # Tilt stiffnes [N-m/rad]
     Qt = 0.6*Kt  # Tilt strength [N-m]
     Gt = 0.8     # Control gain on Qt
-    vx = 10      # Horizontal top speed [m/s]
+    vx = 10.0    # Horizontal top speed [m/s]
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio
     Cy = 2*zy*np.sqrt(Ky*m) # Vertical damping [N-s/m]
     zl = 0.2     # Arm damping ratio
     Cl = 2*zl*np.sqrt(Kl*m) # Arm damping [N-s/m]
     zt = 0.05    # Stool tilt damping ratio
-    Ct = 2*zl*np.sqrt(Kt*m) # Tilt damping [N-m-s/rad]
+    Ct = 2.0*zl*np.sqrt(Kt*m) # Tilt damping [N-m-s/rad]
+
+    # Initial states
+    q0 = np.matrix([[0.0], [y0], [l0], [0.0]])
+    u0 = [0.0, rb, 0.0, 0.0, x0 , y0 , l0 ,   0.0, 0.0, 0.0, 0.0, 10.0,
+          0.0, y0, l0 , 0.0, 0.0, 0.0, 0.0, -10.0]
 
     # Gameplay settings
     userControlled = np.array([[True, True, True, True ],
@@ -360,17 +308,17 @@ class parameters:
     C = np.diag([Cx,Cy,Cl,Ct])
     
     # Stiffness Matrix
-    K = np.diag([0,Ky,Kl,Kt])
+    K = np.diag([0.0,Ky,Kl,Kt])
     
     # Touch Stick Sensitivity
     tsens = 1.5
     
     # Tolerance on last bounce speed before stopping motion
-    dybtol = 2
+    dybtol = 2.0
     
     # startAngle (sa) and startSpeed (ss) initially
     sa = np.pi/4
-    ss = 10
+    ss = 10.0
     
     # Parameter settings I'm using to try to improve running speed
     invM = M.I
@@ -384,13 +332,15 @@ class parameters:
     # Color settings
     playerColor = (darkGreen,red)
     stoolColor  = (white,black)
-    
+
+p = parameters()
+
 class drumBeat:
     def __init__(self):
         self.n        = 0
-        self.bpm      = 120 # Beats per minute
-        self.npb      = np.around(fs*60/4/self.bpm) # frames per beat
-        self.nps      = 16*self.npb # frames per sequence
+        self.bpm      = 120.0 # Beats per minute
+        self.npb      = np.around(fs*60.0/4.0/self.bpm) # frames per beat
+        self.nps      = 16.0*self.npb # frames per sequence
         #self.sequence = [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
         #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
         #                 [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
@@ -464,6 +414,52 @@ def unpackStates(u):
     dtp = u[11:20:8] # Stool tilt rate [rad/s]
     return xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp
 
+
+# Predict motion of the ball
+def BallPredict(gs):
+    if gs.dyb == 0 or gs.gameMode <= 2:
+        # Ball is not moving, impact time is zero
+        tI = 0
+    elif gs.gameMode > 2 and (gs.dyb > 0) and (gs.yb < gs.yp[0] + p.d + gs.lp[0]):
+        # Ball is in play, moving upward and below the stool
+        # Solve for time and height at apogee
+        ta = gs.dyb / p.g
+        ya = 0.5 * p.g * ta ** 2
+
+        # Solve for time the ball would hit the ground
+        tI = ta + np.sqrt(2.0 * ya / p.g)
+    else:
+        # Ball is in play, above the stool
+        # Solve for time that the ball would hit the stool
+        tI = -(-gs.dyb - np.sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - gs.yp[0] - p.d - gs.lp[0]))) / p.g
+
+    if np.isnan(tI):
+        tI = 0
+
+    # Solve for position that the ball would hit the stool
+    xI = gs.xb + gs.dxb * tI
+    yI = gs.yb + gs.dyb * tI - 0.5 * p.g * tI ** 2
+
+    # Solve for time that the ball would hit the ground
+    tG = -(-gs.dyb - np.sqrt(gs.dyb ** 2 + 2.0 * p.g * gs.yb)) / p.g
+
+    # Solve for the arc for the next 1.2 seconds, or until ball hits ground
+    T = np.linspace(0, min(1.2, tG), 20)
+    xTraj = gs.xb + gs.dxb * T
+    yTraj = gs.yb + gs.dyb * T - 0.5 * p.g * T ** 2
+
+    # Time until event
+    timeUntilBounce = tI;
+    tI = timeUntilBounce + gs.t
+
+    # Output variables
+    # xI = Ball distance at impact [m]
+    # yI = Ball height at impact [m]
+    # tI = Time at impact [s]
+    # xTraj = Ball trajectory distances [m]
+    # yTraj = Ball trajectory heights [m]
+    return xI, yI, tI, xTraj, yTraj, timeUntilBounce
+
 class gameState:
     # Initiate the state variables as a list, and as individual variables
     def __init__(self,u0):
@@ -525,8 +521,8 @@ class gameState:
         elif self.ctrlFunc == 1:
             # Motion control scale factors
             gThreshold = 0.05
-            slope = 5
-            aScale = 2
+            slope = 5.0
+            aScale = 2.0
 
             # Run left/right
             if g[1]>gThreshold:
@@ -580,9 +576,9 @@ class gameState:
             
             # Check for events
             if (self.t-self.te)>0.1: 
-                if BallHitStool(self.t,U[:,k],pAct)<0:
+                if BallHitStool(self.t,U[:,k],pAct)<0.0:
                     self.StoolBounce = True
-                if BallHitFloor(self.t,U[:,k])<0:   
+                if BallHitFloor(self.t,U[:,k])<0.0:
                     self.FloorBounce = True
                 if self.StoolBounce or self.FloorBounce:
                     self.te = self.t
@@ -637,11 +633,11 @@ class gameState:
         if self.gameMode<6:
             self.t = 0
             self.n = 0
-            self.u[0] = u0[0]
-            self.u[1] = u0[1]
+            self.u[0] = p.u0[0]
+            self.u[1] = p.u0[1]
         # Named states    
         self   = varStates(self)
-        
+
     def setAngleSpeed(self):
         if self.gameMode == 4:
             self.startAngle = 0.25*np.pi*(1 + 0.75*np.sin(self.phase))
@@ -651,6 +647,8 @@ class gameState:
             self.phase += 3*dt
             self.u[2] = self.startSpeed*np.cos(self.startAngle)
             self.u[3] = self.startSpeed*np.sin(self.startAngle)
+
+gs = gameState(p.u0)
 
 def cycleModes(gs,stats):
     # Exit splash screen
@@ -662,7 +660,7 @@ def cycleModes(gs,stats):
     if gs.gameMode == 2:
         # Reset game
         stats.__init__()
-        gs.__init__(u0)
+        gs.__init__(p.u0)
         gs.gameMode = 3
         return
         
@@ -680,7 +678,7 @@ def cycleModes(gs,stats):
     # Reset the game
     if gs.gameMode == 6:
         stats.__init__()
-        gs.__init__(u0)
+        gs.__init__(p.u0)
         gs.gameMode = 3
         return
 
@@ -706,52 +704,7 @@ class gameScore:
             self.maxHeight = gs.yb   
         self.stoolCount += gs.StoolBounce
         self.floorCount += gs.FloorBounce
-        self.score = int(self.stoolDist*self.maxHeight*self.stoolCount) 
-
-# Predict
-def BallPredict(gs):
-    if gs.dyb==0 or gs.gameMode<=2:
-        # Ball is not moving, impact time is zero
-        tI=0
-    elif gs.gameMode>2 and (gs.dyb>0) and (gs.yb<gs.yp[0]+p.d+gs.lp[0]): 
-        # Ball is in play, moving upward and below the stool
-        # Solve for time and height at apogee
-        ta = gs.dyb/p.g
-        ya = 0.5*p.g*ta**2
-
-        # Solve for time the ball would hit the ground
-        tI = ta + np.sqrt(2.0*ya/p.g)
-    else:
-        # Ball is in play, above the stool
-        # Solve for time that the ball would hit the stool
-        tI = -(-gs.dyb - np.sqrt(gs.dyb**2+2.0*p.g*(gs.yb-gs.yp[0]-p.d-gs.lp[0])))/p.g
-        
-    if np.isnan(tI):
-        tI = 0
-
-    # Solve for position that the ball would hit the stool
-    xI = gs.xb+gs.dxb*tI
-    yI = gs.yb+gs.dyb*tI-0.5*p.g*tI**2
-    
-    # Solve for time that the ball would hit the ground
-    tG = -(-gs.dyb-np.sqrt(gs.dyb**2+2.0*p.g*gs.yb))/p.g
-
-    # Solve for the arc for the next 1.2 seconds, or until ball hits ground
-    T     = np.linspace(0,min(1.2,tG),20)
-    xTraj = gs.xb+gs.dxb*T
-    yTraj = gs.yb+gs.dyb*T-0.5*p.g*T**2
-    
-    # Time until event 
-    timeUntilBounce = tI;
-    tI = timeUntilBounce+gs.t
-    
-    # Output variables
-    # xI = Ball distance at impact [m]
-    # yI = Ball height at impact [m]
-    # tI = Time at impact [s]
-    # xTraj = Ball trajectory distances [m]
-    # yTraj = Ball trajectory heights [m]
-    return xI,yI,tI,xTraj,yTraj,timeUntilBounce
+        self.score = int(self.stoolDist*self.maxHeight*self.stoolCount)
 
 # Equation of Motion
 def PlayerAndStool(t,u):
@@ -774,19 +727,19 @@ def PlayerAndStool(t,u):
         
         # Mass Matrix
         if not p.linearMass:     
-            M = np.matrix([[   p.m    ,    0     ,-p.mg*s,-p.mg*lp[k]*c ],
-                           [    0     ,   p.m    , p.mg*c,-p.mg*lp[k]*s ],
-                           [-p.mg*s   ,  p.mg*c  , p.mg  ,   0       ],
+            M = np.matrix([[   p.m       ,    0        ,-p.mg*s,-p.mg*lp[k]*c ],
+                           [    0        ,   p.m       , p.mg*c,-p.mg*lp[k]*s ],
+                           [-p.mg*s      ,  p.mg*c     , p.mg  ,   0          ],
                            [-p.mg*lp[k]*c,-p.mg*lp[k]*s,   0   , p.mg*lp[k]**2]])
         
         # Centripetal [0,1] and Coriolis [3] Force Vector
         D = np.matrix([[-p.mg*dlp[k]*dtp[k]*c + p.mg*lp[k]*dtp[k]*dtp[k]*s], 
                        [-p.mg*dlp[k]*dtp[k]*s +p.mg*lp[k]*dtp[k]*dtp[k]*c], 
-                       [0],
-                       [2*p.mg*dtp[k]]])
+                       [0.0],
+                       [2.0*p.mg*dtp[k]]])
         
         # Gravitational Force Vector
-        G = np.matrix([[ 0            ],
+        G = np.matrix([[ 0.0          ],
                        [ p.m*p.g      ],
                        [ p.mg*p.g*c   ],
                        [-p.mg*p.g*lp[k]*s]])         
@@ -799,7 +752,7 @@ def PlayerAndStool(t,u):
         Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = ControlLogic(t,u,k)
         
         # Equation of Motion
-        RHS = -p.C*dq-p.K*q+p.K*q0-D-G+Q
+        RHS = -p.C*dq-p.K*q+p.K*p.q0-D-G+Q
         if p.linearMass:
             ddq = p.invM*RHS
         else:
@@ -903,7 +856,7 @@ def ControlLogic(t,u,k):
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
-    ZEM = (gs.xI+10*(p.nPlayer-1-np.mod(stats.stoolCount,2))-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
+    ZEM = (gs.xI+10.0*(p.nPlayer-1-np.mod(stats.stoolCount,2))-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
     if p.userControlled[k,0]:
         if gs.ctrl[0] == 0:
             try:
@@ -914,21 +867,21 @@ def ControlLogic(t,u,k):
             Bx = gs.ctrl[0]
     else:
         Bx = p.Gx*ZEM
-        if Bx>1:
-            Bx = 1
+        if Bx>1.0:
+            Bx = 1.0
         elif (Bx<-1) or (gs.timeUntilBounce<0 and gs.timeUntilBounce>0):
-            Bx = -1
+            Bx = -1.0
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
     if p.userControlled[k,1]:
         By = gs.ctrl[1]
     else:
         if (gs.timeUntilBounce<0.6) and (gs.timeUntilBounce>0.4):
-            By = -1
+            By = -1.0
         elif np.abs(gs.timeUntilBounce)<0.2:       
-            By = 1
+            By = 1.0
         else:
-            By = 0
+            By = 0.0
     
     # Control arm extension based on timing, turn on when impact in <0.2 sec
     if p.userControlled[k,2]:
@@ -944,10 +897,10 @@ def ControlLogic(t,u,k):
         Bth = gs.ctrl[3]
     else:
         Bth = p.Gt*(wantAngle-tp[k])
-        if Bth>1:
-            Bth = 1
+        if Bth>1.0:
+            Bth = 1.0
         elif Bth<-1 or (gs.timeUntilBounce<0.017) and (gs.timeUntilBounce>0):
-            Bth = -1
+            Bth = -1.0
         
     Q = np.matrix([[Bx*p.Qx],[By*p.Qy],[Bl*p.Ql],[Bth*p.Qt]])    
     
@@ -1019,7 +972,7 @@ def BallBounce(gs,k):
     u2 = r2/np.sqrt(r2.dot(r2))
 
     # Delta ball velocity
-    delta_vb = 2*p.COR*u2.dot(vbrel)
+    delta_vb = 2.0*p.COR*u2.dot(vbrel)
     
     # Velocity after bounce
     vBounce = -u2*delta_vb + np.array([gs.dxb,gs.dyb])
@@ -1028,8 +981,8 @@ def BallBounce(gs,k):
     BounceImpulse = -p.mg*vBounce
     c = np.cos(gs.tp[k])
     s = np.sin(gs.tp[k])
-    dRdq = np.array([[ 1      , 0   ],
-                     [ 0      , 1   ],
+    dRdq = np.array([[ 1.0    , 0.0 ],
+                     [ 0.0    , 1.0 ],
                      [-s      , c   ],
                      [-c*gs.lp[k],-s*gs.lp[k]]])
     Qi = dRdq.dot(BounceImpulse)
@@ -1042,14 +995,14 @@ def ThirdPoint(P0,P1,L,SGN):
 
     Psub = [P0[0]-P1[0],P0[1]-P1[1]]
     Padd = [P0[0]+P1[0],P0[1]+P1[1]]
-    P2 = [Padd[0]/2, Padd[1]/2]
+    P2 = [Padd[0]/2.0, Padd[1]/2.0]
     d = np.linalg.norm(Psub) # Distance between point P0,P1
 
     if d > L:
         P3 = P2
     else:
-        a  = (d**2)/2/d # Distance to mid-Point
-        h  = np.sqrt( (L**2)/4 - a**2 )
+        a  = (d**2)/2.0/d # Distance to mid-Point
+        h  = np.sqrt( (L**2)/4.0 - a**2 )
         x3 = P2[0] + h*SGN*Psub[1]/d
         y3 = P2[1] - h*SGN*Psub[0]/d
         P3 = [x3,y3]
@@ -1080,13 +1033,20 @@ def stickDude(inp,k):
         l  = inp.lp[k]
         th = inp.tp[k]
         v  = inp.dxp[k]
-        
+    else:
+        # Wasn't able to identify type, tying states from gs
+        x  = inp.xp[k]
+        y  = inp.yp[k]
+        l  = inp.lp[k]
+        th = inp.tp[k]
+        v  = inp.dxp[k]
+    #print('stickDude x=%f' % x)
     s = np.sin(th)
     c = np.cos(th)
         
     # Right Foot [rf] Left Foot [lf] Positions
-    rf = [x-0.25+(v/p.vx)*np.sin(1.5*x+3*np.pi/2), 
-          0.2*(v/p.vx)*(1+np.sin(1.5*x+3*np.pi/2))]
+    rf = [x-0.25+(v/p.vx)*np.sin(1.5*x+3.0*np.pi/2.0),
+          0.2*(v/p.vx)*(1+np.sin(1.5*x+3.0*np.pi/2.0))]
     lf = [x+0.25+(v/p.vx)*np.cos(1.5*x), 
           0.2*(v/p.vx)*(1+np.cos(1.5*x))]
     
@@ -1122,20 +1082,20 @@ def stickDude(inp,k):
 # convert from meters to pixels, and pixel offset to the center line
 # Ratio refers to normalized positions in the window on the scale [0 0 1 1]
 def setRanges(u):
-    maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),4])
+    maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),4.0])
     diffx = 1.25*np.abs(u[0]-u[4])
-    midx  = (u[0]+u[4])/2
+    midx  = (u[0]+u[4])/2.0
     if diffx>2*(maxy+1):
         xrng = midx-0.5*diffx, midx+0.5*diffx
-        yrng = -1, 0.5*(diffx-0.5)
+        yrng = -1.0, 0.5*(diffx-0.5)
     else:
         xrng = midx-maxy-0.5, midx+maxy+0.5
-        yrng = -1, maxy
+        yrng = -1.0, maxy
 
     MeterToPixel = width/(xrng[1]-xrng[0])
     MeterToRatio = 1.0/(xrng[1]-xrng[0])
-    PixelOffset  = (xrng[0]+xrng[1])/2*MeterToPixel
-    RatioOffset  = (xrng[0]+xrng[1])/2*MeterToRatio
+    PixelOffset  = (xrng[0]+xrng[1])/2.0*MeterToPixel
+    RatioOffset  = (xrng[0]+xrng[1])/2.0*MeterToRatio
     return xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset
  
 def intersperse(list1,list2):    

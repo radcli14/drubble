@@ -22,15 +22,6 @@ from kivy.config import Config
 # Execute drubbleFunc to get the supporting functions and classes
 exec(open('./drubbleFunc.py').read())
 
-# Obtain Parameters
-p = parameters()
-
-# Initial states
-q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u0 = [0,p.rb,0,0,p.x0,p.y0,p.l0,0,0,0,0,10,
-                 0   ,p.y0,p.l0,0,0,0,0,-10]
-gs = gameState(u0)
-
 # Set the keyboard input and mouse defaults
 keyPush = np.zeros(8)
 
@@ -39,7 +30,6 @@ stats = gameScore()
 
 # Initialize drums
 drums = drumBeat()
-# dt means delta-time
 def drums_callback(dt):
     drums.play_kivy()
 
@@ -70,10 +60,18 @@ class MyBackground(Widget):
         self.bg = []
         self.num_bg = 2 # Number of background images
         with self.canvas:
+            # Draw the sky
+            Color(skyBlue[0], skyBlue[1], skyBlue[2], 1)
+            self.sky = Rectangle(pos=(0,0), size=(width, height))
+
+            # Draw some ground
+            Color(1,1,0,1)
+            self.ground = Rectangle(pos=(0,0),size=(width,height/6.0))
+
             # Import the background images
-            self.bg.append(Rectangle(source='figs/bg0.png', 
+            self.bg.append(Image(source='figs/bg0.png',
                                      pos=(self.xpos,0), size=self.sz_orig))
-            self.bg.append(Rectangle(source='figs/bg1.png', 
+            self.bg.append(Image(source='figs/bg1.png',
                                      pos=(self.xpos+2400,0), size=self.sz_orig))
 
              # Draw the bottom line
@@ -85,20 +83,22 @@ class MyBackground(Widget):
         xmod = np.mod(x+self.xpos,200)/100
         
         # scf is the scale factor to apply to the background
-        scf = (m2p/70)**0.5
-        
+        scf = (m2p/70.0)**0.5
+
         # Position in the Background
         posInBG = xmod*scf*self.w_orig
 
+        lowerBound = int(h/20.0-5)
+        self.ground.size = (w, lowerBound+h/6.0*scf)
         if xmod>=0 and xmod<0.5:
-            self.bg[0].pos = (w/2.0-posInBG,h/20)
-            self.bg[1].pos = (w/2.0-posInBG-self.w_orig*scf,h/20)
+            self.bg[0].pos = (int(w/2.0-posInBG),lowerBound)
+            self.bg[1].pos = (int(w/2.0-posInBG-self.w_orig*scf),lowerBound)
         elif xmod>=0.5 and xmod<1.5:
-            self.bg[0].pos = (w/2.0-posInBG,h/20)
-            self.bg[1].pos = (w/2.0-posInBG+self.w_orig*scf,h/20)
+            self.bg[0].pos = (int(w/2.0-posInBG),lowerBound)
+            self.bg[1].pos = (int(w/2.0-posInBG+self.w_orig*scf),lowerBound)
         elif xmod>=1.5 and xmod<=2.0:
-            self.bg[0].pos = (w/2.0-posInBG+self.num_bg*self.w_orig*scf,h/20)
-            self.bg[1].pos = (w/2.0-posInBG+self.w_orig*scf,h/20)
+            self.bg[0].pos = (int(w/2.0-posInBG+self.num_bg*self.w_orig*scf),lowerBound)
+            self.bg[1].pos = (int(w/2.0-posInBG+self.w_orig*scf),lowerBound)
             
         # Size of the background
         sz_mod = (int(self.w_orig*scf),int(self.h_orig*scf))
@@ -118,10 +118,10 @@ class splashScreen(Widget):
             self.k += 5
             self.canvas.clear()
             with self.canvas:
-                Color(skyBlue[0]*self.k/255,skyBlue[1]*self.k/255,skyBlue[2]*self.k/255,1)
+                Color(skyBlue[0]*self.k/255.0,skyBlue[1]*self.k/255.0,skyBlue[2]*self.k/255.0,1)
                 Rectangle(pos=(0,0),size=(width,height))
                 if showSplash:
-                    Rectangle(source='figs/splash.png',pos=(0,0.2*height), 
+                    Image(source='figs/splash.png',pos=(0,0.2*height),
                               size=(0.8*width,0.8*height))
                     if self.k >= 255:
                         Label(font_size=48,pos=(0,0),size=(width,0.2*height),
@@ -132,7 +132,7 @@ class splashScreen(Widget):
             
     def clear(self):
         with self.canvas:
-            Color(skyBlue[0]*self.k/255,skyBlue[1]*self.k/255,skyBlue[2]*self.k/255,1)
+            Color(skyBlue[0]*self.k/255.0,skyBlue[1]*self.k/255.0,skyBlue[2]*self.k/255.0,1)
             Rectangle(pos=(0,0),size=(width,height))            
 
 class myFace(Widget):
@@ -372,7 +372,7 @@ class drubbleGame(Widget):
             self.splash.clear()
             self.remove_widget(self.splash)
             self.weHaveButtons = True
-        elif gs.gameMode>2 and not self.weHaveWidgets:
+        elif gs.gameMode > 2 and not self.weHaveWidgets:
             self.add_game_widgets()            
             self.weHaveWidgets = True            
             print('nPlayer=',str(p.nPlayer))   
@@ -399,9 +399,6 @@ class drubbleGame(Widget):
             self.boing_label.text = 'Boing! = %5.0f' % stats.stoolCount
             self.score_label.text = 'Score = %10.0f' % stats.score
 
-            # Play the drums
-            #drums.play_kivy()
-                
         # Player drawing settings        
         xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
