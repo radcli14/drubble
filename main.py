@@ -26,10 +26,10 @@ exec(open('./drubbleFunc.py').read())
 keyPush = np.zeros(8)
 
 # Initialize stats
-stats = gameScore()
+stats = GameScore()
 
 # Initialize drums
-drums = drumBeat()
+drums = DrumBeat()
 def drums_callback(dt):
     drums.play_kivy()
 
@@ -51,14 +51,14 @@ class MyBackground(Widget):
     def __init__(self, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
         # Randomize the start location in the backgroun
-        self.xpos = np.random.rand()*200
+        self.xpos = np.random.rand()*200.0
         print('xpos=',str(self.xpos))
         # Set size of the background, before updates
-        self.sz_orig = self.w_orig,self.h_orig = (2400,400)
+        self.sz_orig = self.w_orig,self.h_orig = (2400.0,400.0)
         
         # Add widgets to the canvas
         self.bg = []
-        self.num_bg = 2 # Number of background images
+        self.num_bg = 2  # Number of background images
         with self.canvas:
             # Draw the sky
             Color(skyBlue[0], skyBlue[1], skyBlue[2], 1)
@@ -80,39 +80,41 @@ class MyBackground(Widget):
 
     def update(self, x, y, w, h, m2p): 
         # xmod is normalized position of the player between 0 and num_bg
-        xmod = np.mod(x+self.xpos,200)/100
+        xmod = np.mod(x+self.xpos,200)/100.0
         
         # scf is the scale factor to apply to the background
         scf = (m2p/70.0)**0.5
 
         # Position in the Background
-        posInBG = xmod*scf*self.w_orig
+        posInBG = int(np.around(w/2.0-xmod*scf*self.w_orig))
+        newWidth = int(np.around(self.w_orig*scf))
+        newHeight = int(np.around(self.h_orig*scf))
 
         lowerBound = int(h/20.0-5)
         self.ground.size = (w, lowerBound+h/6.0*scf)
         if xmod>=0 and xmod<0.5:
-            self.bg[0].pos = (int(w/2.0-posInBG),lowerBound)
-            self.bg[1].pos = (int(w/2.0-posInBG-self.w_orig*scf),lowerBound)
+            self.bg[0].pos = (posInBG,lowerBound)
+            self.bg[1].pos = (posInBG-newWidth,lowerBound)
         elif xmod>=0.5 and xmod<1.5:
-            self.bg[0].pos = (int(w/2.0-posInBG),lowerBound)
-            self.bg[1].pos = (int(w/2.0-posInBG+self.w_orig*scf),lowerBound)
+            self.bg[0].pos = (posInBG,lowerBound)
+            self.bg[1].pos = (posInBG+newWidth,lowerBound)
         elif xmod>=1.5 and xmod<=2.0:
-            self.bg[0].pos = (int(w/2.0-posInBG+self.num_bg*self.w_orig*scf),lowerBound)
-            self.bg[1].pos = (int(w/2.0-posInBG+self.w_orig*scf),lowerBound)
+            self.bg[0].pos = (posInBG+self.num_bg*newWidth,lowerBound)
+            self.bg[1].pos = (posInBG+newWidth,lowerBound)
             
         # Size of the background
-        sz_mod = (int(self.w_orig*scf),int(self.h_orig*scf))
+        sz_mod = (newWidth,newHeight)
         for n in range(self.num_bg):
             self.bg[n].size = sz_mod
         
         # Scale the bottom line
-        self.bl.size = (w,h/20)
+        self.bl.size = (w,h/20.0)
 
-class splashScreen(Widget):
+class SplashScreen(Widget):
     def __init__(self, **kwargs):
-        super(splashScreen, self).__init__(**kwargs) 
+        super(SplashScreen, self).__init__(**kwargs)
         self.k = 0
-            
+
     def update(self,showSplash):  
         if not gs.showedSplash:
             self.k += 5
@@ -120,13 +122,12 @@ class splashScreen(Widget):
             with self.canvas:
                 Color(skyBlue[0]*self.k/255.0,skyBlue[1]*self.k/255.0,skyBlue[2]*self.k/255.0,1)
                 Rectangle(pos=(0,0),size=(width,height))
-                if showSplash:
-                    Image(source='figs/splash.png',pos=(0,0.2*height),
-                              size=(0.8*width,0.8*height))
-                    if self.k >= 255:
-                        Label(font_size=48,pos=(0,0),size=(width,0.2*height),
-                              color=(darkGreen[0],darkGreen[1],darkGreen[2],1),
-                              halign='center',text='Press Space to Begin!')
+                Image(source='figs/splash.png', pos=(0, 0.2 * height),
+                      size=(0.8 * width, 0.8 * height))
+                if showSplash and self.k >= 255:
+                    Label(font_size=48,pos=(0,0),size=(width,0.2*height),
+                          color=(darkGreen[0],darkGreen[1],darkGreen[2],1),
+                          halign='center',text='Press Space to Begin!')
         if self.k >= 255:
             gs.showedSplash = True    
             
@@ -186,7 +187,7 @@ class drubbleGame(Widget):
         self.weHaveWidgets = False
         self.weHaveButtons = False
         with self.canvas:
-            self.splash = splashScreen()
+            self.splash = SplashScreen()
             self.add_widget(self.splash)
         
     def add_game_widgets(self): 
@@ -271,11 +272,9 @@ class drubbleGame(Widget):
     def on_touch_down(self, touch):
         if gs.gameMode==2 and touch.y>self.height*0.67:
             p.nPlayer=1
-            print('nPlayer=',str(p.nPlayer))
             cycleModes(gs,stats)
         elif gs.gameMode==2 and touch.y>self.height*0.33:
             p.nPlayer=2
-            print('p.nPlayer=',str(p.nPlayer))
             cycleModes(gs,stats)
         elif gs.gameMode>2:
             # Cycle through modes if touch above the halfway point
@@ -386,13 +385,6 @@ class drubbleGame(Widget):
             stats.update()
 
             # Update score line
-            # This works in Python 3.6
-            # self.time_label.text  = 'Time = '+f'{gs.t:.1f}'
-            # self.dist_label.text  = 'Distance = '+f'{stats.stoolDist:.2f}'
-            # self.high_label.text  = 'Height = '+f'{stats.maxHeight:.2f}'
-            # self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
-            # self.score_label.text = 'Score = '+str(stats.score)
-            # This works in Python 2.7
             self.time_label.text  = 'Time = %5.1f' % gs.t
             self.dist_label.text  = 'Distance = %5.1f' % stats.stoolDist
             self.high_label.text  = 'Height = %5.2f' % stats.maxHeight
@@ -427,5 +419,3 @@ class drubbleApp(App):
 
 if __name__ == '__main__':
     drubbleApp().run()
-    
-mixer.quit()    

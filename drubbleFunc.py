@@ -214,7 +214,7 @@ if engine == 'kivy':
                 self.yardMark[k].text = strxr
 
 # Parameters
-class parameters:
+class Parameters:
     # Game parameters
     g   = 9.81 # Gravitational acceleration [m/s^2]
     COR = 0.8  # Coefficient of restitution
@@ -304,9 +304,10 @@ class parameters:
     playerColor = (darkGreen,red)
     stoolColor  = (white,black)
 
-p = parameters()
 
-class drumBeat:
+p = Parameters()
+
+class DrumBeat:
     def __init__(self):
         self.n        = 0
         self.bpm      = 120.0 # Beats per minute
@@ -435,7 +436,7 @@ def BallPredict(gs):
     # yTraj = Ball trajectory heights [m]
     return xI, yI, tI, xTraj, yTraj, timeUntilBounce
 
-class gameState:
+class GameState:
     # Initiate the state variables as a list, and as individual variables
     def __init__(self,u0):
         # Define Game Mode
@@ -623,7 +624,8 @@ class gameState:
             self.u[2] = self.startSpeed*np.cos(self.startAngle)
             self.u[3] = self.startSpeed*np.sin(self.startAngle)
 
-gs = gameState(p.u0)
+
+gs = GameState(p.u0)
 
 def cycleModes(gs,stats):
     # Exit splash screen
@@ -657,7 +659,7 @@ def cycleModes(gs,stats):
         gs.gameMode = 3
         return
 
-class gameScore:
+class GameScore:
     # Initiate statistics as zeros
     def __init__(self):
         self.t = 0
@@ -956,7 +958,7 @@ def stickDude(inp,k):
         l  = inp[6+k8]
         th = inp[7+k8]
         v  = inp[8+k8]
-    elif type(inp)==gameState:
+    elif type(inp)==GameState:
         # States from gs
         x  = inp.xp[k]
         y  = inp.yp[k]
