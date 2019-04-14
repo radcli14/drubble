@@ -1,29 +1,37 @@
 # Execute drubbleFunc to get the supporting functions and classes
 exec(open('./drubbleFunc.py').read())
 
-# Obtain Parameters
-p = parameters()
-
-# Initial states
-q0 = np.matrix([[0],[p.y0],[p.l0],[0]])
-u0 = [0,p.rb,0,0,p.x0,p.y0,p.l0,0,0,0,0,10,
-                 0   ,p.y0,p.l0,0,0,0,0,-10]
-nPlayer = 2
-gs = gameState(u0)
-
 # Set the keyboard input and mouse defaults
-keyPush        = np.zeros(8)
+keyPush = np.zeros(8)
 
 # Initialize stats
-stats = gameScore()
+stats = GameScore()
 
 # Initialize drums
-drums = drumBeat()
+drums = DrumBeat()
 
+# Create OptionButtons class
+class OptionButtons:
+    def __init__(self,*args,**kwargs):
+        self.butt = LabelNode(*args,**kwargs)
+        self.orig_text = self.butt.text
+        self.left = self.butt.position[0]-self.butt.size[0]/2.0
+        self.right = self.butt.position[0]+self.butt.size[0]/2.0
+        self.butt = LabelNode(**kwargs)
+        self.bottom = self.butt.position[1]-self.butt.size[1]/2.0
+        self.top = self.butt.position[1]+self.butt.size[1]/2.0
         
-if engine == 'ista':
-    #gs.gameMode = 3
+    def detect_touch(self,loc):
+        tCnd = [loc[0] > self.left,
+                loc[0] < self.right,
+                loc[1] > self.bottom,
+                loc[1] < self.top]
+        return all(tCnd)
+        
+    def rm(self):
+        self.butt.remove_from_parent()
 
+if engine == 'ista':
     # Initialize the background image
     try:
         splash = scene_drawing.load_image_file('figs/splash.png')
@@ -90,22 +98,21 @@ if engine == 'ista':
             self.ball.size = (dbPix,dbPix)
             self.ball.anchor_point = (0.5, 0.5)
             self.ball.position = (gs.xb*m2p+po, (gs.yb+p.rb)*m2p)
-            self.add_child(self.ball)
+            #self.add_child(self.ball)
             
             # Initialize the player's head
-            self.head = SpriteNode('emj:Slice_Of_Pizza')
+            self.head = SpriteNode('figs/myFace.png')
             spPix = 0.7*m2p
             self.head.size = (spPix,spPix)
             self.head.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp[0]*m2p+po, (gs.yp[0]+p.d)*m2p)
-            self.add_child(self.head)
+            #self.add_child(self.head)
             
-            if nPlayer>0:
-                self.head1 = SpriteNode('emj:Corn')
-                self.head1.size = (spPix,spPix)
-                self.head1.anchor_point = (0.5, 0.0)
-                self.head.position = (gs.xp[1]*m2p+po, (gs.yp[1]+p.d)*m2p)
-                self.add_child(self.head1)
+            self.head1 = SpriteNode('emj:Corn')
+            self.head1.size = (spPix,spPix)
+            self.head1.anchor_point = (0.5, 0.0)
+            self.head.position = (gs.xp[1]*m2p+po, (gs.yp[1]+p.d)*m2p)
+            #self.add_child(self.head1)
             
             toggleVisibleSprites(self,False)
             
@@ -113,7 +120,14 @@ if engine == 'ista':
             # Update if there was a touch
             if self.touchCycle:
                 cycleModes(gs,stats)
-                toggleVisibleSprites(self,True)
+                if gs.gameMode == 2:
+                    self.singleButt = OptionButtons(text='Single Drubble',font=(p.MacsFavoriteFont,36),size=(0.8*width,0.2*height),position=(0.5*width,0.75*height))
+                    self.doubleButt = OptionButtons(text='Double Drubble',font=(p.MacsFavoriteFont,36),size=(0.8*width,0.2*height),position=(0.5*width,0.5*height))
+                    self.add_child(self.singleButt.butt)
+                    self.add_child(self.doubleButt.butt)
+                    
+                if gs.gameMode>2:
+                    toggleVisibleSprites(self,True)
                 self.touchCycle = False
                 
             # Get control inputs
@@ -169,9 +183,10 @@ if engine == 'ista':
             x,y = xy2p(gs.xp[0],gs.yp[0]+p.d,m2p,po,width,height)
             self.head.position = (x,y)
             
-            self.head1.size = (spPix,spPix)
-            x,y = xy2p(gs.xp[1],gs.yp[1]+p.d,m2p,po,width,height)
-            self.head1.position = (x,y)
+            if p.nPlayer>1:
+                self.head1.size = (spPix,spPix)
+                x,y = xy2p(gs.xp[1],gs.yp[1]+p.d,m2p,po,width,height)
+                self.head1.position = (x,y)
                                  
         def draw(self):
             # Show the splash screen
@@ -186,8 +201,6 @@ if engine == 'ista':
                 if bgLoaded and gs.gameMode>2:
                     drawBackgroundImage(bg0,bg0_sz,-0.25,-10,m2p)
                 
-                # Generate the trajectory
-                linePlot(gs.xTraj,gs.yTraj,m2p,po,width,height,white,2)
             
                 if gs.gameMode>2:
                     # Generate the bottom line
@@ -198,19 +211,34 @@ if engine == 'ista':
                     # Generate the markers
                     makeMarkers(xrng,m2p,po)
             
-                for k in range(nPlayer):
-                    # Generate a player image
-                    xv,yv,sx,sy = stickDude(gs,k)
-                    linePlot(xv,yv,m2p,po,width,height,p.playerColor[k],0.15*m2p)
+                    # Generate the trajectory
+                    linePlot(gs.xTraj,gs.yTraj,m2p,po,width,height,white,2)
+                    
+                    for k in range(p.nPlayer):
+                        # Generate a player image
+                        xv,yv,sx,sy = stickDude(gs,k)
+                        linePlot(xv,yv,m2p,po,width,height,p.playerColor[k],0.15*m2p)
             
-                    # Generate a stool image
-                    linePlot(sx,sy,m2p,po,width,height,p.stoolColor[k],0.1*m2p)
+                        # Generate a stool image
+                        linePlot(sx,sy,m2p,po,width,height,p.stoolColor[k],0.1*m2p)
                         
         def touch_began(self, touch):
             # Reset if necessary
-            if touch.location[1] > height/2:
+            if gs.gameMode == 1 and self.kSplash >= 255: 
                 self.touchCycle = True
             
+            if gs.gameMode == 2:
+                b1 = self.singleButt.detect_touch(touch.location)
+                b2 = self.doubleButt.detect_touch(touch.location)
+                if b1 or b2:
+                    self.touchCycle = True
+                    p.nPlayer = b1 + 2*b2
+                    self.singleButt.rm()
+                    self.doubleButt.rm()
+            
+            if gs.gameMode > 2 and touch.location[1] > height/2:
+                self.touchCycle = True
+                
             # Detect control inputs
             xy = touchStick(touch.location,self.moveStick)
             if xy[0] != 0:

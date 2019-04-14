@@ -65,7 +65,7 @@ if engine == 'ista':
             line(x[k-1],y[k-1],x[k],y[k])
     
     def initStick(self,alph,sz,ap,ps):
-        Stick = SpriteNode('iob:pinpoint_256',parent=self)
+        Stick = SpriteNode('figs/crossHair.png',parent=self)
         Stick.size = (sz,sz)
         Stick.anchor_point = ap
         Stick.position = ps
@@ -75,7 +75,9 @@ if engine == 'ista':
         Stick.ctrl = (0,0)
         Stick.id = None
         
-        Aura = SpriteNode('shp:aura')
+        Aura = SpriteNode('shp:Circle')
+        #Aura = ShapeNode(circle,'white')
+        #circle = ui.Path.oval (0, 0, 0.5*sz,0.5*sz)
         Aura.size = (0.5*sz,0.5*sz)
         Aura.position = Stick.cntr
         return Stick, Aura
@@ -105,9 +107,13 @@ if engine == 'ista':
             self.moveAura.alpha = 0.5
             self.tiltStick.alpha = 0.5
             self.tiltAura.alpha = 0.5
-            self.ball.alpha = 1
-            self.head.alpha = 1
-            self.head1.alpha = 1
+            #self.ball.alpha = 1
+            #self.head.alpha = 1
+            #self.head1.alpha = 1
+            self.add_child(self.ball)
+            self.add_child(self.head)
+            if p.nPlayer>1:
+                self.add_child(self.head1)
             self.time_label.alpha = 1
             self.dist_label.alpha = 1
             self.high_label.alpha = 1
@@ -118,9 +124,13 @@ if engine == 'ista':
             self.moveAura.alpha = 0
             self.tiltStick.alpha = 0
             self.tiltAura.alpha = 0
-            self.ball.alpha = 0
-            self.head.alpha = 0
-            self.head1.alpha = 0
+            #self.ball.alpha = 0
+            #self.head.alpha = 0
+            #if p.nPlayer>1:
+                #self.head1.alpha = 0
+            self.ball.remove_from_parent()
+            self.head.remove_from_parent()
+            self.head1.remove_from_parent()
             self.time_label.alpha = 0
             self.dist_label.alpha = 0
             self.high_label.alpha = 0
@@ -322,10 +332,10 @@ class DrumBeat:
                          [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
                          [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]]
         if engine == 'ista':
-            self.drum = ['drums:Drums_01',
-                         'drums:Drums_02',
-                         'drums:Drums_07',
-                         '8ve:8ve-beep-timber']
+            self.drum = ['dc/01_kick.wav',
+                         'dc/04_snare2.wav',
+                         'dc/06_openHat6.wav',
+                         'dc/09_hiConga2.wav']
         elif engine == 'kivy':
             self.drum = []
             #self.drum.append(mixer.Sound(file='dc/kick.ogg'))
