@@ -58,11 +58,11 @@ class OptionButtons:
     def __init__(self,*args,**kwargs):
         self.butt = LabelNode(*args,**kwargs)
         self.orig_text = self.butt.text
-        self.left = self.butt.position[0]-self.butt.size[0]/2.0
-        self.right = self.butt.position[0]+self.butt.size[0]/2.0
+        self.left = self.butt.position[0]-self.butt.size[0]*self.butt.anchor_point[0]
+        self.right = self.butt.position[0]+self.butt.size[0]*(1-self.butt.anchor_point[0])
         self.butt = LabelNode(**kwargs)
-        self.bottom = self.butt.position[1]-self.butt.size[1]/2.0
-        self.top = self.butt.position[1]+self.butt.size[1]/2.0
+        self.bottom = self.butt.position[1]-self.butt.size[1]*self.butt.anchor_point[1]
+        self.top = self.butt.position[1]+self.butt.size[1]*(1-self.butt.anchor_point[1])
         
     def detect_touch(self,loc):
         tCnd = [loc[0] > self.left,
@@ -148,7 +148,9 @@ if engine == 'ista':
             self.head1.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp[1]*m2p+po, (gs.yp[1]+p.d)*m2p)
             
-            self.actionButt = OptionButtons(text='Cycle',font=(p.MacsFavoriteFont,36),position=(0.85*width,0.8*height))
+            self.actionButt = OptionButtons(text='Begin',font=(p.MacsFavoriteFont,24),position=(0.95*width,0.95*height),anchor_point=(1,1))
+            
+            self.optionButt = OptionButtons(text='Options',font=(p.MacsFavoriteFont,24),position=(0.05*width,0.95*height),anchor_point=(0,1))
             
             toggleVisibleSprites(self,False)
             
@@ -165,6 +167,18 @@ if engine == 'ista':
                 if gs.gameMode == 3:
                     toggleVisibleSprites(self,True)
                     self.add_child(self.actionButt.butt)
+                    self.add_child(self.optionButt.butt)
+                    self.actionButt.butt.text = 'Begin'
+                    
+                if gs.gameMode == 4:
+                    self.actionButt.butt.text = 'Set Angle'
+                    
+                if gs.gameMode == 5:
+                    self.actionButt.butt.text = 'Set Speed'
+                    
+                if gs.gameMode == 6:
+                    self.actionButt.butt.text = 'Restart'
+                    
                 self.touchCycle = False
                 
             # Get control inputs
@@ -198,8 +212,8 @@ if engine == 'ista':
             if gs.FloorBounce and not gs.Stuck:
                 sound.play_effect('game:Error')
                 
-            if gs.gameMode == 6:
-                drums.play_ista()
+            # Play the drum beat
+            drums.play_ista()
             
             # Update score line
             self.time_label.text  = 'Time = '+f'{gs.t:.1f}'
@@ -275,6 +289,11 @@ if engine == 'ista':
                     self.doubleButt.rm()
             
             if gs.gameMode > 2 and self.actionButt.detect_touch(touch.location):
+                self.touchCycle = True
+            
+            if gs.gameMode > 2 and self.optionButt.detect_touch(touch.location):
+                gs.gameMode = 1
+                toggleVisibleSprites(self,False)
                 self.touchCycle = True
                 
             # Detect control inputs

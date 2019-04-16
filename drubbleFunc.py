@@ -344,14 +344,16 @@ class DrumBeat:
         self.randFactor = 1.0
        
     def play_ista(self):    
-        whichSequence   = np.floor(gs.n/self.nps)
-        whereInSequence = gs.n-whichSequence*self.nps
+        whichSequence   = np.floor(self.n/self.nps)
+        whereInSequence = self.n-whichSequence*self.nps
         beat = whereInSequence/self.npb
+        numDrums = max(1,gs.gameMode-2)
         if not np.mod(beat,1):
             b = int(beat)
-            for k in range(4):
+            for k in range(numDrums):
                 if self.sequence[k][b] or np.random.uniform()>self.randFactor:
                     sound.play_effect(self.drum[k])
+        self.n+=1
                     
     def play_kivy(self):
         for k in range(self.m):
