@@ -10,6 +10,49 @@ stats = GameScore()
 # Initialize drums
 drums = DrumBeat()
 
+class MyBackground:
+    def __init__(self, **kwargs):
+        super(MyBackground, self).__init__(**kwargs)
+        # Randomize the start location in the background
+        #print('init MyBackground')
+        self.xpos = np.random.rand()*200.0
+        #print('xpos=',str(self.xpos))
+        # Set size of the background, before updates
+        self.sz_orig = self.w_orig,self.h_orig = (2400.0,400.0)
+        
+        # Add widgets to the canvas
+        self.bg = []
+        self.num_bg = 2  # Number of background images
+
+        # Import the background images
+        for n in range(self.num_bg):
+            name = 'figs/bg'+str(n)+'.png'
+            self.bg.append(scene_drawing.load_image_file(name))
+
+    def update(self, x, y, w, h, m2p): 
+        # xmod is normalized position of the player between 0 and num_bg
+        xmod = np.mod(x+self.xpos,200)/100.0
+        
+        # scf is the scale factor to apply to the background
+        scf = (m2p/70.0)**0.5
+
+        # Position in the Background
+        posInBG = w/2.0-xmod*scf*self.w_orig
+        newWidth = self.w_orig*scf
+        newHeight = self.h_orig*scf
+
+        lowerBound = int(h/20.0-5)
+        #self.ground.size = (w, lowerBound+h/6.0*scf)
+        if xmod>=0 and xmod<0.5:
+            scene_drawing.image(self.bg[0],posInBG,lowerBound,newWidth,newHeight)
+            scene_drawing.image(self.bg[1],posInBG-newWidth,lowerBound,newWidth,newHeight)
+        elif xmod>=0.5 and xmod<1.5:
+            scene_drawing.image(self.bg[0],posInBG,lowerBound,newWidth,newHeight)
+            scene_drawing.image(self.bg[1],posInBG+newWidth,lowerBound,newWidth,newHeight)
+        elif xmod>=1.5 and xmod<=2.0:
+            scene_drawing.image(self.bg[0],posInBG+self.num_bg*newWidth,lowerBound,newWidth,newHeight)
+            scene_drawing.image(self.bg[1],posInBG+newWidth,lowerBound,newWidth,newHeight)
+        
 # Create OptionButtons class
 class OptionButtons:
     def __init__(self,*args,**kwargs):
@@ -32,15 +75,8 @@ class OptionButtons:
         self.butt.remove_from_parent()
 
 if engine == 'ista':
-    # Initialize the background image
-    try:
-        splash = scene_drawing.load_image_file('figs/splash.png')
-        bg0 = scene_drawing.load_image_file('figs/bg0.png')
-        bg0_sz = (6*height,height)
-        bgLoaded = True
-    except:
-        bgLoaded = False
-        gs.gameMode = 3
+    # Initialize the splash screen
+    splash = scene_drawing.load_image_file('figs/splash.png')
     
     class Game (Scene):
         def setup(self):
@@ -53,8 +89,9 @@ if engine == 'ista':
             # Initialize the counter for the splash screen
             self.kSplash = 0
             
-            # Generate the sky blue background
+            # Generate the sky blue background and images
             self.background_color = skyBlue
+            self.bg = MyBackground()
             
             # Initialize the buttons or sticks
             self.moveStick,self.moveAura = initStick(self,0.1,0.2*width,(1,0),(width,height/20))
@@ -98,7 +135,6 @@ if engine == 'ista':
             self.ball.size = (dbPix,dbPix)
             self.ball.anchor_point = (0.5, 0.5)
             self.ball.position = (gs.xb*m2p+po, (gs.yb+p.rb)*m2p)
-            #self.add_child(self.ball)
             
             # Initialize the player's head
             self.head = SpriteNode('figs/myFace.png')
@@ -106,13 +142,13 @@ if engine == 'ista':
             self.head.size = (spPix,spPix)
             self.head.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp[0]*m2p+po, (gs.yp[0]+p.d)*m2p)
-            #self.add_child(self.head)
             
             self.head1 = SpriteNode('emj:Corn')
             self.head1.size = (spPix,spPix)
             self.head1.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp[1]*m2p+po, (gs.yp[1]+p.d)*m2p)
-            #self.add_child(self.head1)
+            
+            self.actionButt = OptionButtons(text='Cycle',font=(p.MacsFavoriteFont,36),position=(0.85*width,0.8*height))
             
             toggleVisibleSprites(self,False)
             
@@ -126,8 +162,9 @@ if engine == 'ista':
                     self.add_child(self.singleButt.butt)
                     self.add_child(self.doubleButt.butt)
                     
-                if gs.gameMode>2:
+                if gs.gameMode == 3:
                     toggleVisibleSprites(self,True)
+                    self.add_child(self.actionButt.butt)
                 self.touchCycle = False
                 
             # Get control inputs
@@ -163,7 +200,7 @@ if engine == 'ista':
                 
             if gs.gameMode == 6:
                 drums.play_ista()
-                
+            
             # Update score line
             self.time_label.text  = 'Time = '+f'{gs.t:.1f}'
             self.dist_label.text  = 'Distance = '+f'{stats.stoolDist:.2f}'
@@ -187,10 +224,10 @@ if engine == 'ista':
                 self.head1.size = (spPix,spPix)
                 x,y = xy2p(gs.xp[1],gs.yp[1]+p.d,m2p,po,width,height)
                 self.head1.position = (x,y)
-                                 
+            
         def draw(self):
             # Show the splash screen
-            if gs.gameMode == 1 and bgLoaded:
+            if gs.gameMode == 1:
                 makeSplashScreen(self)
                 if not gs.showedSplash:
                     self.kSplash += 2
@@ -198,9 +235,10 @@ if engine == 'ista':
                 xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
                 # Generate the background
-                if bgLoaded and gs.gameMode>2:
-                    drawBackgroundImage(bg0,bg0_sz,-0.25,-10,m2p)
-                
+                if gs.gameMode>2:
+                    # Update the background
+                    xMean = (gs.xb+gs.xp[0])/2.0
+                    self.bg.update(xMean,gs.yb,width,height,m2p)
             
                 if gs.gameMode>2:
                     # Generate the bottom line
@@ -236,7 +274,7 @@ if engine == 'ista':
                     self.singleButt.rm()
                     self.doubleButt.rm()
             
-            if gs.gameMode > 2 and touch.location[1] > height/2:
+            if gs.gameMode > 2 and self.actionButt.detect_touch(touch.location):
                 self.touchCycle = True
                 
             # Detect control inputs

@@ -107,9 +107,6 @@ if engine == 'ista':
             self.moveAura.alpha = 0.5
             self.tiltStick.alpha = 0.5
             self.tiltAura.alpha = 0.5
-            #self.ball.alpha = 1
-            #self.head.alpha = 1
-            #self.head1.alpha = 1
             self.add_child(self.ball)
             self.add_child(self.head)
             if p.nPlayer>1:
@@ -124,10 +121,6 @@ if engine == 'ista':
             self.moveAura.alpha = 0
             self.tiltStick.alpha = 0
             self.tiltAura.alpha = 0
-            #self.ball.alpha = 0
-            #self.head.alpha = 0
-            #if p.nPlayer>1:
-                #self.head1.alpha = 0
             self.ball.remove_from_parent()
             self.head.remove_from_parent()
             self.head1.remove_from_parent()
@@ -1024,7 +1017,7 @@ def stickDude(inp,k):
 # convert from meters to pixels, and pixel offset to the center line
 # Ratio refers to normalized positions in the window on the scale [0 0 1 1]
 def setRanges(u):
-    maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),4.0])
+    maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),3.0])
     diffx = 1.25*np.abs(u[0]-u[4])
     midx  = (u[0]+u[4])/2.0
     if diffx>2*(maxy+1):
