@@ -175,7 +175,8 @@ if engine == 'ista':
             stroke(white)
             stroke_weight(1)
             line(start_x,start_y,end_x,end_y)
-            text(str(int(xr)),font_name=p.MacsFavoriteFont,font_size=0.6*m2p,x=start_x-2,y=start_y+m2p/20.0,alignment=1)
+            fsize = min(24,int(m2p))
+            text(str(int(xr)),font_name=p.MacsFavoriteFont,font_size=fsize,x=start_x-2,y=start_y+m2p/20.0,alignment=1)
             
 if engine == 'kivy':
     def makeMarkers(self,p):

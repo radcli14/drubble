@@ -14,9 +14,7 @@ class MyBackground:
     def __init__(self, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
         # Randomize the start location in the background
-        #print('init MyBackground')
         self.xpos = np.random.rand()*200.0
-        #print('xpos=',str(self.xpos))
         # Set size of the background, before updates
         self.sz_orig = self.w_orig,self.h_orig = (2400.0,400.0)
         
@@ -57,10 +55,15 @@ class MyBackground:
 class OptionButtons:
     def __init__(self,*args,**kwargs):
         self.butt = LabelNode(*args,**kwargs)
-        self.orig_text = self.butt.text
         self.left = self.butt.position[0]-self.butt.size[0]*self.butt.anchor_point[0]
         self.right = self.butt.position[0]+self.butt.size[0]*(1-self.butt.anchor_point[0])
-        self.butt = LabelNode(**kwargs)
+        self.bottom = self.butt.position[1]-self.butt.size[1]*self.butt.anchor_point[1]
+        self.top = self.butt.position[1]+self.butt.size[1]*(1-self.butt.anchor_point[1])
+        
+    def text(self,str):
+        self.butt.text = str
+        self.left = self.butt.position[0]-self.butt.size[0]*self.butt.anchor_point[0]
+        self.right = self.butt.position[0]+self.butt.size[0]*(1-self.butt.anchor_point[0])
         self.bottom = self.butt.position[1]-self.butt.size[1]*self.butt.anchor_point[1]
         self.top = self.butt.position[1]+self.butt.size[1]*(1-self.butt.anchor_point[1])
         
@@ -168,16 +171,16 @@ if engine == 'ista':
                     toggleVisibleSprites(self,True)
                     self.add_child(self.actionButt.butt)
                     self.add_child(self.optionButt.butt)
-                    self.actionButt.butt.text = 'Begin'
+                    self.actionButt.text('Begin')
                     
                 if gs.gameMode == 4:
-                    self.actionButt.butt.text = 'Set Angle'
+                    self.actionButt.text('Set Angle')
                     
                 if gs.gameMode == 5:
-                    self.actionButt.butt.text = 'Set Speed'
+                    self.actionButt.text('Set Speed')
                     
                 if gs.gameMode == 6:
-                    self.actionButt.butt.text = 'Restart'
+                    self.actionButt.text('Restart')
                     
                 self.touchCycle = False
                 
