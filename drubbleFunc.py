@@ -151,17 +151,6 @@ if engine == 'kivy':
     
 dt = 1.0/fs
 
-
-### CHECK WHETHER THESE OR NEEDED FOR ISTA, PROBABLY SWITCH TO THE NEW BACKGROUND CLASS
-def makeBackgroundImage():
-    # Draw the ESA, Big Chair, River, and USS Barry
-    drawBackgroundImage(bg0,bg0_rect,-0.25,-5,m2p)
-
-def drawBackgroundImage(img,rect,xpos,ypos,m2p):
-    left = width*(-(gs.xb+gs.xp[0])/120.0+xpos)
-    bottom = -gs.yb*5.0+ypos+height/20.0
-    image(bg0,left,bottom,rect[0],rect[1])
-
 if engine == 'ista':        
     def makeMarkers(xrng,m2p,po):
                 
@@ -314,14 +303,14 @@ p = Parameters()
 class DrumBeat:
     def __init__(self):
         self.n        = 0
-        self.bpm      = 120.0 # Beats per minute
+        self.bpm      = 105.0 # Beats per minute
         self.npb      = np.around(fs*60.0/4.0/self.bpm) # frames per beat
         self.nps      = 16.0*self.npb # frames per sequence
         #self.sequence = [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
         #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
         #                 [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
         #                 [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]]
-        self.sequence = [[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+        self.sequence = [[1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0],
                          [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
                          [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
                          [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]]
@@ -1077,6 +1066,16 @@ if defObsoleteDemoFuncs:
         def __init__(self, **kwds):
             self.__dict__.update(kwds)
 
+    ### CHECK WHETHER THESE OR NEEDED FOR ISTA, PROBABLY SWITCH TO THE NEW BACKGROUND CLASS
+    def makeBackgroundImage():
+        # Draw the ESA, Big Chair, River, and USS Barry
+        drawBackgroundImage(bg0, bg0_rect, -0.25, -5, m2p)
+
+
+    def drawBackgroundImage(img, rect, xpos, ypos, m2p):
+        left = width * (-(gs.xb + gs.xp[0]) / 120.0 + xpos)
+        bottom = -gs.yb * 5.0 + ypos + height / 20.0
+        image(bg0, left, bottom, rect[0], rect[1])
 
     def showMessage(msgText):
         font = pygame.font.SysFont(p.MacsFavoriteFont, int(height / 32))
