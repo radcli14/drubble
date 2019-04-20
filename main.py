@@ -11,9 +11,9 @@ from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.image import Image
-#from kivy.properties import NumericProperty, ReferenceListProperty, OptionProperty
+from kivy.properties import NumericProperty, ReferenceListProperty, OptionProperty
 from kivy.core.window import Window
-#from kivy.vector import Vector
+from kivy.vector import Vector
 from kivy.clock import Clock
 from kivy.graphics import *
 from kivy.core.audio import SoundLoader
@@ -29,9 +29,9 @@ keyPush = np.zeros(8)
 stats = GameScore()
 
 # Initialize drums
-drums = DrumBeat()
-def drums_callback(dt):
-    drums.play_kivy()
+#drums = DrumBeat()
+#def drums_callback(dt):
+#    drums.play_kivy()
 
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
@@ -40,8 +40,8 @@ Window.size = (width, height)
 #leftAlign = OptionProperty('left')
 
 # Set the icon (neither are working...)
-Config.window_icon = 'figs/icon.png'
-#Window.icon = 'figs/icon.png'
+#Config.window_icon = 'figs/icon.png'
+Window.icon = 'figs/icon.png'
 
 # Initialize the players
 p1 = playerLines(0)
@@ -69,9 +69,9 @@ class MyBackground(Widget):
             self.ground = Rectangle(pos=(0,0),size=(width,height/6.0))
 
             # Import the background images
-            self.bg.append(Image(source='figs/bg0.png',
+            self.bg.append(Image(source='figs/bg0.png', allow_stretch=True,
                                      pos=(self.xpos,0), size=self.sz_orig))
-            self.bg.append(Image(source='figs/bg1.png',
+            self.bg.append(Image(source='figs/bg1.png', allow_stretch=True,
                                      pos=(self.xpos+2400,0), size=self.sz_orig))
 
              # Draw the bottom line
@@ -84,12 +84,15 @@ class MyBackground(Widget):
         
         # scf is the scale factor to apply to the background
         scf = (m2p/70.0)**0.5
+        newWidth = int(np.around(self.w_orig*scf))
+        nbg_newWidth = self.num_bg*newWidth
+        newHeight = int(np.around(self.h_orig*scf))
+        sz_mod = (newWidth, newHeight)
+        for n in range(self.num_bg):
+            self.bg[n].size = sz_mod
 
         # Position in the Background
-        posInBG = int(np.around(w/2.0-xmod*scf*self.w_orig))
-        newWidth = int(np.around(self.w_orig*scf))
-        newHeight = int(np.around(self.h_orig*scf))
-
+        posInBG = int(np.around(w/2.0-newWidth))
         lowerBound = int(h/20.0-5)
         self.ground.size = (w, lowerBound+h/6.0*scf)
         if xmod>=0 and xmod<0.5:
@@ -99,37 +102,29 @@ class MyBackground(Widget):
             self.bg[0].pos = (posInBG,lowerBound)
             self.bg[1].pos = (posInBG+newWidth,lowerBound)
         elif xmod>=1.5 and xmod<=2.0:
-            self.bg[0].pos = (posInBG+self.num_bg*newWidth,lowerBound)
+            self.bg[0].pos = (posInBG+nbg_newWidth,lowerBound)
             self.bg[1].pos = (posInBG+newWidth,lowerBound)
-            
-        # Size of the background
-        sz_mod = (newWidth,newHeight)
-        for n in range(self.num_bg):
-            self.bg[n].size = sz_mod
-        
+
         # Scale the bottom line
         self.bl.size = (w,h/20.0)
 
 class SplashScreen(Widget):
+    k = 0.0
+    k_increment = 5.0
+    splash_fade = NumericProperty(1)
+    text_alpha  = NumericProperty(0)
+    lbl_height = 0.2*height
     def __init__(self, **kwargs):
         super(SplashScreen, self).__init__(**kwargs)
-        self.k = 0
-
+        self.width = width
+        self.height = height
     def update(self,showSplash):  
         if not gs.showedSplash:
-            self.k += 5
-            self.canvas.clear()
-            with self.canvas:
-                Color(skyBlue[0]*self.k/255.0,skyBlue[1]*self.k/255.0,skyBlue[2]*self.k/255.0,1)
-                Rectangle(pos=(0,0),size=(width,height))
-                Image(source='figs/splash.png', pos=(0, 0.2 * height),
-                      size=(0.8 * width, 0.8 * height))
-                if showSplash and self.k >= 255:
-                    Label(font_size=48,pos=(0,0),size=(width,0.2*height),
-                          color=(darkGreen[0],darkGreen[1],darkGreen[2],1),
-                          halign='center',text='Press Space to Begin!')
+            self.k += self.k_increment
+            self.splash_fade -= self.k_increment/255.0
         if self.k >= 255:
-            gs.showedSplash = True    
+            gs.showedSplash = True
+            self.text_alpha = 1
             
     def clear(self):
         with self.canvas:
@@ -414,7 +409,7 @@ class drubbleApp(App):
     def build(self):
         game = drubbleGame()
         Clock.schedule_interval(game.update, 1.0/fs)
-        Clock.schedule_interval(drums_callback, 1.0/7.0)
+        #Clock.schedule_interval(drums_callback, 1.0/7.0)
         return game
 
 if __name__ == '__main__':
