@@ -48,65 +48,49 @@ p1 = playerLines(0)
 p2 = playerLines(1)
 
 class MyBackground(Widget):
+    bottomLineHeight = NumericProperty(height/20.0)
+    # Set size of the background, before updates
+    sz_orig = w_orig, h_orig = (2400.0, 400.0)
+    img_w = NumericProperty(w_orig)
+    img_h = NumericProperty(h_orig)
+
+    num_bg = 2  # Number of background images
+    bg_left0 = NumericProperty(0.0)
+    bg_left1 = NumericProperty(0.0)
+
+    # Randomize the start location in the backgroun
+    xpos = np.random.rand() * 200.0
+
     def __init__(self, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
-        # Randomize the start location in the backgroun
-        self.xpos = np.random.rand()*200.0
-        print('xpos=',str(self.xpos))
-        # Set size of the background, before updates
-        self.sz_orig = self.w_orig,self.h_orig = (2400.0,400.0)
-        
-        # Add widgets to the canvas
-        self.bg = []
-        self.num_bg = 2  # Number of background images
-        with self.canvas:
-            # Draw the sky
-            Color(skyBlue[0], skyBlue[1], skyBlue[2], 1)
-            self.sky = Rectangle(pos=(0,0), size=(width, height))
-
-            # Draw some ground
-            Color(1,1,0,1)
-            self.ground = Rectangle(pos=(0,0),size=(width,height/6.0))
-
-            # Import the background images
-            self.bg.append(Image(source='figs/bg0.png', allow_stretch=True,
-                                     pos=(self.xpos,0), size=self.sz_orig))
-            self.bg.append(Image(source='figs/bg1.png', allow_stretch=True,
-                                     pos=(self.xpos+2400,0), size=self.sz_orig))
-
-             # Draw the bottom line
-            Color(black[0], black[1], black[2],1)
-            self.bl = Rectangle(pos=(0,0),size=(width, height/20))
+        self.width = width
+        self.height = height
 
     def update(self, x, y, w, h, m2p): 
         # xmod is normalized position of the player between 0 and num_bg
-        xmod = np.mod(x+self.xpos,200)/100.0
+        xmod = np.mod(x+self.xpos, 200)/100.0
         
         # scf is the scale factor to apply to the background
         scf = (m2p/70.0)**0.5
-        newWidth = int(np.around(self.w_orig*scf))
-        nbg_newWidth = self.num_bg*newWidth
-        newHeight = int(np.around(self.h_orig*scf))
-        sz_mod = (newWidth, newHeight)
-        for n in range(self.num_bg):
-            self.bg[n].size = sz_mod
+        self.img_w = int(np.around(self.w_orig*scf))
+        self.img_h = int(np.around(self.h_orig*scf))
 
         # Position in the Background
-        posInBG = int(np.around(w/2.0-newWidth))
+        posInBG = int(np.around(w/2.0-xmod*self.img_w))
         lowerBound = int(h/20.0-5)
-        self.ground.size = (w, lowerBound+h/6.0*scf)
+        #self.ground.size = (w, lowerBound+h/6.0*scf)
         if xmod>=0 and xmod<0.5:
-            self.bg[0].pos = (posInBG,lowerBound)
-            self.bg[1].pos = (posInBG-newWidth,lowerBound)
+            self.bg_left0 = posInBG
+            self.bg_left1 = posInBG-self.img_w
         elif xmod>=0.5 and xmod<1.5:
-            self.bg[0].pos = (posInBG,lowerBound)
-            self.bg[1].pos = (posInBG+newWidth,lowerBound)
+            self.bg_left0 = posInBG
+            self.bg_left1 = posInBG+self.img_w
         elif xmod>=1.5 and xmod<=2.0:
-            self.bg[0].pos = (posInBG+nbg_newWidth,lowerBound)
-            self.bg[1].pos = (posInBG+newWidth,lowerBound)
+            self.bg_left0 = posInBG+self.num_bg*self.img_w
+            self.bg_left1 = posInBG+self.img_w
 
         # Scale the bottom line
-        self.bl.size = (w,h/20.0)
+        #self.bl.size = (w,h/20.0)
 
 class SplashScreen(Widget):
     k = 0.0
