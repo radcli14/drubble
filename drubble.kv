@@ -20,8 +20,6 @@
 
 <MyBackground>:
     canvas:
-        #Color:
-        #    rgba: (0,0,0,1)
         Rectangle:
             source: 'figs/bg0.png'
             pos: self.bg_left0, self.bottomLineHeight
@@ -34,8 +32,20 @@
             rgba: (0,0,0,1)
         Rectangle:
             pos: (0,0)
-            size: root.width, root.height/20.0
+            size: root.width, self.bottomLineHeight
 
+#<stick>:
+    #canvas:
+        #Color:
+        #    rgba: (1,1,1,0.5)
+        #Rectangle:
+        #    source: 'figs/crossHair.png'
+        #    pos: 0, 0
+            #pos: self.ch_x, self.ch_y
+        #    size: self.ch_s, self.ch_s
+        #Ellipse:
+        #    pos: ch_x-ch_s/4.0+ch_s*ctrl_x/4.0,ch_y-ch_s/4.0+ch_s*ctrl_y/4.0
+        #    size: self.ch_s, self.ch_s
 
 <drubbleGame>: 
     # Create the labels               
