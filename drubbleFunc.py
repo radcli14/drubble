@@ -22,7 +22,7 @@ fs = 60
 
 # Window size
 if engine == 'kivy':
-    size      = width, height = 800, 500
+    size = width, height = 800, 500
 elif engine == 'ista':
     width  = max(get_screen_size())
     height = min(get_screen_size())
@@ -65,7 +65,7 @@ if engine == 'ista':
             line(x[k-1],y[k-1],x[k],y[k])
     
     def initStick(self,alph,sz,ap,ps):
-        Stick = SpriteNode('iob:pinpoint_256',parent=self)
+        Stick = SpriteNode('figs/crossHair.png',parent=self)
         Stick.size = (sz,sz)
         Stick.anchor_point = ap
         Stick.position = ps
@@ -75,7 +75,9 @@ if engine == 'ista':
         Stick.ctrl = (0,0)
         Stick.id = None
         
-        Aura = SpriteNode('shp:aura')
+        Aura = SpriteNode('shp:Circle')
+        #Aura = ShapeNode(circle,'white')
+        #circle = ui.Path.oval (0, 0, 0.5*sz,0.5*sz)
         Aura.size = (0.5*sz,0.5*sz)
         Aura.position = Stick.cntr
         return Stick, Aura
@@ -105,9 +107,10 @@ if engine == 'ista':
             self.moveAura.alpha = 0.5
             self.tiltStick.alpha = 0.5
             self.tiltAura.alpha = 0.5
-            self.ball.alpha = 1
-            self.head.alpha = 1
-            self.head1.alpha = 1
+            self.add_child(self.ball)
+            self.add_child(self.head)
+            if p.nPlayer>1:
+                self.add_child(self.head1)
             self.time_label.alpha = 1
             self.dist_label.alpha = 1
             self.high_label.alpha = 1
@@ -118,9 +121,9 @@ if engine == 'ista':
             self.moveAura.alpha = 0
             self.tiltStick.alpha = 0
             self.tiltAura.alpha = 0
-            self.ball.alpha = 0
-            self.head.alpha = 0
-            self.head1.alpha = 0
+            self.ball.remove_from_parent()
+            self.head.remove_from_parent()
+            self.head1.remove_from_parent()
             self.time_label.alpha = 0
             self.dist_label.alpha = 0
             self.high_label.alpha = 0
@@ -148,17 +151,6 @@ if engine == 'kivy':
     
 dt = 1.0/fs
 
-
-### CHECK WHETHER THESE OR NEEDED FOR ISTA, PROBABLY SWITCH TO THE NEW BACKGROUND CLASS
-def makeBackgroundImage():
-    # Draw the ESA, Big Chair, River, and USS Barry
-    drawBackgroundImage(bg0,bg0_rect,-0.25,-5,m2p)
-
-def drawBackgroundImage(img,rect,xpos,ypos,m2p):
-    left = width*(-(gs.xb+gs.xp[0])/120.0+xpos)
-    bottom = -gs.yb*5.0+ypos+height/20.0
-    image(bg0,left,bottom,rect[0],rect[1])
-
 if engine == 'ista':        
     def makeMarkers(xrng,m2p,po):
                 
@@ -172,7 +164,8 @@ if engine == 'ista':
             stroke(white)
             stroke_weight(1)
             line(start_x,start_y,end_x,end_y)
-            text(str(int(xr)),font_name=p.MacsFavoriteFont,font_size=0.6*m2p,x=start_x-2,y=start_y+m2p/20.0,alignment=1)
+            fsize = min(24,int(m2p))
+            text(str(int(xr)),font_name=p.MacsFavoriteFont,font_size=fsize,x=start_x-2,y=start_y+m2p/20.0,alignment=1)
             
 if engine == 'kivy':
     def makeMarkers(self,p):
@@ -310,22 +303,22 @@ p = Parameters()
 class DrumBeat:
     def __init__(self):
         self.n        = 0
-        self.bpm      = 120.0 # Beats per minute
+        self.bpm      = 105.0 # Beats per minute
         self.npb      = np.around(fs*60.0/4.0/self.bpm) # frames per beat
         self.nps      = 16.0*self.npb # frames per sequence
         #self.sequence = [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
         #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
         #                 [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
         #                 [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]]
-        self.sequence = [[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+        self.sequence = [[1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0],
                          [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
                          [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
                          [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]]
         if engine == 'ista':
-            self.drum = ['drums:Drums_01',
-                         'drums:Drums_02',
-                         'drums:Drums_07',
-                         '8ve:8ve-beep-timber']
+            self.drum = ['dc/01_kick.wav',
+                         'dc/04_snare2.wav',
+                         'dc/06_openHat6.wav',
+                         'dc/09_hiConga2.wav']
         elif engine == 'kivy':
             self.drum = []
             #self.drum.append(mixer.Sound(file='dc/kick.ogg'))
@@ -341,14 +334,16 @@ class DrumBeat:
         self.randFactor = 1.0
        
     def play_ista(self):    
-        whichSequence   = np.floor(gs.n/self.nps)
-        whereInSequence = gs.n-whichSequence*self.nps
+        whichSequence   = np.floor(self.n/self.nps)
+        whereInSequence = self.n-whichSequence*self.nps
         beat = whereInSequence/self.npb
+        numDrums = max(1,gs.gameMode-2)
         if not np.mod(beat,1):
             b = int(beat)
-            for k in range(4):
+            for k in range(numDrums):
                 if self.sequence[k][b] or np.random.uniform()>self.randFactor:
                     sound.play_effect(self.drum[k])
+        self.n+=1
                     
     def play_kivy(self):
         for k in range(self.m):
@@ -1014,7 +1009,7 @@ def stickDude(inp,k):
 # convert from meters to pixels, and pixel offset to the center line
 # Ratio refers to normalized positions in the window on the scale [0 0 1 1]
 def setRanges(u):
-    maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),4.0])
+    maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),3.0])
     diffx = 1.25*np.abs(u[0]-u[4])
     midx  = (u[0]+u[4])/2.0
     if diffx>2*(maxy+1):
@@ -1071,6 +1066,16 @@ if defObsoleteDemoFuncs:
         def __init__(self, **kwds):
             self.__dict__.update(kwds)
 
+    ### CHECK WHETHER THESE OR NEEDED FOR ISTA, PROBABLY SWITCH TO THE NEW BACKGROUND CLASS
+    def makeBackgroundImage():
+        # Draw the ESA, Big Chair, River, and USS Barry
+        drawBackgroundImage(bg0, bg0_rect, -0.25, -5, m2p)
+
+
+    def drawBackgroundImage(img, rect, xpos, ypos, m2p):
+        left = width * (-(gs.xb + gs.xp[0]) / 120.0 + xpos)
+        bottom = -gs.yb * 5.0 + ypos + height / 20.0
+        image(bg0, left, bottom, rect[0], rect[1])
 
     def showMessage(msgText):
         font = pygame.font.SysFont(p.MacsFavoriteFont, int(height / 32))
