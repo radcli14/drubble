@@ -22,7 +22,7 @@ fs = 60
 
 # Window size
 if engine == 'kivy':
-    size      = width, height = 800, 500
+    size = width, height = 800, 500
 elif engine == 'ista':
     width  = max(get_screen_size())
     height = min(get_screen_size())
