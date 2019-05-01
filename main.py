@@ -11,7 +11,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.image import Image
-from kivy.properties import NumericProperty, ReferenceListProperty, OptionProperty
+from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
 from kivy.core.window import Window
 from kivy.vector import Vector
 from kivy.clock import Clock
@@ -57,11 +57,19 @@ class MyBackground(Widget):
     img_h = NumericProperty(h_orig)
 
     # Number of background images
-    num_bg = 2
+    num_bg = 3
 
     # Create the properties for the left edges of the bg images
     bg_left0 = NumericProperty(0.0)
     bg_left1 = NumericProperty(0.0)
+
+    # Create the textures
+    textures = []
+    for n in range(num_bg):
+        print('figs/bg'+str(n)+'.png')
+        textures.append(Image(source='figs/bg'+str(n)+'.png').texture)
+    bg_text0 = ObjectProperty(textures[0])
+    bg_text1 = ObjectProperty(textures[1])
 
     # Randomize the start location in the backgroun
     xpos = np.random.rand() * 100.0 * num_bg
@@ -70,6 +78,7 @@ class MyBackground(Widget):
         super(MyBackground, self).__init__(**kwargs)
         self.width = width
         self.height = height
+
 
     def update(self, x, y, w, h, m2p): 
         # xmod is normalized position of the player between 0 and num_bg
@@ -80,21 +89,23 @@ class MyBackground(Widget):
         self.img_w = int(np.around(self.w_orig*scf))
         self.img_h = int(np.around(self.h_orig*scf))
 
-        # Position in the Background
+        # Position in the background
         posInBG = int(np.around(w/2.0-xmod*self.img_w))
-        #self.ground.size = (w, self.bottomLineHeight+h/6.0*scf)
         if xmod>=0 and xmod<0.5:
-            self.bg_left0 = posInBG
-            self.bg_left1 = posInBG-self.img_w
+            self.bg_left0 = posInBG-0.98*self.img_w
+            self.bg_left1 = posInBG
+            self.bg_text0 = self.textures[2]
+            self.bg_text1 = self.textures[0]
         elif xmod>=0.5 and xmod<1.5:
             self.bg_left0 = posInBG
-            self.bg_left1 = posInBG+self.img_w
-        elif xmod>=1.5 and xmod<=2.0:
-            self.bg_left0 = posInBG+self.num_bg*self.img_w
-            self.bg_left1 = posInBG+self.img_w
-
-        # Scale the bottom line
-        #self.bl.size = (w,h/20.0)
+            self.bg_left1 = posInBG+0.98*self.img_w
+            self.bg_text0 = self.textures[0]
+            self.bg_text1 = self.textures[1]
+        elif xmod>=1.5 and xmod<=2.5:
+            self.bg_left0 = posInBG+self.num_bg*self.img_w-0.02*self.img_w
+            self.bg_left1 = posInBG+0.98*self.img_w
+            self.bg_text0 = self.textures[1]
+            self.bg_text1 = self.textures[2]
 
 class SplashScreen(Widget):
     k = 0.0
