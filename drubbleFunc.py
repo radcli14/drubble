@@ -567,10 +567,6 @@ class GameState:
                 self.ue[3] = vBounce[1]
                 
                 # Add  the recoil to the player
-                print(pAct)
-                print(vRecoil)
-                print(self.ue)
-                print(np.shape(self.ue))
                 self.ue[8+pAct*8]  = self.ue[8+pAct*8] + vRecoil[0]
                 self.ue[9+pAct*8]  = self.ue[9]  + vRecoil[1]
                 self.ue[10+pAct*8] = self.ue[10] + vRecoil[2]
