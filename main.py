@@ -304,11 +304,13 @@ class drubbleGame(Widget):
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         keyPush = ctrl2keyPush(gs)
         gs.setControl(keyPush=kvUpdateKey(keyPush,keycode,1))
-        if keycode[1] == 'spacebar':
+        if gs.gameMode == 1:
+            cycleModes(gs,stats)
+        elif keycode[1] == 'spacebar':
             cycleModes(gs,stats)
             if gs.gameMode>2:
                 self.actionButt.text = actionMSG[gs.gameMode]
-        if keycode[1] == 'escape':
+        elif keycode[1] == 'escape':
             gs.gameMode = 1
             self.remove_game_widgets()
             self.canvas.clear()
@@ -326,7 +328,9 @@ class drubbleGame(Widget):
     
     def on_touch_down(self, touch):
         loc = (touch.x,touch.y)
-        if gs.gameMode==2 and self.singleDrubbleButt.detect_touch(loc):
+        if gs.gameMode==1:
+            cycleModes(gs,stats)
+        elif gs.gameMode==2 and self.singleDrubbleButt.detect_touch(loc):
             p.nPlayer=1
             cycleModes(gs,stats)
         elif gs.gameMode==2 and self.doubleDrubbleButt.detect_touch(loc):

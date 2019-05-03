@@ -244,7 +244,7 @@ class Parameters:
     Ct = 2.0*zl*np.sqrt(Kt*m) # Tilt damping [N-m-s/rad]
 
     # Initial states
-    q0 = np.matrix([[0.0], [y0], [l0], [0.0]])
+    q0 = np.array([[0.0], [y0], [l0], [0.0]])
     u0 = [0.0, rb, 0.0, 0.0, x0 , y0 , l0 ,   0.0, 0.0, 0.0, 0.0, 10.0,
           0.0, y0, l0 , 0.0, 0.0, 0.0, 0.0, -10.0]
 
@@ -263,7 +263,7 @@ class Parameters:
                    -0.6 , -0.6 , -0.6 ,
                    -0.9 ,  0   ,   0  , -0.9 ])
     
-    M = np.matrix([[  m    , 0  , 0  , -mg*l0  ],
+    M = np.array([[  m    , 0  , 0  , -mg*l0  ],
                    [  0    , m  , mg ,    0    ],
                    [  0    , mg , mg ,    0    ],
                    [-mg*l0 , 0  , 0  , mg*l0**2]])
@@ -285,7 +285,7 @@ class Parameters:
     ss = 10.0
     
     # Parameter settings I'm using to try to improve running speed
-    invM = M.I
+    invM = np.linalg.inv(M)
     linearMass  = False
     nEulerSteps = 4
     timeRun     = False
@@ -566,11 +566,15 @@ class GameState:
                 self.ue[2] = vBounce[0]
                 self.ue[3] = vBounce[1]
                 
-                # Add  the recoil to the player 
-                self.ue[8+pAct*8]  = self.ue[8+pAct*8]  + vRecoil[0,0]
-                self.ue[9+pAct*8]  = self.ue[9]  + vRecoil[0,1]
-                self.ue[10+pAct*8] = self.ue[10] + vRecoil[0,2]
-                self.ue[11+pAct*8] = self.ue[11] + vRecoil[0,3]
+                # Add  the recoil to the player
+                print(pAct)
+                print(vRecoil)
+                print(self.ue)
+                print(np.shape(self.ue))
+                self.ue[8+pAct*8]  = self.ue[8+pAct*8] + vRecoil[0]
+                self.ue[9+pAct*8]  = self.ue[9]  + vRecoil[1]
+                self.ue[10+pAct*8] = self.ue[10] + vRecoil[2]
+                self.ue[11+pAct*8] = self.ue[11] + vRecoil[3]
                 
             elif self.FloorBounce:
                 # Reverse direction of the ball
@@ -699,19 +703,19 @@ def PlayerAndStool(t,u):
         
         # Mass Matrix
         if not p.linearMass:     
-            M = np.matrix([[   p.m       ,    0        ,-p.mg*s,-p.mg*lp[k]*c ],
+            M = np.array([[   p.m       ,    0        ,-p.mg*s,-p.mg*lp[k]*c ],
                            [    0        ,   p.m       , p.mg*c,-p.mg*lp[k]*s ],
                            [-p.mg*s      ,  p.mg*c     , p.mg  ,   0          ],
                            [-p.mg*lp[k]*c,-p.mg*lp[k]*s,   0   , p.mg*lp[k]**2]])
         
         # Centripetal [0,1] and Coriolis [3] Force Vector
-        D = np.matrix([[-p.mg*dlp[k]*dtp[k]*c + p.mg*lp[k]*dtp[k]*dtp[k]*s], 
+        D = np.array([[-p.mg*dlp[k]*dtp[k]*c + p.mg*lp[k]*dtp[k]*dtp[k]*s],
                        [-p.mg*dlp[k]*dtp[k]*s +p.mg*lp[k]*dtp[k]*dtp[k]*c], 
                        [0.0],
                        [2.0*p.mg*dtp[k]]])
         
         # Gravitational Force Vector
-        G = np.matrix([[ 0.0          ],
+        G = np.array([[ 0.0          ],
                        [ p.m*p.g      ],
                        [ p.mg*p.g*c   ],
                        [-p.mg*p.g*lp[k]*s]])         
@@ -724,11 +728,11 @@ def PlayerAndStool(t,u):
         Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = ControlLogic(t,u,k)
         
         # Equation of Motion
-        RHS = -p.C*dq-p.K*q+p.K*p.q0-D-G+Q
+        RHS = -p.C.dot(dq)-p.K.dot(q)+p.K.dot(p.q0)-D-G+Q
         if p.linearMass:
-            ddq = p.invM*RHS
+            ddq = p.invM.dot(RHS)
         else:
-            ddq = M.I*RHS
+            ddq = np.linalg.inv(M).dot(RHS)
         
         # Output State Derivatives
         i1 = k*8+4
@@ -877,7 +881,7 @@ def BallBounce(gs,k):
     r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
     
     # Calculate z that minimizes the distance
-    z  = ( (gs.xb-sx[0])*r1[0] + (gs.yb-sy[0])*r1[1] )/(r1.dot(r1))
+    z = ((gs.xb-sx[0])*r1[0] + (gs.yb-sy[0])*r1[1] )/(r1.dot(r1))
     
     # Find the closest point of impact on the stool
     if z<0:
@@ -913,7 +917,7 @@ def BallBounce(gs,k):
                      [-s      , c   ],
                      [-c*gs.lp[k],-s*gs.lp[k]]])
     Qi = dRdq.dot(BounceImpulse)
-    vRecoil = np.dot(p.invM,Qi)
+    vRecoil = p.invM.dot(Qi)
     return vBounce, vRecoil
 
 # Solves for the location of the knee or elbow based upon the two other 
