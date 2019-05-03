@@ -17,12 +17,10 @@ class MyBackground:
         self.xpos = np.random.rand()*200.0
         # Set size of the background, before updates
         self.sz_orig = self.w_orig,self.h_orig = (2400.0,400.0)
-        
-        # Add widgets to the canvas
-        self.bg = []
-        self.num_bg = 2  # Number of background images
 
         # Import the background images
+        self.num_bg = 2  # Number of background images
+        self.bg = []
         for n in range(self.num_bg):
             name = 'figs/bg'+str(n)+'.png'
             self.bg.append(scene_drawing.load_image_file(name))
