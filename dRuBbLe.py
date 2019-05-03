@@ -41,13 +41,13 @@ class MyBackground:
         #self.ground.size = (w, lowerBound+h/6.0*scf)
         if xmod>=0 and xmod<0.5:
             scene_drawing.image(self.bg[0],posInBG,lowerBound,newWidth,newHeight)
-            scene_drawing.image(self.bg[1],posInBG-newWidth,lowerBound,newWidth,newHeight)
+            scene_drawing.image(self.bg[1],posInBG-0.98*newWidth,lowerBound,newWidth,newHeight)
         elif xmod>=0.5 and xmod<1.5:
             scene_drawing.image(self.bg[0],posInBG,lowerBound,newWidth,newHeight)
-            scene_drawing.image(self.bg[1],posInBG+newWidth,lowerBound,newWidth,newHeight)
+            scene_drawing.image(self.bg[1],posInBG+0.98*newWidth,lowerBound,newWidth,newHeight)
         elif xmod>=1.5 and xmod<=2.0:
-            scene_drawing.image(self.bg[0],posInBG+self.num_bg*newWidth,lowerBound,newWidth,newHeight)
-            scene_drawing.image(self.bg[1],posInBG+newWidth,lowerBound,newWidth,newHeight)
+            scene_drawing.image(self.bg[0],posInBG+0.98*self.num_bg*newWidth,lowerBound,newWidth,newHeight)
+            scene_drawing.image(self.bg[1],posInBG+0.98*newWidth,lowerBound,newWidth,newHeight)
         
 # Create OptionButtons class
 class OptionButtons:
@@ -144,7 +144,7 @@ if engine == 'ista':
             self.head.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp[0]*m2p+po, (gs.yp[0]+p.d)*m2p)
             
-            self.head1 = SpriteNode('emj:Corn')
+            self.head1 = SpriteNode('figs/LadyFace.png')
             self.head1.size = (spPix,spPix)
             self.head1.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp[1]*m2p+po, (gs.yp[1]+p.d)*m2p)
