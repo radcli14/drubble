@@ -166,6 +166,27 @@ class MyFace(Widget):
     def clear(self):
         self.face_alpha = 0.0
 
+class Ball(Widget):
+    img_left = NumericProperty(0.0)
+    img_bottom = NumericProperty(0.0)
+    sz = NumericProperty(0)
+    image_source = StringProperty(None)
+    ball_alpha = NumericProperty(0.0)
+
+    def __init__(self, image_source='figs/ball.png', **kwargs):
+        super(Ball, self).__init__(**kwargs)
+        self.image_source = image_source
+
+    def update(self, xb, yb, m2p, po, w, h):
+        x, y = xy2p(xb, yb, m2p, po, w, h)
+        self.sz = int(2.0 * p1.m2p * p.rb)
+        self.img_left = int(x - p1.m2p * p.rb)
+        self.img_bottom = int(y - p1.m2p * p.rb)
+        self.ball_alpha = 1.0
+
+    def clear(self):
+        self.ball_alpha = 0.0
+
 # Returns the center_x, center_y, and diameter of the stick
 def get_stick_pos(ch):
     return ch.pos[0]+ch.size[0]/2.0, ch.pos[1]+ch.size[1]/2.0, ch.size[0] 
@@ -250,6 +271,9 @@ class drubbleGame(Widget):
             # Initialize the background
             self.bg = MyBackground()
 
+            # Initialize the ball
+            self.ball = Ball()
+
             # Initialize the player faces
             self.myFace = MyFace(image_source='figs/myFace.png')
             self.LadyFace = MyFace(image_source='figs/LadyFace.png')
@@ -261,6 +285,7 @@ class drubbleGame(Widget):
             self.add_widget(self.bg)
             self.add_widget(self.myFace)
             self.add_widget(self.LadyFace)
+            self.add_widget(self.ball)
 
             # Initialize the sticks
             sz = 0.2*width
@@ -459,12 +484,13 @@ class drubbleGame(Widget):
                     Line(points=p2.stool, width=0.05*p2.m2p)
             
                 # Draw the ball
-                Color(1, 1, 1, 1)
-                x, y = xy2p(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
-                Ellipse(source='figs/ball.png',
-                        pos=(x-p1.m2p*p.rb, y-p1.m2p*p.rb),
-                        size=(2.0*p1.m2p*p.rb, 2.0*p1.m2p*p.rb))
-                
+                #Color(1, 1, 1, 1)
+                #x, y = xy2p(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
+                #Ellipse(source='figs/ball.png',
+                #        pos=(x-p1.m2p*p.rb, y-p1.m2p*p.rb),
+                #        size=(2.0*p1.m2p*p.rb, 2.0*p1.m2p*p.rb))
+                self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
+
     def resize_canvas(self, *args):
         if self.weHaveWidgets:
             self.time_label.pos = (0.0*self.width, self.height-20)

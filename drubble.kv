@@ -39,6 +39,16 @@
             pos: self.img_left, self.img_bottom
             size: self.sz, self.sz
 
+<Ball>:
+    canvas:
+        Color:
+            rgba: (1,1,1,self.ball_alpha)
+        Ellipse:
+            source: self.image_source
+            pos: self.img_left, self.img_bottom
+            size: self.sz, self.sz
+
+
 #<stick>:
     #canvas:
         #Color:
