@@ -83,29 +83,40 @@ class MyBackground(Widget):
     def update(self, x, y, w, h, m2p): 
         # xmod is normalized position of the player between 0 and num_bg
         xmod = np.mod(x+self.xpos, 100.0 * self.num_bg)/100.0
-        
+        xrem = np.mod(xmod, 1)
+        xflr = int(np.floor(xmod))
+
+        # xsel selects which background textures are used TBR
+        if xrem <= 0.5:
+            xsel = xflr-1
+        else:
+            xsel = xflr
+
         # scf is the scale factor to apply to the background
         scf = (m2p/70.0)**0.5
         self.img_w = int(np.around(self.w_orig*scf))
         self.img_h = int(np.around(self.h_orig*scf))
 
-        # Position in the background
-        posInBG = int(np.around(w/2.0-xmod*self.img_w))
-        if xmod>=0 and xmod<0.5:
-            self.bg_left0 = posInBG-0.98*self.img_w
-            self.bg_left1 = posInBG
-            self.bg_text0 = self.textures[2]
+        # Decide which textures are used
+        self.bg_text0 = self.textures[xsel]
+        if xsel < (self.num_bg-1):
+            self.bg_text1 = self.textures[xsel+1]
+        else:
             self.bg_text1 = self.textures[0]
-        elif xmod>=0.5 and xmod<1.5:
-            self.bg_left0 = posInBG
-            self.bg_left1 = posInBG+0.98*self.img_w
-            self.bg_text0 = self.textures[0]
-            self.bg_text1 = self.textures[1]
-        elif xmod>=1.5 and xmod<=2.5:
-            self.bg_left0 = posInBG+self.num_bg*self.img_w-0.02*self.img_w
-            self.bg_left1 = posInBG+0.98*self.img_w
-            self.bg_text0 = self.textures[1]
-            self.bg_text1 = self.textures[2]
+
+        # Determine where the edge is located ## TBR
+        if xrem <= 0.5:
+            # Player is in the right frame
+            edge = int(np.around(w/2.0-xrem*self.img_w))
+        else:
+            # Player is in the left frame
+            edge = int(np.around(w/2.0+(1.0-xrem)*self.img_w))
+
+        # Position the textures
+        overlap = 0.0
+        self.bg_left0 = edge-(1-overlap)*self.img_w
+        self.bg_left1 = edge-overlap*self.img_w
+
 
 class SplashScreen(Widget):
     k = 0.0
