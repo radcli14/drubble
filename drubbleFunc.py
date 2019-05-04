@@ -49,11 +49,11 @@ if engine == 'ista':
     def makeSplashScreen(obj):
         if gs.showedSplash:
             obj.background_color = skyBlue
-            image(splash,0,0.2*height,0.8*width,0.8*height)
+            image(splash,0,0,width,height)
         else:
             k = float(obj.kSplash)/255.0
             obj.background_color = (skyBlue[0]*k,skyBlue[1]*k,skyBlue[2]*k)
-            image(splash,0,0.2*height,0.8*width,0.8*height)
+            image(splash,0,0,width,height)
             if k>=1:
                 gs.showedSplash = True
             
