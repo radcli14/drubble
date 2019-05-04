@@ -459,9 +459,10 @@ class drubbleGame(Widget):
                     Line(points=p2.stool, width=0.05*p2.m2p)
             
                 # Draw the ball
-                Color(pink[0], pink[1], pink[2], 1)
+                Color(1, 1, 1, 1)
                 x, y = xy2p(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
-                Ellipse(pos=(x-p1.m2p*p.rb, y-p1.m2p*p.rb),
+                Ellipse(source='figs/ball.png',
+                        pos=(x-p1.m2p*p.rb, y-p1.m2p*p.rb),
                         size=(2.0*p1.m2p*p.rb, 2.0*p1.m2p*p.rb))
                 
     def resize_canvas(self, *args):
