@@ -68,7 +68,7 @@ class MyBackground:
 
         # Draw the textures
         scene_drawing.image(self.bg[0], bg_left0, self.bottomLineHeight, img_w, img_h)
-        scene_drawing.image(self.bg[1], bg_left0, self.bottomLineHeight, img_w, img_h)
+        scene_drawing.image(self.bg[1], bg_left1, self.bottomLineHeight, img_w, img_h)
 
 
 # Create OptionButtons class
