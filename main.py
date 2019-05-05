@@ -29,9 +29,9 @@ keyPush = np.zeros(8)
 stats = GameScore()
 
 # Initialize drums
-drums = DrumBeat()
-def drums_callback(dt):
-    drums.play_kivy()
+#drums = DrumBeat()
+#def drums_callback(dt):
+#    drums.play_kivy()
 
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
@@ -107,7 +107,7 @@ class MyBackground(Widget):
         else:
             self.bg_text1 = self.textures[0]
 
-        # Determine where the edge is located ## TBR
+        # Determine where the edge is located
         if xrem <= 0.5:
             # Player is in the right frame
             edge = int(np.around(w/2.0-xrem*self.img_w))

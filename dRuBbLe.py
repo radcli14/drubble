@@ -11,44 +11,66 @@ stats = GameScore()
 drums = DrumBeat()
 
 class MyBackground:
+    # Size of the black bar on the bottom of the screen
+    bottomLineHeight = height / 20.0
+
     def __init__(self, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
-        # Randomize the start location in the background
-        self.xpos = np.random.rand()*200.0
         # Set size of the background, before updates
-        self.sz_orig = self.w_orig,self.h_orig = (2400.0,400.0)
+        self.sz_orig = self.w_orig, self.h_orig = (2400.0, 400.0)
 
         # Import the background images
-        self.num_bg = 2  # Number of background images
+        self.num_bg = 3  # Number of background images
         self.bg = []
         for n in range(self.num_bg):
             name = 'figs/bg'+str(n)+'.png'
             self.bg.append(scene_drawing.load_image_file(name))
 
+        # Randomize the start location in the background
+        self.xpos = np.random.rand() * 100.0 * self.num_bg
+
     def update(self, x, y, w, h, m2p): 
         # xmod is normalized position of the player between 0 and num_bg
         xmod = np.mod(x+self.xpos,200)/100.0
-        
+        xrem = np.mod(xmod, 1)
+        xflr = int(np.floor(xmod))
+
+        # xsel selects which background textures are used TBR
+        if xrem <= 0.5:
+            xsel = xflr - 1
+        else:
+            xsel = xflr
+
         # scf is the scale factor to apply to the background
-        scf = (m2p/70.0)**0.5
+        scf = (m2p / 70.0) ** 0.5
+        img_w = int(np.around(self.w_orig * scf))
+        img_h = int(np.around(self.h_orig * scf))
 
-        # Position in the Background
-        posInBG = w/2.0-xmod*scf*self.w_orig
-        newWidth = self.w_orig*scf
-        newHeight = self.h_orig*scf
+        # Decide which textures are used
+        idx_left = xsel
+        if xsel < (self.num_bg - 1):
+            idx_right = xsel + 1
+        else:
+            idx_right = 0
 
-        lowerBound = int(h/20.0-5)
-        #self.ground.size = (w, lowerBound+h/6.0*scf)
-        if xmod>=0 and xmod<0.5:
-            scene_drawing.image(self.bg[0],posInBG,lowerBound,newWidth,newHeight)
-            scene_drawing.image(self.bg[1],posInBG-0.98*newWidth,lowerBound,newWidth,newHeight)
-        elif xmod>=0.5 and xmod<1.5:
-            scene_drawing.image(self.bg[0],posInBG,lowerBound,newWidth,newHeight)
-            scene_drawing.image(self.bg[1],posInBG+0.98*newWidth,lowerBound,newWidth,newHeight)
-        elif xmod>=1.5 and xmod<=2.0:
-            scene_drawing.image(self.bg[0],posInBG+0.98*self.num_bg*newWidth,lowerBound,newWidth,newHeight)
-            scene_drawing.image(self.bg[1],posInBG+0.98*newWidth,lowerBound,newWidth,newHeight)
-        
+        # Determine where the edge is located
+        if xrem <= 0.5:
+            # Player is in the right frame
+            edge = int(np.around(w / 2.0 - xrem * img_w))
+        else:
+            # Player is in the left frame
+            edge = int(np.around(w / 2.0 + (1.0 - xrem) * img_w))
+
+        # Position the textures
+        overlap = 0.0
+        bg_left0 = edge - (1 - overlap) * img_w
+        bg_left1 = edge - overlap * img_w
+
+        # Draw the textures
+        scene_drawing.image(self.bg[idx_left], bg_left0, self.bottomLineHeight, img_w, img_h)
+        scene_drawing.image(self.bg[idx_right], bg_left1, self.bottomLineHeight, img_w, img_h)
+
+
 # Create OptionButtons class
 class OptionButtons:
     def __init__(self,*args,**kwargs):
