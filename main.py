@@ -47,6 +47,7 @@ Window.icon = 'figs/icon.png'
 p1 = playerLines(0)
 p2 = playerLines(1)
 
+
 class MyBackground(Widget):
     # Size of the black bar on the bottom of the screen
     bottomLineHeight = NumericProperty(height/20.0)
@@ -66,7 +67,6 @@ class MyBackground(Widget):
     # Create the textures
     textures = []
     for n in range(num_bg):
-        print('figs/bg'+str(n)+'.png')
         textures.append(Image(source='figs/bg'+str(n)+'.png').texture)
     bg_text0 = ObjectProperty(None)
     bg_text1 = ObjectProperty(None)
@@ -127,10 +127,12 @@ class SplashScreen(Widget):
     splash_fade = NumericProperty(1)
     text_alpha = NumericProperty(0)
     lbl_height = 0.2*height
+
     def __init__(self, **kwargs):
         super(SplashScreen, self).__init__(**kwargs)
         self.width = width
         self.height = height
+
     def update(self,showSplash):  
         if not gs.showedSplash:
             self.k += self.k_increment
@@ -166,6 +168,7 @@ class MyFace(Widget):
     def clear(self):
         self.face_alpha = 0.0
 
+
 class Ball(Widget):
     img_left = NumericProperty(0.0)
     img_bottom = NumericProperty(0.0)
@@ -187,9 +190,11 @@ class Ball(Widget):
     def clear(self):
         self.ball_alpha = 0.0
 
+
 # Returns the center_x, center_y, and diameter of the stick
 def get_stick_pos(ch):
     return ch.pos[0]+ch.size[0]/2.0, ch.pos[1]+ch.size[1]/2.0, ch.size[0] 
+
 
 class stick(Widget):
     #ch_x = NumericProperty(0.0)
@@ -250,9 +255,10 @@ class OptionButtons(Label):
 
 actionMSG = ['', '', '', 'Begin', 'Set Angle', 'Set Speed', 'Restart']
 
-class drubbleGame(Widget):
-    def __init__(self,**kwargs):
-        super(drubbleGame, self).__init__(**kwargs)
+
+class DrubbleGame(Widget):
+    def __init__(self, **kwargs):
+        super(DrubbleGame, self).__init__(**kwargs)
         self.bind(pos=self.update_canvas)
         self.bind(size=self.update_canvas)
         self.bind(size=self.resize_canvas)
@@ -350,7 +356,7 @@ class drubbleGame(Widget):
         self.remove_widget(self.score_label)
 
     def add_option_buttons(self):
-        w,h = (self.width, self.height)
+        w, h = (self.width, self.height)
         # Add option screen buttons
         with self.canvas:
             self.singleDrubbleButt = OptionButtons(text='Single Drubble',
@@ -366,7 +372,7 @@ class drubbleGame(Widget):
                                                    pos=(0.1*w, 0.1*h),
                                                    font_size=0.1*h)
 
-    ## Controls
+    # Controls
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
         self._keyboard = None
@@ -434,7 +440,7 @@ class drubbleGame(Widget):
                 self.tiltStick.update_el(xy[0], xy[1])
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
 
-    def on_touch_move(self,touch):
+    def on_touch_move(self, touch):
         if gs.gameMode > 2 and self.weHaveWidgets:
             # Detect control inputs
             xy = touchStick((touch.x,touch.y), self.moveStick)
@@ -447,8 +453,8 @@ class drubbleGame(Widget):
                 self.tiltStick.update_el(xy[0], xy[1])
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
 
-    def on_touch_up(self,touch):
-        if gs.gameMode>2 and self.weHaveWidgets:
+    def on_touch_up(self, touch):
+        if gs.gameMode > 2 and self.weHaveWidgets:
             if touch.id == self.moveStick.id:
                 self.moveStick.update_el(0, 0)
                 gs.ctrl[0:2] = [0, 0]
@@ -457,7 +463,7 @@ class drubbleGame(Widget):
                 self.tiltStick.update_el(0, 0)
                 gs.ctrl[2:4] = [0, 0]
 
-    #3 Drawing commands
+    # Drawing commands
     def update_canvas(self,*args):
         if self.weHaveWidgets:
             self.canvas.clear()
@@ -484,11 +490,6 @@ class drubbleGame(Widget):
                     Line(points=p2.stool, width=0.05*p2.m2p)
             
                 # Draw the ball
-                #Color(1, 1, 1, 1)
-                #x, y = xy2p(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
-                #Ellipse(source='figs/ball.png',
-                #        pos=(x-p1.m2p*p.rb, y-p1.m2p*p.rb),
-                #        size=(2.0*p1.m2p*p.rb, 2.0*p1.m2p*p.rb))
                 self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
 
     def resize_canvas(self, *args):
@@ -506,7 +507,7 @@ class drubbleGame(Widget):
             self.bg.size = self.bg.width, self.bg.height = (self.width,self.height)
             self.bg.bottomLineHeight = self.bg.height/20.0
 
-    ## Time step the game
+    # Time step the game
     def update(self, dt):
         # Either update the splash, or add the widgets
         if gs.gameMode == 1:
@@ -519,7 +520,7 @@ class drubbleGame(Widget):
         elif gs.gameMode > 2 and not self.weHaveWidgets:
             self.add_game_widgets()            
 
-        ## ANGLE AND SPEED SETTINGS
+        # ANGLE AND SPEED SETTINGS
         if gs.gameMode > 2 and gs.gameMode < 6:
             gs.setAngleSpeed()
         
@@ -555,13 +556,16 @@ class drubbleGame(Widget):
                                    self.width, self.height)
             self.update_canvas()
 
-class drubbleApp(App):
+
+class DrubbleApp(App):
     icon = 'figs/icon.png'
+
     def build(self):
-        game = drubbleGame()
+        game = DrubbleGame()
         Clock.schedule_interval(game.update, 1.0/fs)
-        #Clock.schedule_interval(drums_callback, 1.0/7.0)
+        # Clock.schedule_interval(drums_callback, 1.0/7.0)
         return game
 
+
 if __name__ == '__main__':
-    drubbleApp().run()
+    DrubbleApp().run()
