@@ -47,11 +47,11 @@ class MyBackground:
         img_h = int(np.around(self.h_orig * scf))
 
         # Decide which textures are used
-        self.bg_text0 = self.bg[xsel]
+        idx_left = xsel
         if xsel < (self.num_bg - 1):
-            self.bg_text1 = self.bg[xsel + 1]
+            idx_right = xsel + 1
         else:
-            self.bg_text1 = self.bg[0]
+            idx_right = 0
 
         # Determine where the edge is located
         if xrem <= 0.5:
@@ -67,8 +67,8 @@ class MyBackground:
         bg_left1 = edge - overlap * img_w
 
         # Draw the textures
-        scene_drawing.image(self.bg[0], bg_left0, self.bottomLineHeight, img_w, img_h)
-        scene_drawing.image(self.bg[1], bg_left1, self.bottomLineHeight, img_w, img_h)
+        scene_drawing.image(self.bg[idx_left], bg_left0, self.bottomLineHeight, img_w, img_h)
+        scene_drawing.image(self.bg[idx_right], bg_left1, self.bottomLineHeight, img_w, img_h)
 
 
 # Create OptionButtons class
