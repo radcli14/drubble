@@ -315,20 +315,16 @@ class DrumBeat:
                          [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
                          [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]]
         if engine == 'ista':
-            self.drum = ['dc/01_kick.wav',
-                         'dc/04_snare2.wav',
-                         'dc/06_openHat6.wav',
-                         'dc/09_hiConga2.wav']
+            self.drum = ['a/01_kick.wav',
+                         'a/04_snare2.wav',
+                         'a/06_openHat6.wav',
+                         'a/09_hiConga2.wav']
         elif engine == 'kivy':
             self.drum = []
-            #self.drum.append(mixer.Sound(file='dc/kick.ogg'))
-            #self.drum.append(mixer.Sound(file='dc/snare2.ogg'))
-            #self.drum.append(mixer.Sound(file='dc/openHat6.ogg'))
-            #self.drum.append(mixer.Sound(file='dc/hiConga1.ogg'))
-            self.drum.append(SoundLoader.load('dc/kick.ogg'))
-            self.drum.append(SoundLoader.load('dc/snare2.ogg'))
-            self.drum.append(SoundLoader.load('dc/openHat6.ogg'))
-            self.drum.append(SoundLoader.load('dc/hiConga1.ogg'))
+            self.drum.append(SoundLoader.load('a/01_kick.wav'))
+            self.drum.append(SoundLoader.load('a/04_snare2.wav'))
+            self.drum.append(SoundLoader.load('a/06_openHat6.wav'))
+            self.drum.append(SoundLoader.load('a/09_hiConga2.wav'))
 
         self.m = 4
         self.randFactor = 1.0

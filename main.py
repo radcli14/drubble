@@ -40,8 +40,8 @@ Window.size = (width, height)
 #leftAlign = OptionProperty('left')
 
 # Set the icon (neither are working...)
-#Config.window_icon = 'figs/icon.png'
-Window.icon = 'figs/icon.png'
+#Config.window_icon = 'a/icon.png'
+Window.icon = 'a/icon.png'
 
 # Initialize the players
 p1 = playerLines(0)
@@ -67,7 +67,7 @@ class MyBackground(Widget):
     # Create the textures
     textures = []
     for n in range(num_bg):
-        textures.append(Image(source='figs/bg'+str(n)+'.png').texture)
+        textures.append(Image(source='a/bg'+str(n)+'.png').texture)
     bg_text0 = ObjectProperty(None)
     bg_text1 = ObjectProperty(None)
     bg_alpha = NumericProperty(0.0)
@@ -154,7 +154,7 @@ class MyFace(Widget):
     image_source = StringProperty(None)
     face_alpha = NumericProperty(0.0)
 
-    def __init__(self, image_source='figs/myFace.png', **kwargs):
+    def __init__(self, image_source='a/myFace.png', **kwargs):
         super(MyFace, self).__init__(**kwargs)
         self.image_source = image_source
             
@@ -176,7 +176,7 @@ class Ball(Widget):
     image_source = StringProperty(None)
     ball_alpha = NumericProperty(0.0)
 
-    def __init__(self, image_source='figs/ball.png', **kwargs):
+    def __init__(self, image_source='a/ball.png', **kwargs):
         super(Ball, self).__init__(**kwargs)
         self.image_source = image_source
 
@@ -219,7 +219,7 @@ class stick(Widget):
         #self.center = pos
 
         with self.canvas:
-            self.ch = Image(source='figs/crossHair.png',**kwargs)
+            self.ch = Image(source='a/crossHair.png',**kwargs)
             ch_x, ch_y, ch_s = get_stick_pos(self.ch)
             Color(1,1,1,0.5)
             self.el = Ellipse(pos=(ch_x-ch_s/4.0,ch_y-ch_s/4.0),
@@ -281,8 +281,8 @@ class DrubbleGame(Widget):
             self.ball = Ball()
 
             # Initialize the player faces
-            self.myFace = MyFace(image_source='figs/myFace.png')
-            self.LadyFace = MyFace(image_source='figs/LadyFace.png')
+            self.myFace = MyFace(image_source='a/myFace.png')
+            self.LadyFace = MyFace(image_source='a/LadyFace.png')
 
     def add_game_widgets(self): 
         # Add game widgets
@@ -558,7 +558,7 @@ class DrubbleGame(Widget):
 
 
 class DrubbleApp(App):
-    icon = 'figs/icon.png'
+    icon = 'a/icon.png'
 
     def build(self):
         game = DrubbleGame()
