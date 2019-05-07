@@ -320,11 +320,11 @@ class DrubbleGame(Widget):
             self.add_widget(self.tiltStick)
 
             # Initialize the score line
-            self.time_label = ScoreLabel(text='Time = 0.0', left=0.0*self.width)
-            self.dist_label = ScoreLabel(text='Distance = 0.00', left=0.2*self.width)
-            self.high_label = ScoreLabel(text='Height = 0.00', left=0.4*self.width)
-            self.boing_label = ScoreLabel(text='Boing! = 0', left=0.6*self.width)
-            self.score_label = ScoreLabel(text='Score = 0', left=0.8*self.width)
+            self.time_label = ScoreLabel(text='Time', left=0.0*self.width)
+            self.dist_label = ScoreLabel(text='Distance', left=0.2*self.width)
+            self.high_label = ScoreLabel(text='Height', left=0.4*self.width)
+            self.boing_label = ScoreLabel(text='Boing!', left=0.6*self.width)
+            self.score_label = ScoreLabel(text='Score', left=0.8*self.width)
             self.add_widget(self.time_label)
             self.add_widget(self.dist_label)
             self.add_widget(self.high_label)
@@ -532,11 +532,11 @@ class DrubbleGame(Widget):
             stats.update()
 
             # Update score line
-            self.time_label.update('Time = %5.1f' % gs.t)
-            self.dist_label.update('Distance = %5.1f' % stats.stoolDist)
-            self.high_label.update('Height = %5.2f' % stats.maxHeight)
-            self.boing_label.update('Boing! = %5.0f' % stats.stoolCount)
-            self.score_label.update('Score = %10.0f' % stats.score)
+            self.time_label.update('Time - %5.1f' % gs.t)
+            self.dist_label.update('Distance - %5.1f' % stats.stoolDist)
+            self.high_label.update('Height - %5.2f' % stats.maxHeight)
+            self.boing_label.update('Boing! - %5.0f' % stats.stoolCount)
+            self.score_label.update('Score - %10.0f' % stats.score)
 
         # Player drawing settings        
         xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
