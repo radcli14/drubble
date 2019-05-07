@@ -265,6 +265,11 @@ class DrubbleGame(Widget):
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
         self._keyboard.bind(on_key_up=self._on_keyboard_up)
+        #Window.bind(on_joy_hat=self.on_joy_hat)
+        #Window.bind(on_joy_ball=self.on_joy_ball)
+        Window.bind(on_joy_axis=self.on_joy_axis)
+        #Window.bind(on_joy_button_up=self.on_joy_button_up)
+        Window.bind(on_joy_button_down=self.on_joy_button_down)
         self.nMarks = 0
         self.yardMark = []
         self.weHaveWidgets = False
@@ -463,6 +468,13 @@ class DrubbleGame(Widget):
                 self.tiltStick.update_el(0, 0)
                 gs.ctrl[2:4] = [0, 0]
 
+    def on_joy_axis(self, win, stickid, axisid, value):
+        print('me')
+        print(win)
+
+    def on_joy_button_down(self, win, stickid, buttonid):
+        print('butt')
+
     # Drawing commands
     def update_canvas(self,*args):
         if self.weHaveWidgets:
@@ -501,11 +513,14 @@ class DrubbleGame(Widget):
             self.score_label.pos = (0.8*self.width, self.height-20)
             
             sz = self.moveStick.ch.size[0]
-            self.moveStick.ch.pos = (self.width-sz,0.05*self.height)       
-            self.tiltStick.ch.pos = (0,0.05*self.height)
+            self.moveStick.ch.pos = (self.width-sz, 0.05*self.height)
+            self.tiltStick.ch.pos = (0, 0.05*self.height)
 
             self.bg.size = self.bg.width, self.bg.height = (self.width,self.height)
             self.bg.bottomLineHeight = self.bg.height/20.0
+
+            self.actionButt.pos = (0.8 * self.width, self.height-50)
+            self.optionButt.pos = (0.0 * self.width, self.height-50)
 
     # Time step the game
     def update(self, dt):
@@ -529,9 +544,9 @@ class DrubbleGame(Widget):
             stats.update()
 
             # Update score line
-            self.time_label.text  = 'Time = %5.1f' % gs.t
-            self.dist_label.text  = 'Distance = %5.1f' % stats.stoolDist
-            self.high_label.text  = 'Height = %5.2f' % stats.maxHeight
+            self.time_label.text = 'Time = %5.1f' % gs.t
+            self.dist_label.text = 'Distance = %5.1f' % stats.stoolDist
+            self.high_label.text = 'Height = %5.2f' % stats.maxHeight
             self.boing_label.text = 'Boing! = %5.0f' % stats.stoolCount
             self.score_label.text = 'Score = %10.0f' % stats.score
 
@@ -553,7 +568,7 @@ class DrubbleGame(Widget):
                                self.width,self.height)
             if p.nPlayer > 1:
                 self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, m2p, po,
-                                   self.width, self.height)
+                                     self.width, self.height)
             self.update_canvas()
 
 
