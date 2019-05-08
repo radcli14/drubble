@@ -42,6 +42,11 @@
 <Ball>:
     canvas:
         Color:
+            rgba: (1,1,1,0.5*self.ball_alpha)
+        Line:
+            points: self.trajectory
+            width: 1.5
+        Color:
             rgba: (1,1,1,self.ball_alpha)
         Ellipse:
             source: self.image_source
@@ -67,8 +72,8 @@
         Color:
             rgba: (1,1,1,0.5)
         Rectangle:
-            pos: (self.label_left, self.height-20)
-            size: (0.19*root.width, 18)
+            pos: (self.label_left, self.height-self.label_size-4)
+            size: (0.19*root.width, root.label_size+4)
     Label:
         font_name: root.label_font
         text: root.label_text

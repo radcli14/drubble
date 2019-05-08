@@ -11,7 +11,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.image import Image
-from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty, StringProperty
+from kivy.properties import NumericProperty, ListProperty, ObjectProperty, StringProperty
 from kivy.core.window import Window
 from kivy.vector import Vector
 from kivy.clock import Clock
@@ -179,6 +179,7 @@ class Ball(Widget):
     sz = NumericProperty(0)
     image_source = StringProperty(None)
     ball_alpha = NumericProperty(0.0)
+    trajectory = ListProperty([])
 
     def __init__(self, image_source='a/ball.png', **kwargs):
         super(Ball, self).__init__(**kwargs)
@@ -190,6 +191,8 @@ class Ball(Widget):
         self.img_left = int(x - p1.m2p * p.rb)
         self.img_bottom = int(y - p1.m2p * p.rb)
         self.ball_alpha = 1.0
+        x, y = xy2p(gs.xTraj, gs.yTraj, m2p, po, w, h)
+        self.trajectory = intersperse(x, y)
 
     def clear(self):
         self.ball_alpha = 0.0
@@ -487,12 +490,7 @@ class DrubbleGame(Widget):
     def update_canvas(self,*args):
         if self.weHaveWidgets:
             self.canvas.clear()
-            with self.canvas:                       
-                # Draw the tracer line
-                Color(white[0], white[1], white[2], 1)
-                x,y = xy2p(gs.xTraj, gs.yTraj, p1.m2p, p1.po, self.width, self.height)
-                Line(points=intersperse(x, y), width=1.5)
-                
+            with self.canvas:
                 # Draw Bottom Line
                 makeMarkers(self,p1)
                 
