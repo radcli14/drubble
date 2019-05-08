@@ -48,7 +48,7 @@ p1 = playerLines(0)
 p2 = playerLines(1)
 
 # This is the text used in the upper right button
-actionMSG = ['', '', '', 'Begin', 'Set Angle', 'Set Speed', 'Restart']
+actionMSG = ['', '', '', '    Begin', 'Set Angle', 'Set Speed', '  Restart']
 
 
 class MyBackground(Widget):
@@ -259,6 +259,8 @@ class OptionButtons(Label):
 class ScoreLabel(Widget):
     label_text = StringProperty('')
     label_left = NumericProperty(0.0)
+    label_font = StringProperty('fonts/VeraMono.ttf')
+    label_size = NumericProperty(int(0.015*width))
 
     def __init__(self, **kwargs):
         super(ScoreLabel, self).__init__(**kwargs)
@@ -272,8 +274,10 @@ class ScoreLabel(Widget):
 
     def resize(self, w, h):
         self.label_left = self.label_left * w / self.width
+        self.label_size = int(0.015*w)
         self.width = w
         self.height = h
+
 
 class DrubbleGame(Widget):
     def __init__(self, **kwargs):
@@ -329,7 +333,7 @@ class DrubbleGame(Widget):
             self.dist_label = ScoreLabel(text='Distance', left=0.2*self.width)
             self.high_label = ScoreLabel(text='Height', left=0.4*self.width)
             self.boing_label = ScoreLabel(text='Boing!', left=0.6*self.width)
-            self.score_label = ScoreLabel(text='Score', left=0.8*self.width)
+            self.score_label = ScoreLabel(text='Score', left=0.81*self.width)
             self.add_widget(self.time_label)
             self.add_widget(self.dist_label)
             self.add_widget(self.high_label)
@@ -547,10 +551,10 @@ class DrubbleGame(Widget):
             stats.update()
 
             # Update score line
-            self.time_label.update('Time - %5.1f' % gs.t)
-            self.dist_label.update('Distance - %5.1f' % stats.stoolDist)
-            self.high_label.update('Height - %5.2f' % stats.maxHeight)
-            self.boing_label.update('Boing! - %5.0f' % stats.stoolCount)
+            self.time_label.update('Time - %11.1f' % gs.t)
+            self.dist_label.update('Distance - %7.1f' % stats.stoolDist)
+            self.high_label.update('Height - %9.2f' % stats.maxHeight)
+            self.boing_label.update('Boing! - %9.0f' % stats.stoolCount)
             self.score_label.update('Score - %10.0f' % stats.score)
 
         # Player drawing settings        

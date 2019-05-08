@@ -63,13 +63,19 @@
         #    size: self.ch_s, self.ch_s
 
 <ScoreLabel>:
+    canvas:
+        Color:
+            rgba: (1,1,1,0.5)
+        Rectangle:
+            pos: (self.label_left, self.height-20)
+            size: (0.19*root.width, 18)
     Label:
-        font_name: 'fonts/C_BOX_D.TTF'
+        font_name: root.label_font
         text: root.label_text
-        font_size: 18
+        font_size: root.label_size
         halign: 'left'
-        pos: (root.label_left, root.height-20)
-        size: (0.2*root.width, 18)
+        pos: (root.label_left, root.height-root.label_size-2)
+        size: (0.19*root.width, root.label_size)
         color: (0, 0, 0, 1)
 
 <drubbleGame>: 
