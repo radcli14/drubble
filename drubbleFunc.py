@@ -2,15 +2,7 @@
 import numpy as np
 
 # Determine if you are running from a PC or from iPhone
-import platform
-ps = platform.system()
-pm = platform.machine()
-if ps == 'Windows' or ps == 'Linux' or pm == 'x86_64':
-    #from pygame import mixer
-    #mixer.init(frequency=44100,channels=8)
-    engine = 'kivy'
-elif ps == 'Darwin':    
-    engine = 'ista'
+if engine == 'ista':
     from scene import *
     import motion
     import ui

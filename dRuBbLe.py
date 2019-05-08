@@ -1,4 +1,5 @@
 # Execute drubbleFunc to get the supporting functions and classes
+engine = 'ista'
 exec(open('./drubbleFunc.py').read())
 
 # Set the keyboard input and mouse defaults
@@ -124,27 +125,27 @@ if engine == 'ista':
             
             # Initialize the score line
             score_font = (p.MacsFavoriteFont, 12)
-            self.time_label = LabelNode('Time = '+f'{gs.t:.1f}', score_font, parent=self,color=black)
+            self.time_label = LabelNode('Time', score_font, parent=self,color=black)
             self.time_label.anchor_point = (0.0, 1.0)
             self.time_label.position = (width*0.02, height - 2)
             self.time_label.z_position = 1
             
-            self.dist_label = LabelNode('Distance = '+f'{stats.stoolDist:.1f}', score_font, parent=self,color=black)
+            self.dist_label = LabelNode('Distance', score_font, parent=self,color=black)
             self.dist_label.anchor_point = (0.0, 1.0)
             self.dist_label.position = (width*0.2, height - 2)
             self.dist_label.z_position = 1
             
-            self.high_label = LabelNode('Height = '+f'{stats.maxHeight:.1f}', score_font, parent=self,color=black)
+            self.high_label = LabelNode('Height', score_font, parent=self,color=black)
             self.high_label.anchor_point = (0.0, 1.0)
             self.high_label.position = (width*0.42, height - 2)
             self.high_label.z_position = 1
             
-            self.boing_label = LabelNode('Boing! = '+str(int(stats.stoolCount)), score_font, parent=self,color=black)
+            self.boing_label = LabelNode('Boing!', score_font, parent=self,color=black)
             self.boing_label.anchor_point = (0.0, 1.0)
             self.boing_label.position = (width*0.62, height - 2)
             self.boing_label.z_position = 1
             
-            self.score_label = LabelNode('Score = '+str(stats.score), score_font, parent=self,color=black)
+            self.score_label = LabelNode('Score', score_font, parent=self,color=black)
             self.score_label.anchor_point = (0.0, 1.0)
             self.score_label.position = (width*0.77, height - 2)
             self.score_label.z_position = 1
@@ -239,27 +240,27 @@ if engine == 'ista':
             drums.play_ista()
             
             # Update score line
-            self.time_label.text  = 'Time = '+f'{gs.t:.1f}'
-            self.dist_label.text  = 'Distance = '+f'{stats.stoolDist:.2f}'
-            self.high_label.text  = 'Height = '+f'{stats.maxHeight:.2f}'
-            self.boing_label.text = 'Boing! = '+str(int(stats.stoolCount))
-            self.score_label.text = 'Score = '+str(stats.score)
+            self.time_label.text = 'Time - %11.1f' % gs.t
+            self.dist_label.text = 'Distance - %7.1f' % stats.stoolDist
+            self.high_label.text = 'Height - %9.2f' % stats.maxHeight
+            self.boing_label.text = 'Boing! - %9.0f' % stats.stoolCount
+            self.score_label.text = 'Score - %10.0f' % stats.score
             
             # update the ball sprites
             dbPix = 2*p.rb*m2p
-            self.ball.size = (dbPix,dbPix)
-            x,y = xy2p(gs.xb,gs.yb,m2p,po,width,height)
-            self.ball.position = (x,y)
+            self.ball.size = (dbPix, dbPix)
+            x,y = xy2p(gs.xb, gs.yb, m2p, po, width, height)
+            self.ball.position = (x, y)
             
             # Generate the head sprites
             spPix = 0.7*m2p
-            self.head.size = (spPix,spPix)
-            x,y = xy2p(gs.xp[0],gs.yp[0]+p.d,m2p,po,width,height)
-            self.head.position = (x,y)
+            self.head.size = (spPix, spPix)
+            x,y = xy2p(gs.xp[0], gs.yp[0]+p.d, m2p, po, width, height)
+            self.head.position = (x, y)
             
-            if p.nPlayer>1:
+            if p.nPlayer > 1:
                 self.head1.size = (spPix,spPix)
-                x,y = xy2p(gs.xp[1],gs.yp[1]+p.d,m2p,po,width,height)
+                x,y = xy2p(gs.xp[1], gs.yp[1]+p.d, m2p, po, width, height)
                 self.head1.position = (x,y)
             
         def draw(self):

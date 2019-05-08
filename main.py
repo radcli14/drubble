@@ -20,6 +20,7 @@ from kivy.core.audio import SoundLoader
 from kivy.config import Config
 
 # Execute drubbleFunc to get the supporting functions and classes
+engine = 'kivy'
 exec(open('./drubbleFunc.py').read())
 
 # Set the keyboard input and mouse defaults
@@ -259,7 +260,7 @@ class OptionButtons(Label):
 class ScoreLabel(Widget):
     label_text = StringProperty('')
     label_left = NumericProperty(0.0)
-    label_font = StringProperty('fonts/VeraMono.ttf')
+    label_font = StringProperty('a/VeraMono.ttf')
     label_size = NumericProperty(int(0.015*width))
 
     def __init__(self, **kwargs):
