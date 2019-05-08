@@ -99,7 +99,7 @@ class OptionButtons:
 
 if engine == 'ista':
     # Initialize the splash screen
-    splash = scene_drawing.load_image_file('figs/splash.png')
+    splash = scene_drawing.load_image_file('a/splash.png')
     
     class Game (Scene):
         def setup(self):
@@ -153,20 +153,20 @@ if engine == 'ista':
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
             
             # Initialize the ball image
-            self.ball = SpriteNode('emj:Red_Circle')
+            self.ball = SpriteNode('a/ball.png')
             dbPix = 2*p.rb*m2p
             self.ball.size = (dbPix,dbPix)
             self.ball.anchor_point = (0.5, 0.5)
             self.ball.position = (gs.xb*m2p+po, (gs.yb+p.rb)*m2p)
             
             # Initialize the player's head
-            self.head = SpriteNode('figs/myFace.png')
+            self.head = SpriteNode('a/myFace.png')
             spPix = 0.7*m2p
             self.head.size = (spPix,spPix)
             self.head.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp[0]*m2p+po, (gs.yp[0]+p.d)*m2p)
             
-            self.head1 = SpriteNode('figs/LadyFace.png')
+            self.head1 = SpriteNode('a/LadyFace.png')
             self.head1.size = (spPix,spPix)
             self.head1.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp[1]*m2p+po, (gs.yp[1]+p.d)*m2p)

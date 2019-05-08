@@ -3,7 +3,7 @@
 <SplashScreen>:
     canvas:
         Rectangle:
-            source: 'figs/splash.png'
+            source: 'a/splash.png'
             pos: 0, 0
             size: root.width, root.height
         Color:
@@ -61,6 +61,16 @@
         #Ellipse:
         #    pos: ch_x-ch_s/4.0+ch_s*ctrl_x/4.0,ch_y-ch_s/4.0+ch_s*ctrl_y/4.0
         #    size: self.ch_s, self.ch_s
+
+<ScoreLabel>:
+    Label:
+        font_name: 'fonts/C_BOX_D.TTF'
+        text: root.label_text
+        font_size: 18
+        halign: 'left'
+        pos: (root.label_left, root.height-20)
+        size: (0.2*root.width, 18)
+        color: (0, 0, 0, 1)
 
 <drubbleGame>: 
     # Create the labels               

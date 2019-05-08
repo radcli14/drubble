@@ -40,12 +40,15 @@ Window.size = (width, height)
 #leftAlign = OptionProperty('left')
 
 # Set the icon (neither are working...)
-#Config.window_icon = 'figs/icon.png'
-Window.icon = 'figs/icon.png'
+#Config.window_icon = 'a/icon.png'
+Window.icon = 'a/icon.png'
 
 # Initialize the players
 p1 = playerLines(0)
 p2 = playerLines(1)
+
+# This is the text used in the upper right button
+actionMSG = ['', '', '', 'Begin', 'Set Angle', 'Set Speed', 'Restart']
 
 
 class MyBackground(Widget):
@@ -67,7 +70,7 @@ class MyBackground(Widget):
     # Create the textures
     textures = []
     for n in range(num_bg):
-        textures.append(Image(source='figs/bg'+str(n)+'.png').texture)
+        textures.append(Image(source='a/bg'+str(n)+'.png').texture)
     bg_text0 = ObjectProperty(None)
     bg_text1 = ObjectProperty(None)
     bg_alpha = NumericProperty(0.0)
@@ -154,7 +157,7 @@ class MyFace(Widget):
     image_source = StringProperty(None)
     face_alpha = NumericProperty(0.0)
 
-    def __init__(self, image_source='figs/myFace.png', **kwargs):
+    def __init__(self, image_source='a/myFace.png', **kwargs):
         super(MyFace, self).__init__(**kwargs)
         self.image_source = image_source
             
@@ -176,7 +179,7 @@ class Ball(Widget):
     image_source = StringProperty(None)
     ball_alpha = NumericProperty(0.0)
 
-    def __init__(self, image_source='figs/ball.png', **kwargs):
+    def __init__(self, image_source='a/ball.png', **kwargs):
         super(Ball, self).__init__(**kwargs)
         self.image_source = image_source
 
@@ -203,7 +206,7 @@ class stick(Widget):
     #ctrl_x = NumericProperty(0.0)
     #ctrl_y = NumericProperty(0.0)
 
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
         super(stick, self).__init__(**kwargs)
 
         #size = kwargs['size']
@@ -219,24 +222,24 @@ class stick(Widget):
         #self.center = pos
 
         with self.canvas:
-            self.ch = Image(source='figs/crossHair.png',**kwargs)
+            self.ch = Image(source='a/crossHair.png', **kwargs)
             ch_x, ch_y, ch_s = get_stick_pos(self.ch)
-            Color(1,1,1,0.5)
-            self.el = Ellipse(pos=(ch_x-ch_s/4.0,ch_y-ch_s/4.0),
-                              size=(ch_s/2.0,ch_s/2.0))
+            Color(1, 1, 1, 0.5)
+            self.el = Ellipse(pos=(ch_x-ch_s/4.0, ch_y-ch_s/4.0),
+                              size=(ch_s/2.0, ch_s/2.0))
 
-        self.ts_x = (ch_x-ch_s/2.0,ch_x+ch_s/2.0)
-        self.ts_y = (ch_y-ch_s/2.0,ch_y+ch_s/2.0)
-        self.cntr = (ch_x,ch_y)
-        self.ctrl = (0,0)
+        self.ts_x = (ch_x-ch_s/2.0, ch_x+ch_s/2.0)
+        self.ts_y = (ch_y-ch_s/2.0, ch_y+ch_s/2.0)
+        self.cntr = (ch_x, ch_y)
+        self.ctrl = (0, 0)
 
-    def update_el(self,x,y):
+    def update_el(self, x, y):
         #self.ctrl_x = x
         #self.ctrl_y = y
 
         ch_x, ch_y, ch_s = get_stick_pos(self.ch)
-        self.el.pos = (ch_x-ch_s/4.0+ch_s*x/4.0,ch_y-ch_s/4.0+ch_s*y/4.0)
-        self.ctrl = (x,y)
+        self.el.pos = (ch_x-ch_s/4.0+ch_s*x/4.0, ch_y-ch_s/4.0+ch_s*y/4.0)
+        self.ctrl = (x, y)
 
 
 # Create OptionButtons class
@@ -253,8 +256,24 @@ class OptionButtons(Label):
         return all(tCnd)
 
 
-actionMSG = ['', '', '', 'Begin', 'Set Angle', 'Set Speed', 'Restart']
+class ScoreLabel(Widget):
+    label_text = StringProperty('')
+    label_left = NumericProperty(0.0)
 
+    def __init__(self, **kwargs):
+        super(ScoreLabel, self).__init__(**kwargs)
+        self.label_text = kwargs['text']
+        self.label_left = kwargs['left']
+        self.width = width
+        self.height = height
+
+    def update(self, label_string):
+        self.label_text = label_string
+
+    def resize(self, w, h):
+        self.label_left = self.label_left * w / self.width
+        self.width = w
+        self.height = h
 
 class DrubbleGame(Widget):
     def __init__(self, **kwargs):
@@ -286,8 +305,8 @@ class DrubbleGame(Widget):
             self.ball = Ball()
 
             # Initialize the player faces
-            self.myFace = MyFace(image_source='figs/myFace.png')
-            self.LadyFace = MyFace(image_source='figs/LadyFace.png')
+            self.myFace = MyFace(image_source='a/myFace.png')
+            self.LadyFace = MyFace(image_source='a/LadyFace.png')
 
     def add_game_widgets(self): 
         # Add game widgets
@@ -306,30 +325,15 @@ class DrubbleGame(Widget):
             self.add_widget(self.tiltStick)
 
             # Initialize the score line
-            self.time_label = Label(font_size=18, halign='left',
-                                    pos=(0.0*self.width, self.height-20),
-                                    size=(0.2*self.width, 18),
-                                    text='Time = 0.0', color=(0, 0, 0, 1))
+            self.time_label = ScoreLabel(text='Time', left=0.0*self.width)
+            self.dist_label = ScoreLabel(text='Distance', left=0.2*self.width)
+            self.high_label = ScoreLabel(text='Height', left=0.4*self.width)
+            self.boing_label = ScoreLabel(text='Boing!', left=0.6*self.width)
+            self.score_label = ScoreLabel(text='Score', left=0.8*self.width)
             self.add_widget(self.time_label)
-            self.dist_label = Label(font_size=18, halign='left',
-                                    pos=(0.2*self.width, self.height-20),
-                                    size=(0.2*self.width, 18),
-                                    text='Distance = 0.00', color=(0, 0, 0, 1))
             self.add_widget(self.dist_label)
-            self.high_label = Label(font_size=18, halign='left',
-                                    pos=(0.4*self.width, self.height-20),
-                                    size=(0.2*self.width, 18),
-                                    text='Height = 0.00', color=(0, 0, 0, 1))
             self.add_widget(self.high_label)
-            self.boing_label = Label(font_size=18, halign='left',
-                                     pos=(0.6*self.width, self.height-20),
-                                     size=(0.2*self.width, 18),
-                                     text='Boing! = 0',color=(0, 0, 0, 1))
             self.add_widget(self.boing_label)
-            self.score_label = Label(font_size=18, halign='left',
-                                     pos=(0.8*self.width, self.height-20),
-                                     size=(0.2*self.width, 18),
-                                     text='Score = 0', color=(0, 0, 0, 1))
             self.add_widget(self.score_label)
 
             self.optionButt = OptionButtons(text='Options',
@@ -389,8 +393,7 @@ class DrubbleGame(Widget):
             cycleModes(gs, stats)
         elif keycode[1] == 'spacebar':
             cycleModes(gs, stats)
-            if gs.gameMode > 2:
-                self.actionButt.text = actionMSG[gs.gameMode]
+            self.actionButt.text = actionMSG[gs.gameMode]
         elif keycode[1] == 'escape':
             gs.gameMode = 1
             self.remove_game_widgets()
@@ -506,17 +509,17 @@ class DrubbleGame(Widget):
 
     def resize_canvas(self, *args):
         if self.weHaveWidgets:
-            self.time_label.pos = (0.0*self.width, self.height-20)
-            self.dist_label.pos = (0.2*self.width, self.height-20)
-            self.high_label.pos = (0.4*self.width, self.height-20)
-            self.boing_label.pos = (0.6*self.width, self.height-20)
-            self.score_label.pos = (0.8*self.width, self.height-20)
+            self.time_label.resize(self.width, self.height)
+            self.dist_label.resize(self.width, self.height)
+            self.high_label.resize(self.width, self.height)
+            self.boing_label.resize(self.width, self.height)
+            self.score_label.resize(self.width, self.height)
             
             sz = self.moveStick.ch.size[0]
             self.moveStick.ch.pos = (self.width-sz, 0.05*self.height)
             self.tiltStick.ch.pos = (0, 0.05*self.height)
 
-            self.bg.size = self.bg.width, self.bg.height = (self.width,self.height)
+            self.bg.size = self.bg.width, self.bg.height = (self.width, self.height)
             self.bg.bottomLineHeight = self.bg.height/20.0
 
             self.actionButt.pos = (0.8 * self.width, self.height-50)
@@ -540,15 +543,15 @@ class DrubbleGame(Widget):
             gs.setAngleSpeed()
         
         gs.simStep()
-        if gs.gameMode == 6:
+        if gs.gameMode > 2:
             stats.update()
 
             # Update score line
-            self.time_label.text = 'Time = %5.1f' % gs.t
-            self.dist_label.text = 'Distance = %5.1f' % stats.stoolDist
-            self.high_label.text = 'Height = %5.2f' % stats.maxHeight
-            self.boing_label.text = 'Boing! = %5.0f' % stats.stoolCount
-            self.score_label.text = 'Score = %10.0f' % stats.score
+            self.time_label.update('Time - %5.1f' % gs.t)
+            self.dist_label.update('Distance - %5.1f' % stats.stoolDist)
+            self.high_label.update('Height - %5.2f' % stats.maxHeight)
+            self.boing_label.update('Boing! - %5.0f' % stats.stoolCount)
+            self.score_label.update('Score - %10.0f' % stats.score)
 
         # Player drawing settings        
         xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
@@ -573,7 +576,7 @@ class DrubbleGame(Widget):
 
 
 class DrubbleApp(App):
-    icon = 'figs/icon.png'
+    icon = 'a/icon.png'
 
     def build(self):
         game = DrubbleGame()
