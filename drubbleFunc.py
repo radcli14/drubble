@@ -328,7 +328,7 @@ class GameState:
             self.ctrl = [moveStick[0],moveStick[1],tiltStick[1],-tiltStick[0]]
         
     # Execute a simulation step of duration dt    
-    def simStep(self, p, stats):
+    def simStep(self, p, gs, stats):
         # Increment n 
         self.n += 1
         
@@ -354,7 +354,7 @@ class GameState:
             self.t += dt/p.nEulerSteps
             
             # Calculate the derivatives of states w.r.t. time
-            dudt = PlayerAndStool(self.t, U[:, k-1], p, stats)
+            dudt = PlayerAndStool(self.t, U[:, k-1], p, gs, stats)
             
             # Calculate the states at the next step
             U[:, k] = U[:, k-1] + np.array(dudt)*dt/p.nEulerSteps
@@ -393,7 +393,7 @@ class GameState:
 
             # Re-initialize from the event states
             self.t += dt-tBreak
-            dudt = PlayerAndStool(self.t, self.ue, p, stats)
+            dudt = PlayerAndStool(self.t, self.ue, p, gs, stats)
             self.u = self.ue + np.array(dudt)*(dt-tBreak)
             
             # Stuck
@@ -433,7 +433,7 @@ class GameState:
             self.u[3] = self.startSpeed*np.sin(self.startAngle)
 
 
-def cycleModes(gs,stats):
+def cycleModes(gs, stats, engine):
     # Exit splash screen
     if gs.gameMode == 1:
         gs.gameMode += 1
@@ -443,7 +443,7 @@ def cycleModes(gs,stats):
     if gs.gameMode == 2:
         # Reset game
         stats.__init__()
-        gs.__init__(p.u0)
+        gs.__init__(p.u0, engine)
         gs.gameMode = 3
         return
         
@@ -461,7 +461,7 @@ def cycleModes(gs,stats):
     # Reset the game
     if gs.gameMode == 6:
         stats.__init__()
-        gs.__init__(p.u0)
+        gs.__init__(p.u0, engine)
         gs.gameMode = 3
         return
 
@@ -472,19 +472,19 @@ class GameScore:
         self.t = 0
         self.n = 0
         self.stoolCount = 0
-        self.stoolDist  = 0
-        self.maxHeight  = 0
+        self.stoolDist = 0
+        self.maxHeight = 0
         self.floorCount = 0
-        self.score      = 0
+        self.score = 0
         self.averageStepTime = 0
         
     # Update statistics for the current game state    
-    def update(self):
+    def update(self, gs):
         self.t = gs.t
         self.n = gs.n
-        if gs.StoolBounce and self.stoolDist<gs.xb:
+        if gs.StoolBounce and self.stoolDist < gs.xb:
             self.stoolDist = gs.xb
-        if self.maxHeight<gs.yb and self.stoolCount>0:
+        if self.maxHeight < gs.yb and self.stoolCount > 0:
             self.maxHeight = gs.yb   
         self.stoolCount += gs.StoolBounce
         self.floorCount += gs.FloorBounce
@@ -492,7 +492,7 @@ class GameScore:
 
 
 # Equation of Motion
-def PlayerAndStool(t, u, p, stats):
+def PlayerAndStool(t, u, p, gs, stats):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
@@ -534,7 +534,7 @@ def PlayerAndStool(t, u, p, stats):
             t = t[0]       
         
         # Control inputs form the generalized forces
-        Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = control_logic(t, u, k, p, stats)
+        Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = control_logic(t, u, k, p, gs, stats)
         
         # Equation of Motion
         RHS = -p.C.dot(dq)-p.K.dot(q)+p.K.dot(p.q0)-D-G+Q
@@ -592,15 +592,15 @@ def kvUpdateKey(keyPush, keycode, val):
     return keyPush
 
 
-def control_logic(t, u, k, p, stats):
+def control_logic(t, u, k, p, gs, stats):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
-    ZEM = (gs.xI+10.0*(p.nPlayer-1-np.mod(stats.stoolCount,2))-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
-    if p.userControlled[k,0]:
+    ZEM = (gs.xI+10.0*(p.nPlayer-1-np.mod(stats.stoolCount, 2))-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
+    if p.userControlled[k, 0]:
         if gs.ctrl[0] == 0:
             try:
                 Bx = -scs.erf(dxp[k])
@@ -612,40 +612,40 @@ def control_logic(t, u, k, p, stats):
         Bx = p.Gx*ZEM
         if Bx > 1.0:
             Bx = 1.0
-        elif (Bx < -1) or (gs.timeUntilBounce<0 and gs.timeUntilBounce > 0):
+        elif (Bx < -1) or (gs.timeUntilBounce < 0 and gs.timeUntilBounce > 0):
             Bx = -1.0
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
-    if p.userControlled[k,1]:
+    if p.userControlled[k, 1]:
         By = gs.ctrl[1]
     else:
-        if (gs.timeUntilBounce<0.6) and (gs.timeUntilBounce>0.4):
+        if (gs.timeUntilBounce < 0.6) and (gs.timeUntilBounce > 0.4):
             By = -1.0
-        elif np.abs(gs.timeUntilBounce)<0.2:       
+        elif np.abs(gs.timeUntilBounce) < 0.2:
             By = 1.0
         else:
             By = 0.0
     
     # Control arm extension based on timing, turn on when impact in <0.2 sec
-    if p.userControlled[k,2]:
+    if p.userControlled[k, 2]:
         Bl = gs.ctrl[2]
     else:
-        Bl = np.abs(gs.timeUntilBounce)<0.2
+        Bl = np.abs(gs.timeUntilBounce) < 0.2
     
     # Control stool angle by pointing at the ball
     xdiff = xb-xp[k] # Ball distance - player distance
     ydiff = yb-yp[k]-p.d
-    wantAngle = np.arctan2(-xdiff,ydiff)
-    if p.userControlled[k,3]:
+    wantAngle = np.arctan2(-xdiff, ydiff)
+    if p.userControlled[k, 3]:
         Bth = gs.ctrl[3]
     else:
         Bth = p.Gt*(wantAngle-tp[k])
-        if Bth>1.0:
+        if Bth > 1.0:
             Bth = 1.0
-        elif Bth<-1 or (gs.timeUntilBounce<0.017) and (gs.timeUntilBounce>0):
+        elif Bth < -1 or (gs.timeUntilBounce < 0.017) and (gs.timeUntilBounce > 0):
             Bth = -1.0
         
-    Q = np.matrix([[Bx*p.Qx],[By*p.Qy],[Bl*p.Ql],[Bth*p.Qt]])    
+    Q = np.matrix([[Bx*p.Qx], [By*p.Qy], [Bl*p.Ql], [Bth*p.Qt]])
     
     return Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff    
 
@@ -754,36 +754,29 @@ def ThirdPoint(P0,P1,L,SGN):
 
 # Solve for the vertices that make up the stick man and stool
 def stickDude(inp, k):
-    k8=k*8
+    k8 = k*8
     # Get the state variables
-    if type(inp)==int:
-        # States at time t[n]
-        x  = Y[n,4+k8] 
-        y  = Y[n,5+k8] 
-        l  = Y[n,6+k8] 
-        th = Y[n,7+k8] 
-        v  = Y[n,8+k8] 
-    elif type(inp)==list or type(inp)==np.ndarray:
-          # States from u 
-        x  = inp[4+k8]
-        y  = inp[5+k8]
-        l  = inp[6+k8]
+    if type(inp) == list or type(inp) == np.ndarray:
+        # States from u
+        x = inp[4+k8]
+        y = inp[5+k8]
+        l = inp[6+k8]
         th = inp[7+k8]
-        v  = inp[8+k8]
-    elif type(inp)==GameState:
+        v = inp[8+k8]
+    elif type(inp) == GameState:
         # States from gs
-        x  = inp.xp[k]
-        y  = inp.yp[k]
-        l  = inp.lp[k]
+        x = inp.xp[k]
+        y = inp.yp[k]
+        l = inp.lp[k]
         th = inp.tp[k]
-        v  = inp.dxp[k]
+        v = inp.dxp[k]
     else:
         # Wasn't able to identify type, tying states from gs
-        x  = inp.xp[k]
-        y  = inp.yp[k]
-        l  = inp.lp[k]
+        x = inp.xp[k]
+        y = inp.yp[k]
+        l = inp.lp[k]
         th = inp.tp[k]
-        v  = inp.dxp[k]
+        v = inp.dxp[k]
     #print('stickDude x=%f' % x)
     s = np.sin(th)
     c = np.cos(th)
@@ -795,14 +788,14 @@ def stickDude(inp, k):
           0.2*(v/p.vx)*(1+np.cos(1.5*x))]
     
     # Waist Position
-    w = [x,y-p.d]
+    w = [x, y-p.d]
     
     # Right Knee [rk] Left Knee [lk] Positions
-    rk = ThirdPoint(w,rf,p.y0-p.d,-1) #*((v>-2)-0.5))
-    lk = ThirdPoint(w,lf,p.y0-p.d,1) #2*((v>2)-0.5))
+    rk = ThirdPoint(w, rf, p.y0-p.d, -1)
+    lk = ThirdPoint(w, lf, p.y0-p.d, 1)
     
     # Shoulder Position
-    sh = [x,y+p.d]
+    sh = [x, y+p.d]
     
     # Stool Position
     sx = x+p.xs*c-(l+p.ys)*s
@@ -813,14 +806,14 @@ def stickDude(inp, k):
     lh = [sx[6], sy[6]] 
     
     # Right Elbow [re] Left Elbow [le] Position
-    re = ThirdPoint(sh,rh,1,1)
-    le = ThirdPoint(sh,lh,1,-1)
+    re = ThirdPoint(sh, rh, 1, 1)
+    le = ThirdPoint(sh, lh, 1, -1)
     
     # Plotting vectors
-    xv = [rf[0],rk[0],w[0],lk[0],lf[0],lk[0],w[0],sh[0],re[0],rh[0],re[0],sh[0],le[0],lh[0]]
-    yv = [rf[1],rk[1],w[1],lk[1],lf[1],lk[1],w[1],sh[1],re[1],rh[1],re[1],sh[1],le[1],lh[1]]
+    xv = [rf[0], rk[0], w[0], lk[0], lf[0], lk[0], w[0], sh[0], re[0], rh[0], re[0], sh[0], le[0], lh[0]]
+    yv = [rf[1], rk[1], w[1], lk[1], lf[1], lk[1], w[1], sh[1], re[1], rh[1], re[1], sh[1], le[1], lh[1]]
     
-    return xv,yv,sx,sy
+    return xv, yv, sx, sy
 
 
 # Solve for the x and y ranges to include in the plot, scale factors to 
@@ -852,7 +845,7 @@ def intersperse(list1,list2):
 
 
 class playerLines():
-    def __init__(self, gs, pnum, w, h):
+    def __init__(self, pnum, gs, w, h):
         self.pnum = pnum
         self.width = w
         self.height = h

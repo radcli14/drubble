@@ -455,9 +455,9 @@ class DrubbleGame(Widget):
         keyPush = ctrl2keyPush(gs)
         gs.setControl(keyPush=kvUpdateKey(keyPush, keycode, 1))
         if gs.gameMode == 1 and gs.showedSplash:
-            cycleModes(gs, stats)
+            cycleModes(gs, stats, engine)
         elif keycode[1] == 'spacebar':
-            cycleModes(gs, stats)
+            cycleModes(gs, stats, engine)
             self.actionButt.text = actionMSG[gs.gameMode]
         elif keycode[1] == 'escape':
             gs.gameMode = 1
@@ -467,7 +467,7 @@ class DrubbleGame(Widget):
                 Color(skyBlue[0], skyBlue[1], skyBlue[2], 1)
                 Rectangle(size=(self.width, self.height))
             self.add_option_buttons()
-            cycleModes(gs, stats)
+            cycleModes(gs, stats, engine)
         return True
     
     def _on_keyboard_up(self, keyboard, keycode):
@@ -478,17 +478,17 @@ class DrubbleGame(Widget):
     def on_touch_down(self, touch):
         loc = (touch.x, touch.y)
         if gs.gameMode == 1 and gs.showedSplash:
-            cycleModes(gs, stats)
+            cycleModes(gs, stats, engine)
         elif gs.gameMode == 2 and self.singleDrubbleButt.detect_touch(loc):
             p.nPlayer = 1
-            cycleModes(gs, stats)
+            cycleModes(gs, stats, engine)
         elif gs.gameMode == 2 and self.doubleDrubbleButt.detect_touch(loc):
             p.nPlayer = 2
-            cycleModes(gs, stats)
+            cycleModes(gs, stats, engine)
         elif gs.gameMode > 2:
             # Cycle through modes if touch above the halfway point
             if self.actionButt.detect_touch(loc):
-                cycleModes(gs, stats)
+                cycleModes(gs, stats, engine)
                 self.actionButt.text = actionMSG[gs.gameMode]
             if self.optionButt.detect_touch(loc):
                 gs.gameMode = 1
@@ -498,7 +498,7 @@ class DrubbleGame(Widget):
                     Color(skyBlue[0], skyBlue[1], skyBlue[2], 1)
                     Rectangle(size=(self.width, self.height))
                 self.add_option_buttons()
-                cycleModes(gs, stats)
+                cycleModes(gs, stats, engine)
 
             # Detect control inputs
             xy = touchStick(loc, self.moveStick)
@@ -602,9 +602,9 @@ class DrubbleGame(Widget):
         if 2 < gs.gameMode < 6:
             gs.setAngleSpeed()
         
-        gs.simStep(p, stats)
+        gs.simStep(p, gs, stats)
         if gs.gameMode > 2:
-            stats.update()
+            stats.update(gs)
 
             # Update score line
             self.time_label.update('Time - %11.1f' % gs.t)
