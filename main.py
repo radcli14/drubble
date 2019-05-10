@@ -13,16 +13,13 @@ from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.properties import NumericProperty, ListProperty, ObjectProperty, StringProperty
 from kivy.core.window import Window
-from kivy.vector import Vector
 from kivy.clock import Clock
 from kivy.graphics import *
 from kivy.core.audio import SoundLoader
-from kivy.config import Config
 
 # Execute drubbleFunc to get the supporting functions and classes
-engine = 'kivy'
-exec(open('drubbleFunc.py').read())
-#from drubbleFunc import *
+# engine = 'kivy'
+from drubbleFunc import *
 
 # Set the keyboard input and mouse defaults
 keyPush = np.zeros(8)
@@ -123,6 +120,44 @@ class MyBackground(Widget):
         overlap = 0.0
         self.bg_left0 = edge-(1-overlap)*self.img_w
         self.bg_left1 = edge-overlap*self.img_w
+
+
+def makeMarkers(self, p):
+    # xrng_r is the first and last markers on the screen, xrng_n is the
+    # number of markers
+    xrng_r = np.around(p.xrng, -1)
+    xrng_n = int((xrng_r[1] - xrng_r[0]) / 10.0) + 1
+
+    for k in range(self.nMarks):
+        self.yardMark[k].text = ''
+
+    for k in range(xrng_n):
+        # Current yardage
+        xr = int(xrng_r[0] + 10 * k)
+
+        # Lines
+        [start_x, start_y] = xy2p(xr, 0, p.m2p, p.po, self.width, self.height)
+        [end_x, end_y] = xy2p(xr, -1, p.m2p, p.po, self.width, self.height)
+        Color(white[0], white[1], white[2], 1)
+        Line(points=(start_x, start_y, end_x, end_y), width=1.5)
+
+        # Numbers
+        strxr = str(xr)  # String form of xr
+        fsize = min(24, int(p.m2p))  # Font size
+        xypos = (int(start_x + 5), self.height / 20 - fsize)  # Position of text
+        lsize = (len(strxr) * fsize / 2.0, fsize)  # Label size
+        if k >= self.nMarks:
+            self.yardMark.append(Label(font_size=fsize,
+                                       size=lsize, pos=xypos,
+                                       text=strxr, color=(1, 1, 1, 1),
+                                       halign='left', valign='top'))
+            self.add_widget(self.yardMark[k])
+            self.nMarks += 1
+        else:
+            self.yardMark[k].font_size = fsize
+            self.yardMark[k].size = lsize
+            self.yardMark[k].pos = xypos
+            self.yardMark[k].text = strxr
 
 
 class SplashScreen(Widget):
@@ -542,10 +577,10 @@ class DrubbleGame(Widget):
             self.add_game_widgets()            
 
         # ANGLE AND SPEED SETTINGS
-        if gs.gameMode > 2 and gs.gameMode < 6:
+        if 2 < gs.gameMode < 6:
             gs.setAngleSpeed()
         
-        gs.simStep()
+        gs.simStep(p, stats)
         if gs.gameMode > 2:
             stats.update()
 
@@ -565,13 +600,13 @@ class DrubbleGame(Widget):
         p1.update(gs)
         p2.update(gs)
         
-        if gs.gameMode>2:
+        if gs.gameMode > 2:
             xMean = (gs.xb+gs.xp[0])/2.0
             self.bg.update(xMean, gs.yb, self.width, self.height, m2p)
             self.moveStick.update_el(gs.ctrl[0], gs.ctrl[1])
             self.tiltStick.update_el(-gs.ctrl[3], gs.ctrl[2])
             self.myFace.update(gs.xp[0], gs.yp[0]+1.5*p.d, m2p, po,
-                               self.width,self.height)
+                               self.width, self.height)
             if p.nPlayer > 1:
                 self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, m2p, po,
                                      self.width, self.height)

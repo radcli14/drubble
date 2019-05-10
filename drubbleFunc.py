@@ -159,91 +159,53 @@ if engine == 'ista':
             line(start_x,start_y,end_x,end_y)
             fsize = min(24,int(m2p))
             text(str(int(xr)),font_name=p.MacsFavoriteFont,font_size=fsize,x=start_x-2,y=start_y+m2p/20.0,alignment=1)
-            
-if engine == 'kivy':
-    def makeMarkers(self,p):
-        
-        # xrng_r is the first and last markers on the screen, xrng_n is the 
-        # number of markers
-        xrng_r = np.around(p.xrng,-1)
-        xrng_n = int((xrng_r[1]-xrng_r[0])/10.0)+1
 
-        for k in range(self.nMarks):
-            self.yardMark[k].text = ''
-        
-        for k in range(xrng_n):
-            # Current yardage
-            xr = int(xrng_r[0]+10*k)
-            
-            # Lines
-            [start_x,start_y] = xy2p(xr, 0,p.m2p,p.po,self.width,self.height) 
-            [end_x,end_y]     = xy2p(xr,-1,p.m2p,p.po,self.width,self.height)     
-            Color(white[0],white[1],white[2],1)
-            Line(points=(start_x,start_y,end_x,end_y),width=1.5)
-            
-            # Numbers
-            strxr = str(xr)                               # String form of xr
-            fsize = min(24,int(p.m2p))                    # Font size
-            xypos = (int(start_x+5),self.height/20-fsize) # Position of text 
-            lsize = (len(strxr)*fsize/2.0,fsize)          # Label size
-            if k >= self.nMarks:
-                self.yardMark.append(Label(font_size=fsize,
-                                           size=lsize,pos=xypos,
-                                           text=strxr,color=(1,1,1,1),
-                                           halign='left',valign='top'))
-                self.add_widget(self.yardMark[k])
-                self.nMarks += 1
-            else:
-                self.yardMark[k].font_size = fsize
-                self.yardMark[k].size = lsize
-                self.yardMark[k].pos  = xypos
-                self.yardMark[k].text = strxr
 
 # Parameters
 class Parameters:
     # Game parameters
-    g   = 9.81 # Gravitational acceleration [m/s^2]
+    g = 9.81   # Gravitational acceleration [m/s^2]
     COR = 0.8  # Coefficient of restitution
-    rb  = 0.2  # Radius of the ball
+    rb = 0.2   # Radius of the ball
        
     # Player parameters
     mc = 50.0    # Mass of player [kg]
     mg = 2.0     # Mass of stool [kg]
-    m  = mc+mg   # Total mass [kg]
+    m = mc+mg    # Total mass [kg]
     x0 = 5.0     # Initial player position [m]
     y0 = 1.5     # Equilibrium position of player CG [m]
-    d  = 0.3     # Relative position from player CG to stool rotation axis [m]
+    d = 0.3      # Relative position from player CG to stool rotation axis [m]
     l0 = 1.5     # Equilibrium position of stool
     ax = 1.0     # Horizontal acceleration [g]
     Qx = ax*m*g  # Max horizontal force [N]
     Gx = 1.5     # Control gain on Qx
     fy = 0.8     # vertical frequency [Hz]
-    Ky = m*(fy*2*np.pi)**2 # Leg stiffness [N/m]
+    Ky = m*(fy*2*np.pi)**2  # Leg stiffness [N/m]
     Qy = Ky*0.3  # Leg strength [N], to be updated
     fl = 2.2     # Stool extension frequency
-    Kl = mg*(fl*2*np.pi)**2 # Arm stiffness [N/m]
+    Kl = mg*(fl*2*np.pi)**2  # Arm stiffness [N/m]
     Ql = Kl*0.3  # Arm strength [N]
     ft = 1.5     # Stool tilt frequency [Hz]
-    Kt = (mg*l0*l0)*(ft*2*np.pi)**2 # Tilt stiffnes [N-m/rad]
+    Kt = (mg*l0*l0)*(ft*2*np.pi)**2  # Tilt stiffnes [N-m/rad]
     Qt = 0.6*Kt  # Tilt strength [N-m]
     Gt = 0.8     # Control gain on Qt
     vx = 10.0    # Horizontal top speed [m/s]
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio
-    Cy = 2*zy*np.sqrt(Ky*m) # Vertical damping [N-s/m]
+    Cy = 2*zy*np.sqrt(Ky*m)  # Vertical damping [N-s/m]
     zl = 0.2     # Arm damping ratio
-    Cl = 2*zl*np.sqrt(Kl*m) # Arm damping [N-s/m]
+    Cl = 2*zl*np.sqrt(Kl*m)  # Arm damping [N-s/m]
     zt = 0.05    # Stool tilt damping ratio
-    Ct = 2.0*zl*np.sqrt(Kt*m) # Tilt damping [N-m-s/rad]
+    Ct = 2.0*zl*np.sqrt(Kt*m)  # Tilt damping [N-m-s/rad]
 
     # Initial states
     q0 = np.array([[0.0], [y0], [l0], [0.0]])
-    u0 = [0.0, rb, 0.0, 0.0, x0 , y0 , l0 ,   0.0, 0.0, 0.0, 0.0, 10.0,
-          0.0, y0, l0 , 0.0, 0.0, 0.0, 0.0, -10.0]
+    u0 = [0.0, rb, 0.0, 0.0, x0,   y0,  l0,   0.0, 0.0, 0.0, 0.0, 10.0,
+          0.0, y0, l0,  0.0, 0.0, 0.0, 0.0, -10.0]
 
     # Gameplay settings
-    userControlled = np.array([[True, True, True, True ],
-                               [False,False,False,False]]) 
+    userControlled = np.array([[True,   True,  True, True],
+                               [False, False, False,False]])
     nPlayer = 1
 
     # Stool parameters
@@ -503,12 +465,12 @@ class GameState:
             self.ctrl = [moveStick[0],moveStick[1],tiltStick[1],-tiltStick[0]]
         
     # Execute a simulation step of duration dt    
-    def simStep(self):
+    def simStep(self, p, stats):
         # Increment n 
         self.n += 1
         
         # Active player
-        pAct = np.mod(stats.stoolCount,p.nPlayer)
+        pAct = np.mod(stats.stoolCount, p.nPlayer)
         
         # Initial assumption, there was no event
         self.StoolBounce = False
@@ -522,27 +484,27 @@ class GameState:
         
         ## Integrate using Euler method
         # Initialize state variables
-        U = np.zeros((20,p.nEulerSteps+1))
-        U[:,0] = self.u
-        for k in range(1,p.nEulerSteps+1):
+        U = np.zeros((20, p.nEulerSteps+1))
+        U[:, 0] = self.u
+        for k in range(1, p.nEulerSteps+1):
             # Increment time
             self.t += dt/p.nEulerSteps
             
             # Calculate the derivatives of states w.r.t. time
-            dudt = PlayerAndStool(self.t,U[:,k-1])
+            dudt = PlayerAndStool(self.t, U[:, k-1], p, stats)
             
             # Calculate the states at the next step
-            U[:,k] = U[:,k-1] + np.array(dudt)*dt/p.nEulerSteps
+            U[:, k] = U[:, k-1] + np.array(dudt)*dt/p.nEulerSteps
             
             # Check for events
-            if (self.t-self.te)>0.1: 
-                if BallHitStool(self.t,U[:,k],pAct)<0.0:
+            if (self.t-self.te) > 0.1:
+                if BallHitStool(self.t, U[:, k], pAct) < 0.0:
                     self.StoolBounce = True
-                if BallHitFloor(self.t,U[:,k])<0.0:
+                if BallHitFloor(self.t, U[:, k]) < 0.0:
                     self.FloorBounce = True
                 if self.StoolBounce or self.FloorBounce:
                     self.te = self.t
-                    self.ue = U[:,k] 
+                    self.ue = U[:, k]
                     tBreak = k*dt/p.nEulerSteps
                     break 
         
@@ -551,13 +513,13 @@ class GameState:
             # Change ball states depending on if it was a stool or floor bounce
             if self.StoolBounce:
                 # Obtain the bounce velocity
-                vBounce,vRecoil = BallBounce(self,np.mod(stats.stoolCount,p.nPlayer))
+                vBounce, vRecoil = BallBounce(self, np.mod(stats.stoolCount, p.nPlayer))
                 self.ue[2] = vBounce[0]
                 self.ue[3] = vBounce[1]
                 
                 # Add  the recoil to the player
-                self.ue[8+pAct*8]  = self.ue[8+pAct*8] + vRecoil[0]
-                self.ue[9+pAct*8]  = self.ue[9]  + vRecoil[1]
+                self.ue[8+pAct*8] = self.ue[8+pAct*8] + vRecoil[0]
+                self.ue[9+pAct*8] = self.ue[9] + vRecoil[1]
                 self.ue[10+pAct*8] = self.ue[10] + vRecoil[2]
                 self.ue[11+pAct*8] = self.ue[11] + vRecoil[3]
                 
@@ -565,15 +527,14 @@ class GameState:
                 # Reverse direction of the ball
                 self.ue[2] = +p.COR*self.ue[2]
                 self.ue[3] = -p.COR*self.ue[3]     
-                
-         
+
             # Re-initialize from the event states
             self.t += dt-tBreak
-            dudt = PlayerAndStool(self.t,self.ue)
+            dudt = PlayerAndStool(self.t, self.ue, p, stats)
             self.u = self.ue + np.array(dudt)*(dt-tBreak)
             
             # Stuck
-            if np.sqrt(self.u[2]**2+self.u[3]**2)<p.dybtol and self.u[1]<1:
+            if np.sqrt(self.u[2]**2+self.u[3]**2) < p.dybtol and self.u[1] < 1:
                 self.Stuck = True
         else:   
             # Update states
@@ -596,7 +557,7 @@ class GameState:
             self.u[0] = p.u0[0]
             self.u[1] = p.u0[1]
         # Named states    
-        self   = varStates(self)
+        self = varStates(self)
 
     def setAngleSpeed(self):
         if self.gameMode == 4:
@@ -667,20 +628,21 @@ class GameScore:
         self.floorCount += gs.FloorBounce
         self.score = int(self.stoolDist*self.maxHeight*self.stoolCount)
 
+
 # Equation of Motion
-def PlayerAndStool(t,u):
+def PlayerAndStool(t, u, p, stats):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
     # Initialize output
     du = np.zeros(20)
-    du[0:4] = [dxb,dyb,0,-p.g] # Ball velocities and accelerations
+    du[0:4] = [dxb, dyb, 0, -p.g]  # Ball velocities and accelerations
     
     # Loop over players
     for k in range(p.nPlayer):
         # Create player state vectors
-        q  = np.matrix([[xp[k]],[yp[k]],[lp[k]],[tp[k]]])
-        dq = np.matrix([[dxp[k]],[dyp[k]],[dlp[k]],[dtp[k]]])
+        q = np.matrix([[xp[k]], [yp[k]], [lp[k]], [tp[k]]])
+        dq = np.matrix([[dxp[k]], [dyp[k]], [dlp[k]], [dtp[k]]])
     
         # Sines and cosines of the stool angle
         s = np.sin(tp[k])
@@ -700,17 +662,17 @@ def PlayerAndStool(t,u):
                        [2.0*p.mg*dtp[k]]])
         
         # Gravitational Force Vector
-        G = np.array([[ 0.0          ],
-                       [ p.m*p.g      ],
-                       [ p.mg*p.g*c   ],
-                       [-p.mg*p.g*lp[k]*s]])         
+        G = np.array([[ 0.0             ],
+                      [ p.m*p.g         ],
+                      [ p.mg*p.g*c      ],
+                      [-p.mg*p.g*lp[k]*s]])
     
         # Fix the time, if supplied as tspan vector
-        if np.size(t)>1:
+        if np.size(t) > 1:
             t = t[0]       
         
         # Control inputs form the generalized forces
-        Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = ControlLogic(t,u,k)
+        Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = control_logic(t, u, k, p, stats)
         
         # Equation of Motion
         RHS = -p.C.dot(dq)-p.K.dot(q)+p.K.dot(p.q0)-D-G+Q
@@ -722,31 +684,33 @@ def PlayerAndStool(t,u):
         # Output State Derivatives
         i1 = k*8+4
         i2 = k*8+12
-        du[i1:i2] = [dxp[k],dyp[k],dlp[k],dtp[k],ddq[0,0],ddq[1,0],ddq[2,0],ddq[3,0]] # Player velocities and accelerations
+        du[i1:i2] = [dxp[k], dyp[k], dlp[k], dtp[k], ddq[0, 0], ddq[1, 0], ddq[2, 0], ddq[3, 0]] # Player velocities and accelerations
     
     return du.tolist()
 
+
 def ctrl2keyPush(gs):
     keyPush = np.zeros(8)
-    if gs.ctrl[0]<0:
+    if gs.ctrl[0] < 0:
         keyPush[0] = -gs.ctrl[0]
-    elif gs.ctrl[0]>0:
+    elif gs.ctrl[0] > 0:
         keyPush[1] = gs.ctrl[0]
-    if gs.ctrl[1]>0:
+    if gs.ctrl[1] > 0:
         keyPush[2] = gs.ctrl[1]
-    elif gs.ctrl[1]<0:
+    elif gs.ctrl[1] < 0:
         keyPush[3] = -gs.ctrl[1]    
-    if gs.ctrl[2]>0:
+    if gs.ctrl[2] > 0:
         keyPush[4] = gs.ctrl[2]
-    elif gs.ctrl[2]<0:
+    elif gs.ctrl[2] < 0:
         keyPush[5] = -gs.ctrl[2]
-    if gs.ctrl[3]>0:
+    if gs.ctrl[3] > 0:
         keyPush[6] = gs.ctrl[3]
-    elif gs.ctrl[3]<0:
+    elif gs.ctrl[3] < 0:
         keyPush[7] = -gs.ctrl[3]  
     return keyPush
 
-def kvUpdateKey(keyPush,keycode,val):
+
+def kvUpdateKey(keyPush, keycode, val):
     if keycode[1] == 'w':
         keyPush[4] = val
     elif keycode[1] == 's':
@@ -765,7 +729,8 @@ def kvUpdateKey(keyPush,keycode,val):
         keyPush[1] = val
     return keyPush
 
-def ControlLogic(t,u,k):
+
+def control_logic(t, u, k, p, stats):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
