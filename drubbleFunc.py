@@ -1,164 +1,27 @@
 # Import modules
 import numpy as np
-engine = 'kivy'
-
-# Determine if you are running from a PC or from iPhone
-if engine == 'ista':
-    from scene import *
-    import motion
-    import ui
-    import scene_drawing
-    import sound   
+#engine = 'kivy'
 
 # Frame rate
 fs = 60
-
-# Window size
-if engine == 'kivy':
-    size = width, height = 1200, 675
-elif engine == 'ista':
-    width  = max(get_screen_size())
-    height = min(get_screen_size())
-    
-# Color definition    
-red       = (1,0,0)
-green     = (0,1,0)
-blue      = (0,0,1)
-darkBlue  = (0,0,128.0/255.0)
-white     = (1,1,1)
-gray      = (160.0/255.0,160.0/255.0,160.0/255.0)
-black     = (0,0,0)
-pink      = (1,100.0/255.0,100.0/255.0)
-skyBlue   = (135.0/255.0, 206.0/255.0, 235.0/255.0)
-darkGreen = (0,120.0/255.0,0)
-    
-# Convert physical coordinates to pixels
-def xy2p(x,y,m2p,po,w,h):
-    return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
-
-# Initiate pygame screen and message    
-if engine == 'ista':
-
-    def makeSplashScreen(obj):
-        if gs.showedSplash:
-            obj.background_color = skyBlue
-            image(splash,0,0,width,height)
-        else:
-            k = float(obj.kSplash)/255.0
-            obj.background_color = (skyBlue[0]*k,skyBlue[1]*k,skyBlue[2]*k)
-            image(splash,0,0,width,height)
-            if k>=1:
-                gs.showedSplash = True
-            
-    def linePlot(x,y,m2p,po,w,h,clr,wgt):
-        x,y = xy2p(x,y,m2p,po,w,h)
-        stroke(clr)
-        stroke_weight(wgt)
-        for k in range(1,np.size(x)):
-            line(x[k-1],y[k-1],x[k],y[k])
-    
-    def initStick(self,alph,sz,ap,ps):
-        Stick = SpriteNode('figs/crossHair.png',parent=self)
-        Stick.size = (sz,sz)
-        Stick.anchor_point = ap
-        Stick.position = ps
-        Stick.x = (ps[0]-ap[0]*sz,ps[0]+(1-ap[0])*sz)
-        Stick.y = (ps[1]-ap[1]*sz,ps[1]+(1-ap[1])*sz)
-        Stick.cntr = ((Stick.x[0]+Stick.x[1])/2,(Stick.y[0]+Stick.y[1])/2)
-        Stick.ctrl = (0,0)
-        Stick.id = None
-        
-        Aura = SpriteNode('shp:Circle')
-        #Aura = ShapeNode(circle,'white')
-        #circle = ui.Path.oval (0, 0, 0.5*sz,0.5*sz)
-        Aura.size = (0.5*sz,0.5*sz)
-        Aura.position = Stick.cntr
-        return Stick, Aura
-
-    def touchStick(loc,stick):
-        tCnd = [loc[0] > stick.x[0],
-                loc[0] < stick.x[1],
-                loc[1] > stick.y[0],
-                loc[1] < stick.y[1]]
-                    
-        # Touched inside the stick
-        if all(tCnd):
-            x = min(max(p.tsens*(2*(loc[0]-stick.x[0])/stick.size[0] - 1),-1),1)
-            y = min(max(p.tsens*(2*(loc[1]-stick.y[0])/stick.size[1] - 1),-1),1)
-            
-            mag = np.sqrt(x**2+y**2)
-            ang = np.around(4*np.arctan2(y,x)/np.pi)*np.pi/4
-            
-            return (mag*np.cos(ang),mag*np.sin(ang))
-        else:
-            return (0,0)    
-            
-     
-    def toggleVisibleSprites(self,boule):
-        if boule:
-            self.moveStick.alpha = 0.5
-            self.moveAura.alpha = 0.5
-            self.tiltStick.alpha = 0.5
-            self.tiltAura.alpha = 0.5
-            self.add_child(self.ball)
-            self.add_child(self.head)
-            if p.nPlayer>1:
-                self.add_child(self.head1)
-            self.time_label.alpha = 1
-            self.dist_label.alpha = 1
-            self.high_label.alpha = 1
-            self.boing_label.alpha = 1
-            self.score_label.alpha = 1
-        else:
-            self.moveStick.alpha = 0
-            self.moveAura.alpha = 0
-            self.tiltStick.alpha = 0
-            self.tiltAura.alpha = 0
-            self.ball.remove_from_parent()
-            self.head.remove_from_parent()
-            self.head1.remove_from_parent()
-            self.time_label.alpha = 0
-            self.dist_label.alpha = 0
-            self.high_label.alpha = 0
-            self.boing_label.alpha = 0
-            self.score_label.alpha = 0
-
-if engine == 'kivy':
-    def touchStick(loc,stick):
-        tCnd = [loc[0] > stick.ts_x[0],
-                loc[0] < stick.ts_x[1],
-                loc[1] > stick.ts_y[0],
-                loc[1] < stick.ts_y[1]]
-                    
-        # Touched inside the stick
-        if all(tCnd):
-            x = min(max(p.tsens*(2.0*(loc[0]-stick.ts_x[0])/stick.size[0] - 1),-1),1)
-            y = min(max(p.tsens*(2.0*(loc[1]-stick.ts_y[0])/stick.size[1] - 1),-1),1)
-            
-            mag = np.sqrt(x**2+y**2)
-            ang = np.around(4.0*np.arctan2(y,x)/np.pi)*np.pi/4
-            
-            return (mag*np.cos(ang),mag*np.sin(ang))
-        else:
-            return (0,0)    
-    
 dt = 1.0/fs
 
-if engine == 'ista':        
-    def makeMarkers(xrng,m2p,po):
-                
-        xrng_r = np.around(xrng,-1)
-        xrng_n = int((xrng_r[1]-xrng_r[0])/10.0)+1
-        for k in range(0,xrng_n):
-            xr = xrng_r[0]+10*k
-            
-            [start_x,start_y] = xy2p(xr, 0,m2p,po,width,height) 
-            [end_x,end_y]     = xy2p(xr,-1,m2p,po,width,height) 
-            stroke(white)
-            stroke_weight(1)
-            line(start_x,start_y,end_x,end_y)
-            fsize = min(24,int(m2p))
-            text(str(int(xr)),font_name=p.MacsFavoriteFont,font_size=fsize,x=start_x-2,y=start_y+m2p/20.0,alignment=1)
+# Color definition    
+red = (1, 0, 0)
+green = (0, 1, 0)
+blue = (0, 0, 1)
+darkBlue = (0, 0, 128.0/255.0)
+white = (1, 1, 1)
+gray = (160.0/255.0, 160.0/255.0, 160.0/255.0)
+black = (0, 0, 0)
+pink = (1, 100.0/255.0, 100.0/255.0)
+skyBlue = (135.0/255.0, 206.0/255.0, 235.0/255.0)
+darkGreen = (0, 120.0/255.0, 0)
+
+
+# Convert physical coordinates to pixels
+def xy2p(x, y, m2p, po, w, h):
+    return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
 
 
 # Parameters
@@ -384,7 +247,7 @@ def BallPredict(gs):
 
 class GameState:
     # Initiate the state variables as a list, and as individual variables
-    def __init__(self,u0):
+    def __init__(self, u0, engine):
         # Define Game Mode
         # 0 = Quit
         # 1 = Splash screen
@@ -570,8 +433,6 @@ class GameState:
             self.u[3] = self.startSpeed*np.sin(self.startAngle)
 
 
-gs = GameState(p.u0)
-
 def cycleModes(gs,stats):
     # Exit splash screen
     if gs.gameMode == 1:
@@ -603,6 +464,7 @@ def cycleModes(gs,stats):
         gs.__init__(p.u0)
         gs.gameMode = 3
         return
+
 
 class GameScore:
     # Initiate statistics as zeros
@@ -748,9 +610,9 @@ def control_logic(t, u, k, p, stats):
             Bx = gs.ctrl[0]
     else:
         Bx = p.Gx*ZEM
-        if Bx>1.0:
+        if Bx > 1.0:
             Bx = 1.0
-        elif (Bx<-1) or (gs.timeUntilBounce<0 and gs.timeUntilBounce>0):
+        elif (Bx < -1) or (gs.timeUntilBounce<0 and gs.timeUntilBounce > 0):
             Bx = -1.0
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
@@ -889,8 +751,9 @@ def ThirdPoint(P0,P1,L,SGN):
         P3 = [x3,y3]
     return P3
 
+
 # Solve for the vertices that make up the stick man and stool
-def stickDude(inp,k):
+def stickDude(inp, k):
     k8=k*8
     # Get the state variables
     if type(inp)==int:
@@ -959,55 +822,58 @@ def stickDude(inp,k):
     
     return xv,yv,sx,sy
 
+
 # Solve for the x and y ranges to include in the plot, scale factors to 
 # convert from meters to pixels, and pixel offset to the center line
 # Ratio refers to normalized positions in the window on the scale [0 0 1 1]
-def setRanges(u):
-    maxy  = 1.25*np.max([u[1],u[5]+p.d+u[6]*np.cos(u[7]),3.0])
+def setRanges(u, w):
+    maxy = 1.25*np.max([u[1], u[5]+p.d+u[6]*np.cos(u[7]), 3.0])
     diffx = 1.25*np.abs(u[0]-u[4])
-    midx  = (u[0]+u[4])/2.0
-    if diffx>2*(maxy+1):
+    midx = (u[0]+u[4])/2.0
+    if diffx > 2*(maxy+1):
         xrng = midx-0.5*diffx, midx+0.5*diffx
         yrng = -1.0, 0.5*(diffx-0.5)
     else:
         xrng = midx-maxy-0.5, midx+maxy+0.5
         yrng = -1.0, maxy
 
-    MeterToPixel = width/(xrng[1]-xrng[0])
+    MeterToPixel = w/(xrng[1]-xrng[0])
     MeterToRatio = 1.0/(xrng[1]-xrng[0])
-    PixelOffset  = (xrng[0]+xrng[1])/2.0*MeterToPixel
-    RatioOffset  = (xrng[0]+xrng[1])/2.0*MeterToRatio
+    PixelOffset = (xrng[0]+xrng[1])/2.0*MeterToPixel
+    RatioOffset = (xrng[0]+xrng[1])/2.0*MeterToRatio
     return xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset
- 
+
+
 def intersperse(list1,list2):    
     result = [None]*(len(list1)+len(list2))
     result[::2] = list1
     result[1::2] = list2    
     return result
 
+
 class playerLines():
-    def __init__(self,pnum):
+    def __init__(self, gs, pnum, w, h):
         self.pnum = pnum
-        self.width = width
-        self.height = height
-        self.update(gs)
+        self.width = w
+        self.height = h
+        self.update(gs, w)
         
-    def update(self,gs):
+    def update(self, gs, w):
         # Get the player stick figure
-        self.xv, self.yv, self.sx, self.sy = stickDude(gs,self.pnum)
+        self.xv, self.yv, self.sx, self.sy = stickDude(gs, self.pnum)
         
         # Get ranges for drawing the player and ball
-        self.xrng, self.yrng, self.m2p, self.po, m2r, ro = setRanges(gs.u)
+        self.xrng, self.yrng, self.m2p, self.po, m2r, ro = setRanges(gs.u, w)
         
         # Convert to pixels
-        self.player_x,self.player_y = xy2p(self.xv,self.yv,self.m2p,self.po,
-                                           self.width,self.height)
-        self.stool_x,self.stool_y = xy2p(self.sx,self.sy,self.m2p,self.po,
-                                         self.width,self.height)
+        self.player_x, self.player_y = xy2p(self.xv, self.yv, self.m2p, self.po,
+                                           self.width, self.height)
+        self.stool_x, self.stool_y = xy2p(self.sx, self.sy, self.m2p, self.po,
+                                         self.width, self.height)
         
         # Convert to format used for Kivy line
-        self.player = intersperse(self.player_x,self.player_y)
-        self.stool  = intersperse(self.stool_x,self.stool_y)
+        self.player = intersperse(self.player_x, self.player_y)
+        self.stool = intersperse(self.stool_x, self.stool_y)
 
 
 # Below this line are the functions I created when I started demoDrubble,

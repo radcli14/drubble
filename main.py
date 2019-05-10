@@ -6,6 +6,7 @@ Created on Tue Mar  5 21:18:17 2019
 @author: radcli14
 """
 # Import the Kivy modules
+import numpy as np
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
@@ -18,11 +19,14 @@ from kivy.graphics import *
 from kivy.core.audio import SoundLoader
 
 # Execute drubbleFunc to get the supporting functions and classes
-# engine = 'kivy'
+engine = 'kivy'
 from drubbleFunc import *
 
 # Set the keyboard input and mouse defaults
 keyPush = np.zeros(8)
+
+# Initialize Game State
+gs = GameState(p.u0, engine)
 
 # Initialize stats
 stats = GameScore()
@@ -41,8 +45,8 @@ width, height = Window.size
 Window.icon = 'a/icon.png'
 
 # Initialize the players
-p1 = playerLines(0)
-p2 = playerLines(1)
+p1 = playerLines(0, gs, width, height)
+p2 = playerLines(1, gs, width, height)
 
 # This is the text used in the upper right button
 actionMSG = ['', '', '', '    Begin', 'Set Angle', 'Set Speed', '  Restart']
@@ -234,7 +238,26 @@ class Ball(Widget):
 
 # Returns the center_x, center_y, and diameter of the stick
 def get_stick_pos(ch):
-    return ch.pos[0]+ch.size[0]/2.0, ch.pos[1]+ch.size[1]/2.0, ch.size[0] 
+    return ch.pos[0]+ch.size[0]/2.0, ch.pos[1]+ch.size[1]/2.0, ch.size[0]
+
+
+def touchStick(loc, stick):
+    tCnd = [loc[0] > stick.ts_x[0],
+            loc[0] < stick.ts_x[1],
+            loc[1] > stick.ts_y[0],
+            loc[1] < stick.ts_y[1]]
+
+    # Touched inside the stick
+    if all(tCnd):
+        x = min(max(p.tsens * (2.0 * (loc[0] - stick.ts_x[0]) / stick.size[0] - 1), -1), 1)
+        y = min(max(p.tsens * (2.0 * (loc[1] - stick.ts_y[0]) / stick.size[1] - 1), -1), 1)
+
+        mag = np.sqrt(x ** 2 + y ** 2)
+        ang = np.around(4.0 * np.arctan2(y, x) / np.pi) * np.pi / 4
+
+        return (mag * np.cos(ang), mag * np.sin(ang))
+    else:
+        return (0, 0)
 
 
 class stick(Widget):
@@ -591,13 +614,13 @@ class DrubbleGame(Widget):
             self.score_label.update('Score - %10.0f' % stats.score)
 
         # Player drawing settings        
-        xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
+        xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u, self.width)
             
         p1.width = p2.width = self.width
         p1.height = p2.height = self.height
         
-        p1.update(gs)
-        p2.update(gs)
+        p1.update(gs, self.width)
+        p2.update(gs, self.width)
         
         if gs.gameMode > 2:
             xMean = (gs.xb+gs.xp[0])/2.0

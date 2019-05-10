@@ -1,6 +1,119 @@
 # Execute drubbleFunc to get the supporting functions and classes
 engine = 'ista'
+from scene import *
+import motion
+import ui
+import scene_drawing
+import sound
 exec(open('./drubbleFunc.py').read())
+
+# Window size
+width = max(get_screen_size())
+height = min(get_screen_size())
+
+def makeSplashScreen(obj):
+    if gs.showedSplash:
+        obj.background_color = skyBlue
+        image(splash, 0, 0, width, height)
+    else:
+        k = float(obj.kSplash) / 255.0
+        obj.background_color = (skyBlue[0] * k, skyBlue[1] * k, skyBlue[2] * k)
+        image(splash, 0, 0, width, height)
+        if k >= 1:
+            gs.showedSplash = True
+
+
+def linePlot(x, y, m2p, po, w, h, clr, wgt):
+    x, y = xy2p(x, y, m2p, po, w, h)
+    stroke(clr)
+    stroke_weight(wgt)
+    for k in range(1, np.size(x)):
+        line(x[k - 1], y[k - 1], x[k], y[k])
+
+
+def initStick(self, alph, sz, ap, ps):
+    Stick = SpriteNode('figs/crossHair.png', parent=self)
+    Stick.size = (sz, sz)
+    Stick.anchor_point = ap
+    Stick.position = ps
+    Stick.x = (ps[0] - ap[0] * sz, ps[0] + (1 - ap[0]) * sz)
+    Stick.y = (ps[1] - ap[1] * sz, ps[1] + (1 - ap[1]) * sz)
+    Stick.cntr = ((Stick.x[0] + Stick.x[1]) / 2, (Stick.y[0] + Stick.y[1]) / 2)
+    Stick.ctrl = (0, 0)
+    Stick.id = None
+
+    Aura = SpriteNode('shp:Circle')
+    # Aura = ShapeNode(circle,'white')
+    # circle = ui.Path.oval (0, 0, 0.5*sz,0.5*sz)
+    Aura.size = (0.5 * sz, 0.5 * sz)
+    Aura.position = Stick.cntr
+    return Stick, Aura
+
+
+def touchStick(loc, stick):
+    tCnd = [loc[0] > stick.x[0],
+            loc[0] < stick.x[1],
+            loc[1] > stick.y[0],
+            loc[1] < stick.y[1]]
+
+    # Touched inside the stick
+    if all(tCnd):
+        x = min(max(p.tsens * (2 * (loc[0] - stick.x[0]) / stick.size[0] - 1), -1), 1)
+        y = min(max(p.tsens * (2 * (loc[1] - stick.y[0]) / stick.size[1] - 1), -1), 1)
+
+        mag = np.sqrt(x ** 2 + y ** 2)
+        ang = np.around(4 * np.arctan2(y, x) / np.pi) * np.pi / 4
+
+        return (mag * np.cos(ang), mag * np.sin(ang))
+    else:
+        return (0, 0)
+
+
+def toggleVisibleSprites(self, boule):
+    if boule:
+        self.moveStick.alpha = 0.5
+        self.moveAura.alpha = 0.5
+        self.tiltStick.alpha = 0.5
+        self.tiltAura.alpha = 0.5
+        self.add_child(self.ball)
+        self.add_child(self.head)
+        if p.nPlayer > 1:
+            self.add_child(self.head1)
+        self.time_label.alpha = 1
+        self.dist_label.alpha = 1
+        self.high_label.alpha = 1
+        self.boing_label.alpha = 1
+        self.score_label.alpha = 1
+    else:
+        self.moveStick.alpha = 0
+        self.moveAura.alpha = 0
+        self.tiltStick.alpha = 0
+        self.tiltAura.alpha = 0
+        self.ball.remove_from_parent()
+        self.head.remove_from_parent()
+        self.head1.remove_from_parent()
+        self.time_label.alpha = 0
+        self.dist_label.alpha = 0
+        self.high_label.alpha = 0
+        self.boing_label.alpha = 0
+        self.score_label.alpha = 0
+
+def makeMarkers(xrng, m2p, po):
+
+    xrng_r = np.around(xrng, -1)
+    xrng_n = int((xrng_r[1] - xrng_r[0]) / 10.0) + 1
+    for k in range(0, xrng_n):
+        xr = xrng_r[0] + 10 * k
+
+        [start_x, start_y] = xy2p(xr, 0, m2p, po, width, height)
+        [end_x, end_y] = xy2p(xr, -1, m2p, po, width, height)
+        stroke(white)
+        stroke_weight(1)
+        line(start_x, start_y, end_x, end_y)
+        fsize = min(24, int(m2p))
+        text(str(int(xr)), font_name=p.MacsFavoriteFont, font_size=fsize, x=start_x - 2,
+             y=start_y + m2p / 20.0, alignment=1)
+
 
 # Set the keyboard input and mouse defaults
 keyPush = np.zeros(8)
