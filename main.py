@@ -21,7 +21,8 @@ from kivy.config import Config
 
 # Execute drubbleFunc to get the supporting functions and classes
 engine = 'kivy'
-exec(open('./drubbleFunc.py').read())
+exec(open('drubbleFunc.py').read())
+#from drubbleFunc import *
 
 # Set the keyboard input and mouse defaults
 keyPush = np.zeros(8)
@@ -36,9 +37,8 @@ stats = GameScore()
 
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
-Window.size = (width, height)
-#width, height = Window.size
-#leftAlign = OptionProperty('left')
+#Window.size = (width, height)
+width, height = Window.size
 
 # Set the icon (neither are working...)
 #Config.window_icon = 'a/icon.png'
@@ -267,7 +267,7 @@ class ScoreLabel(Widget):
     label_size = NumericProperty(int(0.015*width))
 
     def __init__(self, **kwargs):
-        super(ScoreLabel, self).__init__(**kwargs)
+        super(ScoreLabel, self).__init__()
         self.label_text = kwargs['text']
         self.label_left = kwargs['left']
         self.width = width

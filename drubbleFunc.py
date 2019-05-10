@@ -1,5 +1,6 @@
 # Import modules
 import numpy as np
+engine = 'kivy'
 
 # Determine if you are running from a PC or from iPhone
 if engine == 'ista':
