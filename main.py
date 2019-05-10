@@ -38,7 +38,6 @@ Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
 width, height = Window.size
 
 # Set the icon (neither are working...)
-#Config.window_icon = 'a/icon.png'
 Window.icon = 'a/icon.png'
 
 # Initialize the players

@@ -16,17 +16,17 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,wav,ttf
 
 # (list) List of inclusions using pattern matching
-source.include_patterns = a/*.png, a/*.wav, fonts/*.ttf
+source.include_patterns = a/*.png,a/*.wav,fonts/*.ttf
 
 # (list) Source files to exclude (let empty to not exclude anything)
 #source.exclude_exts = spec
 
 # (list) List of directory to exclude (let empty to not exclude anything)
-source.exclude_dirs = tests, bin, audio, build, dc, dist, figs, photos, venv, venv2, fonts
+source.exclude_dirs = tests,bin,audio,build,dc,dist,figs,photos,venv,venv2,fonts
 
 # (list) List of exclusions using pattern matching
 #source.exclude_patterns = license,images/*/*.jpg
-source.exclude_patterrns = dRuBbLe.py, dRuBbLe_x.playground, demoDrubble.py
+source.exclude_patterrns = dRuBbLe.py,dRuBbLe_x.playground,demoDrubble.py
 
 # (str) Application versioning (method 1)
 version = 0.1
@@ -47,7 +47,7 @@ requirements = python3,kivy,numpy
 #garden_requirements =
 
 # (str) Presplash of the application
-#presplash.filename = %(source.dir)s/data/presplash.png
+presplash.filename = a/badI.png
 
 # (str) Icon of the application
 icon.filename = a/icon.png
