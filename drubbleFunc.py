@@ -1,6 +1,5 @@
 # Import modules
 import numpy as np
-#engine = 'kivy'
 
 # Frame rate
 fs = 60
@@ -104,26 +103,27 @@ class Parameters:
     
     # Parameter settings I'm using to try to improve running speed
     invM = np.linalg.inv(M)
-    linearMass  = False
-    nEulerSteps = 4
-    timeRun     = False
+    linearMass = False
+    nEulerSteps = 2
+    timeRun = False
     
     # Font settings
-    MacsFavoriteFont = 'Papyrus' # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
+    MacsFavoriteFont = 'Papyrus'  # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Color settings
-    playerColor = (darkGreen,red)
-    stoolColor  = (white,black)
+    playerColor = (darkGreen, red)
+    stoolColor = (white, black)
 
 
 p = Parameters()
 
+
 class DrumBeat:
     def __init__(self):
-        self.n        = 0
-        self.bpm      = 105.0 # Beats per minute
-        self.npb      = np.around(fs*60.0/4.0/self.bpm) # frames per beat
-        self.nps      = 16.0*self.npb # frames per sequence
+        self.n = 0
+        self.bpm = 105.0 # Beats per minute
+        self.npb = np.around(fs*60.0/4.0/self.bpm) # frames per beat
+        self.nps = 16.0*self.npb # frames per sequence
         #self.sequence = [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
         #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
         #                 [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
@@ -148,7 +148,7 @@ class DrumBeat:
         self.randFactor = 1.0
        
     def play_ista(self):    
-        whichSequence   = np.floor(self.n/self.nps)
+        whichSequence = np.floor(self.n/self.nps)
         whereInSequence = self.n-whichSequence*self.nps
         beat = whereInSequence/self.npb
         numDrums = max(1,gs.gameMode-2)
@@ -157,7 +157,7 @@ class DrumBeat:
             for k in range(numDrums):
                 if self.sequence[k][b] or np.random.uniform()>self.randFactor:
                     sound.play_effect(self.drum[k])
-        self.n+=1
+        self.n += 1
                     
     def play_kivy(self):
         for k in range(self.m):
@@ -165,38 +165,40 @@ class DrumBeat:
                 self.drum[k].play() 
                 
         self.n += 1
-        if self.n>=16: 
+        if self.n >= 16:
             self.n = 0            
-    
+
+
 def varStates(obj):
-    obj.xb  = obj.u[0]  # Ball distance [m]
-    obj.yb  = obj.u[1]  # Ball height [m]
-    obj.dxb = obj.u[2]  # Ball horizontal speed [m]
-    obj.dyb = obj.u[3]  # Ball vertical speed [m]
-    obj.xp  = obj.u[4:13:8]  # Player distance [m]
-    obj.yp  = obj.u[5:14:8]  # Player height [m]
-    obj.lp  = obj.u[6:15:8]  # Stool extension [m]
-    obj.tp  = obj.u[7:16:8]  # Stool tilt [rad]
-    obj.dxp = obj.u[8:17:8]  # Player horizontal speed [m/s]
-    obj.dyp = obj.u[9:18:8]  # Player vertical speed [m/s]
-    obj.dlp = obj.u[10:19:8] # Stool extension rate [m/s]
-    obj.dtp = obj.u[11:20:8] # Stool tilt rate [rad/s]
+    obj.xb = obj.u[0]         # Ball distance [m]
+    obj.yb = obj.u[1]         # Ball height [m]
+    obj.dxb = obj.u[2]        # Ball horizontal speed [m]
+    obj.dyb = obj.u[3]        # Ball vertical speed [m]
+    obj.xp = obj.u[4:13:8]    # Player distance [m]
+    obj.yp = obj.u[5:14:8]    # Player height [m]
+    obj.lp = obj.u[6:15:8]    # Stool extension [m]
+    obj.tp = obj.u[7:16:8]    # Stool tilt [rad]
+    obj.dxp = obj.u[8:17:8]   # Player horizontal speed [m/s]
+    obj.dyp = obj.u[9:18:8]   # Player vertical speed [m/s]
+    obj.dlp = obj.u[10:19:8]  # Stool extension rate [m/s]
+    obj.dtp = obj.u[11:20:8]  # Stool tilt rate [rad/s]
     return obj
+
 
 def unpackStates(u):
     # xp, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
-    xb  = u[0]  # Ball distance [m]
-    yb  = u[1]  # Ball height [m]
-    dxb = u[2]  # Ball horizontal speed [m]
-    dyb = u[3]  # Ball vertical speed [m]
-    xp  = u[4:13:8]  # Player distance [m]
-    yp  = u[5:14:8]  # Player height [m]
-    lp  = u[6:15:8]  # Stool extension [m]
-    tp  = u[7:16:8]  # Stool tilt [rad]
-    dxp = u[8:17:8]  # Player horizontal speed [m/s]
-    dyp = u[9:18:8]  # Player vertical speed [m/s]
-    dlp = u[10:19:8] # Stool extension rate [m/s]
-    dtp = u[11:20:8] # Stool tilt rate [rad/s]
+    xb = u[0]         # Ball distance [m]
+    yb = u[1]         # Ball height [m]
+    dxb = u[2]        # Ball horizontal speed [m]
+    dyb = u[3]        # Ball vertical speed [m]
+    xp = u[4:13:8]    # Player distance [m]
+    yp = u[5:14:8]    # Player height [m]
+    lp = u[6:15:8]    # Stool extension [m]
+    tp = u[7:16:8]    # Stool tilt [rad]
+    dxp = u[8:17:8]   # Player horizontal speed [m/s]
+    dyp = u[9:18:8]   # Player vertical speed [m/s]
+    dlp = u[10:19:8]  # Stool extension rate [m/s]
+    dtp = u[11:20:8]  # Stool tilt rate [rad/s]
     return xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp
 
 
@@ -234,7 +236,7 @@ def BallPredict(gs):
     yTraj = gs.yb + gs.dyb * T - 0.5 * p.g * T ** 2
 
     # Time until event
-    timeUntilBounce = tI;
+    timeUntilBounce = tI
     tI = timeUntilBounce + gs.t
 
     # Output variables
@@ -294,14 +296,14 @@ class GameState:
         self.Stuck = False
          
     # Get control input from external source
-    def setControl(self,keyPush=np.zeros(8),
-                   moveStick=[0,0],tiltStick=[0,0],
-                   g=[0,0,0],a=[0,0,0]):
+    def setControl(self, keyPush=np.zeros(8),
+                   moveStick=[0,0], tiltStick=[0,0],
+                   g=[0, 0, 0], a=[0, 0, 0]):
         
         if self.ctrlFunc == 0:
             # Key press control
-            self.ctrl = [keyPush[1]-keyPush[0],keyPush[2]-keyPush[3],
-                         keyPush[4]-keyPush[5],keyPush[6]-keyPush[7]]
+            self.ctrl = [keyPush[1]-keyPush[0], keyPush[2]-keyPush[3],
+                         keyPush[4]-keyPush[5], keyPush[6]-keyPush[7]]
             
         elif self.ctrlFunc == 1:
             # Motion control scale factors
@@ -311,21 +313,21 @@ class GameState:
 
             # Run left/right
             if g[1]>gThreshold:
-                self.ctrl[0] = -min(slope*(g[1]-gThreshold),1)
+                self.ctrl[0] = -min(slope*(g[1]-gThreshold), 1)
             elif g[1]<-gThreshold:
-                self.ctrl[0] = -max(slope*(g[1]+gThreshold),-1)
+                self.ctrl[0] = -max(slope*(g[1]+gThreshold), -1)
             else:
                 self.ctrl[0]
                 
             # Push up/down    
             if a[1]>0:
-                self.ctrl[1] = min(aScale*a[1],1)
+                self.ctrl[1] = min(aScale*a[1], 1)
             else:
-                self.ctrl[1] = max(aScale*a[1],-1)
+                self.ctrl[1] = max(aScale*a[1], -1)
                     
         elif self.ctrlFunc == 2:
             # Virtual stick control
-            self.ctrl = [moveStick[0],moveStick[1],tiltStick[1],-tiltStick[0]]
+            self.ctrl = [moveStick[0], moveStick[1], tiltStick[1], -tiltStick[0]]
         
     # Execute a simulation step of duration dt    
     def simStep(self, p, gs, stats):
@@ -341,11 +343,11 @@ class GameState:
         
         # Prevent event detection if there was already one within 0.1 seconds, 
         # or if the ball is far from the stool or ground
-        L = BallHitStool(self.t,self.u,pAct)       # Distance to stool
-        vBall = np.array((self.dxb,self.dyb)) # Velocity
-        sBall = np.linalg.norm(vBall)         # Speed
+        L = BallHitStool(self.t, self.u,pAct)   # Distance to stool
+        vBall = np.array((self.dxb, self.dyb))  # Velocity
+        sBall = np.linalg.norm(vBall)           # Speed
         
-        ## Integrate using Euler method
+        # Integrate using Euler method
         # Initialize state variables
         U = np.zeros((20, p.nEulerSteps+1))
         U[:, 0] = self.u
@@ -368,7 +370,7 @@ class GameState:
                 if self.StoolBounce or self.FloorBounce:
                     self.te = self.t
                     self.ue = U[:, k]
-                    tBreak = k*dt/p.nEulerSteps
+                    tBreak = k * dt / p.nEulerSteps
                     break 
         
         # If an event occured, increment the counter, otherwise continue
@@ -511,23 +513,23 @@ def PlayerAndStool(t, u, p, gs, stats):
         c = np.cos(tp[k])
         
         # Mass Matrix
-        if not p.linearMass:     
-            M = np.array([[   p.m       ,    0        ,-p.mg*s,-p.mg*lp[k]*c ],
-                           [    0        ,   p.m       , p.mg*c,-p.mg*lp[k]*s ],
-                           [-p.mg*s      ,  p.mg*c     , p.mg  ,   0          ],
-                           [-p.mg*lp[k]*c,-p.mg*lp[k]*s,   0   , p.mg*lp[k]**2]])
+        #if not p.linearMass:
+        #    M = np.array([[   p.m       ,    0        ,-p.mg*s,-p.mg*lp[k]*c ],
+        #                   [    0        ,   p.m       , p.mg*c,-p.mg*lp[k]*s ],
+        #                   [-p.mg*s      ,  p.mg*c     , p.mg  ,   0          ],
+        #                   [-p.mg*lp[k]*c,-p.mg*lp[k]*s,   0   , p.mg*lp[k]**2]])
         
         # Centripetal [0,1] and Coriolis [3] Force Vector
-        D = np.array([[-p.mg*dlp[k]*dtp[k]*c + p.mg*lp[k]*dtp[k]*dtp[k]*s],
-                       [-p.mg*dlp[k]*dtp[k]*s +p.mg*lp[k]*dtp[k]*dtp[k]*c], 
-                       [0.0],
-                       [2.0*p.mg*dtp[k]]])
+        #D = np.array([[-p.mg*dlp[k]*dtp[k]*c + p.mg*lp[k]*dtp[k]*dtp[k]*s],
+        #               [-p.mg*dlp[k]*dtp[k]*s +p.mg*lp[k]*dtp[k]*dtp[k]*c],
+        #               [0.0],
+        #               [2.0*p.mg*dtp[k]]])
         
         # Gravitational Force Vector
-        G = np.array([[ 0.0             ],
-                      [ p.m*p.g         ],
-                      [ p.mg*p.g*c      ],
-                      [-p.mg*p.g*lp[k]*s]])
+        #G = np.array([[ 0.0             ],
+        #              [ p.m*p.g         ],
+        #              [ p.mg*p.g*c      ],
+        #              [-p.mg*p.g*lp[k]*s]])
     
         # Fix the time, if supplied as tspan vector
         if np.size(t) > 1:
@@ -537,16 +539,23 @@ def PlayerAndStool(t, u, p, gs, stats):
         Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = control_logic(t, u, k, p, gs, stats)
         
         # Equation of Motion
-        RHS = -p.C.dot(dq)-p.K.dot(q)+p.K.dot(p.q0)-D-G+Q
-        if p.linearMass:
-            ddq = p.invM.dot(RHS)
-        else:
-            ddq = np.linalg.inv(M).dot(RHS)
-        
+        #RHS = -p.C.dot(dq)-p.K.dot(q)+p.K.dot(p.q0)-D-G+Q
+        #if p.linearMass:
+        #    ddq = p.invM.dot(RHS)
+        #else:
+        #    ddq = np.linalg.inv(M).dot(RHS)
+
+        # Equations of motion, created in the Jupyter notebook eom.ipynb
+        ddq = [None, None, None, None]
+        ddq[0] = 1.0*(-p.Cl*dlp[k]*lp[k]*s - p.Ct*dtp[k]*c - p.Cx*dxp[k]*lp[k] + p.Kl*p.l0*lp[k]*s - p.Kl*lp[k]**2*s - p.Kt*tp[k]*c + Q[2]*lp[k]*s + Q[3]*c + Q[0]*lp[k])/(p.mc*lp[k])
+        ddq[1] = (-1.0*(p.Ct*dtp[k] + 1.0*p.Kt*tp[k] - Q[3] + 2.0*dlp[k]*dtp[k]*p.mg*lp[k] - p.g*p.mg*lp[k]*s)*s + 1.0*(p.Cl*dlp[k] - p.Kl*p.l0 + p.Kl*lp[k] - Q[2] - dtp[k]**2*p.mg*lp[k] + p.g*p.mg*c)*lp[k]*c - 1.0*(1.0*p.Cy*dyp[k] - 1.0*p.Ky*p.y0 + 1.0*p.Ky*yp[k] - 1.0*Q[1] - 2.0*dlp[k]*dtp[k]*p.mg*s - 1.0*dtp[k]**2*p.mg*lp[k]*c + 1.0*p.g*p.mc + 1.0*p.g*p.mg)*lp[k])/(p.mc*lp[k])
+        ddq[2] = -1.0*p.Cl*dlp[k]/p.mg - 1.0*p.Cl*dlp[k]/p.mc - 1.0*p.Cx*dxp[k]*s/p.mc + 1.0*p.Cy*dyp[k]*c/p.mc + 1.0*p.Kl*p.l0/p.mg + 1.0*p.Kl*p.l0/p.mc - 1.0*p.Kl*lp[k]/p.mg - 1.0*p.Kl*lp[k]/p.mc - 1.0*p.Ky*p.y0*c/p.mc + 1.0*p.Ky*yp[k]*c/p.mc + 1.0*Q[2]/p.mg + 1.0*Q[2]/p.mc + 1.0*Q[0]*s/p.mc - 1.0*Q[1]*c/p.mc + 1.0*dtp[k]**2*lp[k]
+        ddq[3] = (-1.0*p.Ct*dtp[k]*p.mc - 1.0*p.Ct*dtp[k]*p.mg - 1.0*p.Cx*dxp[k]*p.mg*lp[k]*c - 1.0*p.Cy*dyp[k]*p.mg*lp[k]*s - 1.0*p.Kt*p.mc*tp[k] - 1.0*p.Kt*p.mg*tp[k] + 1.0*p.Ky*p.mg*p.y0*lp[k]*s - 1.0*p.Ky*p.mg*lp[k]*yp[k]*s + 1.0*Q[3]*p.mc + 1.0*Q[3]*p.mg + 1.0*Q[0]*p.mg*lp[k]*c + 1.0*Q[1]*p.mg*lp[k]*s - 2.0*dlp[k]*dtp[k]*p.mc*p.mg*lp[k])/(p.mc*p.mg*lp[k]**2)
+
         # Output State Derivatives
         i1 = k*8+4
         i2 = k*8+12
-        du[i1:i2] = [dxp[k], dyp[k], dlp[k], dtp[k], ddq[0, 0], ddq[1, 0], ddq[2, 0], ddq[3, 0]] # Player velocities and accelerations
+        du[i1:i2] = [dxp[k], dyp[k], dlp[k], dtp[k], ddq[0], ddq[1], ddq[2], ddq[3]]  # Player velocities and accelerations
     
     return du.tolist()
 
