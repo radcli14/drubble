@@ -228,9 +228,13 @@ def linspace(start, stop, n):
 
 
 def zeros(ztup):
-    z = [0 for i in xrange(ztup[1])]
-    Z = [z for i in xrange(ztup[0])]
-    return Z
+    try:
+        z = [0 for i in xrange(ztup[1])]
+        Z = [z for i in xrange(ztup[0])]
+        return Z
+    except:
+        z = [0 for i in xrange(ztup)]
+        return z
 
 
 # Predict motion of the ball
@@ -536,41 +540,41 @@ def PlayerAndStool(t, u, p, gs, stats):
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
     # Initialize output
-    du = np.zeros(20)
+    du = zeros(20)
     du[0:4] = [dxb, dyb, 0, -p.g]  # Ball velocities and accelerations
     
     # Loop over players
     for k in range(p.nPlayer):
         # Create player state vectors
-        q = np.matrix([[xp[k]], [yp[k]], [lp[k]], [tp[k]]])
-        dq = np.matrix([[dxp[k]], [dyp[k]], [dlp[k]], [dtp[k]]])
+        # q = np.matrix([[xp[k]], [yp[k]], [lp[k]], [tp[k]]])
+        # dq = np.matrix([[dxp[k]], [dyp[k]], [dlp[k]], [dtp[k]]])
     
         # Sines and cosines of the stool angle
-        s = np.sin(tp[k])
-        c = np.cos(tp[k])
+        s = sin(tp[k])
+        c = cos(tp[k])
         
         # Mass Matrix
-        #if not p.linearMass:
-        #    M = np.array([[   p.m       ,    0        ,-p.mg*s,-p.mg*lp[k]*c ],
-        #                   [    0        ,   p.m       , p.mg*c,-p.mg*lp[k]*s ],
-        #                   [-p.mg*s      ,  p.mg*c     , p.mg  ,   0          ],
-        #                   [-p.mg*lp[k]*c,-p.mg*lp[k]*s,   0   , p.mg*lp[k]**2]])
+        # if not p.linearMass:
+        #     M = np.array([[   p.m       ,    0        ,-p.mg*s,-p.mg*lp[k]*c ],
+        #                    [    0        ,   p.m       , p.mg*c,-p.mg*lp[k]*s ],
+        #                    [-p.mg*s      ,  p.mg*c     , p.mg  ,   0          ],
+        #                    [-p.mg*lp[k]*c,-p.mg*lp[k]*s,   0   , p.mg*lp[k]**2]])
         
         # Centripetal [0,1] and Coriolis [3] Force Vector
-        #D = np.array([[-p.mg*dlp[k]*dtp[k]*c + p.mg*lp[k]*dtp[k]*dtp[k]*s],
-        #               [-p.mg*dlp[k]*dtp[k]*s +p.mg*lp[k]*dtp[k]*dtp[k]*c],
-        #               [0.0],
-        #               [2.0*p.mg*dtp[k]]])
+        # D = np.array([[-p.mg*dlp[k]*dtp[k]*c + p.mg*lp[k]*dtp[k]*dtp[k]*s],
+        #                [-p.mg*dlp[k]*dtp[k]*s +p.mg*lp[k]*dtp[k]*dtp[k]*c],
+        #                [0.0],
+        #                [2.0*p.mg*dtp[k]]])
         
         # Gravitational Force Vector
-        #G = np.array([[ 0.0             ],
-        #              [ p.m*p.g         ],
-        #              [ p.mg*p.g*c      ],
-        #              [-p.mg*p.g*lp[k]*s]])
+        # G = np.array([[ 0.0             ],
+        #               [ p.m*p.g         ],
+        #               [ p.mg*p.g*c      ],
+        #               [-p.mg*p.g*lp[k]*s]])
     
         # Fix the time, if supplied as tspan vector
-        if np.size(t) > 1:
-            t = t[0]       
+        # if np.size(t) > 1:
+        #     t = t[0]
         
         # Control inputs form the generalized forces
         Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = control_logic(t, u, k, p, gs, stats)
@@ -594,11 +598,11 @@ def PlayerAndStool(t, u, p, gs, stats):
         i2 = k*8+12
         du[i1:i2] = [dxp[k], dyp[k], dlp[k], dtp[k], ddq[0], ddq[1], ddq[2], ddq[3]]  # Player velocities and accelerations
     
-    return du.tolist()
+    return du
 
 
 def ctrl2keyPush(gs):
-    keyPush = np.zeros(8)
+    keyPush = zeros(8)
     if gs.ctrl[0] < 0:
         keyPush[0] = -gs.ctrl[0]
     elif gs.ctrl[0] > 0:
