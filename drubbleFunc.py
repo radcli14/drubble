@@ -1,6 +1,6 @@
 # Import modules
 import numpy as np
-from math import sin, cos, pi, sqrt, isnan
+from math import sin, cos, pi, sqrt, isnan, fmod
 from random import randint
 
 # Frame rate
@@ -91,11 +91,15 @@ class Parameters:
           -0.30, -0.30, -0.30,
           -0.60, -0.60, -0.60,
           -0.90,  0.00,  0.00, -0.90]
-    
-    M = np.array([[  m    , 0  , 0  , -mg*l0  ],
-                  [  0    , m  , mg ,    0    ],
-                  [  0    , mg , mg ,    0    ],
-                  [-mg*l0 , 0  , 0  , mg*l0**2]])
+
+    try:
+        M = np.array([[  m    , 0  , 0  , -mg*l0  ],
+                      [  0    , m  , mg ,    0    ],
+                      [  0    , mg , mg ,    0    ],
+                      [-mg*l0 , 0  , 0  , mg*l0**2]])
+        invM = np.linalg.inv(M)
+    except:
+        numpy_str = 'Do not have numpy'
     
     # Damping Matrix     
     #C = np.diag([Cx,Cy,Cl,Ct])
@@ -114,7 +118,6 @@ class Parameters:
     ss = 10.0
     
     # Parameter settings I'm using to try to improve running speed
-    invM = np.linalg.inv(M)
     linearMass = False
     nEulerSteps = 2
     timeRun = False
@@ -369,8 +372,8 @@ class GameState:
         self.n += 1
         
         # Active player
-        pAct = np.mod(stats.stoolCount, p.nPlayer)
-        
+        pAct = stats.stoolCount % p.nPlayer
+
         # Initial assumption, there was no event
         self.StoolBounce = False
         self.FloorBounce = False

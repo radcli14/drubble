@@ -6,9 +6,6 @@ Created on Tue Mar  5 21:18:17 2019
 @author: radcli14
 """
 # Import the Kivy modules
-#import numpy as np
-# from math import sin, cos, pi, sqrt, isnan
-# from random import randint
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
@@ -51,7 +48,7 @@ p1 = playerLines(0, gs, width, height)
 p2 = playerLines(1, gs, width, height)
 
 # This is the text used in the upper right button
-actionMSG = ['', '', '', '    Begin', 'Set Angle', 'Set Speed', '  Restart']
+actionMSG = ['', '', '', 'Begin', 'Set Angle', 'Set Speed', 'Restart']
 
 
 class MyBackground(Widget):
