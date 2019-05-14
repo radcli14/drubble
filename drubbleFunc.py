@@ -225,12 +225,8 @@ def linspace(start, stop, n):
 
 
 def zeros(ztup):
-    z = []
-    for i in range(ztup[1]):
-        z.append(0)
-    Z = []
-    for i in range(ztup[0]):
-        Z.append(z)
+    z = [0 for i in xrange(ztup[1])]
+    Z = [z for i in xrange(ztup[0])]
     return Z
 
 
@@ -247,10 +243,12 @@ def BallPredict(gs):
 
         # Solve for time the ball would hit the ground
         tI = ta + sqrt(2.0 * ya / p.g)
-    else:
+    elif gs.gameMode > 2 and (gs.yb > gs.yp[0] + p.d + gs.lp[0]):
         # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
-        tI = -(-gs.dyb - np.sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - gs.yp[0] - p.d - gs.lp[0]))) / p.g
+        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - gs.yp[0] - p.d - gs.lp[0]))) / p.g
+    else:
+        tI = 0
 
     if isnan(tI):
         tI = 0

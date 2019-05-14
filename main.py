@@ -6,7 +6,7 @@ Created on Tue Mar  5 21:18:17 2019
 @author: radcli14
 """
 # Import the Kivy modules
-import numpy as np
+#import numpy as np
 # from math import sin, cos, pi, sqrt, isnan
 # from random import randint
 from kivy.app import App
