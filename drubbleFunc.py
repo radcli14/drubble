@@ -1,6 +1,6 @@
 # Import modules
 import numpy as np
-from math import sin, cos, pi, sqrt, isnan, fmod
+from math import sin, cos, pi, sqrt, isnan, fmod, atan2
 from random import randint
 
 # Frame rate
@@ -577,8 +577,8 @@ def PlayerAndStool(t, u, p, gs, stats):
         #     t = t[0]
         
         # Control inputs form the generalized forces
-        Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff = control_logic(t, u, k, p, gs, stats)
-        
+        Qx, Qy, Ql, Qth = control_logic(t, u, k, p, gs, stats)
+
         # Equation of Motion
         #RHS = -p.C.dot(dq)-p.K.dot(q)+p.K.dot(p.q0)-D-G+Q
         #if p.linearMass:
@@ -588,10 +588,10 @@ def PlayerAndStool(t, u, p, gs, stats):
 
         # Equations of motion, created in the Jupyter notebook eom.ipynb
         ddq = [None, None, None, None]
-        ddq[0] = 1.0*(-p.Cl*dlp[k]*lp[k]*s - p.Ct*dtp[k]*c - p.Cx*dxp[k]*lp[k] + p.Kl*p.l0*lp[k]*s - p.Kl*lp[k]**2*s - p.Kt*tp[k]*c + Q[2]*lp[k]*s + Q[3]*c + Q[0]*lp[k])/(p.mc*lp[k])
-        ddq[1] = (-1.0*(p.Ct*dtp[k] + 1.0*p.Kt*tp[k] - Q[3] + 2.0*dlp[k]*dtp[k]*p.mg*lp[k] - p.g*p.mg*lp[k]*s)*s + 1.0*(p.Cl*dlp[k] - p.Kl*p.l0 + p.Kl*lp[k] - Q[2] - dtp[k]**2*p.mg*lp[k] + p.g*p.mg*c)*lp[k]*c - 1.0*(1.0*p.Cy*dyp[k] - 1.0*p.Ky*p.y0 + 1.0*p.Ky*yp[k] - 1.0*Q[1] - 2.0*dlp[k]*dtp[k]*p.mg*s - 1.0*dtp[k]**2*p.mg*lp[k]*c + 1.0*p.g*p.mc + 1.0*p.g*p.mg)*lp[k])/(p.mc*lp[k])
-        ddq[2] = -1.0*p.Cl*dlp[k]/p.mg - 1.0*p.Cl*dlp[k]/p.mc - 1.0*p.Cx*dxp[k]*s/p.mc + 1.0*p.Cy*dyp[k]*c/p.mc + 1.0*p.Kl*p.l0/p.mg + 1.0*p.Kl*p.l0/p.mc - 1.0*p.Kl*lp[k]/p.mg - 1.0*p.Kl*lp[k]/p.mc - 1.0*p.Ky*p.y0*c/p.mc + 1.0*p.Ky*yp[k]*c/p.mc + 1.0*Q[2]/p.mg + 1.0*Q[2]/p.mc + 1.0*Q[0]*s/p.mc - 1.0*Q[1]*c/p.mc + 1.0*dtp[k]**2*lp[k]
-        ddq[3] = (-1.0*p.Ct*dtp[k]*p.mc - 1.0*p.Ct*dtp[k]*p.mg - 1.0*p.Cx*dxp[k]*p.mg*lp[k]*c - 1.0*p.Cy*dyp[k]*p.mg*lp[k]*s - 1.0*p.Kt*p.mc*tp[k] - 1.0*p.Kt*p.mg*tp[k] + 1.0*p.Ky*p.mg*p.y0*lp[k]*s - 1.0*p.Ky*p.mg*lp[k]*yp[k]*s + 1.0*Q[3]*p.mc + 1.0*Q[3]*p.mg + 1.0*Q[0]*p.mg*lp[k]*c + 1.0*Q[1]*p.mg*lp[k]*s - 2.0*dlp[k]*dtp[k]*p.mc*p.mg*lp[k])/(p.mc*p.mg*lp[k]**2)
+        ddq[0] = 1.0*(-p.Cl*dlp[k]*lp[k]*s - p.Ct*dtp[k]*c - p.Cx*dxp[k]*lp[k] + p.Kl*p.l0*lp[k]*s - p.Kl*lp[k]**2*s - p.Kt*tp[k]*c + Ql*lp[k]*s + Qth*c + Qx*lp[k])/(p.mc*lp[k])
+        ddq[1] = (-1.0*(p.Ct*dtp[k] + 1.0*p.Kt*tp[k] - Qth + 2.0*dlp[k]*dtp[k]*p.mg*lp[k] - p.g*p.mg*lp[k]*s)*s + 1.0*(p.Cl*dlp[k] - p.Kl*p.l0 + p.Kl*lp[k] - Ql - dtp[k]**2*p.mg*lp[k] + p.g*p.mg*c)*lp[k]*c - 1.0*(1.0*p.Cy*dyp[k] - 1.0*p.Ky*p.y0 + 1.0*p.Ky*yp[k] - 1.0*Qy - 2.0*dlp[k]*dtp[k]*p.mg*s - 1.0*dtp[k]**2*p.mg*lp[k]*c + 1.0*p.g*p.mc + 1.0*p.g*p.mg)*lp[k])/(p.mc*lp[k])
+        ddq[2] = -1.0*p.Cl*dlp[k]/p.mg - 1.0*p.Cl*dlp[k]/p.mc - 1.0*p.Cx*dxp[k]*s/p.mc + 1.0*p.Cy*dyp[k]*c/p.mc + 1.0*p.Kl*p.l0/p.mg + 1.0*p.Kl*p.l0/p.mc - 1.0*p.Kl*lp[k]/p.mg - 1.0*p.Kl*lp[k]/p.mc - 1.0*p.Ky*p.y0*c/p.mc + 1.0*p.Ky*yp[k]*c/p.mc + 1.0*Ql/p.mg + 1.0*Ql/p.mc + 1.0*Qx*s/p.mc - 1.0*Qy*c/p.mc + 1.0*dtp[k]**2*lp[k]
+        ddq[3] = (-1.0*p.Ct*dtp[k]*p.mc - 1.0*p.Ct*dtp[k]*p.mg - 1.0*p.Cx*dxp[k]*p.mg*lp[k]*c - 1.0*p.Cy*dyp[k]*p.mg*lp[k]*s - 1.0*p.Kt*p.mc*tp[k] - 1.0*p.Kt*p.mg*tp[k] + 1.0*p.Ky*p.mg*p.y0*lp[k]*s - 1.0*p.Ky*p.mg*lp[k]*yp[k]*s + 1.0*Qth*p.mc + 1.0*Qth*p.mg + 1.0*Qx*p.mg*lp[k]*c + 1.0*Qy*p.mg*lp[k]*s - 2.0*dlp[k]*dtp[k]*p.mc*p.mg*lp[k])/(p.mc*p.mg*lp[k]**2)
 
         # Output State Derivatives
         i1 = k*8+4
@@ -649,13 +649,10 @@ def control_logic(t, u, k, p, gs, stats):
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
-    ZEM = (gs.xI+10.0*(p.nPlayer-1-np.mod(stats.stoolCount, 2))-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
+    ZEM = (gs.xI+10.0*(p.nPlayer-1-(stats.stoolCount % 2))-0.1) - xp[k] - dxp[k]*abs(gs.timeUntilBounce-1)
     if p.userControlled[k][0]:
         if gs.ctrl[0] == 0:
-            try:
-                Bx = -scs.erf(dxp[k])
-            except:
-                Bx = -np.sign(dxp[k])
+            Bx = 0 if dxp[k] == 0 else -dxp[k] / abs(dxp[k])
         else:
             Bx = gs.ctrl[0]
     else:
@@ -671,7 +668,7 @@ def control_logic(t, u, k, p, gs, stats):
     else:
         if (gs.timeUntilBounce < 0.6) and (gs.timeUntilBounce > 0.4):
             By = -1.0
-        elif np.abs(gs.timeUntilBounce) < 0.2:
+        elif abs(gs.timeUntilBounce) < 0.2:
             By = 1.0
         else:
             By = 0.0
@@ -680,12 +677,12 @@ def control_logic(t, u, k, p, gs, stats):
     if p.userControlled[k][2]:
         Bl = gs.ctrl[2]
     else:
-        Bl = np.abs(gs.timeUntilBounce) < 0.2
+        Bl = abs(gs.timeUntilBounce) < 0.2
     
     # Control stool angle by pointing at the ball
-    xdiff = xb-xp[k] # Ball distance - player distance
+    xdiff = xb-xp[k]  # Ball distance - player distance
     ydiff = yb-yp[k]-p.d
-    wantAngle = np.arctan2(-xdiff, ydiff)
+    wantAngle = atan2(-xdiff, ydiff)
     if p.userControlled[k][3]:
         Bth = gs.ctrl[3]
     else:
@@ -694,10 +691,13 @@ def control_logic(t, u, k, p, gs, stats):
             Bth = 1.0
         elif Bth < -1 or (gs.timeUntilBounce < 0.017) and (gs.timeUntilBounce > 0):
             Bth = -1.0
-        
-    Q = np.matrix([[Bx*p.Qx], [By*p.Qy], [Bl*p.Ql], [Bth*p.Qt]])
-    
-    return Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff    
+
+    return Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt
+    # Q = (Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt)
+    # For some reason, the numpy matrix runs faster
+    # Q = np.matrix([[Bx*p.Qx], [By*p.Qy], [Bl*p.Ql], [Bth*p.Qt]])
+    # print(Q)
+    # return Q
 
 
 def BallHitFloor(t,u):
