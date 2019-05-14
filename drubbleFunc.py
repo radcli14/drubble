@@ -397,11 +397,12 @@ class GameState:
             self.t += dt/p.nEulerSteps
             
             # Calculate the derivatives of states w.r.t. time
-            dudt = PlayerAndStool(self.t, U[:][k-1], p, gs, stats)
+            dudt = PlayerAndStool(self.t, U[k-1], p, gs, stats)
             
             # Calculate the states at the next step
-            U[k] = U[k-1] + np.array(dudt)*dt/p.nEulerSteps
-            
+            # U[k] = U[k-1] + np.array(dudt)*dt/p.nEulerSteps
+            U[k] = [U[k-1][i]+dudt[i]*dt/p.nEulerSteps for i in range(20)]
+
             # Check for events
             if (self.t-self.te) > 0.1:
                 if BallHitStool(self.t, U[k], pAct) < 0.0:
@@ -419,7 +420,7 @@ class GameState:
             # Change ball states depending on if it was a stool or floor bounce
             if self.StoolBounce:
                 # Obtain the bounce velocity
-                vBounce, vRecoil = BallBounce(self, np.mod(stats.stoolCount, p.nPlayer))
+                vBounce, vRecoil = BallBounce(self, stats.stoolCount % p.nPlayer)
                 self.ue[2] = vBounce[0]
                 self.ue[3] = vBounce[1]
                 
@@ -437,10 +438,10 @@ class GameState:
             # Re-initialize from the event states
             self.t += dt-tBreak
             dudt = PlayerAndStool(self.t, self.ue, p, gs, stats)
-            self.u = self.ue + np.array(dudt)*(dt-tBreak)
+            self.u = [self.ue[i] + dudt[i]*(dt-tBreak) for i in range(20)]
             
             # Stuck
-            if np.sqrt(self.u[2]**2+self.u[3]**2) < p.dybtol and self.u[1] < 1:
+            if sqrt(self.u[2]**2+self.u[3]**2) < p.dybtol and self.u[1] < 1:
                 self.Stuck = True
         else:   
             # Update states
