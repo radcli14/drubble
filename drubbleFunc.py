@@ -711,24 +711,24 @@ def BallHitStool(t, u, k):
     xv, yv, sx, sy = stickDude(u, k)
     
     # Vectors from the left edge of the stool to the right, and to the ball
-    r1 = np.array([sx[1]-sx[0], sy[1]-sy[0]])
+    r1 = [sx[1]-sx[0], sy[1]-sy[0]]
     
     # Calculate z that minimizes the distance
-    z = ((xb-sx[0])*r1[0] + (yb-sy[0])*r1[1])/(r1.dot(r1))
+    z = ((xb - sx[0]) * r1[0] + (yb - sy[0]) * r1[1])/(r1[0]**2 + r1[1]**2)
     
     # Find the closest point of impact on the stool
-    if z<0:
-        ri = np.array([sx[0],sy[0]])
-    elif z>1:
-        ri = np.array([sx[1],sy[1]])
+    if z < 0:
+        ri = [sx[0], sy[0]]
+    elif z > 1:
+        ri = [sx[1], sy[1]]
     else:
-        ri = np.array([sx[0]+z*r1[0],sy[0]+z*r1[1]])
+        ri = [sx[0] + z * r1[0], sy[0] + z * r1[1]]
 
     # Vector from the closest point of impact to the center of the ball    
-    r2 = np.array([xb-ri[0],yb-ri[1]])
+    r2 = [xb-ri[0], yb - ri[1]]
 
     # Calculate the distance to the outer radius of the ball t
-    L = np.sqrt(r2.dot(r2))-p.rb
+    L = norm(r2) - p.rb
     
     return L 
 BallHitStool.terminal = True 
@@ -813,27 +813,21 @@ def ThirdPoint(P0, P1, L, SGN):
 def stickDude(inp, k):
     k8 = k*8
     # Get the state variables
-    if type(inp) == list or type(inp) == np.ndarray:
+    try:
         # States from u
         x = inp[4+k8]
         y = inp[5+k8]
         l = inp[6+k8]
         th = inp[7+k8]
         v = inp[8+k8]
-    elif type(inp) == GameState:
+    except:
         # States from gs
         x = inp.xp[k]
         y = inp.yp[k]
         l = inp.lp[k]
         th = inp.tp[k]
         v = inp.dxp[k]
-    else:
-        # Wasn't able to identify type, tying states from gs
-        x = inp.xp[k]
-        y = inp.yp[k]
-        l = inp.lp[k]
-        th = inp.tp[k]
-        v = inp.dxp[k]
+
     s = sin(th)
     c = cos(th)
         
