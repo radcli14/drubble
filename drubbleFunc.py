@@ -1,5 +1,5 @@
 # Import modules
-import numpy as np
+#import numpy as np
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2
 
 # Frame rate
@@ -738,9 +738,9 @@ def BallHitStool(t, u, k):
 BallHitStool.terminal = True 
 
 
-def BallBounce(gs,k):
+def BallBounce(gs, k):
     # Get the stool locations using stickDude function
-    xv, yv, sx, sy = stickDude(gs.u,k)
+    xv, yv, sx, sy = stickDude(gs.u, k)
     
     # Vectors from the left edge of the stool to the right, and to the ball
     r1 = [sx[1]-sx[0], sy[1]-sy[0]]
@@ -769,22 +769,30 @@ def BallBounce(gs,k):
     u2 = [r2[0]/nr2, r2[1]/nr2]
 
     # Delta ball velocity
-    delta_vb = 2.0*p.COR*(u2[0]*vbrel[0] + u2[1]*vbrel[1])
+    delta_vb = [2.0*p.COR*u2[0]*vbrel[0], 2.0*p.COR*u2[1]*vbrel[1]]
     
     # Velocity after bounce
-    # TBR Here is where I pick up tomorrow
-    vBounce = -np.array(u2)*delta_vb + np.array([gs.dxb, gs.dyb])
+    vBounce = [-u2[0]*delta_vb[1]+gs.dxb, -u2[1]*delta_vb[1]+gs.dyb]
+    # vBounce = -np.array(u2)*delta_vb + np.array([gs.dxb, gs.dyb])
     
     # Obtain the player recoil states
-    BounceImpulse = -p.mg*vBounce
+    BounceImpulse = [-p.mg*vBounce[0], -p.mg*vBounce[1]]
+    # BounceImpulse = -p.mg*vBounce
     c = cos(gs.tp[k])
     s = sin(gs.tp[k])
-    dRdq = np.array([[ 1.0    , 0.0 ],
-                     [ 0.0    , 1.0 ],
-                     [-s      , c   ],
-                     [-c*gs.lp[k],-s*gs.lp[k]]])
-    Qi = dRdq.dot(BounceImpulse)
-    vRecoil = p.invM.dot(Qi)
+    # dRdq = np.array([[ 1.0    , 0.0 ],
+    #                  [ 0.0    , 1.0 ],
+    #                  [-s      , c   ],
+    #                  [-c*gs.lp[k],-s*gs.lp[k]]])
+    Q = [BounceImpulse[0], BounceImpulse[1],
+          -s * BounceImpulse[0] + c * BounceImpulse[1],
+          -c * gs.lp[k] * BounceImpulse[0] - s * gs.lp[k] * BounceImpulse[1]]
+    # Qi = dRdq.dot(BounceImpulse)
+    vRecoil = [1.0*Q[2]*sin(gs.tp[k])/p.mc + 1.0*Q[3]*cos(gs.tp[k])/(p.mc*gs.lp[k]) + 1.0*Q[0]/p.mc,
+               -1.0*Q[2]*cos(gs.tp[k])/p.mc + 1.0*Q[3]*sin(gs.tp[k])/(p.mc*gs.lp[k]) + 1.0*Q[1]/p.mc,
+               Q[2]*(1.0/p.mg + 1.0/p.mc) + 1.0*Q[0]*sin(gs.tp[k])/p.mc - 1.0*Q[1]*cos(gs.tp[k])/p.mc,
+               1.0*Q[3]*(p.mc + p.mg)/(p.mc*p.mg*gs.lp[k]**2) + 1.0*Q[0]*cos(gs.tp[k])/(p.mc*gs.lp[k]) + 1.0*Q[1]*sin(gs.tp[k])/(p.mc*gs.lp[k])]
+    #vRecoil = p.invM.dot(Qi)
     return vBounce, vRecoil
 
 
