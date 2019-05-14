@@ -7,6 +7,8 @@ Created on Tue Mar  5 21:18:17 2019
 """
 # Import the Kivy modules
 import numpy as np
+# from math import sin, cos, pi, sqrt, isnan
+# from random import randint
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
@@ -23,7 +25,7 @@ engine = 'kivy'
 from drubbleFunc import *
 
 # Set the keyboard input and mouse defaults
-keyPush = np.zeros(8)
+keyPush = [0, 0, 0, 0, 0, 0, 0, 0]
 
 # Initialize Game State
 gs = GameState(p.u0, engine)
@@ -77,7 +79,7 @@ class MyBackground(Widget):
     bg_alpha = NumericProperty(0.0)
 
     # Randomize the start location in the backgroun
-    xpos = np.random.rand() * 100.0 * num_bg
+    xpos = randint(0, 100*num_bg)
 
     def __init__(self, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
@@ -91,6 +93,7 @@ class MyBackground(Widget):
         # xmod is normalized position of the player between 0 and num_bg
         xmod = np.mod(x+self.xpos, 100.0 * self.num_bg)/100.0
         xrem = np.mod(xmod, 1)
+        #xmod = (x+self.xpos % 100.0*self.num_bg)/100.0
         xflr = int(np.floor(xmod))
 
         # xsel selects which background textures are used TBR

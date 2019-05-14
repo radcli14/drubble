@@ -1,5 +1,7 @@
 # Import modules
 import numpy as np
+from math import sin, cos, pi, sqrt, isnan
+from random import randint
 
 # Frame rate
 fs = 60
@@ -20,7 +22,17 @@ darkGreen = (0, 120.0/255.0, 0)
 
 # Convert physical coordinates to pixels
 def xy2p(x, y, m2p, po, w, h):
-    return np.array(x)*m2p-po+w/2, np.array(y)*m2p+h/20
+    try:
+        xp = x * m2p - po + w/2
+        yp = y * m2p + h/20
+    except:
+        xp = []
+        for xi in x:
+            xp.append(xi * m2p - po + w/2)
+        yp = []
+        for yi in y:
+            yp.append(yi * m2p + h/20)
+    return xp, yp
 
 
 # Parameters
@@ -29,7 +41,7 @@ class Parameters:
     g = 9.81   # Gravitational acceleration [m/s^2]
     COR = 0.8  # Coefficient of restitution
     rb = 0.2   # Radius of the ball
-       
+
     # Player parameters
     mc = 50.0    # Mass of player [kg]
     mg = 2.0     # Mass of stool [kg]
@@ -42,54 +54,54 @@ class Parameters:
     Qx = ax*m*g  # Max horizontal force [N]
     Gx = 1.5     # Control gain on Qx
     fy = 0.8     # vertical frequency [Hz]
-    Ky = m*(fy*2*np.pi)**2  # Leg stiffness [N/m]
+    Ky = m*(fy*2*pi)**2  # Leg stiffness [N/m]
     Qy = Ky*0.3  # Leg strength [N], to be updated
     fl = 2.2     # Stool extension frequency
-    Kl = mg*(fl*2*np.pi)**2  # Arm stiffness [N/m]
+    Kl = mg*(fl*2*pi)**2  # Arm stiffness [N/m]
     Ql = Kl*0.3  # Arm strength [N]
     ft = 1.5     # Stool tilt frequency [Hz]
-    Kt = (mg*l0*l0)*(ft*2*np.pi)**2  # Tilt stiffnes [N-m/rad]
+    Kt = (mg*l0*l0)*(ft*2*pi)**2  # Tilt stiffnes [N-m/rad]
     Qt = 0.6*Kt  # Tilt strength [N-m]
     Gt = 0.8     # Control gain on Qt
     vx = 10.0    # Horizontal top speed [m/s]
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio
-    Cy = 2*zy*np.sqrt(Ky*m)  # Vertical damping [N-s/m]
+    Cy = 2*zy*sqrt(Ky*m)  # Vertical damping [N-s/m]
     zl = 0.2     # Arm damping ratio
-    Cl = 2*zl*np.sqrt(Kl*m)  # Arm damping [N-s/m]
+    Cl = 2*zl*sqrt(Kl*m)  # Arm damping [N-s/m]
     zt = 0.05    # Stool tilt damping ratio
-    Ct = 2.0*zl*np.sqrt(Kt*m)  # Tilt damping [N-m-s/rad]
+    Ct = 2.0*zl*sqrt(Kt*m)  # Tilt damping [N-m-s/rad]
 
     # Initial states
-    q0 = np.array([[0.0], [y0], [l0], [0.0]])
+    q0 = [0.0, y0,  l0, 0.0]
     u0 = [0.0, rb, 0.0, 0.0, x0,   y0,  l0,   0.0, 0.0, 0.0, 0.0, 10.0,
           0.0, y0, l0,  0.0, 0.0, 0.0, 0.0, -10.0]
 
     # Gameplay settings
-    userControlled = np.array([[True,   True,  True, True],
-                               [False, False, False,False]])
+    userControlled = [[True,   True,  True, True],
+                      [False, False, False,False]]
     nPlayer = 1
 
     # Stool parameters
-    xs = np.array([-0.25,  0.25,  0.14, 
-                    0.16, -0.16,  0.16, 
-                    0.18, -0.18,  0.18,  
-                    0.2 ,  0.14, -0.14, -0.2])
-    ys = np.array([  0  ,  0   ,  0   , 
-                   -0.3 , -0.3 , -0.3 , 
-                   -0.6 , -0.6 , -0.6 ,
-                   -0.9 ,  0   ,   0  , -0.9 ])
+    xs = [-0.25,  0.25,  0.14,
+           0.16, -0.16,  0.16,
+           0.18, -0.18,  0.18,
+           0.20,  0.14, -0.14, -0.20]
+    ys = [0.00,  0.00,  0.00,
+          -0.30, -0.30, -0.30,
+          -0.60, -0.60, -0.60,
+          -0.90,  0.00,  0.00, -0.90]
     
     M = np.array([[  m    , 0  , 0  , -mg*l0  ],
-                   [  0    , m  , mg ,    0    ],
-                   [  0    , mg , mg ,    0    ],
-                   [-mg*l0 , 0  , 0  , mg*l0**2]])
+                  [  0    , m  , mg ,    0    ],
+                  [  0    , mg , mg ,    0    ],
+                  [-mg*l0 , 0  , 0  , mg*l0**2]])
     
     # Damping Matrix     
-    C = np.diag([Cx,Cy,Cl,Ct])
+    #C = np.diag([Cx,Cy,Cl,Ct])
     
     # Stiffness Matrix
-    K = np.diag([0.0,Ky,Kl,Kt])
+    #K = np.diag([0.0,Ky,Kl,Kt])
     
     # Touch Stick Sensitivity
     tsens = 1.5
@@ -98,7 +110,7 @@ class Parameters:
     dybtol = 2.0
     
     # startAngle (sa) and startSpeed (ss) initially
-    sa = np.pi/4
+    sa = pi/4
     ss = 10.0
     
     # Parameter settings I'm using to try to improve running speed
@@ -202,6 +214,26 @@ def unpackStates(u):
     return xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp
 
 
+def linspace(start, stop, n):
+    if n == 1:
+        return stop
+    h = (stop - start) / (n - 1)
+    v = []
+    for i in range(n):
+        v.append(start + h * i)
+    return v
+
+
+def zeros(ztup):
+    z = []
+    for i in range(ztup[1]):
+        z.append(0)
+    Z = []
+    for i in range(ztup[0]):
+        Z.append(z)
+    return Z
+
+
 # Predict motion of the ball
 def BallPredict(gs):
     if gs.dyb == 0 or gs.gameMode <= 2:
@@ -214,13 +246,13 @@ def BallPredict(gs):
         ya = 0.5 * p.g * ta ** 2
 
         # Solve for time the ball would hit the ground
-        tI = ta + np.sqrt(2.0 * ya / p.g)
+        tI = ta + sqrt(2.0 * ya / p.g)
     else:
         # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
         tI = -(-gs.dyb - np.sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - gs.yp[0] - p.d - gs.lp[0]))) / p.g
 
-    if np.isnan(tI):
+    if isnan(tI):
         tI = 0
 
     # Solve for position that the ball would hit the stool
@@ -228,12 +260,15 @@ def BallPredict(gs):
     yI = gs.yb + gs.dyb * tI - 0.5 * p.g * tI ** 2
 
     # Solve for time that the ball would hit the ground
-    tG = -(-gs.dyb - np.sqrt(gs.dyb ** 2 + 2.0 * p.g * gs.yb)) / p.g
+    tG = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * gs.yb)) / p.g
 
     # Solve for the arc for the next 1.2 seconds, or until ball hits ground
-    T = np.linspace(0, min(1.2, tG), 20)
-    xTraj = gs.xb + gs.dxb * T
-    yTraj = gs.yb + gs.dyb * T - 0.5 * p.g * T ** 2
+    T = linspace(0, min(1.2, tG), 20)
+    xTraj = []
+    yTraj = []
+    for n in range(20):
+        xTraj.append(gs.xb + gs.dxb * T[n])
+        yTraj.append(gs.yb + gs.dyb * T[n] - 0.5 * p.g * T[n] ** 2)
 
     # Time until event
     timeUntilBounce = tI
@@ -246,6 +281,7 @@ def BallPredict(gs):
     # xTraj = Ball trajectory distances [m]
     # yTraj = Ball trajectory heights [m]
     return xI, yI, tI, xTraj, yTraj, timeUntilBounce
+
 
 class GameState:
     # Initiate the state variables as a list, and as individual variables
@@ -275,17 +311,17 @@ class GameState:
         self.ctrl = [0,0,0,0]
         
         # Timing
-        self.t  = 0
-        self.n  = 0
+        self.t = 0
+        self.n = 0
         self.te = 0
         
         # State variables
-        self.u  = u0[:]
+        self.u = u0[:]
         self = varStates(self)
        
         # Event states
         self.ue = u0[:]
-        self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict(self)
+        self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = BallPredict(self)
         
         # Angle and Speed Conditions
         self.startAngle = p.sa
@@ -296,9 +332,9 @@ class GameState:
         self.Stuck = False
          
     # Get control input from external source
-    def setControl(self, keyPush=np.zeros(8),
-                   moveStick=[0,0], tiltStick=[0,0],
-                   g=[0, 0, 0], a=[0, 0, 0]):
+    def setControl(self, keyPush=(0, 0, 0, 0, 0, 0, 0, 0),
+                   moveStick=(0, 0), tiltStick=(0, 0),
+                   g=(0, 0, 0), a=(0, 0, 0)):
         
         if self.ctrlFunc == 0:
             # Key press control
@@ -343,33 +379,33 @@ class GameState:
         
         # Prevent event detection if there was already one within 0.1 seconds, 
         # or if the ball is far from the stool or ground
-        L = BallHitStool(self.t, self.u,pAct)   # Distance to stool
-        vBall = np.array((self.dxb, self.dyb))  # Velocity
-        sBall = np.linalg.norm(vBall)           # Speed
+        L = BallHitStool(self.t, self.u, pAct)  # Distance to stool
+        vBall = (self.dxb, self.dyb)            # Velocity
+        sBall = norm(vBall)                     # Speed
         
         # Integrate using Euler method
         # Initialize state variables
-        U = np.zeros((20, p.nEulerSteps+1))
-        U[:, 0] = self.u
+        U = zeros((p.nEulerSteps+1, 20))
+        U[0] = self.u
         for k in range(1, p.nEulerSteps+1):
             # Increment time
             self.t += dt/p.nEulerSteps
             
             # Calculate the derivatives of states w.r.t. time
-            dudt = PlayerAndStool(self.t, U[:, k-1], p, gs, stats)
+            dudt = PlayerAndStool(self.t, U[:][k-1], p, gs, stats)
             
             # Calculate the states at the next step
-            U[:, k] = U[:, k-1] + np.array(dudt)*dt/p.nEulerSteps
+            U[k] = U[k-1] + np.array(dudt)*dt/p.nEulerSteps
             
             # Check for events
             if (self.t-self.te) > 0.1:
-                if BallHitStool(self.t, U[:, k], pAct) < 0.0:
+                if BallHitStool(self.t, U[k], pAct) < 0.0:
                     self.StoolBounce = True
-                if BallHitFloor(self.t, U[:, k]) < 0.0:
+                if BallHitFloor(self.t, U[k]) < 0.0:
                     self.FloorBounce = True
                 if self.StoolBounce or self.FloorBounce:
                     self.te = self.t
-                    self.ue = U[:, k]
+                    self.ue = U[k]
                     tBreak = k * dt / p.nEulerSteps
                     break 
         
@@ -403,7 +439,7 @@ class GameState:
                 self.Stuck = True
         else:   
             # Update states
-            self.u = U[:,-1]  
+            self.u = U[-1]
         
         if self.Stuck:
             self.u[1] = p.rb
@@ -609,7 +645,7 @@ def control_logic(t, u, k, p, gs, stats):
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
     ZEM = (gs.xI+10.0*(p.nPlayer-1-np.mod(stats.stoolCount, 2))-0.1) - xp[k] - dxp[k]*np.abs(gs.timeUntilBounce-1)
-    if p.userControlled[k, 0]:
+    if p.userControlled[k][0]:
         if gs.ctrl[0] == 0:
             try:
                 Bx = -scs.erf(dxp[k])
@@ -625,7 +661,7 @@ def control_logic(t, u, k, p, gs, stats):
             Bx = -1.0
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
-    if p.userControlled[k, 1]:
+    if p.userControlled[k][1]:
         By = gs.ctrl[1]
     else:
         if (gs.timeUntilBounce < 0.6) and (gs.timeUntilBounce > 0.4):
@@ -636,7 +672,7 @@ def control_logic(t, u, k, p, gs, stats):
             By = 0.0
     
     # Control arm extension based on timing, turn on when impact in <0.2 sec
-    if p.userControlled[k, 2]:
+    if p.userControlled[k][2]:
         Bl = gs.ctrl[2]
     else:
         Bl = np.abs(gs.timeUntilBounce) < 0.2
@@ -645,7 +681,7 @@ def control_logic(t, u, k, p, gs, stats):
     xdiff = xb-xp[k] # Ball distance - player distance
     ydiff = yb-yp[k]-p.d
     wantAngle = np.arctan2(-xdiff, ydiff)
-    if p.userControlled[k, 3]:
+    if p.userControlled[k][3]:
         Bth = gs.ctrl[3]
     else:
         Bth = p.Gt*(wantAngle-tp[k])
@@ -658,24 +694,26 @@ def control_logic(t, u, k, p, gs, stats):
     
     return Q, Bx, By, Bl, Bth, ZEM, wantAngle, xdiff, ydiff    
 
+
 def BallHitFloor(t,u):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u) 
     return yb-p.rb
 BallHitFloor.terminal = True
 
-def BallHitStool(t,u,k):
+
+def BallHitStool(t, u, k):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
         
     # Get the stool locations using stickDude function
-    xv,yv,sx,sy = stickDude(u,k)
+    xv, yv, sx, sy = stickDude(u, k)
     
     # Vectors from the left edge of the stool to the right, and to the ball
-    r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
+    r1 = np.array([sx[1]-sx[0], sy[1]-sy[0]])
     
     # Calculate z that minimizes the distance
-    z  = ( (xb-sx[0])*r1[0] + (yb-sy[0])*r1[1] )/(r1.dot(r1))
+    z = ((xb-sx[0])*r1[0] + (yb-sy[0])*r1[1])/(r1.dot(r1))
     
     # Find the closest point of impact on the stool
     if z<0:
@@ -693,6 +731,7 @@ def BallHitStool(t,u,k):
     
     return L 
 BallHitStool.terminal = True 
+
 
 def BallBounce(gs,k):
     # Get the stool locations using stickDude function
@@ -741,23 +780,31 @@ def BallBounce(gs,k):
     vRecoil = p.invM.dot(Qi)
     return vBounce, vRecoil
 
+
+def norm(V):
+    variance = 0
+    for v in V:
+        variance += v**2
+    return sqrt(variance)
+
+
 # Solves for the location of the knee or elbow based upon the two other 
 # end-points of the triangle 
-def ThirdPoint(P0,P1,L,SGN):
+def ThirdPoint(P0, P1, L, SGN):
 
-    Psub = [P0[0]-P1[0],P0[1]-P1[1]]
-    Padd = [P0[0]+P1[0],P0[1]+P1[1]]
+    Psub = [P0[0]-P1[0], P0[1]-P1[1]]
+    Padd = [P0[0]+P1[0], P0[1]+P1[1]]
     P2 = [Padd[0]/2.0, Padd[1]/2.0]
-    d = np.linalg.norm(Psub) # Distance between point P0,P1
+    d = norm(Psub)  # Distance between point P0,P1
 
     if d > L:
         P3 = P2
     else:
-        a  = (d**2)/2.0/d # Distance to mid-Point
-        h  = np.sqrt( (L**2)/4.0 - a**2 )
+        a = (d**2)/2.0/d  # Distance to mid-Point
+        h = sqrt((L**2)/4.0 - a**2)
         x3 = P2[0] + h*SGN*Psub[1]/d
         y3 = P2[1] - h*SGN*Psub[0]/d
-        P3 = [x3,y3]
+        P3 = [x3, y3]
     return P3
 
 
@@ -786,15 +833,14 @@ def stickDude(inp, k):
         l = inp.lp[k]
         th = inp.tp[k]
         v = inp.dxp[k]
-    #print('stickDude x=%f' % x)
-    s = np.sin(th)
-    c = np.cos(th)
+    s = sin(th)
+    c = cos(th)
         
     # Right Foot [rf] Left Foot [lf] Positions
-    rf = [x-0.25+(v/p.vx)*np.sin(1.5*x+3.0*np.pi/2.0),
-          0.2*(v/p.vx)*(1+np.sin(1.5*x+3.0*np.pi/2.0))]
-    lf = [x+0.25+(v/p.vx)*np.cos(1.5*x), 
-          0.2*(v/p.vx)*(1+np.cos(1.5*x))]
+    rf = [x - 0.25 + (v / p.vx) * sin(1.5 * x + 3.0 * pi / 2.0),
+          0.2 * (v / p.vx) * (1 + sin(1.5 * x + 3.0 * pi / 2.0))]
+    lf = [x + 0.25 + (v / p.vx) * cos(1.5 * x),
+          0.2 * (v / p.vx) * (1 + cos(1.5 * x))]
     
     # Waist Position
     w = [x, y-p.d]
@@ -807,8 +853,11 @@ def stickDude(inp, k):
     sh = [x, y+p.d]
     
     # Stool Position
-    sx = x+p.xs*c-(l+p.ys)*s
-    sy = y+p.d+(l+p.ys)*c+p.xs*s
+    sx = []
+    sy = []
+    for n in range(13):
+        sx.append(x + p.xs[n] * c - (l + p.ys[n]) * s)
+        sy.append(y + p.d + (l + p.ys[n]) * c + p.xs[n] * s)
     
     # Right Hand [rh] Left Hand [lh] Position 
     rh = [sx[7], sy[7]] 
@@ -829,14 +878,14 @@ def stickDude(inp, k):
 # convert from meters to pixels, and pixel offset to the center line
 # Ratio refers to normalized positions in the window on the scale [0 0 1 1]
 def setRanges(u, w):
-    maxy = 1.25*np.max([u[1], u[5]+p.d+u[6]*np.cos(u[7]), 3.0])
-    diffx = 1.25*np.abs(u[0]-u[4])
-    midx = (u[0]+u[4])/2.0
-    if diffx > 2*(maxy+1):
-        xrng = midx-0.5*diffx, midx+0.5*diffx
-        yrng = -1.0, 0.5*(diffx-0.5)
+    maxy = 1.25 * max([u[1], u[5] + p.d + u[6] * cos(u[7]), 3.0])
+    diffx = 1.25 * abs(u[0]-u[4])
+    midx = (u[0] + u[4]) / 2.0
+    if diffx > 2 * (maxy+1):
+        xrng = midx - 0.5 * diffx, midx + 0.5*diffx
+        yrng = -1.0, 0.5 * (diffx - 0.5)
     else:
-        xrng = midx-maxy-0.5, midx+maxy+0.5
+        xrng = midx - maxy - 0.5, midx + maxy + 0.5
         yrng = -1.0, maxy
 
     MeterToPixel = w/(xrng[1]-xrng[0])
@@ -846,8 +895,8 @@ def setRanges(u, w):
     return xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset
 
 
-def intersperse(list1,list2):    
-    result = [None]*(len(list1)+len(list2))
+def intersperse(list1, list2):
+    result = [None] * (len(list1) + len(list2))
     result[::2] = list1
     result[1::2] = list2    
     return result
