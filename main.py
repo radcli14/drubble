@@ -6,6 +6,8 @@ Created on Tue Mar  5 21:18:17 2019
 @author: radcli14
 """
 # Import the Kivy modules
+from math import fmod, floor
+from random import randint
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
@@ -88,10 +90,9 @@ class MyBackground(Widget):
         self.bg_alpha = 1.0
 
         # xmod is normalized position of the player between 0 and num_bg
-        xmod = np.mod(x+self.xpos, 100.0 * self.num_bg)/100.0
-        xrem = np.mod(xmod, 1)
-        #xmod = (x+self.xpos % 100.0*self.num_bg)/100.0
-        xflr = int(np.floor(xmod))
+        xmod = fmod(x+self.xpos, 100.0*self.num_bg)/100.0
+        xrem = fmod(xmod, 1)
+        xflr = int(floor(xmod))
 
         # xsel selects which background textures are used TBR
         if xrem <= 0.5:
@@ -101,8 +102,8 @@ class MyBackground(Widget):
 
         # scf is the scale factor to apply to the background
         scf = (m2p/70.0)**0.5
-        self.img_w = int(np.around(self.w_orig*scf))
-        self.img_h = int(np.around(self.h_orig*scf))
+        self.img_w = int(round(self.w_orig*scf))
+        self.img_h = int(round(self.h_orig*scf))
 
         # Decide which textures are used
         self.bg_text0 = self.textures[xsel]
@@ -114,10 +115,10 @@ class MyBackground(Widget):
         # Determine where the edge is located
         if xrem <= 0.5:
             # Player is in the right frame
-            edge = int(np.around(w/2.0-xrem*self.img_w))
+            edge = int(round(w/2.0-xrem*self.img_w))
         else:
             # Player is in the left frame
-            edge = int(np.around(w/2.0+(1.0-xrem)*self.img_w))
+            edge = int(round(w/2.0+(1.0-xrem)*self.img_w))
 
         # Position the textures
         overlap = 0.0
@@ -128,7 +129,7 @@ class MyBackground(Widget):
 def makeMarkers(self, p):
     # xrng_r is the first and last markers on the screen, xrng_n is the
     # number of markers
-    xrng_r = np.around(p.xrng, -1)
+    xrng_r = [round(p.xrng[i], -1) for i in xrange(2)]
     xrng_n = int((xrng_r[1] - xrng_r[0]) / 10.0) + 1
 
     for k in range(self.nMarks):
@@ -549,7 +550,7 @@ class DrubbleGame(Widget):
             self.canvas.clear()
             with self.canvas:
                 # Draw Bottom Line
-                makeMarkers(self,p1)
+                makeMarkers(self, p1)
                 
                 # Draw Player One
                 Color(darkGreen[0], darkGreen[1], darkGreen[2], 1)

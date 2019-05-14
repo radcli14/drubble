@@ -1,7 +1,6 @@
 # Import modules
 import numpy as np
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2
-from random import randint
 
 # Frame rate
 fs = 60
@@ -468,13 +467,13 @@ class GameState:
 
     def setAngleSpeed(self):
         if self.gameMode == 4:
-            self.startAngle = 0.25*np.pi*(1 + 0.75*np.sin(self.phase))
+            self.startAngle = 0.25*pi*(1 + 0.75*sin(self.phase))
         if self.gameMode == 5:
-            self.startSpeed = p.ss*(1 + 0.75*np.sin(self.phase))
+            self.startSpeed = p.ss*(1 + 0.75*sin(self.phase))
         if self.gameMode == 4 or self.gameMode == 5:
             self.phase += 3*dt
-            self.u[2] = self.startSpeed*np.cos(self.startAngle)
-            self.u[3] = self.startSpeed*np.sin(self.startAngle)
+            self.u[2] = self.startSpeed*cos(self.startAngle)
+            self.u[3] = self.startSpeed*sin(self.startAngle)
 
 
 def cycleModes(gs, stats, engine):
@@ -741,43 +740,45 @@ BallHitStool.terminal = True
 
 def BallBounce(gs,k):
     # Get the stool locations using stickDude function
-    xv,yv,sx,sy = stickDude(gs.u,k)
+    xv, yv, sx, sy = stickDude(gs.u,k)
     
     # Vectors from the left edge of the stool to the right, and to the ball
-    r1 = np.array([sx[1]-sx[0],sy[1]-sy[0]])
+    r1 = [sx[1]-sx[0], sy[1]-sy[0]]
     
     # Calculate z that minimizes the distance
-    z = ((gs.xb-sx[0])*r1[0] + (gs.yb-sy[0])*r1[1] )/(r1.dot(r1))
+    z = ((gs.xb-sx[0])*r1[0] + (gs.yb-sy[0])*r1[1])/(r1[0]**2 + r1[1]**2)
     
     # Find the closest point of impact on the stool
-    if z<0:
-        ri = np.array([sx[0],sy[0]])
-    elif z>1:
-        ri = np.array([sx[1],sy[1]])
+    if z < 0:
+        ri = [sx[0], sy[0]]
+    elif z > 1:
+        ri = [sx[1], sy[1]]
     else:
-        ri = np.array([sx[0]+z*r1[0],sy[0]+z*r1[1]])
+        ri = [sx[0]+z*r1[0], sy[0]+z*r1[1]]
     
     # Velocity of the stool at the impact point 
-    vi = np.array([gs.dxp-gs.lp[k]*np.sin(gs.tp[k])-(ri[1]-gs.yp[k])*gs.dtp[k],
-                   gs.dyp[k]+gs.lp[k]*np.cos(gs.tp[k])+(ri[0]-gs.xp[k])*gs.dtp[k]])
+    vi = [gs.dxp[k]-gs.lp[k]*sin(gs.tp[k])-(ri[1]-gs.yp[k])*gs.dtp[k],
+          gs.dyp[k]+gs.lp[k]*cos(gs.tp[k])+(ri[0]-gs.xp[k])*gs.dtp[k]]
     
     # Velocity of the ball relative to impact point
-    vbrel = np.array([gs.dxb,gs.dyb])-vi
+    vbrel = [gs.dxb - vi[0], gs.dyb - vi[1]]
     
     # Vector from the closest point of impact to the center of the ball    
-    r2 = np.array([gs.xb-ri[0],gs.yb-ri[1]])
-    u2 = r2/np.sqrt(r2.dot(r2))
+    r2 = [gs.xb-ri[0], gs.yb-ri[1]]
+    nr2 = norm(r2)
+    u2 = [r2[0]/nr2, r2[1]/nr2]
 
     # Delta ball velocity
-    delta_vb = 2.0*p.COR*u2.dot(vbrel)
+    delta_vb = 2.0*p.COR*(u2[0]*vbrel[0] + u2[1]*vbrel[1])
     
     # Velocity after bounce
-    vBounce = -u2*delta_vb + np.array([gs.dxb,gs.dyb])
+    # TBR Here is where I pick up tomorrow
+    vBounce = -np.array(u2)*delta_vb + np.array([gs.dxb, gs.dyb])
     
     # Obtain the player recoil states
     BounceImpulse = -p.mg*vBounce
-    c = np.cos(gs.tp[k])
-    s = np.sin(gs.tp[k])
+    c = cos(gs.tp[k])
+    s = sin(gs.tp[k])
     dRdq = np.array([[ 1.0    , 0.0 ],
                      [ 0.0    , 1.0 ],
                      [-s      , c   ],
