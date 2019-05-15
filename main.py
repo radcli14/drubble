@@ -41,6 +41,7 @@ stats = GameScore()
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
 #Window.size = (width, height)
 width, height = Window.size
+Window.release_all_keyboards()
 
 # Set the icon (neither are working...)
 Window.icon = 'a/icon.png'
@@ -129,7 +130,7 @@ class MyBackground(Widget):
 def makeMarkers(self, p):
     # xrng_r is the first and last markers on the screen, xrng_n is the
     # number of markers
-    xrng_r = [round(p.xrng[i], -1) for i in xrange(2)]
+    xrng_r = [round(p.xrng[i], -1) for i in range(2)]
     xrng_n = int((xrng_r[1] - xrng_r[0]) / 10.0) + 1
 
     for k in range(self.nMarks):
@@ -261,7 +262,8 @@ def touchStick(loc, stick):
         return 0, 0
 
 
-class stick(Widget):
+class Stick(Widget):
+    id_code = None
     #ch_x = NumericProperty(0.0)
     #ch_y = NumericProperty(0.0)
     #ch_s = NumericProperty(0.0)
@@ -269,7 +271,7 @@ class stick(Widget):
     #ctrl_y = NumericProperty(0.0)
 
     def __init__(self, **kwargs):
-        super(stick, self).__init__(**kwargs)
+        super(Stick, self).__init__(**kwargs)
 
         #size = kwargs['size']
         #pos = kwargs['pos']
@@ -385,8 +387,8 @@ class DrubbleGame(Widget):
 
             # Initialize the sticks
             sz = 0.2*width
-            self.moveStick = stick(size=(sz, sz), pos=(0.8*width, 0.05*height))
-            self.tiltStick = stick(size=(sz, sz), pos=(0, 0.05*height))
+            self.moveStick = Stick(size=(sz, sz), pos=(0.8*width, 0.05*height))
+            self.tiltStick = Stick(size=(sz, sz), pos=(0, 0.05*height))
             self.add_widget(self.moveStick)
             self.add_widget(self.tiltStick)
 
@@ -403,14 +405,14 @@ class DrubbleGame(Widget):
             self.add_widget(self.score_label)
 
             self.optionButt = OptionButtons(text='Options',
-                                            size=(0.2 * self.width, 24),
-                                            pos=(0.0 * self.width, self.height-50),
+                                            size=(0.18 * self.width, 0.04 * self.width),
+                                            pos=(0.01 * self.width, 0.87 * self.height),
                                             font_size=24)
             self.add_widget(self.optionButt)
 
             self.actionButt = OptionButtons(text=actionMSG[3],
-                                            size=(0.2 * self.width, 24),
-                                            pos=(0.8 * self.width, self.height-50),
+                                            size=(0.18 * self.width, 0.04 * self.width),
+                                            pos=(0.81 * self.width, 0.87 * self.height),
                                             font_size=24)
             self.add_widget(self.actionButt)
 
@@ -435,17 +437,17 @@ class DrubbleGame(Widget):
         # Add option screen buttons
         with self.canvas:
             self.singleDrubbleButt = OptionButtons(text='Single Drubble',
-                                                   size=(0.8*w, 0.2*h),
-                                                   pos=(0.1*w, 0.7*h),
+                                                   size=(0.7*w, 0.2*h),
+                                                   pos=(0.15*w, 0.7*h),
                                                    font_size=0.1*h)
             self.doubleDrubbleButt = OptionButtons(text='Double Drubble',
-                                                   size=(0.8*w, 0.2*h),
-                                                   pos=(0.1*w, 0.4*h),
+                                                   size=(0.7*w, 0.2*h),
+                                                   pos=(0.15*w, 0.4*h),
                                                    font_size=0.1*h)
-            self.tripleDrubbleButt = OptionButtons(text='Triple Drubble',
-                                                   size=(0.8*w, 0.2*h),
-                                                   pos=(0.1*w, 0.1*h),
-                                                   font_size=0.1*h)
+            #self.tripleDrubbleButt = OptionButtons(text='Triple Drubble',
+            #                                       size=(0.7*w, 0.2*h),
+            #                                       pos=(0.15*w, 0.1*h),
+            #                                       font_size=0.1*h)
 
     # Controls
     def _keyboard_closed(self):
@@ -504,13 +506,13 @@ class DrubbleGame(Widget):
             # Detect control inputs
             xy = touchStick(loc, self.moveStick)
             if xy[0] != 0:
-                self.moveStick.id = touch.id
+                self.moveStick.id_code = touch.id
                 self.moveStick.update_el(xy[0], xy[1])
                 gs.ctrl[0:2] = xy
             
             xy = touchStick(loc, self.tiltStick)
             if xy[0] != 0:
-                self.tiltStick.id = touch.id    
+                self.tiltStick.id_code = touch.id
                 self.tiltStick.update_el(xy[0], xy[1])
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
 
@@ -518,22 +520,22 @@ class DrubbleGame(Widget):
         if gs.gameMode > 2 and self.weHaveWidgets:
             # Detect control inputs
             xy = touchStick((touch.x,touch.y), self.moveStick)
-            if touch.id == self.moveStick.id and xy[0] != 0:
+            if touch.id == self.moveStick.id_code and xy[0] != 0:
                 self.moveStick.update_el(xy[0], xy[1])
                 gs.ctrl[0:2] = xy
 
             xy = touchStick((touch.x,touch.y),self.tiltStick)
-            if touch.id == self.tiltStick.id and xy[0] != 0:
+            if touch.id == self.tiltStick.id_code and xy[0] != 0:
                 self.tiltStick.update_el(xy[0], xy[1])
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
 
     def on_touch_up(self, touch):
         if gs.gameMode > 2 and self.weHaveWidgets:
-            if touch.id == self.moveStick.id:
+            if touch.id == self.moveStick.id_code:
                 self.moveStick.update_el(0, 0)
                 gs.ctrl[0:2] = [0, 0]
                 
-            if touch.id == self.tiltStick.id:
+            if touch.id == self.tiltStick.id_code:
                 self.tiltStick.update_el(0, 0)
                 gs.ctrl[2:4] = [0, 0]
 

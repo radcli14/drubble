@@ -45,7 +45,7 @@
             rgba: (1,1,1,0.5*self.ball_alpha)
         Line:
             points: self.trajectory
-            width: 1.5
+            width: 1
         Color:
             rgba: (1,1,1,self.ball_alpha)
         Ellipse:
@@ -82,6 +82,15 @@
         pos: (root.label_left, root.height-root.label_size-2)
         size: (0.19*root.width, root.label_size)
         color: (0, 0, 0, 1)
+
+<OptionButtons>
+    canvas:
+        Color:
+            rgba: (1,1,1,0.25)
+        Rectangle:
+            source: 'a/button.png'
+            pos: self.pos
+            size: self.width, self.height
 
 <drubbleGame>: 
     # Create the labels               

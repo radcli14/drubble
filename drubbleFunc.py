@@ -3,7 +3,7 @@
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2
 
 # Frame rate
-fs = 60
+fs = 30
 dt = 1.0/fs
 
 # Color definition    
@@ -228,11 +228,11 @@ def linspace(start, stop, n):
 
 def zeros(ztup):
     try:
-        z = [0 for i in xrange(ztup[1])]
-        Z = [z for i in xrange(ztup[0])]
+        z = [0 for i in range(ztup[1])]
+        Z = [z for i in range(ztup[0])]
         return Z
     except:
-        z = [0 for i in xrange(ztup)]
+        z = [0 for i in range(ztup)]
         return z
 
 
