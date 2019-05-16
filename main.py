@@ -192,21 +192,36 @@ class SplashScreen(Widget):
 
 
 class MyFace(Widget):
+    sz = NumericProperty(0)
     img_left = NumericProperty(0.0)
     img_bottom = NumericProperty(0.0)
-    sz = NumericProperty(0)
+    stool_left = NumericProperty(0.0)
+    stool_bottom = NumericProperty(0.0)
+    stool_width = NumericProperty(0.0)
+    stool_height = NumericProperty(0.0)
+    stool_angle = NumericProperty(0.0)
+    rotate_center = ListProperty([0, 0])
     image_source = StringProperty(None)
     face_alpha = NumericProperty(0.0)
+    stool_color = ListProperty([0, 0, 0])
 
-    def __init__(self, image_source='a/myFace.png', **kwargs):
+    def __init__(self, image_source='a/myFace.png', stool_color=(1, 1, 1), **kwargs):
         super(MyFace, self).__init__(**kwargs)
         self.image_source = image_source
-            
-    def update(self, x, y, m2p, po, w, h):
+        self.stool_color = stool_color
+
+    def update(self, x, y, l, th, m2p, po, w, h):
         xp, yp = xy2p(x, y, m2p, po, w, h)
         self.sz = int(m2p*0.7)
         self.img_left = int(xp-self.sz*0.5)
         self.img_bottom = int(yp)
+
+        self.stool_width = int(0.7*m2p)
+        self.stool_height = int(m2p)
+        self.stool_left = int(xp - 0.5 * self.stool_width)
+        self.stool_bottom = int(yp + (l - 0.9 - 0.5 * p.d) * m2p)
+        self.stool_angle = th * 180.0 / pi
+        self.rotate_center = [self.img_left + self.sz*0.5, yp - 0.5 * p.d * m2p]
         self.face_alpha = 1.0
 
     def clear(self):
@@ -557,14 +572,14 @@ class DrubbleGame(Widget):
                 # Draw Player One
                 Color(darkGreen[0], darkGreen[1], darkGreen[2], 1)
                 Line(points=p1.player, width=0.075*p1.m2p)
-                Color(white[0], white[1], white[2], 1)
+                Color(white[0], white[1], white[2], 0.0)
                 Line(points=p1.stool, width=0.05*p1.m2p)
                 
                 if p.nPlayer>1:
                     # Draw Player Two
                     Color(red[0], red[1], red[2], 1)
                     Line(points=p2.player,width=0.075*p2.m2p)
-                    Color(black[0], black[1], black[2], 1)
+                    Color(black[0], black[1], black[2], 0.0)
                     Line(points=p2.stool, width=0.05*p2.m2p)
             
                 # Draw the ball
@@ -630,10 +645,10 @@ class DrubbleGame(Widget):
             self.bg.update(xMean, gs.yb, self.width, self.height, m2p)
             self.moveStick.update_el(gs.ctrl[0], gs.ctrl[1])
             self.tiltStick.update_el(-gs.ctrl[3], gs.ctrl[2])
-            self.myFace.update(gs.xp[0], gs.yp[0]+1.5*p.d, m2p, po,
+            self.myFace.update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], m2p, po,
                                self.width, self.height)
             if p.nPlayer > 1:
-                self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, m2p, po,
+                self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], m2p, po,
                                      self.width, self.height)
             self.update_canvas()
 
