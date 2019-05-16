@@ -243,10 +243,10 @@ ios.ios_deploy_branch = 1.7.0
 
 # (str) Name of the certificate to use for signing the debug version
 # Get a list of available identities: buildozer ios list_identities
-#ios.codesign.debug = "iPhone Developer: <lastname> <firstname> (<hexstring>)"
+ios.codesign.debug = "iPhone Developer: radcli14@gmail.com (22V3VCU92S)"
 
 # (str) Name of the certificate to use for signing the release version
-#ios.codesign.release = %(ios.codesign.debug)s
+ios.codesign.release = %(ios.codesign.debug)s
 
 
 [buildozer]
