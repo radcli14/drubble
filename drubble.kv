@@ -33,17 +33,22 @@
 <MyFace>:
     canvas:
         Color:
+            rgba: (self.line_color[0], self.line_color[1], self.line_color[2], self.face_alpha)
+        Line:
+            points: self.line_list
+            width: self.line_width
+        Color:
             rgba: (1,1,1,self.face_alpha)
         Rectangle:
             source: self.image_source
             pos: self.img_left, self.img_bottom
             size: self.sz, self.sz
-        Color:
-            rgba: (self.stool_color[0], self.stool_color[1], self.stool_color[2], self.face_alpha)
         PushMatrix
         Rotate:
             angle: self.stool_angle
             origin: self.rotate_center
+        Color:
+            rgba: (self.stool_color[0], self.stool_color[1], self.stool_color[2], self.face_alpha)
         Rectangle:
             source: 'a/stool.png'
             pos: self.stool_left, self.stool_bottom

@@ -18,6 +18,7 @@ from kivy.core.window import Window
 from kivy.clock import Clock
 from kivy.graphics import *
 from kivy.core.audio import SoundLoader
+from kivy.utils import platform
 
 # Execute drubbleFunc to get the supporting functions and classes
 engine = 'kivy'
@@ -39,7 +40,8 @@ stats = GameScore()
 
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
-#Window.size = (width, height)
+if platform == 'linux':
+    Window.size = (1000, 562)
 width, height = Window.size
 Window.release_all_keyboards()
 
@@ -204,13 +206,19 @@ class MyFace(Widget):
     image_source = StringProperty(None)
     face_alpha = NumericProperty(0.0)
     stool_color = ListProperty([0, 0, 0])
+    line_list = ListProperty([0, 0])
+    line_color = ListProperty([0, 0, 0])
+    line_width = NumericProperty(1)
 
-    def __init__(self, image_source='a/myFace.png', stool_color=(1, 1, 1), **kwargs):
+    def __init__(self, image_source='a/myFace.png', stool_color=white, line_color=darkGreen, **kwargs):
         super(MyFace, self).__init__(**kwargs)
         self.image_source = image_source
         self.stool_color = stool_color
+        self.line_color = line_color
+        print(self.stool_color)
+        print(self.line_color)
 
-    def update(self, x, y, l, th, m2p, po, w, h):
+    def update(self, x, y, l, th, m2p, po, w, h, player):
         xp, yp = xy2p(x, y, m2p, po, w, h)
         self.sz = int(m2p*0.7)
         self.img_left = int(xp-self.sz*0.5)
@@ -222,6 +230,8 @@ class MyFace(Widget):
         self.stool_bottom = int(yp + (l - 0.9 - 0.5 * p.d) * m2p)
         self.stool_angle = th * 180.0 / pi
         self.rotate_center = [self.img_left + self.sz*0.5, yp - 0.5 * p.d * m2p]
+        self.line_width = 0.075*m2p
+        self.line_list = player
         self.face_alpha = 1.0
 
     def clear(self):
@@ -388,8 +398,8 @@ class DrubbleGame(Widget):
             self.ball = Ball()
 
             # Initialize the player faces
-            self.myFace = MyFace(image_source='a/myFace.png')
-            self.LadyFace = MyFace(image_source='a/LadyFace.png')
+            self.myFace = MyFace(image_source='a/myFace.png', line_color=darkGreen, stool_color=white)
+            self.LadyFace = MyFace(image_source='a/LadyFace.png', line_color=red, stool_color=gray)
 
     def add_game_widgets(self): 
         # Add game widgets
@@ -568,20 +578,7 @@ class DrubbleGame(Widget):
             with self.canvas:
                 # Draw Bottom Line
                 makeMarkers(self, p1)
-                
-                # Draw Player One
-                Color(darkGreen[0], darkGreen[1], darkGreen[2], 1)
-                Line(points=p1.player, width=0.075*p1.m2p)
-                Color(white[0], white[1], white[2], 0.0)
-                Line(points=p1.stool, width=0.05*p1.m2p)
-                
-                if p.nPlayer>1:
-                    # Draw Player Two
-                    Color(red[0], red[1], red[2], 1)
-                    Line(points=p2.player,width=0.075*p2.m2p)
-                    Color(black[0], black[1], black[2], 0.0)
-                    Line(points=p2.stool, width=0.05*p2.m2p)
-            
+
                 # Draw the ball
                 self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
 
@@ -646,10 +643,10 @@ class DrubbleGame(Widget):
             self.moveStick.update_el(gs.ctrl[0], gs.ctrl[1])
             self.tiltStick.update_el(-gs.ctrl[3], gs.ctrl[2])
             self.myFace.update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], m2p, po,
-                               self.width, self.height)
+                               self.width, self.height, p1.player)
             if p.nPlayer > 1:
                 self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], m2p, po,
-                                     self.width, self.height)
+                                     self.width, self.height, p2.player)
             self.update_canvas()
 
 
