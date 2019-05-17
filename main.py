@@ -41,7 +41,7 @@ stats = GameScore()
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
 if platform == 'linux':
-    Window.size = (1000, 562)
+    Window.size = (1200, 675)
 width, height = Window.size
 Window.release_all_keyboards()
 
