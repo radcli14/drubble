@@ -26,7 +26,7 @@ source.exclude_dirs = tests,bin,audio,build,dc,dist,figs,photos,venv,venv2,fonts
 
 # (list) List of exclusions using pattern matching
 #source.exclude_patterns = license,images/*/*.jpg
-source.exclude_patterrns = dRuBbLe.py,dRuBbLe_x.playground,demoDrubble.py
+source.exclude_patterns = dRuBbLe.py,dRuBbLe_x.playground,demoDrubble.py
 
 # (str) Application versioning (method 1)
 version = 0.2
@@ -37,7 +37,7 @@ version = 0.2
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy
+requirements = python3,kivy,numpy
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -53,7 +53,7 @@ presplash.filename = a/badI.png
 icon.filename = a/icon.png
 
 # (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
-orientation = sensorLandscape
+orientation = landscape
 
 # (list) List of service to declare
 #services = NAME:ENTRYPOINT_TO_PY,NAME2:ENTRYPOINT2_TO_PY

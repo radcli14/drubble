@@ -1,5 +1,6 @@
 # Import modules
 #import numpy as np
+#from numpy import array
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2
 
 # Frame rate
@@ -118,7 +119,7 @@ class Parameters:
     
     # Parameter settings I'm using to try to improve running speed
     linearMass = False
-    nEulerSteps = 2
+    nEulerSteps = 1
     timeRun = False
     
     # Font settings
@@ -373,7 +374,7 @@ class GameState:
     def simStep(self, p, gs, stats):
         # Increment n 
         self.n += 1
-        
+
         # Active player
         pAct = stats.stoolCount % p.nPlayer
 
@@ -386,21 +387,33 @@ class GameState:
         L = BallHitStool(self.t, self.u, pAct)  # Distance to stool
         vBall = (self.dxb, self.dyb)            # Velocity
         sBall = norm(vBall)                     # Speed
-        
+
+        # Set the timing
+        time_condition = (self.yb - self.yp[pAct] - self.lp[pAct] * cos(self.tp[pAct]) - p.d) / sBall if sBall >0.0 else -1.0
+        near_condition = abs(self.xb - self.xp[pAct]) < 1.0
+        if 0.0 < time_condition < 0.5 and near_condition:
+            # Slow speed
+            ddt = dt / 4.0
+            nStep = 4 * p.nEulerSteps
+        else:
+            # Regular speed
+            ddt = dt
+            nStep = p.nEulerSteps
+
         # Integrate using Euler method
         # Initialize state variables
-        U = zeros((p.nEulerSteps+1, 20))
+        U = zeros((nStep+1, 20))
         U[0] = self.u
-        for k in range(1, p.nEulerSteps+1):
+        for k in range(1, nStep+1):
             # Increment time
-            self.t += dt/p.nEulerSteps
+            self.t += ddt/nStep
             
             # Calculate the derivatives of states w.r.t. time
             dudt = PlayerAndStool(self.t, U[k-1], p, gs, stats)
             
             # Calculate the states at the next step
             # U[k] = U[k-1] + np.array(dudt)*dt/p.nEulerSteps
-            U[k] = [U[k-1][i]+dudt[i]*dt/p.nEulerSteps for i in range(20)]
+            U[k] = [U[k-1][i]+dudt[i]*ddt/nStep for i in range(20)]
 
             # Check for events
             if (self.t-self.te) > 0.1:
@@ -411,7 +424,7 @@ class GameState:
                 if self.StoolBounce or self.FloorBounce:
                     self.te = self.t
                     self.ue = U[k]
-                    tBreak = k * dt / p.nEulerSteps
+                    tBreak = k * ddt / nStep
                     break 
         
         # If an event occured, increment the counter, otherwise continue
@@ -435,9 +448,9 @@ class GameState:
                 self.ue[3] = -p.COR*self.ue[3]     
 
             # Re-initialize from the event states
-            self.t += dt-tBreak
+            self.t += ddt-tBreak
             dudt = PlayerAndStool(self.t, self.ue, p, gs, stats)
-            self.u = [self.ue[i] + dudt[i]*(dt-tBreak) for i in range(20)]
+            self.u = [self.ue[i] + dudt[i]*(ddt-tBreak) for i in range(20)]
             
             # Stuck
             if sqrt(self.u[2]**2+self.u[3]**2) < p.dybtol and self.u[1] < 1:
@@ -454,7 +467,7 @@ class GameState:
         # Generate the new ball trajectory prediction line
         if self.StoolBounce or self.FloorBounce or self.gameMode<7:    
             # Predict the future trajectory of the ball
-            self.xI,self.yI,self.tI,self.xTraj,self.yTraj,self.timeUntilBounce = BallPredict(self)
+            self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = BallPredict(self)
 
         # Stop the ball from moving if the player hasn't hit space yet
         if self.gameMode<6:
