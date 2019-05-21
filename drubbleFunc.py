@@ -60,16 +60,16 @@ class Parameters:
     Kl = mg*(fl*2*pi)**2  # Arm stiffness [N/m]
     Ql = Kl*0.3  # Arm strength [N]
     ft = 1.5     # Stool tilt frequency [Hz]
-    Kt = (mg*l0*l0)*(ft*2*pi)**2  # Tilt stiffnes [N-m/rad]
+    Kt = (mg*l0*l0)*(ft*2*pi)**2  # Tilt stiffness [N-m/rad]
     Qt = 0.6*Kt  # Tilt strength [N-m]
     Gt = 0.8     # Control gain on Qt
     vx = 10.0    # Horizontal top speed [m/s]
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio
     Cy = 2*zy*sqrt(Ky*m)  # Vertical damping [N-s/m]
-    zl = 0.2     # Arm damping ratio
+    zl = 0.07     # Arm damping ratio
     Cl = 2*zl*sqrt(Kl*m)  # Arm damping [N-s/m]
-    zt = 0.05    # Stool tilt damping ratio
+    zt = 0.04    # Stool tilt damping ratio
     Ct = 2.0*zl*sqrt(Kt*m)  # Tilt damping [N-m-s/rad]
 
     # Initial states
@@ -136,17 +136,17 @@ p = Parameters()
 class DrumBeat:
     def __init__(self):
         self.n = 0
-        self.bpm = 105.0 # Beats per minute
-        self.npb = np.around(fs*60.0/4.0/self.bpm) # frames per beat
+        self.bpm = 105.0  # Beats per minute
+        self.npb = round(fs*60.0/4.0/self.bpm) # frames per beat
         self.nps = 16.0*self.npb # frames per sequence
         #self.sequence = [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
         #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
         #                 [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
         #                 [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]]
-        self.sequence = [[1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0],
-                         [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                         [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
-                         [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]]
+        #self.sequence = [[1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0],
+        #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+        #                 [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
+        #                [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]]
         if engine == 'ista':
             self.drum = ['a/01_kick.wav',
                          'a/04_snare2.wav',
@@ -154,14 +154,19 @@ class DrumBeat:
                          'a/09_hiConga2.wav']
         elif engine == 'kivy':
             self.drum = []
+            self.loop = []
             self.drum.append(SoundLoader.load('a/01_kick.wav'))
             self.drum.append(SoundLoader.load('a/04_snare2.wav'))
             self.drum.append(SoundLoader.load('a/06_openHat6.wav'))
             self.drum.append(SoundLoader.load('a/09_hiConga2.wav'))
+            self.loop.append(SoundLoader.load('a/00-DC-Base.mp3'))
+            self.loop.append(SoundLoader.load('a/01-DC-Base.mp3'))
 
         self.m = 4
         self.randFactor = 1.0
-       
+
+        self.loop[0].play()
+
     def play_ista(self):    
         whichSequence = np.floor(self.n/self.nps)
         whereInSequence = self.n-whichSequence*self.nps
@@ -183,6 +188,8 @@ class DrumBeat:
         if self.n >= 16:
             self.n = 0            
 
+    def check_kivy(self):
+        pass
 
 def varStates(obj):
     obj.xb = obj.u[0]         # Ball distance [m]
@@ -393,8 +400,8 @@ class GameState:
         near_condition = abs(self.xb - self.xp[pAct]) < 1.0
         if 0.0 < time_condition < 0.5 and near_condition:
             # Slow speed
-            ddt = dt / 4.0
-            nStep = 4 * p.nEulerSteps
+            ddt = dt / 3.0
+            nStep = 3 * p.nEulerSteps
         else:
             # Regular speed
             ddt = dt
