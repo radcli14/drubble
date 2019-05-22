@@ -147,12 +147,14 @@ class DrumBeat:
         #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
         #                 [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
         #                [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]]
-        if engine == 'ista':
+        try:
             self.drum = ['a/01_kick.wav',
                          'a/04_snare2.wav',
                          'a/06_openHat6.wav',
                          'a/09_hiConga2.wav']
-        elif engine == 'kivy':
+            self.loop = ['a/00-DC-Base.mp3', 'a/01-DC-Base.mp3']
+            #sound.play_effect(self.loop[0])
+        except:
             self.drum = []
             self.loop = []
             self.drum.append(SoundLoader.load('a/01_kick.wav'))
@@ -161,11 +163,12 @@ class DrumBeat:
             self.drum.append(SoundLoader.load('a/09_hiConga2.wav'))
             self.loop.append(SoundLoader.load('a/00-DC-Base.mp3'))
             self.loop.append(SoundLoader.load('a/01-DC-Base.mp3'))
+            self.loop[0].play()
 
         self.m = 4
         self.randFactor = 1.0
 
-        self.loop[0].play()
+        
 
     def play_ista(self):    
         whichSequence = np.floor(self.n/self.nps)

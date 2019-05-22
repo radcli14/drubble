@@ -5,7 +5,9 @@ import motion
 import ui
 import scene_drawing
 import sound
-exec(open('./drubbleFunc.py').read())
+import numpy as np
+#exec(open('./drubbleFunc.py').read())
+from drubbleFunc import *
 
 # Window size
 width = max(get_screen_size())
@@ -118,11 +120,17 @@ def makeMarkers(xrng, m2p, po):
 # Set the keyboard input and mouse defaults
 keyPush = np.zeros(8)
 
+# Initialize gamestate
+gs = GameState(p.u0, engine)
+
 # Initialize stats
 stats = GameScore()
 
 # Initialize drums
 drums = DrumBeat()
+
+#fs = 60.0
+#dt = 1/fs
 
 class MyBackground:
     # Size of the black bar on the bottom of the screen
@@ -137,11 +145,12 @@ class MyBackground:
         self.num_bg = 3  # Number of background images
         self.bg = []
         for n in range(self.num_bg):
-            name = 'figs/bg'+str(n)+'.png'
+            name = 'a/bg'+str(n)+'.png'
             self.bg.append(scene_drawing.load_image_file(name))
 
         # Randomize the start location in the background
         self.xpos = np.random.rand() * 100.0 * self.num_bg
+
 
     def update(self, x, y, w, h, m2p): 
         # xmod is normalized position of the player between 0 and num_bg
@@ -217,6 +226,7 @@ if engine == 'ista':
     
     class Game (Scene):
         def setup(self):
+            
             # Initialize the motion module
             motion.start_updates()
         	
@@ -228,7 +238,7 @@ if engine == 'ista':
             
             # Generate the sky blue background and images
             self.background_color = skyBlue
-            self.bg = MyBackground()
+            self.bg = MyBackground() 
             
             # Initialize the buttons or sticks
             self.moveStick,self.moveAura = initStick(self,0.1,0.2*width,(1,0),(width,height/20))
@@ -264,37 +274,37 @@ if engine == 'ista':
             self.score_label.z_position = 1
             
             # Get ranges for drawing the player and ball
-            xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
+            xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u, width)
             
             # Initialize the ball image
             self.ball = SpriteNode('a/ball.png')
             dbPix = 2*p.rb*m2p
-            self.ball.size = (dbPix,dbPix)
+            self.ball.size = (dbPix, dbPix)
             self.ball.anchor_point = (0.5, 0.5)
             self.ball.position = (gs.xb*m2p+po, (gs.yb+p.rb)*m2p)
             
             # Initialize the player's head
             self.head = SpriteNode('a/myFace.png')
             spPix = 0.7*m2p
-            self.head.size = (spPix,spPix)
+            self.head.size = (spPix, spPix)
             self.head.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp[0]*m2p+po, (gs.yp[0]+p.d)*m2p)
             
             self.head1 = SpriteNode('a/LadyFace.png')
-            self.head1.size = (spPix,spPix)
+            self.head1.size = (spPix, spPix)
             self.head1.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp[1]*m2p+po, (gs.yp[1]+p.d)*m2p)
             
-            self.actionButt = OptionButtons(text='Begin',font=(p.MacsFavoriteFont,24),position=(0.95*width,0.95*height),anchor_point=(1,1))
+            self.actionButt = OptionButtons(text='Begin', font=(p.MacsFavoriteFont, 24),position=(0.95*width, 0.95*height), anchor_point=(1,1))
             
-            self.optionButt = OptionButtons(text='Options',font=(p.MacsFavoriteFont,24),position=(0.05*width,0.95*height),anchor_point=(0,1))
+            self.optionButt = OptionButtons(text='Options', font=(p.MacsFavoriteFont, 24), position=(0.05*width,0.95*height), anchor_point=(0,1))
             
-            toggleVisibleSprites(self,False)
+            toggleVisibleSprites(self, False)       
             
         def update(self):
             # Update if there was a touch
             if self.touchCycle:
-                cycleModes(gs,stats)
+                cycleModes(gs, stats, engine)
                 if gs.gameMode == 2:
                     self.singleButt = OptionButtons(text='Single Drubble',font=(p.MacsFavoriteFont,36),size=(0.8*width,0.2*height),position=(0.5*width,0.75*height))
                     self.doubleButt = OptionButtons(text='Double Drubble',font=(p.MacsFavoriteFont,36),size=(0.8*width,0.2*height),position=(0.5*width,0.5*height))
@@ -340,17 +350,17 @@ if engine == 'ista':
                 gs.setAngleSpeed()
             
             # Run one simulation step
-            gs.simStep()
-            if gs.gameMode==6:
-                stats.update()
-            xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
+            gs.simStep(p, gs, stats)
+            if gs.gameMode == 6:
+                stats.update(gs)
+            xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u, width)
             if gs.StoolBounce:
                 sound.play_effect('digital:PhaseJump3')
             if gs.FloorBounce and not gs.Stuck:
                 sound.play_effect('game:Error')
                 
             # Play the drum beat
-            drums.play_ista()
+            #drums.play_ista()
             
             # Update score line
             self.time_label.text = 'Time - %11.1f' % gs.t
@@ -383,7 +393,7 @@ if engine == 'ista':
                 if not gs.showedSplash:
                     self.kSplash += 2
             else:
-                xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u)
+                xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u, width)
             
                 # Generate the background
                 if gs.gameMode>2:
@@ -470,7 +480,7 @@ if engine == 'ista':
             motion.stop_updates()
                 
     if __name__ == '__main__':
-        run(Game(), LANDSCAPE, show_fps=False)
+        run(Game(), LANDSCAPE, frame_interval=60.0/fs,show_fps=False)
         
         
         
