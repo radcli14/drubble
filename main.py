@@ -45,7 +45,10 @@ def sound_stopped(self):
 
 
 for k in range(2):
-    loop[k].bind(on_stop=sound_stopped)
+    try:
+        loop[k].bind(on_stop=sound_stopped)
+    except:
+        print('failed binding to sound_stopped')
 loop[0].play()
 
 
