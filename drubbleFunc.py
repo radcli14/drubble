@@ -157,7 +157,6 @@ class DrumBeat:
                          'a/06_openHat6.wav',
                          'a/09_hiConga2.wav']
             self.loop = ['a/00-DC-Base.mp3', 'a/01-DC-Base.mp3']
-            #sound.play_effect(self.loop[0])
         except:
             self.drum = []
             self.loop = []
@@ -171,7 +170,7 @@ class DrumBeat:
 
         self.m = 4
         self.randFactor = 1.0
-
+        self.nloops = 2
         
 
     def play_ista(self):    

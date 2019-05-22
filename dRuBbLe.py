@@ -129,13 +129,12 @@ stats = GameScore()
 
 # Initialize drums
 drums = DrumBeat()
-
-#fs = 60.0
-#dt = 1/fs
+drum_player = [sound.Player(drums.loop[k]) for k in range(drums.nloops)]
 
 class MyBackground:
     # Size of the black bar on the bottom of the screen
     bottomLineHeight = height / 20.0
+    current_drum = 0
 
     def __init__(self, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
@@ -152,6 +151,8 @@ class MyBackground:
         # Randomize the start location in the background
         self.xpos = np.random.rand() * 100.0 * self.num_bg
 
+        # Start the drums
+        drum_player[self.current_drum].play()
 
     def update(self, x, y, w, h, m2p): 
         # xmod is normalized position of the player between 0 and num_bg
@@ -221,6 +222,7 @@ class OptionButtons:
     def rm(self):
         self.butt.remove_from_parent()
 
+
 if engine == 'ista':
     # Initialize the splash screen
     splash = scene_drawing.load_image_file('a/splash.png')
@@ -230,7 +232,7 @@ if engine == 'ista':
             
             # Initialize the motion module
             motion.start_updates()
-        	
+
             # Add the game state classes to the scene
             self.touchCycle = False
             
@@ -361,6 +363,8 @@ if engine == 'ista':
                 sound.play_effect('game:Error')
                 
             # Play the drum beat
+            if drum_player[self.current_drum].current_time / drum_player[self.current_drum].duration >= 0.99:
+                drum_player[self.current_drum].play()
             #drums.play_ista()
             
             # Update score line
