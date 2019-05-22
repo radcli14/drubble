@@ -369,9 +369,13 @@ if engine == 'ista':
                 sound.play_effect('game:Error')
                 
             # Play the drum beat
-            if drum_player[self.current_drum].current_time + 2*dt > drum_player[self.current_drum].duration:
-                self.current_drum = 1
-                drum_player[self.current_drum].play()
+            if drum_player[self.current_drum].current_time > 0.985 * drum_player[self.current_drum].duration:
+                next_drum = 1
+                if next_drum == self.current_drum:
+                    drum_player[self.current_drum].current_time = 0.0
+                else:
+                    self.current_drum = next_drum
+                    drum_player[self.current_drum].play()
             #drums.play_ista()
             
             # Update score line
