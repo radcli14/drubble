@@ -34,7 +34,7 @@ def linePlot(x, y, m2p, po, w, h, clr, wgt):
 
 
 def initStick(self, alph, sz, ap, ps):
-    Stick = SpriteNode('figs/crossHair.png', parent=self)
+    Stick = SpriteNode('a/crossHair.png', parent=self)
     Stick.size = (sz, sz)
     Stick.anchor_point = ap
     Stick.position = ps
@@ -200,21 +200,36 @@ class MyBackground:
 
 # Create OptionButtons class
 class OptionButtons:
-    def __init__(self,*args,**kwargs):
-        self.butt = LabelNode(*args,**kwargs)
-        self.left = self.butt.position[0]-self.butt.size[0]*self.butt.anchor_point[0]
-        self.right = self.butt.position[0]+self.butt.size[0]*(1-self.butt.anchor_point[0])
-        self.bottom = self.butt.position[1]-self.butt.size[1]*self.butt.anchor_point[1]
-        self.top = self.butt.position[1]+self.butt.size[1]*(1-self.butt.anchor_point[1])
+    def __init__(self, anchor_point=(0.5, 0.5), **kwargs):
+        # Get the keyword arguments
+        text = kwargs['text']
+        font = kwargs['font']
+        pos = kwargs['position']
+        sz = kwargs['size']
+        ap = anchor_point
         
-    def text(self,str):
+        # Set the boundaries
+        self.left = pos[0] - sz[0] * ap[0]
+        self.right = pos[0] + sz[0] * (1-ap[0])
+        self.bottom = pos[1] - sz[1] * ap[1]
+        self.top = pos[1] + sz[1] * (1-ap[1])
+        
+        # Set up the background image
+        self.img = SpriteNode('a/button.png')
+        self.img.position = (self.left, self.bottom)
+        self.img.size = sz
+        self.img.alpha = 0.25
+        self.img.anchor_point = (0, 0)
+        
+        # Set up the text
+        self.butt = LabelNode(text=text, font=font)
+        self.butt.position = (self.left + sz[0]/2, self.bottom + sz[1]/2)
+        self.butt.anchor_point = (0.5, 0.5)
+        
+    def text(self, str):
         self.butt.text = str
-        self.left = self.butt.position[0]-self.butt.size[0]*self.butt.anchor_point[0]
-        self.right = self.butt.position[0]+self.butt.size[0]*(1-self.butt.anchor_point[0])
-        self.bottom = self.butt.position[1]-self.butt.size[1]*self.butt.anchor_point[1]
-        self.top = self.butt.position[1]+self.butt.size[1]*(1-self.butt.anchor_point[1])
         
-    def detect_touch(self,loc):
+    def detect_touch(self, loc):
         tCnd = [loc[0] > self.left,
                 loc[0] < self.right,
                 loc[1] > self.bottom,
@@ -223,6 +238,7 @@ class OptionButtons:
         
     def rm(self):
         self.butt.remove_from_parent()
+        self.img.remove_from_parent()
 
 
 if engine == 'ista':
@@ -299,10 +315,10 @@ if engine == 'ista':
             self.head1.size = (spPix, spPix)
             self.head1.anchor_point = (0.5, 0.0)
             self.head.position = (gs.xp[1]*m2p+po, (gs.yp[1]+p.d)*m2p)
+
+            self.actionButt = OptionButtons(text='Begin', font=(p.MacsFavoriteFont, 20), position=(0.95*width, 0.95*height), size=(0.18 * width, 0.04 * width), anchor_point=(1,1))
             
-            self.actionButt = OptionButtons(text='Begin', font=(p.MacsFavoriteFont, 24),position=(0.95*width, 0.95*height), anchor_point=(1,1))
-            
-            self.optionButt = OptionButtons(text='Options', font=(p.MacsFavoriteFont, 24), position=(0.05*width,0.95*height), anchor_point=(0,1))
+            self.optionButt = OptionButtons(text='Options', font=(p.MacsFavoriteFont, 20), position=(0.05*width,0.95*height), size=(0.18 * width, 0.04 * width), anchor_point=(0,1))
             
             toggleVisibleSprites(self, False)
 
@@ -318,12 +334,16 @@ if engine == 'ista':
                     self.singleButt = OptionButtons(text='Single Drubble',font=(p.MacsFavoriteFont,36),size=(0.8*width,0.2*height),position=(0.5*width,0.75*height))
                     self.doubleButt = OptionButtons(text='Double Drubble',font=(p.MacsFavoriteFont,36),size=(0.8*width,0.2*height),position=(0.5*width,0.5*height))
                     self.add_child(self.singleButt.butt)
+                    self.add_child(self.singleButt.img)
                     self.add_child(self.doubleButt.butt)
+                    self.add_child(self.doubleButt.img)
                     
                 if gs.gameMode == 3:
                     toggleVisibleSprites(self,True)
                     self.add_child(self.actionButt.butt)
+                    self.add_child(self.actionButt.img)
                     self.add_child(self.optionButt.butt)
+                    self.add_child(self.optionButt.img)
                     self.actionButt.text('Begin')
                     
                 if gs.gameMode == 4:
