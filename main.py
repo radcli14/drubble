@@ -34,13 +34,13 @@ gs = GameState(p.u0, engine)
 stats = GameScore()
 
 # Initialize drums
+"""
 loop = []
 loop.append(SoundLoader.load('a/00-DC-Base.mp3'))
 loop.append(SoundLoader.load('a/01-DC-Base.mp3'))
 
 
 def sound_stopped(self):
-    """ The current audio file has stopped. Play the next one. """
     loop[1].play()
 
 
@@ -50,7 +50,7 @@ for k in range(2):
     except:
         print('failed binding to sound_stopped')
 loop[0].play()
-
+"""
 
 #drums = DrumBeat()
 #def drums_callback(dt):
@@ -117,7 +117,7 @@ class MyBackground(Widget):
 
         # xsel selects which background textures are used TBR
         if xrem <= 0.5:
-            xsel = xflr-1
+            xsel = xflr - 1
         else:
             xsel = xflr
 

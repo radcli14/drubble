@@ -2,9 +2,13 @@
 #import numpy as np
 #from numpy import array
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2
-
+import sys
 # Frame rate
-fs = 30
+if 'dRuBbLe' in sys.argv[0]:
+    print(sys.argv[0])
+    fs = 60
+else:
+    fs = 30
 dt = 1.0/fs
 
 # Color definition    
@@ -147,12 +151,13 @@ class DrumBeat:
         #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
         #                 [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
         #                [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]]
-        if engine == 'ista':
+        try:
             self.drum = ['a/01_kick.wav',
                          'a/04_snare2.wav',
                          'a/06_openHat6.wav',
                          'a/09_hiConga2.wav']
-        elif engine == 'kivy':
+            self.loop = ['a/00-DC-Base.mp3', 'a/01-DC-Base.mp3']
+        except:
             self.drum = []
             self.loop = []
             self.drum.append(SoundLoader.load('a/01_kick.wav'))
@@ -161,11 +166,12 @@ class DrumBeat:
             self.drum.append(SoundLoader.load('a/09_hiConga2.wav'))
             self.loop.append(SoundLoader.load('a/00-DC-Base.mp3'))
             self.loop.append(SoundLoader.load('a/01-DC-Base.mp3'))
+            self.loop[0].play()
 
         self.m = 4
         self.randFactor = 1.0
-
-        self.loop[0].play()
+        self.nloops = 2
+        
 
     def play_ista(self):    
         whichSequence = np.floor(self.n/self.nps)
