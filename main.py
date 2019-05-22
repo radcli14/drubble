@@ -114,7 +114,7 @@ class MyBackground(Widget):
 
         # xsel selects which background textures are used TBR
         if xrem <= 0.5:
-            xsel = xflr-1
+            xsel = xflr - 1
         else:
             xsel = xflr
 

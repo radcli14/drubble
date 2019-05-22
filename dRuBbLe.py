@@ -134,29 +134,31 @@ drum_player = [sound.Player(drums.loop[k]) for k in range(drums.nloops)]
 class MyBackground:
     # Size of the black bar on the bottom of the screen
     bottomLineHeight = height / 20.0
-    current_drum = 0
+
+    # Set size of the background, before updates
+    sz_orig = w_orig, h_orig = (2400.0, 400.0)
+
+    # Number of background images
+    self.num_bg = 3
+
+    # Import the background images
+    bg = []
+    for n in range(self.num_bg):
+        name = 'a/bg' + str(n) + '.png'
+        bg.append(scene_drawing.load_image_file(name))
+
+    # Randomize the start location in the background
+    self.xpos = np.random.rand() * 100.0 * num_bg
 
     def __init__(self, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
-        # Set size of the background, before updates
-        self.sz_orig = self.w_orig, self.h_orig = (2400.0, 400.0)
 
-        # Import the background images
-        self.num_bg = 3  # Number of background images
-        self.bg = []
-        for n in range(self.num_bg):
-            name = 'a/bg'+str(n)+'.png'
-            self.bg.append(scene_drawing.load_image_file(name))
-
-        # Randomize the start location in the background
-        self.xpos = np.random.rand() * 100.0 * self.num_bg
-
-        # Start the drums
-        drum_player[self.current_drum].play()
+        self.width = width
+        self.height = height
 
     def update(self, x, y, w, h, m2p): 
         # xmod is normalized position of the player between 0 and num_bg
-        xmod = np.mod(x+self.xpos,200)/100.0
+        xmod = np.mod(x+self.xpos, 100.0*self.num_bg)/100.0
         xrem = np.mod(xmod, 1)
         xflr = int(np.floor(xmod))
 
@@ -229,7 +231,7 @@ if engine == 'ista':
     
     class Game (Scene):
         def setup(self):
-            
+
             # Initialize the motion module
             motion.start_updates()
 
@@ -302,7 +304,11 @@ if engine == 'ista':
             
             self.optionButt = OptionButtons(text='Options', font=(p.MacsFavoriteFont, 24), position=(0.05*width,0.95*height), anchor_point=(0,1))
             
-            toggleVisibleSprites(self, False)       
+            toggleVisibleSprites(self, False)
+
+            # Start the drums
+            self.current_drum = 0
+            drum_player[self.current_drum].play()
             
         def update(self):
             # Update if there was a touch
