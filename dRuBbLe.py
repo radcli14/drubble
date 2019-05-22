@@ -139,16 +139,16 @@ class MyBackground:
     sz_orig = w_orig, h_orig = (2400.0, 400.0)
 
     # Number of background images
-    self.num_bg = 3
+    num_bg = 3
 
     # Import the background images
     bg = []
-    for n in range(self.num_bg):
+    for n in range(num_bg):
         name = 'a/bg' + str(n) + '.png'
         bg.append(scene_drawing.load_image_file(name))
 
     # Randomize the start location in the background
-    self.xpos = np.random.rand() * 100.0 * num_bg
+    xpos = np.random.rand() * 100.0 * num_bg
 
     def __init__(self, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
@@ -369,7 +369,8 @@ if engine == 'ista':
                 sound.play_effect('game:Error')
                 
             # Play the drum beat
-            if drum_player[self.current_drum].current_time / drum_player[self.current_drum].duration >= 0.99:
+            if drum_player[self.current_drum].current_time + 2*dt > drum_player[self.current_drum].duration:
+                self.current_drum = 1
                 drum_player[self.current_drum].play()
             #drums.play_ista()
             
