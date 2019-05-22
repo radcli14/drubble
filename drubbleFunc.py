@@ -2,9 +2,13 @@
 #import numpy as np
 #from numpy import array
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2
-
+import sys
 # Frame rate
-fs = 30
+if 'dRuBbLe' in sys.argv[0]:
+    print(sys.argv[0])
+    fs = 60
+else:
+    fs = 30
 dt = 1.0/fs
 
 # Color definition    

@@ -63,10 +63,11 @@ def touchStick(loc, stick):
         x = min(max(p.tsens * (2 * (loc[0] - stick.x[0]) / stick.size[0] - 1), -1), 1)
         y = min(max(p.tsens * (2 * (loc[1] - stick.y[0]) / stick.size[1] - 1), -1), 1)
 
-        mag = np.sqrt(x ** 2 + y ** 2)
-        ang = np.around(4 * np.arctan2(y, x) / np.pi) * np.pi / 4
+        #mag = np.sqrt(x ** 2 + y ** 2)
+        #ang = np.around(4 * np.arctan2(y, x) / np.pi) * np.pi / 4
 
-        return (mag * np.cos(ang), mag * np.sin(ang))
+        #return (mag * np.cos(ang), mag * np.sin(ang))
+        return x, y
     else:
         return (0, 0)
 
