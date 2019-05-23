@@ -70,9 +70,9 @@ class Parameters:
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio
     Cy = 2*zy*sqrt(Ky*m)  # Vertical damping [N-s/m]
-    zl = 0.06    # Arm damping ratio
+    zl = 0.08    # Arm damping ratio
     Cl = 2*zl*sqrt(Kl*m)  # Arm damping [N-s/m]
-    zt = 0.08    # Stool tilt damping ratio
+    zt = 0.09    # Stool tilt damping ratio
     Ct = 2.0*zl*sqrt(Kt*m)  # Tilt damping [N-m-s/rad]
 
     # Initial states

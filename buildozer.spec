@@ -7,7 +7,7 @@ title = dRuBbLe
 package.name = drubble
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.test
+package.domain = bad.I
 
 # (str) Source code where the main.py live
 source.dir = .

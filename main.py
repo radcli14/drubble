@@ -23,7 +23,8 @@ from kivy.utils import platform
 # Execute drubbleFunc to get the supporting functions and classes
 engine = 'kivy'
 from drubbleFunc import *
-
+print(fs)
+print(dt)
 # Set the keyboard input and mouse defaults
 keyPush = [0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -49,7 +50,7 @@ for k in range(2):
         loop[k].bind(on_stop=sound_stopped)
     except:
         print('failed binding to sound_stopped')
-loop[0].play()
+loop[0].play() 
 """
 
 #drums = DrumBeat()
