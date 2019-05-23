@@ -16,7 +16,7 @@
    id="svg8"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
    sodipodi:docname="splash.svg"
-   inkscape:export-filename="C:\drubble\figs\splash.png"
+   inkscape:export-filename="/home/radcli14/PycharmProjects/drubble/a/splash.png"
    inkscape:export-xdpi="254"
    inkscape:export-ydpi="254">
   <defs
@@ -645,17 +645,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.16"
-     inkscape:cx="314.77999"
+     inkscape:zoom="1.52"
+     inkscape:cx="336.14198"
      inkscape:cy="191.76551"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
      units="cm"
      inkscape:window-width="1920"
-     inkscape:window-height="1017"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
+     inkscape:window-height="1014"
+     inkscape:window-x="0"
+     inkscape:window-y="34"
      inkscape:window-maximized="1" />
   <metadata
      id="metadata5">
@@ -665,7 +665,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -674,6 +674,15 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,-207.00001)">
+    <rect
+       style="fill:#00ffff;stroke:#ffffff;stroke-width:0.27837789;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect14212"
+       width="187.97948"
+       height="91.730217"
+       x="-14.616539"
+       y="205.79021"
+       inkscape:export-xdpi="138.15945"
+       inkscape:export-ydpi="138.15945" />
     <circle
        style="fill:#ffd5d5;fill-opacity:1;stroke-width:0.56510186;stroke-miterlimit:4;stroke-dasharray:none"
        id="path2840-7"
@@ -688,7 +697,7 @@
        r="36.68644" />
     <g
        id="g3059"
-       transform="translate(0.61246142,1.3474151)">
+       transform="matrix(0.99965518,0,0,0.98182289,1.6976936,-1.4877146)">
       <g
          transform="matrix(0.64139825,0,0,-0.53055367,-69.740429,400.10658)"
          id="g889">
@@ -1160,14 +1169,36 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Yu Gothic Light';-inkscape-font-specification:'Yu Gothic Light, ';letter-spacing:0px;word-spacing:0px;fill:#00ffff;fill-opacity:1;stroke:none;stroke-width:0.26458332;filter:url(#filter2838);"
-       x="30.742954"
-       y="228.74571"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Yu Gothic Light';-inkscape-font-specification:'Yu Gothic Light, ';letter-spacing:0px;word-spacing:0px;fill:#00ffff;fill-opacity:1;stroke:none;stroke-width:0.26458332;filter:url(#filter2838)"
+       x="39.453316"
+       y="197.62672"
        id="text2286"><tspan
          sodipodi:role="line"
          id="tspan2284"
-         x="30.742954"
-         y="228.74571"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:19.75555611px;line-height:1.25;font-family:'Snap ITC';-inkscape-font-specification:'Snap ITC Bold';letter-spacing:1.32291663px;fill:#00ffff;stroke-width:0.26458332;">dRuBbLe</tspan></text>
+         x="39.453316"
+         y="197.62672"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:25.39999962px;line-height:1.25;font-family:Airstream;-inkscape-font-specification:'Airstream Bold';letter-spacing:1.32291663px;fill:#00ffff;stroke-width:0.26458332">dRuBbLe</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:125%;font-family:Airstream;-inkscape-font-specification:Airstream;letter-spacing:0px;word-spacing:0px;fill:#0000ff;fill-opacity:1;stroke:#ffffff;stroke-width:1.065;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;"
+       x="33.595119"
+       y="228.76537"
+       id="text9688"><tspan
+         sodipodi:role="line"
+         id="tspan9686"
+         x="33.595119"
+         y="228.76537"
+         style="font-size:31.75px;fill:#0000ff;stroke-width:1.065;stroke:#ffffff;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;">dRuBbLe</tspan></text>
+    <text
+       id="text9702"
+       y="293.69275"
+       x="21.584427"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:125%;font-family:Airstream;-inkscape-font-specification:Airstream;letter-spacing:0px;word-spacing:0px;fill:#ff00ff;fill-opacity:1;stroke:#0000ff;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;"
+       xml:space="preserve"><tspan
+         style="font-size:11.28888893px;fill:#ff00ff;stroke-width:0.265;stroke:#0000ff;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;"
+         y="293.69275"
+         x="21.584427"
+         id="tspan9700"
+         sodipodi:role="line">A Silly Game With Silly Stools!</tspan></text>
   </g>
 </svg>

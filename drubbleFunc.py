@@ -5,7 +5,6 @@ from math import sin, cos, pi, sqrt, isnan, fmod, atan2
 import sys
 # Frame rate
 if 'dRuBbLe' in sys.argv[0]:
-    print(sys.argv[0])
     fs = 60
 else:
     fs = 30
@@ -71,9 +70,9 @@ class Parameters:
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio
     Cy = 2*zy*sqrt(Ky*m)  # Vertical damping [N-s/m]
-    zl = 0.07     # Arm damping ratio
+    zl = 0.06    # Arm damping ratio
     Cl = 2*zl*sqrt(Kl*m)  # Arm damping [N-s/m]
-    zt = 0.04    # Stool tilt damping ratio
+    zt = 0.08    # Stool tilt damping ratio
     Ct = 2.0*zl*sqrt(Kt*m)  # Tilt damping [N-m-s/rad]
 
     # Initial states
@@ -127,7 +126,7 @@ class Parameters:
     timeRun = False
     
     # Font settings
-    MacsFavoriteFont = 'Papyrus'  # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
+    MacsFavoriteFont = 'Optima' #Papyrus'  # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Color settings
     playerColor = (darkGreen, red)
