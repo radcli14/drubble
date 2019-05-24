@@ -1,13 +1,15 @@
 # Import modules
 #import numpy as np
 #from numpy import array
-from math import sin, cos, pi, sqrt, isnan, fmod, atan2
+from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
 import sys
 # Frame rate
 if 'dRuBbLe' in sys.argv[0]:
     fs = 60
+    engine = 'ista'
 else:
     fs = 30
+    engine = 'kivy'
 dt = 1.0/fs
 
 # Color definition    
@@ -677,7 +679,7 @@ def control_logic(t, u, k, p, gs, stats):
     ZEM = (gs.xI+10.0*(p.nPlayer-1-(stats.stoolCount % 2))-0.1) - xp[k] - dxp[k]*abs(gs.timeUntilBounce-1)
     if p.userControlled[k][0]:
         if gs.ctrl[0] == 0:
-            Bx = 0 if dxp[k] == 0 else -dxp[k] / abs(dxp[k])
+            Bx = 0 if dxp[k] == 0 else -erf(dxp[k])  # Friction
         else:
             Bx = gs.ctrl[0]
     else:

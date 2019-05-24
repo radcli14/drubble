@@ -21,10 +21,9 @@ from kivy.core.audio import SoundLoader
 from kivy.utils import platform
 
 # Execute drubbleFunc to get the supporting functions and classes
-engine = 'kivy'
+#engine = 'kivy'
 from drubbleFunc import *
-print(fs)
-print(dt)
+
 # Set the keyboard input and mouse defaults
 keyPush = [0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -216,6 +215,9 @@ class MyFace(Widget):
     sz = NumericProperty(0)
     img_left = NumericProperty(0.0)
     img_bottom = NumericProperty(0.0)
+    jersey_left = NumericProperty(0.0)
+    jersey_bottom = NumericProperty(0.0)
+    jersey_source = StringProperty(None)
     stool_left = NumericProperty(0.0)
     stool_bottom = NumericProperty(0.0)
     stool_width = NumericProperty(0.0)
@@ -229,9 +231,11 @@ class MyFace(Widget):
     line_color = ListProperty([0, 0, 0])
     line_width = NumericProperty(1)
 
-    def __init__(self, image_source='a/myFace.png', stool_color=white, line_color=darkGreen, **kwargs):
+    def __init__(self, image_source='a/myFace.png', jersey_source='a/MyJersey.png',
+                 stool_color=white, line_color=darkGreen, **kwargs):
         super(MyFace, self).__init__(**kwargs)
         self.image_source = image_source
+        self.jersey_source = jersey_source
         self.stool_color = stool_color
         self.line_color = line_color
 
@@ -240,6 +244,8 @@ class MyFace(Widget):
         self.sz = int(m2p*0.7)
         self.img_left = int(xp-self.sz*0.5)
         self.img_bottom = int(yp)
+        self.jersey_left = int(xp-self.sz*0.3)
+        self.jersey_bottom = int(yp-1.1*self.sz)
 
         self.stool_width = int(0.7*m2p)
         self.stool_height = int(m2p)
@@ -415,8 +421,10 @@ class DrubbleGame(Widget):
             self.ball = Ball()
 
             # Initialize the player faces
-            self.myFace = MyFace(image_source='a/myFace.png', line_color=darkGreen, stool_color=white)
-            self.LadyFace = MyFace(image_source='a/LadyFace.png', line_color=red, stool_color=gray)
+            self.myFace = MyFace(image_source='a/myFace.png', jersey_source='a/MyJersey.png',
+                                 line_color=green, stool_color=white)
+            self.LadyFace = MyFace(image_source='a/LadyFace.png', jersey_source='a/LadyJersey.png',
+                                   line_color=red, stool_color=gray)
 
     def add_game_widgets(self): 
         # Add game widgets
@@ -449,13 +457,13 @@ class DrubbleGame(Widget):
             self.optionButt = OptionButtons(text='Options',
                                             size=(0.18 * self.width, 0.04 * self.width),
                                             pos=(0.01 * self.width, 0.87 * self.height),
-                                            font_size=24)
+                                            font_size=24, color=blue)
             self.add_widget(self.optionButt)
 
             self.actionButt = OptionButtons(text=actionMSG[3],
                                             size=(0.18 * self.width, 0.04 * self.width),
                                             pos=(0.81 * self.width, 0.87 * self.height),
-                                            font_size=24)
+                                            font_size=24, color=blue)
             self.add_widget(self.actionButt)
 
             self.weHaveWidgets = True
@@ -481,11 +489,11 @@ class DrubbleGame(Widget):
             self.singleDrubbleButt = OptionButtons(text='Single Drubble',
                                                    size=(0.7*w, 0.2*h),
                                                    pos=(0.15*w, 0.7*h),
-                                                   font_size=0.1*h)
+                                                   font_size=0.1*h, color=blue)
             self.doubleDrubbleButt = OptionButtons(text='Double Drubble',
                                                    size=(0.7*w, 0.2*h),
                                                    pos=(0.15*w, 0.4*h),
-                                                   font_size=0.1*h)
+                                                   font_size=0.1*h, color=blue)
             #self.tripleDrubbleButt = OptionButtons(text='Triple Drubble',
             #                                       size=(0.7*w, 0.2*h),
             #                                       pos=(0.15*w, 0.1*h),
