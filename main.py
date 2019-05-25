@@ -382,6 +382,8 @@ class ScoreLabel(Widget):
 
 
 class DrubbleGame(Widget):
+    Window.release_all_keyboards()
+
     def __init__(self, **kwargs):
         super(DrubbleGame, self).__init__(**kwargs)
         self.bind(pos=self.update_canvas)
@@ -674,4 +676,5 @@ class DrubbleApp(App):
 
 
 if __name__ == '__main__':
+    Window.release_all_keyboards()
     DrubbleApp().run()
