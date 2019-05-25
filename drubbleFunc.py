@@ -1,14 +1,15 @@
 # Import modules
 #import numpy as np
 #from numpy import array
-from math import sin, cos, pi, sqrt, isnan, fmod, atan2
+from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
 import sys
 # Frame rate
 if 'dRuBbLe' in sys.argv[0]:
-    print(sys.argv[0])
     fs = 60
+    engine = 'ista'
 else:
     fs = 30
+    engine = 'kivy'
 dt = 1.0/fs
 
 # Color definition    
@@ -71,9 +72,9 @@ class Parameters:
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio
     Cy = 2*zy*sqrt(Ky*m)  # Vertical damping [N-s/m]
-    zl = 0.07     # Arm damping ratio
+    zl = 0.08    # Arm damping ratio
     Cl = 2*zl*sqrt(Kl*m)  # Arm damping [N-s/m]
-    zt = 0.04    # Stool tilt damping ratio
+    zt = 0.09    # Stool tilt damping ratio
     Ct = 2.0*zl*sqrt(Kt*m)  # Tilt damping [N-m-s/rad]
 
     # Initial states
@@ -127,7 +128,7 @@ class Parameters:
     timeRun = False
     
     # Font settings
-    MacsFavoriteFont = 'Papyrus'  # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
+    MacsFavoriteFont = 'Optima' #Papyrus'  # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Color settings
     playerColor = (darkGreen, red)
@@ -678,7 +679,7 @@ def control_logic(t, u, k, p, gs, stats):
     ZEM = (gs.xI+10.0*(p.nPlayer-1-(stats.stoolCount % 2))-0.1) - xp[k] - dxp[k]*abs(gs.timeUntilBounce-1)
     if p.userControlled[k][0]:
         if gs.ctrl[0] == 0:
-            Bx = 0 if dxp[k] == 0 else -dxp[k] / abs(dxp[k])
+            Bx = 0 if dxp[k] == 0 else -erf(dxp[k])  # Friction
         else:
             Bx = gs.ctrl[0]
     else:
