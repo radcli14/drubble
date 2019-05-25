@@ -887,8 +887,8 @@ def stickDude(inp, k):
     
     # Shoulder Position
     sh = [x, y+p.d]
-    shl = [x-0.2, y+p.d+0.05]
-    shr = [x+0.2, y+p.d+0.05]
+    shl = [x-0.18, y+p.d+0.05]
+    shr = [x+0.18, y+p.d+0.05]
     
     # Stool Position
     sx = []

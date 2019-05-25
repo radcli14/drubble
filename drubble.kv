@@ -40,6 +40,11 @@
         Color:
             rgba: (1,1,1,self.face_alpha)
         Rectangle:
+            source: self.shorts_source
+            pos: self.jersey_left, self.jersey_bottom-0.6*self.sz
+            size: 0.4*self.sz, 0.7*self.sz
+
+        Rectangle:
             source: self.jersey_source
             pos: self.jersey_left, self.jersey_bottom
             size: 0.6*self.sz, self.sz

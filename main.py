@@ -230,12 +230,16 @@ class MyFace(Widget):
     line_list = ListProperty([0, 0])
     line_color = ListProperty([0, 0, 0])
     line_width = NumericProperty(1)
+    shorts_source = StringProperty(None)
+    shorts_angle0 = NumericProperty(0.0)
+    shorts_angle1 = NumericProperty(0.0)
 
-    def __init__(self, image_source='a/myFace.png', jersey_source='a/MyJersey.png',
+    def __init__(self, image_source='a/myFace.png', jersey_source='a/MyJersey.png', shorts_source='a/MyShorts.png',
                  stool_color=white, line_color=darkGreen, **kwargs):
         super(MyFace, self).__init__(**kwargs)
         self.image_source = image_source
         self.jersey_source = jersey_source
+        self.shorts_source = shorts_source
         self.stool_color = stool_color
         self.line_color = line_color
 
