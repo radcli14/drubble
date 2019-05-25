@@ -243,9 +243,9 @@ class MyFace(Widget):
         xp, yp = xy2p(x, y, m2p, po, w, h)
         self.sz = int(m2p*0.7)
         self.img_left = int(xp-self.sz*0.5)
-        self.img_bottom = int(yp)
+        self.img_bottom = int(yp-0.05*m2p)
         self.jersey_left = int(xp-self.sz*0.3)
-        self.jersey_bottom = int(yp-1.1*self.sz)
+        self.jersey_bottom = int(yp-1.0*self.sz)
 
         self.stool_width = int(0.7*m2p)
         self.stool_height = int(m2p)

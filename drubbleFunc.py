@@ -887,6 +887,8 @@ def stickDude(inp, k):
     
     # Shoulder Position
     sh = [x, y+p.d]
+    shl = [x-0.2, y+p.d+0.05]
+    shr = [x+0.2, y+p.d+0.05]
     
     # Stool Position
     sx = []
@@ -900,12 +902,12 @@ def stickDude(inp, k):
     lh = [sx[6], sy[6]] 
     
     # Right Elbow [re] Left Elbow [le] Position
-    re = ThirdPoint(sh, rh, 1, 1)
-    le = ThirdPoint(sh, lh, 1, -1)
+    re = ThirdPoint(shl, rh, 1, 1)
+    le = ThirdPoint(shr, lh, 1, -1)
     
     # Plotting vectors
-    xv = [rf[0], rk[0], w[0], lk[0], lf[0], lk[0], w[0], sh[0], re[0], rh[0], re[0], sh[0], le[0], lh[0]]
-    yv = [rf[1], rk[1], w[1], lk[1], lf[1], lk[1], w[1], sh[1], re[1], rh[1], re[1], sh[1], le[1], lh[1]]
+    xv = [rf[0], rk[0], w[0], lk[0], lf[0], lk[0], w[0], sh[0], shl[0], re[0], rh[0], re[0], shl[0], shr[0], le[0], lh[0]]
+    yv = [rf[1], rk[1], w[1], lk[1], lf[1], lk[1], w[1], sh[1], shl[1], re[1], rh[1], re[1], shl[1], shr[1], le[1], lh[1]]
     
     return xv, yv, sx, sy
 
