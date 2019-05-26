@@ -370,7 +370,7 @@ class OptionButtons(Button):
     background_down = 'a/button.png'
     background_disabled_down = 'a/button.png'
     background_disabled_normal = 'a/button.png'
-    font_name = 'a/AIRSTREA.TTF'
+    font_name = 'a/airstrea.ttf'
 
     def resize(self, size, pos):
         self.size = size
