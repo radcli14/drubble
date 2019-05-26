@@ -17,6 +17,7 @@ from kivy.properties import NumericProperty, ListProperty, ObjectProperty, Strin
 from kivy.core.window import Window
 from kivy.clock import Clock
 from kivy.graphics import *
+#from kivy.core.image import Image
 from kivy.core.audio import SoundLoader
 from kivy.utils import platform
 
@@ -233,6 +234,7 @@ class MyFace(Widget):
     shorts_source = StringProperty(None)
     shorts_angle0 = NumericProperty(0.0)
     shorts_angle1 = NumericProperty(0.0)
+    shorts = Image(source='a/MyShorts.png').texture
 
     def __init__(self, image_source='a/myFace.png', jersey_source='a/MyJersey.png', shorts_source='a/MyShorts.png',
                  stool_color=white, line_color=darkGreen, **kwargs):
@@ -242,6 +244,8 @@ class MyFace(Widget):
         self.shorts_source = shorts_source
         self.stool_color = stool_color
         self.line_color = line_color
+
+        self.shorts = Image(source=shorts_source).texture.flip_horizontal()
 
     def update(self, x, y, l, th, m2p, po, w, h, player):
         xp, yp = xy2p(x, y, m2p, po, w, h)
@@ -259,6 +263,10 @@ class MyFace(Widget):
         self.rotate_center = [self.img_left + self.sz*0.5, yp - 0.5 * p.d * m2p]
         self.line_width = 0.075*m2p
         self.line_list = player
+        self.shorts_angle0 = atan2(player[4]-player[2], player[5]-player[3]) * 180.0 / pi
+        self.shorts_angle1 = atan2(player[4]-player[6], player[5]-player[7]) * 180.0 / pi
+        #print(player[4])
+        #print(player[4:12])
         self.face_alpha = 1.0
 
     def clear(self):
@@ -633,6 +641,8 @@ class DrubbleGame(Widget):
 
     # Time step the game
     def update(self, dt):
+        #Window.release_all_keyboards()
+
         # Either update the splash, or add the widgets
         if gs.gameMode == 1:
             self.splash.update(True)

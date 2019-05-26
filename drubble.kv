@@ -39,11 +39,25 @@
             width: self.line_width
         Color:
             rgba: (1,1,1,self.face_alpha)
+        PushMatrix
+        Rotate:
+            angle: self.shorts_angle0
+            origin: self.img_left+0.5*self.sz, self.jersey_bottom
         Rectangle:
-            source: self.shorts_source
-            pos: self.jersey_left, self.jersey_bottom-0.6*self.sz
+            texture: self.shorts
+            pos: self.jersey_left+0.05*self.sz, self.jersey_bottom-0.6*self.sz
             size: 0.4*self.sz, 0.7*self.sz
-
+            #tex_coords: (0, 1, 1, 1, 1, 0, 0, 0)
+        PopMatrix
+        PushMatrix
+        Rotate:
+            angle: self.shorts_angle1
+            origin: self.img_left+0.5*self.sz, self.jersey_bottom
+        Rectangle:
+            texture: self.shorts
+            pos: self.jersey_left+0.15*self.sz, self.jersey_bottom-0.6*self.sz
+            size: 0.4*self.sz, 0.7*self.sz
+        PopMatrix
         Rectangle:
             source: self.jersey_source
             pos: self.jersey_left, self.jersey_bottom
