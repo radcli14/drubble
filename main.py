@@ -364,10 +364,17 @@ class Stick(Widget):
 
 
 # Create OptionButtons class
-class OptionButtons(Label):
+class OptionButtons(Button):
+    background_color = (1, 1, 1, 0.6)
+    background_normal = 'a/button.png'
+    background_down = 'a/button.png'
+    background_disabled_down = 'a/button.png'
+    background_disabled_normal = 'a/button.png'
+    font_name = 'a/AIRSTREA.TTF'
+
     def resize(self, size, pos):
-        self.butt.size = size
-        self.butt.pos = pos
+        self.size = size
+        self.pos = pos
 
     def detect_touch(self, loc):
         tCnd = [loc[0] > self.pos[0],
@@ -468,13 +475,13 @@ class DrubbleGame(Widget):
             self.optionButt = OptionButtons(text='Options',
                                             size=(0.18 * self.width, 0.04 * self.width),
                                             pos=(0.01 * self.width, 0.87 * self.height),
-                                            font_size=24, color=blue)
+                                            font_size=36, color=red)
             self.add_widget(self.optionButt)
 
             self.actionButt = OptionButtons(text=actionMSG[3],
                                             size=(0.18 * self.width, 0.04 * self.width),
                                             pos=(0.81 * self.width, 0.87 * self.height),
-                                            font_size=24, color=blue)
+                                            font_size=36, color=red)
             self.add_widget(self.actionButt)
 
             self.weHaveWidgets = True
@@ -497,18 +504,14 @@ class DrubbleGame(Widget):
         w, h = (self.width, self.height)
         # Add option screen buttons
         with self.canvas:
-            self.singleDrubbleButt = OptionButtons(text='Single Drubble',
+            self.singleDrubbleButt = OptionButtons(text='Single dRuBbLe',
                                                    size=(0.7*w, 0.2*h),
                                                    pos=(0.15*w, 0.7*h),
-                                                   font_size=0.1*h, color=blue)
-            self.doubleDrubbleButt = OptionButtons(text='Double Drubble',
+                                                   font_size=0.15*h, color=red)
+            self.doubleDrubbleButt = OptionButtons(text='Double dRuBbLe',
                                                    size=(0.7*w, 0.2*h),
                                                    pos=(0.15*w, 0.4*h),
-                                                   font_size=0.1*h, color=blue)
-            #self.tripleDrubbleButt = OptionButtons(text='Triple Drubble',
-            #                                       size=(0.7*w, 0.2*h),
-            #                                       pos=(0.15*w, 0.1*h),
-            #                                       font_size=0.1*h)
+                                                   font_size=0.15*h, color=red)
 
     # Controls
     def _keyboard_closed(self):

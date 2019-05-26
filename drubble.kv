@@ -1,5 +1,6 @@
 #:kivy 1.10.1
 
+
 <SplashScreen>:
     canvas:
         Rectangle:
@@ -11,6 +12,7 @@
         Rectangle:
             pos: 0, 0
             size: self.width, self.height
+
 
 <MyBackground>:
     canvas:
@@ -29,6 +31,7 @@
         Rectangle:
             pos: (0,0)
             size: root.width, self.bottomLineHeight
+
 
 <MyFace>:
     canvas:
@@ -77,6 +80,7 @@
             size: self.stool_width, self.stool_height
         PopMatrix
 
+
 <Ball>:
     canvas:
         Color:
@@ -91,19 +95,6 @@
             pos: self.img_left, self.img_bottom
             size: self.sz, self.sz
 
-
-#<stick>:
-    #canvas:
-        #Color:
-        #    rgba: (1,1,1,0.5)
-        #Rectangle:
-        #    source: 'figs/crossHair.png'
-        #    pos: 0, 0
-            #pos: self.ch_x, self.ch_y
-        #    size: self.ch_s, self.ch_s
-        #Ellipse:
-        #    pos: ch_x-ch_s/4.0+ch_s*ctrl_x/4.0,ch_y-ch_s/4.0+ch_s*ctrl_y/4.0
-        #    size: self.ch_s, self.ch_s
 
 <ScoreLabel>:
     canvas:
@@ -121,19 +112,3 @@
         size: (0.19*root.width, root.label_size)
         color: (0, 0, 0, 1)
 
-<OptionButtons>
-    canvas:
-        Color:
-            rgba: (1,1,1,0.3)
-        Rectangle:
-            source: 'a/button.png'
-            pos: self.pos
-            size: self.width, self.height
-
-<drubbleGame>: 
-    # Create the labels               
-    #Label:
-    #    font_size: root.height/20
-    #    pos: root.width*0.02, 0.9*root.height-20
-    #    text: 'Time = '
-    #    color: 0, 0, 0, 1
