@@ -17,7 +17,6 @@ from kivy.properties import NumericProperty, ListProperty, ObjectProperty, Strin
 from kivy.core.window import Window
 from kivy.clock import Clock
 from kivy.graphics import *
-#from kivy.core.image import Image
 from kivy.core.audio import SoundLoader
 from kivy.utils import platform
 
@@ -234,7 +233,8 @@ class MyFace(Widget):
     shorts_source = StringProperty(None)
     shorts_angle0 = NumericProperty(0.0)
     shorts_angle1 = NumericProperty(0.0)
-    shorts = Image(source='a/MyShorts.png').texture
+    shorts0 = Image(source='a/MyShorts.png').texture
+    shorts1 = Image(source='a/MyShorts1.png').texture
 
     def __init__(self, image_source='a/myFace.png', jersey_source='a/MyJersey.png', shorts_source='a/MyShorts.png',
                  stool_color=white, line_color=darkGreen, **kwargs):
@@ -245,7 +245,7 @@ class MyFace(Widget):
         self.stool_color = stool_color
         self.line_color = line_color
 
-        self.shorts = Image(source=shorts_source).texture.flip_horizontal()
+        self.shorts0 = Image(source=shorts_source).texture
 
     def update(self, x, y, l, th, m2p, po, w, h, player):
         xp, yp = xy2p(x, y, m2p, po, w, h)

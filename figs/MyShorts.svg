@@ -16,9 +16,9 @@
    id="svg8"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
    sodipodi:docname="MyShorts.svg"
-   inkscape:export-filename="/home/radcli14/PycharmProjects/drubble/a/MyShorts.png"
-   inkscape:export-xdpi="13.805803"
-   inkscape:export-ydpi="13.805803">
+   inkscape:export-filename="/home/radcli14/drubble/a/MyShorts1.png"
+   inkscape:export-xdpi="6.9290686"
+   inkscape:export-ydpi="6.9290686">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -34,10 +34,10 @@
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1014"
+     inkscape:window-width="1280"
+     inkscape:window-height="745"
      inkscape:window-x="0"
-     inkscape:window-y="34"
+     inkscape:window-y="27"
      inkscape:window-maximized="1" />
   <metadata
      id="metadata5">
@@ -47,7 +47,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -56,7 +56,7 @@
      inkscape:groupmode="layer"
      id="layer1">
     <path
-       style="fill:#ececec;fill-rule:evenodd;stroke:#000000;stroke-width:1.07390583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#e6e6e6;fill-rule:evenodd;stroke:#000000;stroke-width:1.07390583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m 25.728786,0.51039763 74.814624,-0.87210699 95.2186,129.94399936 1.5114,160.46777 -182.880173,0.87209 z"
        id="path9148"
        inkscape:connector-curvature="0" />
