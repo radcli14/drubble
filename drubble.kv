@@ -42,19 +42,19 @@
         PushMatrix
         Rotate:
             angle: self.shorts_angle0
-            origin: self.img_left+0.5*self.sz, self.jersey_bottom
+            origin: self.jersey_right-0.12*self.sz, self.jersey_bottom-0.04*self.sz
         Rectangle:
-            texture: self.shorts0
-            pos: self.jersey_left+0.04*self.sz, self.jersey_bottom-0.6*self.sz
+            source: self.shorts_source0
+            pos: self.jersey_right-0.45*self.sz, self.jersey_bottom-0.35*self.sz
             size: 0.4*self.sz, 0.7*self.sz
         PopMatrix
         PushMatrix
         Rotate:
             angle: self.shorts_angle1
-            origin: self.img_left+0.5*self.sz, self.jersey_bottom
+            origin: self.jersey_left+0.12*self.sz, self.jersey_bottom-0.04*self.sz
         Rectangle:
-            texture: self.shorts1
-            pos: self.jersey_left+0.16*self.sz, self.jersey_bottom-0.6*self.sz
+            source: self.shorts_source1
+            pos: self.jersey_left + 0.05*self.sz, self.jersey_bottom-0.35*self.sz
             size: 0.4*self.sz, 0.7*self.sz
         PopMatrix
         Rectangle:

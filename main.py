@@ -216,6 +216,7 @@ class MyFace(Widget):
     img_left = NumericProperty(0.0)
     img_bottom = NumericProperty(0.0)
     jersey_left = NumericProperty(0.0)
+    jersey_right = NumericProperty(0.0)
     jersey_bottom = NumericProperty(0.0)
     jersey_source = StringProperty(None)
     stool_left = NumericProperty(0.0)
@@ -230,22 +231,20 @@ class MyFace(Widget):
     line_list = ListProperty([0, 0])
     line_color = ListProperty([0, 0, 0])
     line_width = NumericProperty(1)
-    shorts_source = StringProperty(None)
+    shorts_source0 = StringProperty(None)
+    shorts_source1 = StringProperty(None)
     shorts_angle0 = NumericProperty(0.0)
     shorts_angle1 = NumericProperty(0.0)
-    shorts0 = Image(source='a/MyShorts.png').texture
-    shorts1 = Image(source='a/MyShorts1.png').texture
 
     def __init__(self, image_source='a/myFace.png', jersey_source='a/MyJersey.png', shorts_source='a/MyShorts.png',
                  stool_color=white, line_color=darkGreen, **kwargs):
         super(MyFace, self).__init__(**kwargs)
         self.image_source = image_source
         self.jersey_source = jersey_source
-        self.shorts_source = shorts_source
+        self.shorts_source0 = shorts_source
+        self.shorts_source1 = shorts_source.replace('.', '1.')
         self.stool_color = stool_color
         self.line_color = line_color
-
-        self.shorts0 = Image(source=shorts_source).texture
 
     def update(self, x, y, l, th, m2p, po, w, h, player):
         xp, yp = xy2p(x, y, m2p, po, w, h)
@@ -254,7 +253,7 @@ class MyFace(Widget):
         self.img_bottom = int(yp-0.05*m2p)
         self.jersey_left = int(xp-self.sz*0.3)
         self.jersey_bottom = int(yp-1.0*self.sz)
-
+        self.jersey_right = int(xp+self.sz*0.3)
         self.stool_width = int(0.7*m2p)
         self.stool_height = int(m2p)
         self.stool_left = int(xp - 0.5 * self.stool_width)
@@ -263,10 +262,8 @@ class MyFace(Widget):
         self.rotate_center = [self.img_left + self.sz*0.5, yp - 0.5 * p.d * m2p]
         self.line_width = 0.075*m2p
         self.line_list = player
-        self.shorts_angle0 = atan2(player[4]-player[2], player[5]-player[3]) * 180.0 / pi
-        self.shorts_angle1 = atan2(player[4]-player[6], player[5]-player[7]) * 180.0 / pi
-        #print(player[4])
-        #print(player[4:12])
+        self.shorts_angle0 = -atan2(player[4]-player[6], player[5]-player[7]) * 180.0 / pi
+        self.shorts_angle1 = -atan2(player[4]-player[2], player[5]-player[3]) * 180.0 / pi
         self.face_alpha = 1.0
 
     def clear(self):
@@ -436,9 +433,9 @@ class DrubbleGame(Widget):
 
             # Initialize the player faces
             self.myFace = MyFace(image_source='a/myFace.png', jersey_source='a/MyJersey.png',
-                                 line_color=green, stool_color=white)
+                                 shorts_source='a/MyShorts.png', line_color=green, stool_color=white)
             self.LadyFace = MyFace(image_source='a/LadyFace.png', jersey_source='a/LadyJersey.png',
-                                   line_color=red, stool_color=gray)
+                                   shorts_source='a/LadyShorts.png', line_color=pink, stool_color=gray)
 
     def add_game_widgets(self): 
         # Add game widgets

@@ -23,7 +23,7 @@ black = (0, 0, 0)
 pink = (1, 100.0/255.0, 100.0/255.0)
 skyBlue = (135.0/255.0, 206.0/255.0, 235.0/255.0)
 darkGreen = (0, 120.0/255.0, 0)
-
+pink = (1.0, 182.0/255.0, 193.0/255.0)
 
 # Convert physical coordinates to pixels
 def xy2p(x, y, m2p, po, w, h):

@@ -29,7 +29,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.35"
-     inkscape:cx="-131.42857"
+     inkscape:cx="-115.71428"
      inkscape:cy="560"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
@@ -56,18 +56,18 @@
      inkscape:groupmode="layer"
      id="layer1">
     <path
-       style="fill:#e6e6e6;fill-rule:evenodd;stroke:#000000;stroke-width:1.07390583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 25.728786,0.51039763 74.814624,-0.87210699 95.2186,129.94399936 1.5114,160.46777 -182.880173,0.87209 z"
+       style="fill:#cccccc;fill-rule:evenodd;stroke:#000000;stroke-width:1.07390583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 25.728787,0.51039763 74.814633,-0.87210699 95.21859,129.94399936 1.5114,160.46777 -182.880173,0.87209 z"
        id="path9148"
        inkscape:connector-curvature="0" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#008000;stroke-width:10.13772297;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="M 14.363095,290.95237 197.30356,290.17546"
+       style="fill:none;fill-rule:evenodd;stroke:#008000;stroke-width:20;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 14.363097,287.24818 197.30356,286.47127"
        id="path9169"
        inkscape:connector-curvature="0" />
     <path
        style="fill:#ffff00;stroke:none;stroke-width:0.47352585;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="M 14.407433,265.37595 A 21.408551,32.971755 1.4370316 0 0 37.126151,234.09247 21.408551,32.971755 1.4370316 0 0 17.498993,199.55129 Z"
+       d="m 14.407437,265.37595 a 21.408551,32.971755 1.437032 0 0 22.71872,-31.28348 21.408551,32.971755 1.437032 0 0 -19.62716,-34.54118 z"
        id="path9976"
        inkscape:connector-curvature="0" />
   </g>
