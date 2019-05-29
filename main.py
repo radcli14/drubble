@@ -364,23 +364,38 @@ class Stick(Widget):
 
 
 # Create OptionButtons class
-class OptionButtons(Button):
-    background_color = (1, 1, 1, 0.6)
+class OptionButtons(Widget):
+    background_color = ListProperty([1, 1, 1, 0.75])
     background_normal = 'a/button.png'
     background_down = 'a/button.png'
     background_disabled_down = 'a/button.png'
     background_disabled_normal = 'a/button.png'
-    font_name = 'a/airstrea.ttf'
+    text = StringProperty('')
+    label_pos = ListProperty([0.0, 0.0])
+    label_font = StringProperty('a/airstrea.ttf')
+    label_size = ListProperty([0.0, 0.0])
+    label_font_size = NumericProperty(0.0)
+    label_color = ListProperty([0.0, 0.0, 0.0, 1.0])
+
+    def __init__(self, **kwargs):
+        super(OptionButtons, self).__init__()
+        self.width = width
+        self.height = height
+        self.text = kwargs['text']
+        self.label_pos = kwargs['pos']
+        self.label_size = kwargs['size']
+        self.label_font_size = kwargs['font_size']
+        self.label_color = [kwargs['color'][0], kwargs['color'][1], kwargs['color'][2], 1]
 
     def resize(self, size, pos):
-        self.size = size
-        self.pos = pos
+        self.label_size = size
+        self.label_pos = pos
 
     def detect_touch(self, loc):
-        tCnd = [loc[0] > self.pos[0],
-                loc[0] < self.pos[0] + self.size[0],
-                loc[1] > self.pos[1],
-                loc[1] < self.pos[1] + self.size[1]]
+        tCnd = [loc[0] > self.label_pos[0],
+                loc[0] < self.label_pos[0] + self.label_size[0],
+                loc[1] > self.label_pos[1],
+                loc[1] < self.label_pos[1] + self.label_size[1]]
         return all(tCnd)
 
 
@@ -388,7 +403,7 @@ class ScoreLabel(Widget):
     label_text = StringProperty('')
     label_left = NumericProperty(0.0)
     label_font = StringProperty('a/VeraMono.ttf')
-    label_size = NumericProperty(int(0.015*width))
+    label_size = NumericProperty(int(0.02*width))
 
     def __init__(self, **kwargs):
         super(ScoreLabel, self).__init__()
@@ -641,7 +656,11 @@ class DrubbleGame(Widget):
 
     # Time step the game
     def update(self, dt):
-        #Window.release_all_keyboards()
+        if platform == 'android':
+            Window.release_all_keyboards()
+
+        if self.weHaveWidgets:
+            self.actionButt.text = actionMSG[gs.gameMode]
 
         # Either update the splash, or add the widgets
         if gs.gameMode == 1:
@@ -663,11 +682,11 @@ class DrubbleGame(Widget):
             stats.update(gs)
 
             # Update score line
-            self.time_label.update('Time - %11.1f' % gs.t)
-            self.dist_label.update('Distance - %7.1f' % stats.stoolDist)
-            self.high_label.update('Height - %9.2f' % stats.maxHeight)
-            self.boing_label.update('Boing! - %9.0f' % stats.stoolCount)
-            self.score_label.update('Score - %10.0f' % stats.score)
+            self.time_label.update('Time %9.1f' % gs.t)
+            self.dist_label.update('Distance %6.1f' % stats.stoolDist)
+            self.high_label.update('Height %7.2f' % stats.maxHeight)
+            self.boing_label.update('Boing! %7.0f' % stats.stoolCount)
+            self.score_label.update('Score %8.0f' % stats.score)
 
         # Player drawing settings        
         xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u, self.width)

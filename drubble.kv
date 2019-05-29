@@ -41,7 +41,12 @@
             points: self.line_list
             width: self.line_width
         Color:
-            rgba: (1,1,1,self.face_alpha)
+            rgba: (0.7, 0.7, 0.7, self.face_alpha)
+        Ellipse:
+            pos: self.jersey_left+0.1*self.sz, self.jersey_bottom-0.3*self.sz
+            size: 0.4*self.sz, 0.6*self.sz
+        Color:
+            rgba: (1, 1, 1, self.face_alpha)
         PushMatrix
         Rotate:
             angle: self.shorts_angle0
@@ -95,6 +100,22 @@
             pos: self.img_left, self.img_bottom
             size: self.sz, self.sz
 
+
+<OptionButtons>:
+    canvas:
+        Color:
+            rgba: self.background_color
+        Rectangle:
+            source: self.background_normal
+            pos: self.label_pos
+            size: self.label_size
+    Label:
+        font_name: root.label_font
+        text: root.text
+        font_size: root.label_font_size
+        pos: root.label_pos
+        size: root.label_size
+        color: root.label_color
 
 <ScoreLabel>:
     canvas:
