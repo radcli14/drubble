@@ -20,8 +20,7 @@ from kivy.graphics import *
 from kivy.core.audio import SoundLoader
 from kivy.utils import platform
 
-# Execute drubbleFunc to get the supporting functions and classes
-#engine = 'kivy'
+# Import drubbleFunc to get the supporting functions and classes
 from drubbleFunc import *
 
 # Set the keyboard input and mouse defaults
@@ -34,10 +33,8 @@ gs = GameState(p.u0, engine)
 stats = GameScore()
 
 # Initialize drums
-"""
-loop = []
-loop.append(SoundLoader.load('a/00-DC-Base.mp3'))
-loop.append(SoundLoader.load('a/01-DC-Base.mp3'))
+nloops = 2
+loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.mp3') for k in range(nloops)]
 
 
 def sound_stopped(self):
@@ -50,7 +47,7 @@ for k in range(2):
     except:
         print('failed binding to sound_stopped')
 loop[0].play() 
-"""
+
 
 #drums = DrumBeat()
 #def drums_callback(dt):
