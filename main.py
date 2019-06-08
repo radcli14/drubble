@@ -34,7 +34,7 @@ stats = GameScore()
 
 # Initialize drums
 nloops = 2
-loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.mp3') for k in range(nloops)]
+loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.wav') for k in range(nloops)]
 
 
 def sound_stopped(self):
@@ -46,8 +46,10 @@ for k in range(2):
         loop[k].bind(on_stop=sound_stopped)
     except:
         print('failed binding to sound_stopped')
-loop[0].play() 
-
+try:
+    loop[0].play()
+except:
+    print('failed playing the drum loop')
 
 #drums = DrumBeat()
 #def drums_callback(dt):
@@ -308,10 +310,11 @@ def touchStick(loc, stick):
         x = min(max(p.tsens * (2.0 * (loc[0] - stick.ts_x[0]) / stick.size[0] - 1), -1), 1)
         y = min(max(p.tsens * (2.0 * (loc[1] - stick.ts_y[0]) / stick.size[1] - 1), -1), 1)
 
-        mag = sqrt(x ** 2 + y ** 2)
-        ang = round(4.0 * atan2(y, x) / pi) * pi / 4
+        #mag = sqrt(x ** 2 + y ** 2)
+        #ang = round(4.0 * atan2(y, x) / pi) * pi / 4
 
-        return mag * cos(ang), mag * sin(ang)
+        #return mag * cos(ang), mag * sin(ang)
+        return x, y
     else:
         return 0, 0
 
@@ -477,7 +480,7 @@ class DrubbleGame(Widget):
             self.dist_label = ScoreLabel(text='Distance', left=0.2*self.width)
             self.high_label = ScoreLabel(text='Height', left=0.4*self.width)
             self.boing_label = ScoreLabel(text='Boing!', left=0.6*self.width)
-            self.score_label = ScoreLabel(text='Score', left=0.81*self.width)
+            self.score_label = ScoreLabel(text='Score', left=0.8*self.width)
             self.add_widget(self.time_label)
             self.add_widget(self.dist_label)
             self.add_widget(self.high_label)
@@ -486,13 +489,13 @@ class DrubbleGame(Widget):
 
             self.optionButt = OptionButtons(text='Options',
                                             size=(0.18 * self.width, 0.04 * self.width),
-                                            pos=(0.01 * self.width, 0.87 * self.height),
+                                            pos=(0.01 * self.width, 0.86 * self.height),
                                             font_size=36, color=red)
             self.add_widget(self.optionButt)
 
             self.actionButt = OptionButtons(text=actionMSG[3],
                                             size=(0.18 * self.width, 0.04 * self.width),
-                                            pos=(0.81 * self.width, 0.87 * self.height),
+                                            pos=(0.81 * self.width, 0.86 * self.height),
                                             font_size=36, color=red)
             self.add_widget(self.actionButt)
 
