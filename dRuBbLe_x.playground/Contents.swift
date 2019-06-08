@@ -19,16 +19,27 @@ let pink      = (1.0, 100.0/255.0, 100.0/255.0)
 let skyBlue   = (135.0/255.0, 206.0/255.0, 235.0/255.0)
 let darkGreen = (0.0, 120.0/255.0, 0)
 
+// Create the value of pi
 let pi = 3.14159
 
 // Convert physical coordinates to pixels
-func xy2p(x: Double,y: Double, m2p: Double,po: Double,w: Double,h: Double) -> (Double, Double) {
+func xy2p(x: Double, y: Double, m2p: Double,po: Double,w: Double,h: Double) -> (Double, Double) {
     let xout = x*m2p-po+w/2
     let yout = y*m2p+h/20
     return (xout, yout)
 }
 
-// Set up the parameter class
+// Define the linspace function
+func linspace(startValue: Double, endValue: Double, nSteps: Int) -> [Double] {
+    var outputArray = [Double]()
+    let incrementSize = (endValue - startValue) / Double(nSteps - 1)
+    for n in 0 ..< nSteps {
+        outputArray.append(startValue + Double(n) * incrementSize)
+    }
+    return outputArray
+}
+
+// Set up the parameter class, contains constants
 class Parameters {
     // Game parameters
     let g = 9.81   // Gravitational acceleration [m/s^2]
@@ -118,21 +129,159 @@ class Parameters {
 var p = Parameters()
 print(p.u0)
 
-// Animate the background screen
+class GameState {
+    // Define Game Mode
+    // 0 = Quit
+    // 1 = Splash screen
+    // 2 = Options screen
+    // 3 = In game, pre-angle set
+    // 4 = In game, angle set
+    // 5 = In game, distance set
+    // 6 = In game
+    // 7 = Game over, resume option
+    // 8 = Game over, high scores
+    var gameMode = 1
+    var showedSplash = false
+    
+    // Initialize the ctrl (control) array
+    var ctrl = [0.0, 0.0, 0.0, 0.0]
+    
+    // Timing
+    var t = 0.0, n = 0, te = 0.0
+    
+    // State variables
+    var u = p.u0
+    var xb: Double, yb: Double, dxb: Double, dyb: Double
+    var xp: [Double], yp: [Double], lp: [Double], tp: [Double]
+    var dxp: [Double], dyp: [Double], dlp: [Double], dtp: [Double]
+    var xI: Double, yI: Double, tI: Double, xTraj = [Double](), yTraj = [Double](), timeUntilBounce: Double
+    // TBR self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = BallPredict(self)
+    
+    // Event states
+    var ue: [Double]
+    
+    // Initial ball angle and speed conditions
+    var startAngle: Double, startSpeed: Double, phase: Double
+    
+    // Stuck condition
+    var Stuck = false
+    
+    // Init is called when the class is created, but also used to restart the game
+    init() {
+        // Timing
+        self.t = 0.0
+        self.n = 0
+        self.te = 0.0
+        
+        // State variables
+        self.xb = p.u0[0]
+        self.yb = p.u0[1]
+        self.dxb = p.u0[2]
+        self.dyb = p.u0[3]
+        self.xp = [p.u0[4], p.u0[12]]
+        self.yp = [p.u0[5], p.u0[13]]
+        self.lp = [p.u0[6], p.u0[14]]
+        self.tp = [p.u0[7], p.u0[15]]
+        self.dxp = [p.u0[8], p.u0[16]]
+        self.dyp = [p.u0[9], p.u0[17]]
+        self.dlp = [p.u0[10], p.u0[18]]
+        self.dtp = [p.u0[11], p.u0[19]]
+        self.xI = 0.0
+        self.yI = 0.0
+        self.tI = 0.0
+        self.xTraj = [0.0]
+        self.yTraj = [0.0]
+        self.timeUntilBounce = 0.0
+        
+        // Event states
+        self.ue = p.u0
+        
+        // Initial ball angle and speed conditions
+        self.startAngle = p.sa
+        self.startSpeed = p.ss
+        self.phase      = 0.0
+        
+        // Stuck condition
+        self.Stuck = false
+        
+    }
+    
+    // Define a function to predict motion of the ball
+    func ball_predict() -> (Double, Double, Double, [Double], [Double], Double) {
+        if self.dyb == 0 || self.gameMode <= 2 {
+            // Ball is not moving, impact time is zero
+            self.tI = 0
+        } else if self.gameMode > 2 && (self.dyb > 0) && (self.yb < self.yp[0] + p.d + self.lp[0]) {
+            // Ball is in play, moving upward and below the stool
+            // Solve for time and height at apogee
+            let ta = self.dyb / p.g
+            let ya = 0.5 * p.g * pow(ta, 2)
+        
+            // Solve for time the ball would hit the ground
+            self.tI = ta + sqrt(2.0 * ya / p.g)
+        } else if self.gameMode > 2 || (self.yb > self.yp[0] + p.d + self.lp[0]) {
+            // Ball is in play, above the stool
+            // Solve for time that the ball would hit the stool
+            self.tI = -(-self.dyb - sqrt(pow(self.dyb, 2) + 2.0 * p.g * (self.yb - self.yp[0] - p.d - self.lp[0]))) / p.g
+        } else {
+            self.tI = 0
+        }
+        
+        if self.tI.isNaN {
+            self.tI = 0
+        }
+        
+        // Solve for position that the ball would hit the stool
+        self.xI = self.xb + self.dxb * self.tI
+        self.yI = self.yb + self.dyb * self.tI - 0.5 * p.g * pow(self.tI, 2)
+        
+        // Solve for time that the ball would hit the ground
+        let tG = -(-self.dyb - sqrt(pow(self.dyb, 2) + 2.0 * p.g * self.yb)) / p.g
+        
+        // Solve for the arc for the next 1.2 seconds, or until ball hits ground
+        let T = linspace(startValue: 0.0, endValue: min(1.2, tG), nSteps: 20)
+        self.xTraj = [Double]()
+        self.yTraj = [Double]()
+        for n in 0 ..< 20 {
+            self.xTraj.append(self.xb + self.dxb * T[n])
+            self.yTraj.append(self.yb + self.dyb * T[n] - 0.5 * p.g * pow(T[n], 2))
+        }
+        
+        // Time until event
+        self.timeUntilBounce = tI
+        self.tI = self.timeUntilBounce + self.t
+        
+        // Output variables
+        // xI = Ball distance at impact [m]
+        // yI = Ball height at impact [m]
+        // tI = Time at impact [s]
+        // xTraj = Ball trajectory distances [m]
+        // yTraj = Ball trajectory heights [m]
+        return (self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce)
+    }
+    
+}
+
+var gs = GameState()
+print(gs.u)
+print(gs.ball_predict())
+print(gs.tI)
+
+// Define a class to animate the background screen
 class MyBackground {
     // Set size of the background, before updates
     let w_orig = 2400.0
     let h_orig = 400.0
     
     // Number of background images
-    let num_bg = Int(3)
+    let num_bg = 3
 
     // Initialize dependent variables
-    var xpos: Int
+    var xpos = 0
     var name = [String]()
     init() {
         // Randomize the start location in the background
-        xpos = arc4random_uniform(100) * num_bg
+        xpos = Int(arc4random_uniform(100)) * num_bg
         
         // Initialize the background images
         // TBR
