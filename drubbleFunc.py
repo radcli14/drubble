@@ -327,7 +327,7 @@ class GameState:
             #self.ctrlFunc = 1
             self.ctrlMode = 'vStick'
             self.ctrlFunc = 2
-        self.ctrl = [0,0,0,0]
+        self.ctrl = [0.0, 0.0, 0.0, 0.0]
         
         # Timing
         self.t = 0
