@@ -145,6 +145,8 @@ class GameState {
     
     // Initialize the ctrl (control) array
     var ctrl = [0.0, 0.0, 0.0, 0.0]
+    var ctrlMode = "Keys"
+    var ctrlFunc = 0
     
     // Timing
     var t = 0.0, n = 0, te = 0.0
@@ -203,7 +205,6 @@ class GameState {
         
         // Stuck condition
         self.Stuck = false
-        
     }
     
     // Define a function to predict motion of the ball
@@ -260,6 +261,38 @@ class GameState {
         return (self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce)
     }
     
+    // Get control input from external source
+    func set_control(keyPush: [Int] = [0, 0, 0, 0, 0, 0, 0, 0], moveStick: [Double] = [0, 0], tiltStick: [Double] = [0, 0], g: [Double] = [0, 0, 0], a: [Double] = [0, 0, 0]) {
+
+        if self.ctrlFunc == 0 {
+            // Key press control
+            self.ctrl = [Double(keyPush[1]-keyPush[0]), Double(keyPush[2]-keyPush[3]), Double(keyPush[4]-keyPush[5]), Double(keyPush[6]-keyPush[7])]
+        } else if self.ctrlFunc == 1 {
+            // Motion control scale factors
+            let gThreshold = 0.05
+            let slope = 5.0
+            let aScale = 2.0
+            
+            // Run left/right
+            if g[1] > gThreshold {
+                self.ctrl[0] = -min(slope*(g[1]-gThreshold), 1)
+            } else if g[1] < -gThreshold {
+                self.ctrl[0] = -max(slope*(g[1]+gThreshold), -1)
+            } else {
+                self.ctrl[0] = 0.0
+            }
+            
+            // Push up/down
+            if a[1] > 0 {
+                self.ctrl[1] = min(aScale*a[1], 1)
+            } else {
+                self.ctrl[1] = max(aScale*a[1], -1)
+            }
+        } else if self.ctrlFunc == 2 {
+            // Virtual stick control
+            self.ctrl = [moveStick[0], moveStick[1], tiltStick[1], -tiltStick[0]]
+        }
+    }
 }
 
 var gs = GameState()
