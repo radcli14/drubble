@@ -129,6 +129,45 @@ class Parameters {
 var p = Parameters()
 print(p.u0)
 
+
+class GameScore {
+    // Initiate statistics as zeros
+    var t = 0.0
+    var n = 0
+    var stoolCount = 0
+    var stoolDist = 0.0
+    var maxHeight = 0.0
+    var floorCount = 0
+    var score = 0
+    var averageStepTime = 0.0
+    
+    func update(t: Double, n: Int, xb: Double, yb: Double, StoolBounce: Bool, FloorBounce: Bool) {
+        self.t = t
+        self.n = n
+        if StoolBounce && self.stoolDist < xb {
+            self.stoolDist = xb
+        }
+        if self.maxHeight < yb && self.stoolCount > 0 {
+            self.maxHeight = yb
+        }
+        self.stoolCount += StoolBounce ? 1 : 0
+        self.floorCount += FloorBounce ? 1 : 0
+        self.score = Int(self.stoolDist * self.maxHeight * Double(self.stoolCount))
+    }
+}
+
+var stats = GameScore()
+print(stats.t)
+
+
+func norm(vec: [Double]) -> Double {
+    var vec2 = 0.0
+    for n in 0 ..< vec.count {
+        vec2 += pow(vec[n], 2)
+    }
+    return sqrt(vec2)
+}
+
 class GameState {
     // Define Game Mode
     // 0 = Quit
@@ -167,6 +206,10 @@ class GameState {
     
     // Stuck condition
     var Stuck = false
+    
+    // Initial assumption, there was no event
+    var StoolBounce = false
+    var FloorBounce = false
     
     // Init is called when the class is created, but also used to restart the game
     init() {
@@ -292,6 +335,31 @@ class GameState {
             // Virtual stick control
             self.ctrl = [moveStick[0], moveStick[1], tiltStick[1], -tiltStick[0]]
         }
+    }
+    
+    // Execute a simulation step of duration dt
+    func sim_step() {
+        // Increment n
+        self.n += 1
+        
+        // Active player
+        let pAct = stats.stoolCount % p.nPlayer
+        
+        // Initial assumption, there was no event
+        self.StoolBounce = false
+        self.FloorBounce = false
+        
+        // Prevent event detection if there was already one within 0.1 seconds,
+        // or if the ball is far from the stool or ground
+        // L = BallHitStool(self.t, self.u, pAct)  # Distance to stool
+        // TBR BallHitStool
+        let vBall = [self.dxb, self.dyb] // Velocity
+        let sBall = norm(vec: vBall)     // Speed
+        
+        // Set the timing
+        //let time_condition = (self.yb - self.yp[pAct] - self.lp[pAct] * cos(self.tp[pAct]) - p.d) / sBall if sBall > 0.0 else -1.0
+        // TBR time_condition
+        let near_condition = abs(self.xb - self.xp[pAct]) < 1.0
     }
 }
 
