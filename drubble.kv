@@ -104,13 +104,13 @@
 <Stick>:
     canvas:
         Color:
-            rgba: 1, 1, 1, 0.5
+            rgba: 1, 1, 1, 0.25
         Rectangle:
             source: 'a/crossHair.png'
             pos: self.ch_x, self.ch_y
             size: self.ch_s, self.ch_s
         Ellipse:
-            pos: self.ch_x + self.ch_s/4.0 + self.ch_s*self.ctrl_x/4.0, self.ch_y + self.ch_s/4.0 + self.ch_s*self.ctrl_y/4.0
+            pos: self.ch_x + self.ch_s*(1+self.ctrl_x)/4.0, self.ch_y + self.ch_s*(1+self.ctrl_y)/4.0
             size: self.ch_s/2.0, self.ch_s/2.0
 
 

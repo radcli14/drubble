@@ -303,9 +303,8 @@ def touchStick(loc, stick):
 
     # Touched inside the stick
     if all(tCnd):
-        x = min(max(p.tsens * (2.0 * (loc[0] - stick.ts_x[0]) / stick.size[0] - 1), -1), 1)
-        y = min(max(p.tsens * (2.0 * (loc[1] - stick.ts_y[0]) / stick.size[1] - 1), -1), 1)
-
+        x = min(max(p.tsens * (2.0 * (loc[0] - stick.ts_x[0]) / stick.ch_s - 1), -1), 1)
+        y = min(max(p.tsens * (2.0 * (loc[1] - stick.ts_y[0]) / stick.ch_s - 1), -1), 1)
         return x, y
         # mag = sqrt(x ** 2 + y ** 2)
         # ang = round(4.0 * atan2(y, x) / pi) * pi / 4
@@ -338,21 +337,13 @@ class Stick(Widget):
         self.ch_y = stick_pos[1]
         self.ch_s = stick_size[0]
 
-        #self.ts_x = (pos[0]-size[0]/2.0, pos[0]+size[0]/2.0)
-        #self.ts_y = (pos[1]-size[1]/2.0, pos[1]+size[1]/2.0)
-        #self.center = pos
-
         self.ts_x = [stick_pos[0], stick_pos[0] + stick_size[0]]
         self.ts_y = [stick_pos[1], stick_pos[1] + stick_size[1]]
-        #self.cntr = (self.ch_x, self.ch_y)
         self.ctrl = (0, 0)
 
     def update_el(self, x, y):
         self.ctrl_x = x
         self.ctrl_y = y
-
-        #ch_x, ch_y, ch_s = get_stick_pos(self.ch)
-        #self.el.pos = (ch_x-ch_s/4.0+ch_s*x/4.0, ch_y-ch_s/4.0+ch_s*y/4.0)
         self.ctrl = (x, y)
 
 
