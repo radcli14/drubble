@@ -258,7 +258,7 @@ class OptionButtons:
 
 if engine == 'ista':
     # Initialize the splash screen
-    splash = scene_drawing.load_image_file('a/splash.png')
+    #splash = scene_drawing.load_image_file('a/splash.png')
     
     class Game (Scene):
         def setup(self):
@@ -271,6 +271,11 @@ if engine == 'ista':
             
             # Initialize the counter for the splash screen
             self.kSplash = 0
+            self.splash = SpriteNode('a/splash.png')
+            self.splash.size = (width, height)
+            self.splash.anchor_point = (0.0, 0.0)
+            self.splash.position = (0, 0)
+            self.add_child(self.splash)
             
             # Generate the sky blue background and images
             self.background_color = skyBlue
@@ -469,7 +474,7 @@ if engine == 'ista':
         def draw(self):
             # Show the splash screen
             if gs.gameMode == 1:
-                makeSplashScreen(self)
+                #makeSplashScreen(self)
                 if not gs.showedSplash:
                     self.kSplash += 2
             else:
@@ -505,6 +510,8 @@ if engine == 'ista':
             # Reset if necessary
             if gs.gameMode == 1 and self.kSplash >= 255: 
                 self.touchCycle = True
+                move_action = Action.move_to(0, -height, 0.5, TIMING_SINODIAL)
+                self.splash.run_action(move_action)
             
             if gs.gameMode == 2:
                 b1 = self.singleButt.detect_touch(touch.location)
