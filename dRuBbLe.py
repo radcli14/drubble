@@ -1,4 +1,4 @@
-# Execute drubbleFunc to get the supporting functions and classes
+# Import the supporting functions and classes
 engine = 'ista'
 from scene import *
 import motion
@@ -6,7 +6,6 @@ import ui
 import scene_drawing
 import sound
 import numpy as np
-#exec(open('./drubbleFunc.py').read())
 from drubbleFunc import *
 
 # Window size
@@ -89,6 +88,8 @@ def toggleVisibleSprites(self, boule):
         self.high_label.alpha = 1
         self.boing_label.alpha = 1
         self.score_label.alpha = 1
+        self.actionButt.add()
+        self.optionButt.add()
     else:
         self.moveStick.alpha = 0
         self.moveAura.alpha = 0
@@ -206,30 +207,31 @@ class MyBackground:
 
 # Create OptionButtons class
 class OptionButtons:
-    def __init__(self, anchor_point=(0.5, 0.5), **kwargs):
+    def __init__(self, anchor_point=(0.5, 0.5), rm_pos=(0, 1.1*height), **kwargs):
         # Get the keyword arguments
         text = kwargs['text']
         font = kwargs['font']
-        pos = kwargs['position']
-        sz = kwargs['size']
+        self.pos = kwargs['position']
+        self.rm_pos = rm_pos
+        self.sz = kwargs['size']
         ap = anchor_point
         
         # Set the boundaries
-        self.left = pos[0] - sz[0] * ap[0]
-        self.right = pos[0] + sz[0] * (1-ap[0])
-        self.bottom = pos[1] - sz[1] * ap[1]
-        self.top = pos[1] + sz[1] * (1-ap[1])
+        self.left = self.pos[0] - self.sz[0] * ap[0]
+        self.right = self.pos[0] + self.sz[0] * (1-ap[0])
+        self.bottom = self.pos[1] - self.sz[1] * ap[1]
+        self.top = self.pos[1] + self.sz[1] * (1-ap[1])
         
         # Set up the background image
         self.img = SpriteNode('a/button.png')
-        self.img.position = (self.left, self.bottom)
-        self.img.size = sz
-        self.img.alpha = 0.25
+        self.img.position = (self.rm_pos[0], self.rm_pos[1])
+        self.img.size = self.sz
+        self.img.alpha = 0.5
         self.img.anchor_point = (0, 0)
         
         # Set up the text
-        self.butt = LabelNode(text=text, font=font)
-        self.butt.position = (self.left + sz[0]/2, self.bottom + sz[1]/2)
+        self.butt = LabelNode(text=text, font=font, color=red)
+        self.butt.position = (self.rm_pos[0] + self.sz[0]/2, self.rm_pos[1] + self.sz[1]/2)
         self.butt.anchor_point = (0.5, 0.5)
         
     def text(self, str):
@@ -242,10 +244,17 @@ class OptionButtons:
                 loc[1] < self.top]
         return all(tCnd)
         
-    def rm(self):
-        self.butt.remove_from_parent()
-        self.img.remove_from_parent()
-
+    def add(self, t=0.5):
+        move_action = Action.move_to(self.left, self.bottom, t, TIMING_SINODIAL)
+        self.img.run_action(move_action)
+        move_action = Action.move_to(self.left + self.sz[0]/2, self.bottom + self.sz[1]/2, t, TIMING_SINODIAL)
+        self.butt.run_action(move_action)
+        
+    def rm(self, t=0.5):
+        move_action = Action.move_to(self.rm_pos[0], self.rm_pos[1], 0.7, TIMING_SINODIAL)
+        self.img.run_action(move_action)
+        move_action = Action.move_to(self.rm_pos[0] + self.sz[0]/2, self.rm_pos[1] + self.sz[1]/2, t, TIMING_SINODIAL)
+        self.butt.run_action(move_action)
 
 if engine == 'ista':
     # Initialize the splash screen
@@ -338,6 +347,20 @@ if engine == 'ista':
             
             self.optionButt = OptionButtons(text='Options', font=(p.MacsFavoriteFont, 20), position=(0.01*width,0.92*height), size=(0.18 * width, 0.04 * width), anchor_point=(0,1))
             
+            self.add_child(self.actionButt.butt)
+            self.add_child(self.actionButt.img)
+            self.add_child(self.optionButt.butt)
+            self.add_child(self.optionButt.img)
+            self.actionButt.text('Begin')
+            
+            self.singleButt = OptionButtons(text='Single Drubble', font=(p.MacsFavoriteFont,36), size=(0.8*width,0.2*height), position=(0.5*width,0.75*height))
+            self.doubleButt = OptionButtons(text='Double Drubble', font=(p.MacsFavoriteFont,36), size=(0.8*width,0.2*height), position=(0.5*width,0.5*height))
+            
+            self.add_child(self.singleButt.butt)
+            self.add_child(self.singleButt.img)
+            self.add_child(self.doubleButt.butt)
+            self.add_child(self.doubleButt.img)
+            
             toggleVisibleSprites(self, False)
 
             # Start the drums
@@ -349,20 +372,14 @@ if engine == 'ista':
             if self.touchCycle:
                 cycleModes(gs, stats, engine)
                 if gs.gameMode == 2:
-                    self.singleButt = OptionButtons(text='Single Drubble', font=(p.MacsFavoriteFont,36), size=(0.8*width,0.2*height), position=(0.5*width,0.75*height))
-                    self.doubleButt = OptionButtons(text='Double Drubble', font=(p.MacsFavoriteFont,36), size=(0.8*width,0.2*height), position=(0.5*width,0.5*height))
-                    self.add_child(self.singleButt.butt)
-                    self.add_child(self.singleButt.img)
-                    self.add_child(self.doubleButt.butt)
-                    self.add_child(self.doubleButt.img)
+                    self.singleButt.add()
+                    self.doubleButt.add()
                     
                 if gs.gameMode == 3:
+                    self.singleButt.rm()
+                    self.doubleButt.rm()
                     toggleVisibleSprites(self,True)
-                    self.add_child(self.actionButt.butt)
-                    self.add_child(self.actionButt.img)
-                    self.add_child(self.optionButt.butt)
-                    self.add_child(self.optionButt.img)
-                    self.actionButt.text('Begin')
+                    
                     
                 if gs.gameMode == 4:
                     self.actionButt.text('Set Angle')
@@ -377,8 +394,7 @@ if engine == 'ista':
                 
             # Get control inputs
             if gs.ctrlMode == 'motion':
-                gs.setControl(g=motion.get_gravity(),
-                              a=motion.get_user_acceleration())    
+                gs.setControl(g=motion.get_gravity(), a=motion.get_user_acceleration())    
             elif gs.ctrlMode == 'vStick' and gs.gameMode>1:
                 gs.setControl(moveStick=self.moveStick.ctrl,
                               tiltStick=self.tiltStick.ctrl)
