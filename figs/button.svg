@@ -17,8 +17,8 @@
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
    sodipodi:docname="button.svg"
    inkscape:export-filename="/home/radcli14/drubble/a/button.png"
-   inkscape:export-xdpi="23.341305"
-   inkscape:export-ydpi="23.341305">
+   inkscape:export-xdpi="48.034676"
+   inkscape:export-ydpi="48.034676">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -50,7 +50,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>

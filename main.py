@@ -11,7 +11,7 @@ from random import randint
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
-from kivy.uix.button import Button
+# from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.properties import NumericProperty, ListProperty, ObjectProperty, StringProperty
 from kivy.core.window import Window
@@ -24,9 +24,6 @@ from kivy.config import Config
 # Import drubbleFunc to get the supporting functions and classes
 from drubbleFunc import *
 
-# Set the keyboard input and mouse defaults
-keyPush = [0, 0, 0, 0, 0, 0, 0, 0]
-
 # Initialize Game State
 gs = GameState(p.u0, engine)
 
@@ -38,10 +35,8 @@ try:
     nloops = 2
     loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.mp3') for k in range(nloops)]
 
-
     def sound_stopped(self):
         loop[1].play()
-
 
     for k in range(2):
         try:
@@ -51,10 +46,6 @@ try:
     loop[0].play()
 except:
     print('failed loading mp3')
-
-#drums = DrumBeat()
-#def drums_callback(dt):
-#    drums.play_kivy()
 
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
@@ -77,10 +68,6 @@ Window.icon = 'a/icon.png'
 # Initialize the players
 p1 = playerLines(0, gs, width, height)
 p2 = playerLines(1, gs, width, height)
-
-# This is the text used in the upper right button
-actionMSG = ['', '', '', 'Begin', 'Set Angle', 'Set Speed', 'Restart']
-
 
 class MyBackground(Widget):
     # Size of the black bar on the bottom of the screen
@@ -347,8 +334,6 @@ class Stick(Widget):
         self.size = width * screen_scf, height * screen_scf
         stick_size = kwargs['size']
         stick_pos = kwargs['pos']
-        print(stick_size)
-        print(stick_pos)
         self.ch_x = stick_pos[0]
         self.ch_y = stick_pos[1]
         self.ch_s = stick_size[0]
@@ -356,15 +341,6 @@ class Stick(Widget):
         #self.ts_x = (pos[0]-size[0]/2.0, pos[0]+size[0]/2.0)
         #self.ts_y = (pos[1]-size[1]/2.0, pos[1]+size[1]/2.0)
         #self.center = pos
-
-        """
-        with self.canvas:
-            self.ch = Image(source='a/crossHair.png', **kwargs)
-            ch_x, ch_y, ch_s = get_stick_pos(self.ch)
-            Color(1, 1, 1, 0.5)
-            self.el = Ellipse(pos=(ch_x-ch_s/4.0, ch_y-ch_s/4.0),
-                              size=(ch_s/2.0, ch_s/2.0))
-        """
 
         self.ts_x = [stick_pos[0], stick_pos[0] + stick_size[0]]
         self.ts_y = [stick_pos[1], stick_pos[1] + stick_size[1]]
@@ -510,7 +486,7 @@ class DrubbleGame(Widget):
                                             font_size=36 * screen_scf, color=red)
             self.add_widget(self.optionButt)
 
-            self.actionButt = OptionButtons(text=actionMSG[3],
+            self.actionButt = OptionButtons(text=p.actionMSG[3],
                                             size=(0.18 * self.width, 0.04 * self.width),
                                             pos=(0.81 * self.width, 0.87 * self.height),
                                             font_size=36 * screen_scf, color=red)
@@ -551,13 +527,13 @@ class DrubbleGame(Widget):
         self._keyboard = None
     
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        keyPush = ctrl2keyPush(gs)
-        gs.setControl(keyPush=kvUpdateKey(keyPush, keycode, 1))
+        self.keyPush = ctrl2keyPush(gs)
+        gs.setControl(keyPush=kvUpdateKey(self.keyPush, keycode, 1))
         if gs.gameMode == 1 and gs.showedSplash:
             cycleModes(gs, stats, engine)
         elif keycode[1] == 'spacebar':
             cycleModes(gs, stats, engine)
-            self.actionButt.text = actionMSG[gs.gameMode]
+            self.actionButt.text = p.actionMSG[gs.gameMode]
         elif keycode[1] == 'escape':
             gs.gameMode = 1
             self.remove_game_widgets()
@@ -570,8 +546,8 @@ class DrubbleGame(Widget):
         return True
     
     def _on_keyboard_up(self, keyboard, keycode):
-        keyPush = ctrl2keyPush(gs)
-        gs.setControl(keyPush=kvUpdateKey(keyPush, keycode, 0))
+        self.keyPush = ctrl2keyPush(gs)
+        gs.setControl(keyPush=kvUpdateKey(self.keyPush, keycode, 0))
         return True
     
     def on_touch_down(self, touch):
@@ -588,7 +564,7 @@ class DrubbleGame(Widget):
             # Cycle through modes if touch above the halfway point
             if self.actionButt.detect_touch(loc):
                 cycleModes(gs, stats, engine)
-                self.actionButt.text = actionMSG[gs.gameMode]
+                self.actionButt.text = p.actionMSG[gs.gameMode]
             if self.optionButt.detect_touch(loc):
                 gs.gameMode = 1
                 self.remove_game_widgets()
@@ -677,7 +653,7 @@ class DrubbleGame(Widget):
             Window.release_all_keyboards()
 
         if self.weHaveWidgets:
-            self.actionButt.text = actionMSG[gs.gameMode]
+            self.actionButt.text = p.actionMSG[gs.gameMode]
 
         # Either update the splash, or add the widgets
         if gs.gameMode == 1:

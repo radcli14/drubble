@@ -134,6 +134,8 @@ class Parameters:
     playerColor = (darkGreen, red)
     stoolColor = (white, black)
 
+    # This is the text used in the upper right button
+    actionMSG = ['', '', '', 'Begin', 'Set Angle', 'Set Speed', 'Restart']
 
 p = Parameters()
 
@@ -328,6 +330,7 @@ class GameState:
             self.ctrlMode = 'vStick'
             self.ctrlFunc = 2
         self.ctrl = [0.0, 0.0, 0.0, 0.0]
+        self.keyPush = [0, 0, 0, 0, 0, 0, 0, 0]
         
         # Timing
         self.t = 0
@@ -629,7 +632,7 @@ def PlayerAndStool(t, u, p, gs, stats):
 
 
 def ctrl2keyPush(gs):
-    keyPush = zeros(8)
+    keyPush = gs.keyPush
     if gs.ctrl[0] < 0:
         keyPush[0] = -gs.ctrl[0]
     elif gs.ctrl[0] > 0:
