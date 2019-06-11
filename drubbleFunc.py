@@ -1,13 +1,15 @@
 # Import modules
 #import numpy as np
 #from numpy import array
-from math import sin, cos, pi, sqrt, isnan, fmod, atan2
+from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
 import sys
 # Frame rate
 if 'dRuBbLe' in sys.argv[0]:
     fs = 60
+    engine = 'ista'
 else:
     fs = 30
+    engine = 'kivy'
 dt = 1.0/fs
 
 # Color definition    
@@ -19,9 +21,9 @@ white = (1, 1, 1)
 gray = (160.0/255.0, 160.0/255.0, 160.0/255.0)
 black = (0, 0, 0)
 pink = (1, 100.0/255.0, 100.0/255.0)
-skyBlue = (135.0/255.0, 206.0/255.0, 235.0/255.0)
+skyBlue = (135.0/255.0, 226.0/255.0, 255.0/255.0)
 darkGreen = (0, 120.0/255.0, 0)
-
+pink = (1.0, 182.0/255.0, 193.0/255.0)
 
 # Convert physical coordinates to pixels
 def xy2p(x, y, m2p, po, w, h):
@@ -325,7 +327,7 @@ class GameState:
             #self.ctrlFunc = 1
             self.ctrlMode = 'vStick'
             self.ctrlFunc = 2
-        self.ctrl = [0,0,0,0]
+        self.ctrl = [0.0, 0.0, 0.0, 0.0]
         
         # Timing
         self.t = 0
@@ -677,7 +679,7 @@ def control_logic(t, u, k, p, gs, stats):
     ZEM = (gs.xI+10.0*(p.nPlayer-1-(stats.stoolCount % 2))-0.1) - xp[k] - dxp[k]*abs(gs.timeUntilBounce-1)
     if p.userControlled[k][0]:
         if gs.ctrl[0] == 0:
-            Bx = 0 if dxp[k] == 0 else -dxp[k] / abs(dxp[k])
+            Bx = 0 if dxp[k] == 0 else -erf(dxp[k])  # Friction
         else:
             Bx = gs.ctrl[0]
     else:
@@ -885,6 +887,8 @@ def stickDude(inp, k):
     
     # Shoulder Position
     sh = [x, y+p.d]
+    shl = [x-0.18, y+p.d+0.05]
+    shr = [x+0.18, y+p.d+0.05]
     
     # Stool Position
     sx = []
@@ -898,12 +902,12 @@ def stickDude(inp, k):
     lh = [sx[6], sy[6]] 
     
     # Right Elbow [re] Left Elbow [le] Position
-    re = ThirdPoint(sh, rh, 1, 1)
-    le = ThirdPoint(sh, lh, 1, -1)
+    re = ThirdPoint(shl, rh, 1, 1)
+    le = ThirdPoint(shr, lh, 1, -1)
     
     # Plotting vectors
-    xv = [rf[0], rk[0], w[0], lk[0], lf[0], lk[0], w[0], sh[0], re[0], rh[0], re[0], sh[0], le[0], lh[0]]
-    yv = [rf[1], rk[1], w[1], lk[1], lf[1], lk[1], w[1], sh[1], re[1], rh[1], re[1], sh[1], le[1], lh[1]]
+    xv = [rf[0], rk[0], w[0], lk[0], lf[0], lk[0], w[0], sh[0], shl[0], re[0], rh[0], re[0], shl[0], shr[0], le[0], lh[0]]
+    yv = [rf[1], rk[1], w[1], lk[1], lf[1], lk[1], w[1], sh[1], shl[1], re[1], rh[1], re[1], shl[1], shr[1], le[1], lh[1]]
     
     return xv, yv, sx, sy
 

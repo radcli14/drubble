@@ -1,4 +1,5 @@
-#:kivy 1.10.1
+#:kivy 1.11.0
+
 
 <SplashScreen>:
     canvas:
@@ -7,10 +8,11 @@
             pos: 0, 0
             size: root.width, root.height
         Color:
-            rgba: (1,1,1,self.splash_fade)
+            rgba: 1, 1, 1, self.splash_fade
         Rectangle:
             pos: 0, 0
-            size: self.width, self.height
+            size: root.width, root.height
+
 
 <MyBackground>:
     canvas:
@@ -30,6 +32,7 @@
             pos: (0,0)
             size: root.width, self.bottomLineHeight
 
+
 <MyFace>:
     canvas:
         Color:
@@ -38,7 +41,34 @@
             points: self.line_list
             width: self.line_width
         Color:
-            rgba: (1,1,1,self.face_alpha)
+            rgba: (0.7, 0.7, 0.7, self.face_alpha)
+        Ellipse:
+            pos: self.jersey_left+0.1*self.sz, self.jersey_bottom-0.3*self.sz
+            size: 0.4*self.sz, 0.6*self.sz
+        Color:
+            rgba: (1, 1, 1, self.face_alpha)
+        PushMatrix
+        Rotate:
+            angle: self.shorts_angle0
+            origin: self.jersey_right-0.12*self.sz, self.jersey_bottom-0.04*self.sz
+        Rectangle:
+            source: self.shorts_source0
+            pos: self.jersey_right-0.45*self.sz, self.jersey_bottom-0.35*self.sz
+            size: 0.4*self.sz, 0.7*self.sz
+        PopMatrix
+        PushMatrix
+        Rotate:
+            angle: self.shorts_angle1
+            origin: self.jersey_left+0.12*self.sz, self.jersey_bottom-0.04*self.sz
+        Rectangle:
+            source: self.shorts_source1
+            pos: self.jersey_left + 0.05*self.sz, self.jersey_bottom-0.35*self.sz
+            size: 0.4*self.sz, 0.7*self.sz
+        PopMatrix
+        Rectangle:
+            source: self.jersey_source
+            pos: self.jersey_left, self.jersey_bottom
+            size: 0.6*self.sz, self.sz
         Rectangle:
             source: self.image_source
             pos: self.img_left, self.img_bottom
@@ -55,13 +85,14 @@
             size: self.stool_width, self.stool_height
         PopMatrix
 
+
 <Ball>:
     canvas:
         Color:
             rgba: (1,1,1,0.5*self.ball_alpha)
         Line:
             points: self.trajectory
-            width: 1
+            width: 2
         Color:
             rgba: (1,1,1,self.ball_alpha)
         Ellipse:
@@ -70,48 +101,54 @@
             size: self.sz, self.sz
 
 
-#<stick>:
-    #canvas:
-        #Color:
-        #    rgba: (1,1,1,0.5)
-        #Rectangle:
-        #    source: 'figs/crossHair.png'
-        #    pos: 0, 0
-            #pos: self.ch_x, self.ch_y
-        #    size: self.ch_s, self.ch_s
-        #Ellipse:
-        #    pos: ch_x-ch_s/4.0+ch_s*ctrl_x/4.0,ch_y-ch_s/4.0+ch_s*ctrl_y/4.0
-        #    size: self.ch_s, self.ch_s
+<Stick>:
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 0.5
+        Rectangle:
+            source: 'a/crossHair.png'
+            pos: self.ch_x, self.ch_y
+            size: self.ch_s, self.ch_s
+        Ellipse:
+            pos: self.ch_x + self.ch_s/4.0 + self.ch_s*self.ctrl_x/4.0, self.ch_y + self.ch_s/4.0 + self.ch_s*self.ctrl_y/4.0
+            size: self.ch_s/2.0, self.ch_s/2.0
+
+
+<OptionButtons>:
+    canvas:
+        Color:
+            rgba: self.background_color
+        Rectangle:
+            source: self.background_normal
+            pos: self.label_pos
+            size: self.label_size
+    Label:
+        font_name: root.label_font
+        text: root.text
+        font_size: root.label_font_size
+        pos: root.label_pos
+        size: root.label_size
+        color: root.label_color
 
 <ScoreLabel>:
     canvas:
         Color:
-            rgba: (1,1,1,0.5)
+            rgba: 1, 1, 1, 0.75
         Rectangle:
-            pos: (self.label_left, self.height-self.label_size-4)
-            size: (0.19*root.width, root.label_size+4)
+            pos: self.label_left, self.height-self.label_size-4
+            size: 0.2*root.width, root.label_size+4
+        Color:
+            rgba: 0.53, 0.89, 1, 1
+            #rgba: 0, 0, 0, 1
+        Line:
+            width: 2
+            rectangle: self.label_left, self.height-self.label_size-4, 0.2*root.width, root.label_size+4
     Label:
         font_name: root.label_font
         text: root.label_text
         font_size: root.label_size
         halign: 'left'
         pos: (root.label_left, root.height-root.label_size-2)
-        size: (0.19*root.width, root.label_size)
+        size: (0.2*root.width, root.label_size)
         color: (0, 0, 0, 1)
 
-<OptionButtons>
-    canvas:
-        Color:
-            rgba: (1,1,1,0.25)
-        Rectangle:
-            source: 'a/button.png'
-            pos: self.pos
-            size: self.width, self.height
-
-<drubbleGame>: 
-    # Create the labels               
-    #Label:
-    #    font_size: root.height/20
-    #    pos: root.width*0.02, 0.9*root.height-20
-    #    text: 'Time = '
-    #    color: 0, 0, 0, 1
