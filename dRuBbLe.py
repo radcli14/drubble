@@ -251,14 +251,12 @@ class OptionButtons:
         self.butt.run_action(move_action)
         
     def rm(self, t=0.5):
-        move_action = Action.move_to(self.rm_pos[0], self.rm_pos[1], 0.7, TIMING_SINODIAL)
+        move_action = Action.move_to(self.rm_pos[0], self.rm_pos[1], t, TIMING_SINODIAL)
         self.img.run_action(move_action)
         move_action = Action.move_to(self.rm_pos[0] + self.sz[0]/2, self.rm_pos[1] + self.sz[1]/2, t, TIMING_SINODIAL)
         self.butt.run_action(move_action)
 
 if engine == 'ista':
-    # Initialize the splash screen
-    #splash = scene_drawing.load_image_file('a/splash.png')
     
     class Game (Scene):
         def setup(self):
@@ -276,6 +274,9 @@ if engine == 'ista':
             self.splash.anchor_point = (0.0, 0.0)
             self.splash.position = (0, 0)
             self.add_child(self.splash)
+            self.splash.alpha = 0
+            fade_action = Action.fade_to(1, 2)
+            self.splash.run_action(fade_action)
             
             # Generate the sky blue background and images
             self.background_color = skyBlue
@@ -358,8 +359,8 @@ if engine == 'ista':
             self.add_child(self.optionButt.img)
             self.actionButt.text('Begin')
             
-            self.singleButt = OptionButtons(text='Single Drubble', font=(p.MacsFavoriteFont,36), size=(0.8*width,0.2*height), position=(0.5*width,0.75*height))
-            self.doubleButt = OptionButtons(text='Double Drubble', font=(p.MacsFavoriteFont,36), size=(0.8*width,0.2*height), position=(0.5*width,0.5*height))
+            self.singleButt = OptionButtons(text='Single Drubble', font=(p.MacsFavoriteFont,36), size=(0.8*width,0.2*height),  position=(0.5*width, 0.75*height),  rm_pos=(-1.5*width, 0.75*height))
+            self.doubleButt = OptionButtons(text='Double Drubble', font=(p.MacsFavoriteFont,36), size=(0.8*width,0.2*height), position=(0.5*width, 0.5*height), rm_pos=(1.5*width, 0.5*height))
             
             self.add_child(self.singleButt.butt)
             self.add_child(self.singleButt.img)
