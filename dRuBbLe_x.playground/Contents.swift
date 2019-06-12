@@ -168,6 +168,98 @@ func norm(vec: [Double]) -> Double {
     return sqrt(vec2)
 }
 
+func thirdPoint(P0: [Double], P1: [Double], L: Double, SGN: Int) -> [Double] {
+    // TBR thirdPoint
+    return [0.0, 0.0]
+}
+
+func stickDude(u: [Double], k: Int) -> ([Double], [Double], [Double], [Double]) {
+    let k8 = k*8
+    // Get the state variables
+    // States from u
+    let x = u[4+k8]
+    let y = u[5+k8]
+    let l = u[6+k8]
+    let th = u[7+k8]
+    let v = u[8+k8]
+    
+    let s = sin(th)
+    let c = cos(th)
+    
+    // Right Foot [rf] Left Foot [lf] Positions
+    let rf = [x - 0.25 + (v / p.vx) * sin(1.5 * x + 3.0 * pi / 2.0),
+              0.2 * (v / p.vx) * (1 + sin(1.5 * x + 3.0 * pi / 2.0))]
+    let lf = [x + 0.25 + (v / p.vx) * cos(1.5 * x),
+              0.2 * (v / p.vx) * (1 + cos(1.5 * x))]
+    
+    // Waist Position
+    let w = [x, y-p.d]
+    
+    // Right Knee [rk] Left Knee [lk] Positions
+    let rk = thirdPoint(P0: w, P1: rf, L: p.y0-p.d, SGN: -1)
+    let lk = thirdPoint(P0: w, P1: lf, L: p.y0-p.d, SGN: 1)
+    
+    // Shoulder Position
+    let sh = [x, y+p.d]
+    let shl = [x - 0.18, y + p.d + 0.05]
+    let shr = [x + 0.18, y + p.d + 0.05]
+    
+    // Stool Position
+    var sx = [Double]()
+    var sy = [Double]()
+    for n in 0 ..< 13 {
+        sx.append(x + p.xs[n] * c - (l + p.ys[n]) * s)
+        sy.append(y + p.d + (l + p.ys[n]) * c + p.xs[n] * s)
+    }
+    
+    // Right Hand [rh] Left Hand [lh] Position
+    let rh = [sx[7], sy[7]]
+    let lh = [sx[6], sy[6]]
+    
+    // Right Elbow [re] Left Elbow [le] Position
+    let re = thirdPoint(P0: shl, P1: rh, L: 1, SGN: 1)
+    let le = thirdPoint(P0: shr, P1: lh, L: 1, SGN: -1)
+    
+    // Plotting vectors
+    let xv = [rf[0], rk[0], w[0], lk[0], lf[0], lk[0], w[0], sh[0], shl[0], re[0], rh[0], re[0], shl[0],    shr[0], le[0], lh[0]]
+    let yv = [rf[1], rk[1], w[1], lk[1], lf[1], lk[1], w[1], sh[1], shl[1], re[1], rh[1], re[1], shl[1], shr[1], le[1], lh[1]]
+    
+    return (xv, yv, sx, sy)
+}
+
+func ballHitStool(t: Double, u: [Double], k: Int) -> Double {
+    // Unpack the state variables
+    let xb = u[0]
+    let yb = u[1]
+    
+    // Get the stool locations using stickDude function
+    let (_, _, sx, sy) = stickDude(u: u, k: k)
+    
+    // Vectors from the left edge of the stool to the right, and to the ball
+    let r1 = [sx[1] - sx[0], sy[1] - sy[0]]
+    
+    // Calculate z that minimizes the distance
+    let z = ((xb - sx[0]) * r1[0] + (yb - sy[0]) * r1[1])/(pow(r1[0], 2) + pow(r1[1], 2))
+    
+    // Find the closest point of impact on the stool
+    var ri = [0.0, 0.0]
+    if z < 0 {
+        ri = [sx[0], sy[0]]
+    } else if z > 1 {
+        ri =  [sx[1], sy[1]]
+    } else {
+        ri = [sx[0] + z * r1[0], sy[0] + z * r1[1]]
+    }
+    
+    // Vector from the closest point of impact to the center of the ball
+    let r2 = [xb - ri[0], yb - ri[1]]
+    
+    // Calculate the distance to the outer radius of the ball t
+    let L = norm(vec: r2) - p.rb
+    
+    return L
+}
+
 class GameState {
     // Define Game Mode
     // 0 = Quit
@@ -351,14 +443,17 @@ class GameState {
         
         // Prevent event detection if there was already one within 0.1 seconds,
         // or if the ball is far from the stool or ground
-        // L = BallHitStool(self.t, self.u, pAct)  # Distance to stool
+        let L = ballHitStool(t: self.t, u: self.u, k: pAct)  // Distance to stool
         // TBR BallHitStool
         let vBall = [self.dxb, self.dyb] // Velocity
         let sBall = norm(vec: vBall)     // Speed
         
         // Set the timing
-        //let time_condition = (self.yb - self.yp[pAct] - self.lp[pAct] * cos(self.tp[pAct]) - p.d) / sBall if sBall > 0.0 else -1.0
-        // TBR time_condition
+        if sBall > 0.0 {
+            let time_condition = (self.yb - self.yp[pAct] - self.lp[pAct] * cos(self.tp[pAct]) - p.d) / sBall
+        } else {
+            let time_condition = -1.0
+        }
         let near_condition = abs(self.xb - self.xp[pAct]) < 1.0
     }
 }
