@@ -836,13 +836,18 @@ def norm(V):
 # Solves for the location of the knee or elbow based upon the two other 
 # end-points of the triangle 
 def ThirdPoint(P0, P1, L, SGN):
-
+    # Subtract then add the two points
     Psub = [P0[0]-P1[0], P0[1]-P1[1]]
     Padd = [P0[0]+P1[0], P0[1]+P1[1]]
+
+    # Calculate the midpoint between the two
     P2 = [Padd[0]/2.0, Padd[1]/2.0]
-    d = norm(Psub)  # Distance between point P0,P1
+
+    # Distance between point P0, P1
+    d = norm(Psub)
 
     if d > L:
+        # P0 and P1 are too far apart to form a knee, use the midpoint
         P3 = P2
     else:
         a = (d**2)/2.0/d  # Distance to mid-Point
