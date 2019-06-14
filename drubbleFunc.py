@@ -305,6 +305,9 @@ def BallPredict(gs):
 
 
 class GameState:
+    FloorBounce = False
+    StoolBounce = False
+
     # Initiate the state variables as a list, and as individual variables
     def __init__(self, u0, engine):
         # Define Game Mode
@@ -348,13 +351,13 @@ class GameState:
         # Angle and Speed Conditions
         self.startAngle = p.sa
         self.startSpeed = p.ss
-        self.phase      = 0
+        self.phase = 0
         
         # Stuck condition
         self.Stuck = False
          
     # Get control input from external source
-    def setControl(self, keyPush=(0, 0, 0, 0, 0, 0, 0, 0),
+    def setControl(self, keyPush=[0, 0, 0, 0, 0, 0, 0, 0],
                    moveStick=(0, 0), tiltStick=(0, 0),
                    g=(0, 0, 0), a=(0, 0, 0)):
         
@@ -410,8 +413,8 @@ class GameState:
         near_condition = abs(self.xb - self.xp[pAct]) < 1.0
         if 0.0 < time_condition < 0.5 and near_condition:
             # Slow speed
-            ddt = dt / 3.0
-            nStep = 3 * p.nEulerSteps
+            ddt = dt / 2.0
+            nStep = 4 * p.nEulerSteps
         else:
             # Regular speed
             ddt = dt
@@ -423,14 +426,14 @@ class GameState:
         U[0] = self.u
         for k in range(1, nStep+1):
             # Increment time
-            self.t += ddt/nStep
+            self.t += ddt / nStep
             
             # Calculate the derivatives of states w.r.t. time
             dudt = PlayerAndStool(self.t, U[k-1], p, gs, stats)
             
             # Calculate the states at the next step
             # U[k] = U[k-1] + np.array(dudt)*dt/p.nEulerSteps
-            U[k] = [U[k-1][i]+dudt[i]*ddt/nStep for i in range(20)]
+            U[k] = [U[k-1][i] + dudt[i] * ddt / nStep for i in range(20)]
 
             # Check for events
             if (self.t-self.te) > 0.1:
@@ -679,10 +682,10 @@ def control_logic(t, u, k, p, gs, stats):
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
-    ZEM = (gs.xI+10.0*(p.nPlayer-1-(stats.stoolCount % 2))-0.1) - xp[k] - dxp[k]*abs(gs.timeUntilBounce-1)
+    ZEM = (gs.xI+10.0*(p.nPlayer-1-(stats.stoolCount % 2))-0.1) - xp[k] - dxp[k]*abs(gs.timeUntilBounce-1.0)
     if p.userControlled[k][0]:
         if gs.ctrl[0] == 0:
-            Bx = 0 if dxp[k] == 0 else -erf(dxp[k])  # Friction
+            Bx = 0.0 if dxp[k] == 0.0 else -erf(dxp[k])  # Friction
         else:
             Bx = gs.ctrl[0]
     else:
@@ -719,7 +722,7 @@ def control_logic(t, u, k, p, gs, stats):
         Bth = p.Gt*(wantAngle-tp[k])
         if Bth > 1.0:
             Bth = 1.0
-        elif Bth < -1 or (gs.timeUntilBounce < 0.017) and (gs.timeUntilBounce > 0):
+        elif Bth < -1.0 or (0 < gs.timeUntilBounce < 0.017):
             Bth = -1.0
 
     return Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt

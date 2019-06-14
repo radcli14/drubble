@@ -452,6 +452,122 @@ class GameState {
         }
     }
     
+    func control_logic(k: Int) -> (Double, Double, Double, Double){
+        // Unpack states
+        let xp = self.xp
+        let yp = self.yp
+        let lp = self.lp
+        let tp = self.tp
+        let dxp = self.dxp
+        let dyp = self.dyp
+        let dlp = self.dlp
+        let dtp = self.dtp
+        
+        // Initialize outputs
+        var Bx = 0.0, By = 0.0, Bl = 0.0, Bth = 0.0
+        
+        // Control horizontal acceleration based on zero effort miss (ZEM)
+        // Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
+        // ball moving forward
+        let ZEM = (self.xI + 10.0 * (p.nPlayer - 1 - (stats.stoolCount % 2)) - 0.1) - xp[k] - dxp[k]*abs(self.timeUntilBounce-1.0)
+        if p.userControlled[k][0] {
+            if self.ctrl[0] == 0 {
+                if dxp[k] == 0 {
+                    Bx = 0.0
+                } else {
+                    Bx = -erf(dxp[k]) // Friction
+                }
+            } else {
+                Bx = self.ctrl[0]
+            }
+        } else {
+            Bx = p.Gx * ZEM
+            if Bx > 1.0 {
+                Bx = 1.0
+            } else if (Bx < -1) || (self.timeUntilBounce < 0 && self.timeUntilBounce > 0) {
+                Bx = -1.0
+            }
+        }
+        
+        // Control leg extension based on timing, turn on when impact in <0.2 sec
+        if p.userControlled[k][1] {
+            By = self.ctrl[1]
+        } else {
+            if (self.timeUntilBounce < 0.6) && (self.timeUntilBounce > 0.4) {
+                By = -1.0
+            } else if abs(self.timeUntilBounce) < 0.2 {
+                By = 1.0
+            } else {
+                By = 0.0
+            }
+        }
+        
+        // Control arm extension based on timing, turn on when impact in <0.2 sec
+        if p.userControlled[k][2] {
+            Bl = gs.ctrl[2]
+        } else {
+            Bl = abs(self.timeUntilBounce) < 0.2
+        }
+        
+        // Control stool angle by pointing at the ball
+        let xdiff = xb-xp[k]  // Ball distance - player distance
+        let ydiff = yb-yp[k] - p.d
+        let wantAngle = atan2(-xdiff, ydiff)
+        if p.userControlled[k][3] {
+            Bth = self.ctrl[3]
+        } else {
+            Bth = p.Gt*(wantAngle-tp[k])
+        }
+        if Bth > 1.0 {
+            Bth = 1.0
+        } else if Bth < -1 || (self.timeUntilBounce > 0.0 && self.timeUntilBounce < 0.17) {
+            Bth = -1.0
+        }
+        
+        return (Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt)
+    }
+    
+    func playerAndStool() -> [Double] {
+        // Unpack states
+        let yp = self.yp
+        let lp = self.lp
+        let tp = self.tp
+        let dxp = self.dxp
+        let dyp = self.dyp
+        let dlp = self.dlp
+        let dtp = self.dtp
+        
+        // Initialize output
+        var du = Array(repeating: 0.0, count: 20)
+        du[0...3] = [self.dxb, self.dyb, 0, -p.g]  // Ball velocities and accelerations
+        
+        // Loop over players
+        var s = 0.0, c = 0.0, Qx = 0.0, Qy = 0.0, Ql = 0.0, Qth = 0.0, ddq = [Double](), i1 = 0, i2 = 0
+        for k in 0 ..< p.nPlayer {
+            // Sines and cosines of the stool angle
+            s = sin(tp[k])
+            c = cos(tp[k])
+            
+            // Control inputs form the generalized forces
+            (Qx, Qy, Ql, Qth) = self.control_logic()
+
+            // Equations of motion, created in the Jupyter notebook eom.ipynb
+            ddq = Array(repeating: 0.0, count: 4)
+            ddq[0] = 1.0*(-p.Cl*dlp[k]*lp[k]*s - p.Ct*dtp[k]*c - p.Cx*dxp[k]*lp[k] + p.Kl*p.l0*lp[k]*s - p.Kl*pow(lp[k],2)*s - p.Kt*tp[k]*c + Ql*lp[k]*s + Qth*c + Qx*lp[k])/(p.mc*lp[k])
+            ddq[1] = (-1.0*(p.Ct*dtp[k] + 1.0*p.Kt*tp[k] - Qth + 2.0*dlp[k]*dtp[k]*p.mg*lp[k] - p.g*p.mg*lp[k]*s)*s + 1.0*(p.Cl*dlp[k] - p.Kl*p.l0 + p.Kl*lp[k] - Ql - pow(dtp[k],2)*p.mg*lp[k] + p.g*p.mg*c)*lp[k]*c - 1.0*(1.0*p.Cy*dyp[k] - 1.0*p.Ky*p.y0 + 1.0*p.Ky*yp[k] - 1.0*Qy - 2.0*dlp[k]*dtp[k]*p.mg*s - 1.0*pow(dtp[k],2)*p.mg*lp[k]*c + 1.0*p.g*p.mc + 1.0*p.g*p.mg)*lp[k])/(p.mc*lp[k])
+            ddq[2] = -1.0*p.Cl*dlp[k]/p.mg - 1.0*p.Cl*dlp[k]/p.mc - 1.0*p.Cx*dxp[k]*s/p.mc + 1.0*p.Cy*dyp[k]*c/p.mc + 1.0*p.Kl*p.l0/p.mg + 1.0*p.Kl*p.l0/p.mc - 1.0*p.Kl*lp[k]/p.mg - 1.0*p.Kl*lp[k]/p.mc - 1.0*p.Ky*p.y0*c/p.mc + 1.0*p.Ky*yp[k]*c/p.mc + 1.0*Ql/p.mg + 1.0*Ql/p.mc + 1.0*Qx*s/p.mc - 1.0*Qy*c/p.mc + 1.0*pow(dtp[k],2)*lp[k]
+            ddq[3] = (-1.0*p.Ct*dtp[k]*p.mc - 1.0*p.Ct*dtp[k]*p.mg - 1.0*p.Cx*dxp[k]*p.mg*lp[k]*c - 1.0*p.Cy*dyp[k]*p.mg*lp[k]*s - 1.0*p.Kt*p.mc*tp[k] - 1.0*p.Kt*p.mg*tp[k] + 1.0*p.Ky*p.mg*p.y0*lp[k]*s - 1.0*p.Ky*p.mg*lp[k]*yp[k]*s + 1.0*Qth*p.mc + 1.0*Qth*p.mg + 1.0*Qx*p.mg*lp[k]*c + 1.0*Qy*p.mg*lp[k]*s - 2.0*dlp[k]*dtp[k]*p.mc*p.mg*lp[k])/(p.mc*p.mg*pow(lp[k],2))
+
+            // Output State Derivatives
+            i1 = k * 8 + 4
+            i2 = k * 8 + 12
+            du[i1...i2] = [dxp[k], dyp[k], dlp[k], dtp[k], ddq[0], ddq[1], ddq[2], ddq[3]]
+            
+        }
+        
+        return du
+    }
+    
     // Execute a simulation step of duration dt
     func sim_step() {
         // Increment n
@@ -481,6 +597,23 @@ class GameState {
             // Slow speed
             ddt = dt / 3.0
             nStep = 3 * p.nEulerSteps
+        }
+        
+        // Integrate using Euler method
+        // Initialize state variables
+        var U = [[Double]()]
+        let rep = Array(repeating: 0.0, count: 20)
+        U.append(self.u)
+        for _ in 0 ..< nStep {
+            U.append(rep)
+        }
+        
+        for k in 0 ... nStep {
+            // Increment time
+            self.t += ddt / Double(nStep)
+            
+            // Calculate the derivatives of states w.r.t. time
+            // TBR dudt = PlayerAndStool(self.t, U[k-1], p, gs, stats)
         }
     }
 }
