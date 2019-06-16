@@ -282,6 +282,18 @@ class GameScore {
         self.floorCount += FloorBounce ? 1 : 0
         self.score = Int(self.stoolDist * self.maxHeight * Double(self.stoolCount))
     }
+    
+    func re_init() {
+        // Re-initiate statistics as zeros
+        self.t = 0.0
+        self.n = 0
+        self.stoolCount = 0
+        self.stoolDist = 0.0
+        self.maxHeight = 0.0
+        self.floorCount = 0
+        self.score = 0
+        self.averageStepTime = 0.0
+    }
 }
 
 var stats = GameScore()
@@ -330,7 +342,7 @@ class GameState {
     var StoolBounce = false
     var FloorBounce = false
     
-    // Init is called when the class is created, but also used to restart the game
+    // Init is called when the class is created
     init() {
         // Timing
         self.t = 0.0
@@ -369,6 +381,46 @@ class GameState {
         self.Stuck = false
     }
     
+    // re_init() is used to restart the game, its the same as init()
+    func re_init() {
+        // Timing
+        self.t = 0.0
+        self.n = 0
+        self.te = 0.0
+        
+        // State variables
+        self.xb = p.u0[0]
+        self.yb = p.u0[1]
+        self.dxb = p.u0[2]
+        self.dyb = p.u0[3]
+        self.xp = [p.u0[4], p.u0[12]]
+        self.yp = [p.u0[5], p.u0[13]]
+        self.lp = [p.u0[6], p.u0[14]]
+        self.tp = [p.u0[7], p.u0[15]]
+        self.dxp = [p.u0[8], p.u0[16]]
+        self.dyp = [p.u0[9], p.u0[17]]
+        self.dlp = [p.u0[10], p.u0[18]]
+        self.dtp = [p.u0[11], p.u0[19]]
+        self.xI = 0.0
+        self.yI = 0.0
+        self.tI = 0.0
+        self.xTraj = [0.0]
+        self.yTraj = [0.0]
+        self.timeUntilBounce = 0.0
+        
+        // Event states
+        self.ue = p.u0
+        
+        // Initial ball angle and speed conditions
+        self.startAngle = p.sa
+        self.startSpeed = p.ss
+        self.phase      = 0.0
+        
+        // Stuck condition
+        self.Stuck = false
+    }
+    
+    
     // Rename the state variables
     func var_states() {
         self.xb = self.u[0]
@@ -385,6 +437,30 @@ class GameState {
         self.dtp = [self.u[11], self.u[19]]
     }
     
+    func cycle_modes() {
+        if self.gameMode == 1 {
+            // Exit splash screen
+            self.gameMode += 1
+        } else if gs.gameMode == 2 {
+            // Exit options screen and reset game
+            stats.re_init()
+            self.re_init()
+            self.gameMode = 3
+        } else if (self.gameMode == 3 || self.gameMode == 4) {
+            // Progress through angle and speed selection
+            self.gameMode += 1
+            self.phase = 0
+        } else if self.gameMode == 5 {
+            // Start the ball moving!
+            self.gameMode = 6
+        } else if self.gameMode == 6 {
+            // Reset the game
+            stats.re_init()
+            self.re_init()
+            self.gameMode = 3
+        }
+    }
+    
     func setAngleSpeed() {
         if self.gameMode == 4 {
             self.startAngle = 0.25*pi*(1 + 0.75*sin(self.phase))
@@ -399,7 +475,7 @@ class GameState {
     }
     
     // Define a function to predict motion of the ball
-    func ball_predict() -> (Double, Double, Double, [Double], [Double], Double) {
+    func ball_predict() {
         if self.dyb == 0 || self.gameMode <= 2 {
             // Ball is not moving, impact time is zero
             self.tI = 0
@@ -443,13 +519,6 @@ class GameState {
         self.timeUntilBounce = tI
         self.tI = self.timeUntilBounce + self.t
         
-        // Output variables
-        // xI = Ball distance at impact [m]
-        // yI = Ball height at impact [m]
-        // tI = Time at impact [s]
-        // xTraj = Ball trajectory distances [m]
-        // yTraj = Ball trajectory heights [m]
-        return (self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce)
     }
     
     // Get control input from external source
@@ -489,20 +558,23 @@ class GameState {
         // Unpack states
         let xp = self.xp
         let yp = self.yp
-        let lp = self.lp
+        // let lp = self.lp
         let tp = self.tp
         let dxp = self.dxp
-        let dyp = self.dyp
-        let dlp = self.dlp
-        let dtp = self.dtp
+        // let dyp = self.dyp
+        // let dlp = self.dlp
+        // let dtp = self.dtp
         
         // Initialize outputs
         var Bx = 0.0, By = 0.0, Bl = 0.0, Bth = 0.0
         
         // Control horizontal acceleration based on zero effort miss (ZEM)
-        // Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
+        // Subtract 1 secoond to get there early, and subtract 0.1 m to keep the
         // ball moving forward
-        let ZEM = (self.xI + 10.0 * (p.nPlayer - 1 - (stats.stoolCount % 2)) - 0.1) - xp[k] - dxp[k] * abs(self.timeUntilBounce-1.0)
+        let pA = stats.stoolCount % 2
+        let tUB = abs(self.timeUntilBounce - 1.0)
+        let xD = (self.xI + 10.0 * (Double(p.nPlayer) - 1.0 - Double(pA)) - 0.1)
+        let ZEM = xD - xp[k] - dxp[k] * tUB
         if p.userControlled[k][0] {
             if self.ctrl[0] == 0 {
                 if dxp[k] == 0 {
@@ -722,7 +794,7 @@ class GameState {
         // Generate the new ball trajectory prediction line
         if self.StoolBounce || self.FloorBounce || self.gameMode < 7 {
             // Predict the future trajectory of the ball
-            self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = self.ball_predict()
+            self.ball_predict()
         }
         
         // Stop the ball from moving if the player hasn't hit space yet
