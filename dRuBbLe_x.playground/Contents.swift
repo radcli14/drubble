@@ -162,6 +162,10 @@ func ballHitStool(t: Double, u: [Double], k: Int) -> Double {
     return L
 }
 
+func ballHitFloor(t: Double, u: [Double]) -> Double {
+    return u[1] - p.rb
+}
+
 
 // Set up the parameter class, contains constants
 class Parameters {
@@ -365,6 +369,35 @@ class GameState {
         self.Stuck = false
     }
     
+    // Rename the state variables
+    func var_states() {
+        self.xb = self.u[0]
+        self.yb = self.u[1]
+        self.dxb = self.u[2]
+        self.dyb = self.u[3]
+        self.xp = [self.u[4], self.u[12]]
+        self.yp = [self.u[5], self.u[13]]
+        self.lp = [self.u[6], self.u[14]]
+        self.tp = [self.u[7], self.u[15]]
+        self.dxp = [self.u[8], self.u[16]]
+        self.dyp = [self.u[9], self.u[17]]
+        self.dlp = [self.u[10], self.u[18]]
+        self.dtp = [self.u[11], self.u[19]]
+    }
+    
+    func setAngleSpeed() {
+        if self.gameMode == 4 {
+            self.startAngle = 0.25*pi*(1 + 0.75*sin(self.phase))
+        } else if self.gameMode == 5 {
+            self.startSpeed = p.ss*(1 + 0.75*sin(self.phase))
+        }
+        if self.gameMode == 4 || self.gameMode == 5 {
+            self.phase += 3.0 * dt
+            self.u[2] = self.startSpeed * cos(self.startAngle)
+            self.u[3] = self.startSpeed * sin(self.startAngle)
+        }
+    }
+    
     // Define a function to predict motion of the ball
     func ball_predict() -> (Double, Double, Double, [Double], [Double], Double) {
         if self.dyb == 0 || self.gameMode <= 2 {
@@ -469,7 +502,7 @@ class GameState {
         // Control horizontal acceleration based on zero effort miss (ZEM)
         // Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
         // ball moving forward
-        let ZEM = (self.xI + 10.0 * (p.nPlayer - 1 - (stats.stoolCount % 2)) - 0.1) - xp[k] - dxp[k]*abs(self.timeUntilBounce-1.0)
+        let ZEM = (self.xI + 10.0 * (p.nPlayer - 1 - (stats.stoolCount % 2)) - 0.1) - xp[k] - dxp[k] * abs(self.timeUntilBounce-1.0)
         if p.userControlled[k][0] {
             if self.ctrl[0] == 0 {
                 if dxp[k] == 0 {
@@ -505,10 +538,12 @@ class GameState {
         // Control arm extension based on timing, turn on when impact in <0.2 sec
         if p.userControlled[k][2] {
             Bl = gs.ctrl[2]
+        } else if abs(self.timeUntilBounce) < 0.2 {
+            Bl = 1.0
         } else {
-            Bl = abs(self.timeUntilBounce) < 0.2
+            Bl = 0.0
         }
-        
+    
         // Control stool angle by pointing at the ball
         let xdiff = xb-xp[k]  // Ball distance - player distance
         let ydiff = yb-yp[k] - p.d
@@ -527,7 +562,7 @@ class GameState {
         return (Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt)
     }
     
-    func playerAndStool() -> [Double] {
+    func playerAndStool(u: [Double]) -> [Double] {
         // Unpack states
         let yp = self.yp
         let lp = self.lp
@@ -549,7 +584,7 @@ class GameState {
             c = cos(tp[k])
             
             // Control inputs form the generalized forces
-            (Qx, Qy, Ql, Qth) = self.control_logic()
+            (Qx, Qy, Ql, Qth) = self.control_logic(k: k)
 
             // Equations of motion, created in the Jupyter notebook eom.ipynb
             ddq = Array(repeating: 0.0, count: 4)
@@ -608,13 +643,98 @@ class GameState {
             U.append(rep)
         }
         
+        var dudt = [Double](), Ls = 0.0, Lf = 0.0, tBreak = 0.0
         for k in 0 ... nStep {
             // Increment time
             self.t += ddt / Double(nStep)
             
             // Calculate the derivatives of states w.r.t. time
-            // TBR dudt = PlayerAndStool(self.t, U[k-1], p, gs, stats)
+            dudt = self.playerAndStool(u: U[k])
+            
+            // Calculate the states at the next step
+            for i in 0 ..< 20 {
+                U[k+1][i] = U[k][i] + dudt[i] * Double(ddt) / Double(nStep)
+            }
+            
+            // Check for events
+            Ls = ballHitStool(t: self.t, u: U[k+1], k: pAct)
+            Lf = ballHitFloor(t: self.t, u: U[k+1])
+            if (self.t - self.te) > 0.1 {
+                if Ls < 0.0 {
+                    self.StoolBounce = true
+                }
+                if Lf < 0.0 {
+                    self.FloorBounce = true
+                }
+                if self.StoolBounce || self.FloorBounce {
+                    self.te = self.t
+                    self.ue = U[k+1]
+                    tBreak = Double(k) * ddt / Double(nStep)
+                    break
+                }
+            }
         }
+        
+        // If an event occured, increment the counter, otherwise continue
+        if self.StoolBounce || self.FloorBounce {
+            // Change ball states depending on if it was a stool or floor bounce
+            if self.StoolBounce {
+                // Obtain the bounce velocity
+                // TBR vBounce, vRecoil = BallBounce(self, stats.stoolCount % p.nPlayer)
+                let vBounce = [0.0, 0.0], vRecoil = [0.0, 0.0, 0.0, 0.0]
+                self.ue[2] = vBounce[0]
+                self.ue[3] = vBounce[1]
+        
+                // Add  the recoil to the player
+                self.ue[8+pAct*8] = self.ue[8+pAct*8] + vRecoil[0]
+                self.ue[9+pAct*8] = self.ue[9] + vRecoil[1]
+                self.ue[10+pAct*8] = self.ue[10] + vRecoil[2]
+                self.ue[11+pAct*8] = self.ue[11] + vRecoil[3]
+        
+            } else if self.FloorBounce {
+                // Reverse direction of the ball
+                self.ue[2] = +p.COR * self.ue[2]
+                self.ue[3] = -p.COR * self.ue[3]
+            }
+                
+            // Re-initialize from the event states
+            self.t += ddt - tBreak
+            dudt = self.playerAndStool(u: self.ue)
+            for i in 0 ..< 20 {
+                self.u = self.ue[i] + dudt[i] * (ddt - tBreak)
+            }
+        
+            // Stuck
+            if sqrt(pow(self.u[2], 2) + pow(self.u[3], 2)) < p.dybtol && self.u[1] < 1 {
+                self.Stuck = true
+            }
+        } else {
+            // Update states
+            self.u = U[nStep]
+        }
+            
+        if self.Stuck {
+            self.u[1] = p.rb
+            self.u[2] = 0.9999*self.u[2]
+            self.u[3] = 0
+        }
+        
+        // Generate the new ball trajectory prediction line
+        if self.StoolBounce || self.FloorBounce || self.gameMode < 7 {
+            // Predict the future trajectory of the ball
+            self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = self.ball_predict()
+        }
+        
+        // Stop the ball from moving if the player hasn't hit space yet
+        if self.gameMode < 6 {
+            self.t = 0
+            self.n = 0
+            self.u[0] = p.u0[0]
+            self.u[1] = p.u0[1]
+        }
+        
+        // Named states
+        self.var_states()
     }
 }
 
