@@ -33,7 +33,9 @@ stats = GameScore()
 try:
     # Initialize drums
     nloops = 2
-    loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.mp3') for k in range(nloops)]
+    loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.wav') for k in range(nloops)]
+    for k in range(nloops):
+        loop[k].volume = 0.5
 
     def sound_stopped(self):
         loop[1].play()
@@ -44,15 +46,19 @@ try:
         except:
             print('failed binding to sound_stopped')
     loop[0].play()
+
+    floor_sound = SoundLoader.load('a/GoGo_crank_hit_Floor.wav')
+    floor_sound.play()
 except:
-    print('failed loading mp3')
+    print('failed loading wav')
 
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
 if platform in ('linux', 'windows', 'macosx'):
-    Config.set('graphics', 'width', '1200')
+    """Config.set('graphics', 'width', '1200')
     Config.set('graphics', 'height', '675')
-    Config.write()
+    Config.set('graphics', 'window_state', 'minimized')
+    Config.write() """
     width = 1200
     height = 675
     Window.size = (width, height)
@@ -68,6 +74,7 @@ Window.icon = 'a/icon.png'
 # Initialize the players
 p1 = playerLines(0, gs, width, height)
 p2 = playerLines(1, gs, width, height)
+
 
 class MyBackground(Widget):
     # Size of the black bar on the bottom of the screen
@@ -96,10 +103,14 @@ class MyBackground(Widget):
     # Randomize the start location in the backgroun
     xpos = randint(0, 100*num_bg)
 
-    def __init__(self, **kwargs):
+    def __init__(self, w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
-        self.width = width * screen_scf
-        self.height = height * screen_scf
+        self.width = w
+        self.height = h
+
+    def resize(self, w=width*screen_scf, h=height*screen_scf):
+        self.width = w
+        self.height = h
 
     def update(self, x, y, w, h, m2p):
         # Since we're updating, you probably want it visible
@@ -142,7 +153,7 @@ class MyBackground(Widget):
         self.bg_left1 = edge - overlap * self.img_w
 
 
-def makeMarkers(self, p):
+def make_markers(self, p):
     # xrng_r is the first and last markers on the screen, xrng_n is the
     # number of markers
     xrng_r = [round(p.xrng[i], -1) for i in range(2)]
@@ -187,12 +198,16 @@ class SplashScreen(Widget):
     text_alpha = NumericProperty(0)
     lbl_height = 0.2 * height * screen_scf
 
-    def __init__(self, **kwargs):
+    def __init__(self, w=width, h=height, **kwargs):
         super(SplashScreen, self).__init__(**kwargs)
-        self.width = width * screen_scf
-        self.height = height * screen_scf
+        self.width = w
+        self.height = h
 
-    def update(self,showSplash):  
+    def resize(self, w=width, h=height):
+        self.width = w
+        self.height = h
+
+    def update(self, showSplash):
         if not gs.showedSplash:
             self.k += self.k_increment
             self.splash_fade -= self.k_increment/255.0
@@ -203,7 +218,7 @@ class SplashScreen(Widget):
     def clear(self):
         with self.canvas:
             Color(skyBlue[0]*self.k/255.0, skyBlue[1]*self.k/255.0, skyBlue[2]*self.k/255.0, 1)
-            Rectangle(pos=(0, 0), size=(width * screen_scf, height * screen_scf))
+            Rectangle(pos=(0, 0), size=(self.width, self.height))
 
 
 class MyFace(Widget):
@@ -328,23 +343,33 @@ class Stick(Widget):
     ctrl_x = NumericProperty(0.0)
     ctrl_y = NumericProperty(0.0)
 
-    def __init__(self, **kwargs):
+    def __init__(self, norm_size=(0.2, 0.2), norm_pos=(0.0, 0.0),
+                 w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(Stick, self).__init__(**kwargs)
         self.size = width * screen_scf, height * screen_scf
-        stick_size = kwargs['size']
-        stick_pos = kwargs['pos']
-        self.ch_x = stick_pos[0]
-        self.ch_y = stick_pos[1]
-        self.ch_s = stick_size[0]
+        self.norm_size = norm_size
+        self.norm_pos = norm_pos
+        self.ch_x = norm_pos[0] * w
+        self.ch_y = norm_pos[1] * h
+        self.ch_s = norm_size[0] * w
 
-        self.ts_x = [stick_pos[0], stick_pos[0] + stick_size[0]]
-        self.ts_y = [stick_pos[1], stick_pos[1] + stick_size[1]]
+        self.ts_x = [norm_pos[0] * w, norm_pos[0] * w + norm_size[0] * w]
+        self.ts_y = [norm_pos[1] * w, norm_pos[1] * w + norm_size[1] * w]
         self.ctrl = (0, 0)
 
     def update_el(self, x, y):
         self.ctrl_x = x
         self.ctrl_y = y
         self.ctrl = (x, y)
+
+    def resize(self, w=width*screen_scf, h=height*screen_scf):
+        self.ch_x = self.norm_pos[0] * w
+        self.ch_y = self.norm_pos[1] * h
+        self.ch_s = self.norm_size[0] * w
+
+        self.ts_x = [self.norm_pos[0] * w, self.norm_pos[0] * w + self.norm_size[0] * w]
+        self.ts_y = [self.norm_pos[1] * w, self.norm_pos[1] * w + self.norm_size[1] * w]
+
 
 
 # Create OptionButtons class
@@ -361,19 +386,24 @@ class OptionButtons(Widget):
     label_font_size = NumericProperty(0.0)
     label_color = ListProperty([0.0, 0.0, 0.0, 1.0])
 
-    def __init__(self, **kwargs):
+    def __init__(self, norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
+                 w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(OptionButtons, self).__init__()
         self.width = width
         self.height = height
         self.text = kwargs['text']
-        self.label_pos = kwargs['pos']
-        self.label_size = kwargs['size']
-        self.label_font_size = kwargs['font_size']
+        self.norm_pos = norm_pos
+        self.norm_size = norm_size
+        self.norm_font_size = norm_font_size
+        self.label_pos = (norm_pos[0] * w, norm_pos[1] * h)
+        self.label_size = (norm_size[0] * w, norm_size[1] * h)
+        self.label_font_size = norm_font_size * h
         self.label_color = [kwargs['color'][0], kwargs['color'][1], kwargs['color'][2], 1]
 
-    def resize(self, size, pos):
-        self.label_size = size
-        self.label_pos = pos
+    def resize(self, w=width*screen_scf, h=height*screen_scf):
+        self.label_size = (self.norm_size[0] * w, self.norm_size[1] * h)
+        self.label_pos = (self.norm_pos[0] * w, self.norm_pos[1] * h)
+        self.label_font_size = self.norm_font_size * h
 
     def detect_touch(self, loc):
         tCnd = [loc[0] > self.label_pos[0],
@@ -389,26 +419,25 @@ class ScoreLabel(Widget):
     label_font = StringProperty('a/VeraMono.ttf')
     label_size = NumericProperty(int(0.02 * width * screen_scf))
 
-    def __init__(self, **kwargs):
+    def __init__(self, norm_left=0.0, w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(ScoreLabel, self).__init__()
         self.label_text = kwargs['text']
-        self.label_left = kwargs['left']
+        self.norm_left = norm_left
+        self.label_left = norm_left * w
         self.width = width * screen_scf
         self.height = height * screen_scf
 
     def update(self, label_string):
         self.label_text = label_string
 
-    def resize(self, w, h):
-        self.label_left = self.label_left * w / self.width
+    def resize(self, w=width*screen_scf, h=height*screen_scf):
+        self.label_left = self.norm_left * w
         self.label_size = int(0.015*w)
         self.width = w
         self.height = h
 
 
 class DrubbleGame(Widget):
-    Window.release_all_keyboards()
-
     def __init__(self, **kwargs):
         super(DrubbleGame, self).__init__(**kwargs)
         self.bind(pos=self.update_canvas)
@@ -428,7 +457,7 @@ class DrubbleGame(Widget):
         self.weHaveButtons = False
         with self.canvas:
             # Splash screen, init right away
-            self.splash = SplashScreen()
+            self.splash = SplashScreen(w=width*screen_scf, h=height*screen_scf)
             self.add_widget(self.splash)
 
             # Initialize the background
@@ -452,38 +481,37 @@ class DrubbleGame(Widget):
             self.add_widget(self.LadyFace)
             self.add_widget(self.ball)
 
+            self.bg.resize(w=self.width, h=self.height)
+
             # Initialize the sticks
-            sz = 0.2 * self.width
-            self.moveStick = Stick(size=(sz, sz), pos=(0.8 * self.width, 0.05 * self.height))
-            self.tiltStick = Stick(size=(sz, sz), pos=(0.0, 0.05 * self.height))
+            self.moveStick = Stick(norm_size=(0.2, 0.2), norm_pos=(0.8, 0.05))
+            self.tiltStick = Stick(norm_size=(0.2, 0.2), norm_pos=(0.0, 0.05))
             self.add_widget(self.moveStick)
             self.add_widget(self.tiltStick)
 
             # Initialize the score line
-            self.time_label = ScoreLabel(text='Time', left=0.0*self.width)
-            self.dist_label = ScoreLabel(text='Distance', left=0.2*self.width)
-            self.high_label = ScoreLabel(text='Height', left=0.4*self.width)
-            self.boing_label = ScoreLabel(text='Boing!', left=0.6*self.width)
-            self.score_label = ScoreLabel(text='Score', left=0.8*self.width)
+            self.time_label = ScoreLabel(text='Time', norm_left=0.0)
+            self.dist_label = ScoreLabel(text='Distance', norm_left=0.2)
+            self.high_label = ScoreLabel(text='Height', norm_left=0.4)
+            self.boing_label = ScoreLabel(text='Boing!', norm_left=0.6)
+            self.score_label = ScoreLabel(text='Score', norm_left=0.8)
             self.add_widget(self.time_label)
             self.add_widget(self.dist_label)
             self.add_widget(self.high_label)
             self.add_widget(self.boing_label)
             self.add_widget(self.score_label)
 
-            self.optionButt = OptionButtons(text='Options',
-                                            size=(0.18 * self.width, 0.04 * self.width),
-                                            pos=(0.01 * self.width, 0.87 * self.height),
-                                            font_size=36 * screen_scf, color=red)
+            self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06),
+                                            norm_pos=(0.01, 0.87), norm_font_size=0.05, color=red)
             self.add_widget(self.optionButt)
 
-            self.actionButt = OptionButtons(text=p.actionMSG[3],
-                                            size=(0.18 * self.width, 0.04 * self.width),
-                                            pos=(0.81 * self.width, 0.87 * self.height),
-                                            font_size=36 * screen_scf, color=red)
+            self.actionButt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.06),
+                                            norm_pos=(0.81, 0.87),  norm_font_size=0.05, color=red)
             self.add_widget(self.actionButt)
 
             self.weHaveWidgets = True
+
+            self.resize_canvas()
 
     def remove_game_widgets(self):
         self.remove_widget(self.bg)
@@ -500,17 +528,14 @@ class DrubbleGame(Widget):
         self.remove_widget(self.score_label)
 
     def add_option_buttons(self):
-        w, h = (self.width, self.height)
         # Add option screen buttons
         with self.canvas:
-            self.singleDrubbleButt = OptionButtons(text='Single dRuBbLe',
-                                                   size=(0.7*w, 0.2*h),
-                                                   pos=(0.15*w, 0.7*h),
-                                                   font_size=0.15*h, color=red)
-            self.doubleDrubbleButt = OptionButtons(text='Double dRuBbLe',
-                                                   size=(0.7*w, 0.2*h),
-                                                   pos=(0.15*w, 0.4*h),
-                                                   font_size=0.15*h, color=red)
+            self.singleDrubbleButt = OptionButtons(text='Single dRuBbLe', norm_size=(0.7, 0.2),
+                                                   norm_pos=(0.15, 0.7),  norm_font_size=0.15,
+                                                   w=self.width, h=self.height, color=red)
+            self.doubleDrubbleButt = OptionButtons(text='Double dRuBbLe', norm_size=(0.7, 0.2),
+                                                   norm_pos=(0.15, 0.4),  norm_font_size=0.15,
+                                                   w=self.width, h=self.height, color=red)
 
     # Controls
     def _keyboard_closed(self):
@@ -615,28 +640,27 @@ class DrubbleGame(Widget):
             self.canvas.clear()
             with self.canvas:
                 # Draw Bottom Line
-                makeMarkers(self, p1)
+                make_markers(self, p1)
 
                 # Draw the ball
                 self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
 
     def resize_canvas(self, *args):
         if self.weHaveWidgets:
-            self.time_label.resize(self.width, self.height)
-            self.dist_label.resize(self.width, self.height)
-            self.high_label.resize(self.width, self.height)
-            self.boing_label.resize(self.width, self.height)
-            self.score_label.resize(self.width, self.height)
-            
-            sz = self.moveStick.ch.size[0]
-            self.moveStick.ch.pos = (self.width-sz, 0.05*self.height)
-            self.tiltStick.ch.pos = (0, 0.05*self.height)
+            self.time_label.resize(w=self.width, h=self.height)
+            self.dist_label.resize(w=self.width, h=self.height)
+            self.high_label.resize(w=self.width, h=self.height)
+            self.boing_label.resize(w=self.width, h=self.height)
+            self.score_label.resize(w=self.width, h=self.height)
 
-            self.bg.size = self.bg.width, self.bg.height = (self.width, self.height)
-            self.bg.bottomLineHeight = self.bg.height/20.0
+            self.moveStick.resize(w=self.width, h=self.height)
+            self.tiltStick.resize(w=self.width, h=self.height)
 
-            self.actionButt.pos = (0.8 * self.width, self.height-50)
-            self.optionButt.pos = (0.0 * self.width, self.height-50)
+            self.bg.resize(self.width, self.height)
+            self.bg.bottomLineHeight = self.height/20.0
+
+            self.actionButt.resize(w=self.width, h=self.height)
+            self.optionButt.resize(w=self.width, h=self.height)
 
     # Time step the game
     def update(self, dt):
@@ -648,6 +672,7 @@ class DrubbleGame(Widget):
 
         # Either update the splash, or add the widgets
         if gs.gameMode == 1:
+            self.splash.resize(w=self.width, h=self.height)
             self.splash.update(True)
         elif gs.gameMode == 2 and not self.weHaveButtons:
             self.add_option_buttons()
@@ -700,10 +725,8 @@ class DrubbleApp(App):
     def build(self):
         game = DrubbleGame()
         Clock.schedule_interval(game.update, 1.0/fs)
-        # Clock.schedule_interval(drums_callback, 1.0/7.0)
         return game
 
 
 if __name__ == '__main__':
-    Window.release_all_keyboards()
     DrubbleApp().run()
