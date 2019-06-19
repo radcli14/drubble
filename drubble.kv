@@ -89,10 +89,10 @@
 <Ball>:
     canvas:
         Color:
-            rgba: (1,1,1,0.5*self.ball_alpha)
+            rgba: (1.0, 1.0, 1.0, self.line_alpha)
         Line:
             points: self.trajectory
-            width: 2
+            width: self.line_width
         Color:
             rgba: (1,1,1,self.ball_alpha)
         Ellipse:

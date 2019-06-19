@@ -35,7 +35,7 @@ try:
     nloops = 2
     loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.wav') for k in range(nloops)]
     for k in range(nloops):
-        loop[k].volume = 0.5
+        loop[k].volume = 0.4
 
     def sound_stopped(self):
         loop[1].play()
@@ -47,8 +47,8 @@ try:
             print('failed binding to sound_stopped')
     loop[0].play()
 
-    floor_sound = SoundLoader.load('a/GoGo_crank_hit_Floor.wav')
-    floor_sound.play()
+    stool_sound = SoundLoader.load('a/GoGo_crank_hit_Stool.wav')
+    floor_sound = SoundLoader.load('a/GoGo_guitar_hit_slide_Floor.wav')
 except:
     print('failed loading wav')
 
@@ -287,6 +287,11 @@ class Ball(Widget):
     image_source = StringProperty(None)
     ball_alpha = NumericProperty(0.0)
     trajectory = ListProperty([])
+    line_width = screen_scf
+    if platform in ('linux', 'windows', 'macosx'):
+        line_alpha = NumericProperty(0.5)
+    else:
+        line_alpha = NumericProperty(1.0)
 
     def __init__(self, image_source='a/ball.png', **kwargs):
         super(Ball, self).__init__(**kwargs)
@@ -432,7 +437,7 @@ class ScoreLabel(Widget):
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
         self.label_left = self.norm_left * w
-        self.label_size = int(0.015*w)
+        self.label_size = int(0.02*w)
         self.width = w
         self.height = h
 
@@ -502,11 +507,11 @@ class DrubbleGame(Widget):
             self.add_widget(self.score_label)
 
             self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06),
-                                            norm_pos=(0.01, 0.87), norm_font_size=0.05, color=red)
+                                            norm_pos=(0.01, 0.88), norm_font_size=0.05, color=red)
             self.add_widget(self.optionButt)
 
             self.actionButt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.06),
-                                            norm_pos=(0.81, 0.87),  norm_font_size=0.05, color=red)
+                                            norm_pos=(0.81, 0.88),  norm_font_size=0.05, color=red)
             self.add_widget(self.actionButt)
 
             self.weHaveWidgets = True
@@ -717,6 +722,14 @@ class DrubbleGame(Widget):
                 self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], m2p, po,
                                      self.width, self.height, p2.player)
             self.update_canvas()
+
+            # Make the bounce sounds
+            if gs.StoolBounce:
+                stool_sound.volume = abs(gs.dyb) / 50.0
+                stool_sound.play()
+            elif gs.FloorBounce:
+                floor_sound.volume = abs(gs.dyb) / 15.0
+                floor_sound.play()
 
 
 class DrubbleApp(App):
