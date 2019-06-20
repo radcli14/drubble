@@ -54,7 +54,8 @@ except:
 
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
-if platform in ('linux', 'windows', 'macosx'):
+print(platform)
+if platform in ('linux', 'windows', 'win', 'macosx'):
     """Config.set('graphics', 'width', '1200')
     Config.set('graphics', 'height', '675')
     Config.set('graphics', 'window_state', 'minimized')
