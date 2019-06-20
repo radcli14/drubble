@@ -56,7 +56,7 @@ except:
 
 # Set the sky blue background color
 Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
-print(platform)
+print('dRuBbLe game launched from the ', platform, ' platform')
 if platform in ('linux', 'windows', 'win', 'macosx'):
     """Config.set('graphics', 'width', '1200')
     Config.set('graphics', 'height', '675')
@@ -444,7 +444,7 @@ class DrubbleGame(Widget):
         self.bind(pos=self.update_canvas)
         self.bind(size=self.update_canvas)
         self.bind(size=self.resize_canvas)
-        if platform in ('linux', 'windows', 'macosx'):
+        if platform in ('linux', 'windows', 'win', 'macosx'):
             self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
             self._keyboard.bind(on_key_down=self._on_keyboard_down)
             self._keyboard.bind(on_key_up=self._on_keyboard_up)
