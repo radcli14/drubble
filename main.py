@@ -32,20 +32,22 @@ stats = GameScore()
 
 try:
     # Initialize drums
-    nloops = 2
-    loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.wav') for k in range(nloops)]
-    for k in range(nloops):
+    num_loops = 2
+    current_loop = 0
+    loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.wav') for k in range(num_loops)]
+    for k in range(num_loops):
         loop[k].volume = 0.4
 
     def sound_stopped(self):
-        loop[1].play()
+        current_loop = randint(0, num_loops-1)
+        loop[current_loop].play()
 
-    for k in range(2):
+    for k in range(num_loops):
         try:
             loop[k].bind(on_stop=sound_stopped)
         except:
             print('failed binding to sound_stopped')
-    loop[0].play()
+    loop[current_loop].play()
 
     stool_sound = SoundLoader.load('a/GoGo_crank_hit_Stool.wav')
     floor_sound = SoundLoader.load('a/GoGo_guitar_hit_slide_Floor.wav')
@@ -382,41 +384,34 @@ class Stick(Widget):
 class OptionButtons(Widget):
     background_color = ListProperty([1, 1, 1, 0.75])
     background_normal = 'a/button.png'
-    background_down = 'a/button.png'
-    background_disabled_down = 'a/button.png'
-    background_disabled_normal = 'a/button.png'
     text = StringProperty('')
-    label_pos = ListProperty([0.0, 0.0])
     label_font = StringProperty('a/airstrea.ttf')
-    label_size = ListProperty([0.0, 0.0])
     label_font_size = NumericProperty(0.0)
     label_color = ListProperty([0.0, 0.0, 0.0, 1.0])
 
     def __init__(self, norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
                  w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(OptionButtons, self).__init__()
-        self.width = width
-        self.height = height
+        self.pos = (norm_pos[0] * w, norm_pos[1] * h)
+        self.size = (norm_size[0] * w, norm_size[1] * h)
         self.text = kwargs['text']
         self.norm_pos = norm_pos
         self.norm_size = norm_size
         self.norm_font_size = norm_font_size
-        self.label_pos = (norm_pos[0] * w, norm_pos[1] * h)
-        self.label_size = (norm_size[0] * w, norm_size[1] * h)
         self.label_font_size = norm_font_size * h
         self.label_color = [kwargs['color'][0], kwargs['color'][1], kwargs['color'][2], 1]
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
-        self.label_size = (self.norm_size[0] * w, self.norm_size[1] * h)
-        self.label_pos = (self.norm_pos[0] * w, self.norm_pos[1] * h)
+        self.size = (self.norm_size[0] * w, self.norm_size[1] * h)
+        self.pos = (self.norm_pos[0] * w, self.norm_pos[1] * h)
         self.label_font_size = self.norm_font_size * h
 
     def detect_touch(self, loc):
-        tCnd = [loc[0] > self.label_pos[0],
-                loc[0] < self.label_pos[0] + self.label_size[0],
-                loc[1] > self.label_pos[1],
-                loc[1] < self.label_pos[1] + self.label_size[1]]
-        return all(tCnd)
+        touch_conditions = [loc[0] > self.pos[0],
+                            loc[0] < self.pos[0] + self.size[0],
+                            loc[1] > self.pos[1],
+                            loc[1] < self.pos[1] + self.size[1]]
+        return all(touch_conditions)
 
 
 class ScoreLabel(Widget):
@@ -449,9 +444,10 @@ class DrubbleGame(Widget):
         self.bind(pos=self.update_canvas)
         self.bind(size=self.update_canvas)
         self.bind(size=self.resize_canvas)
-        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
-        self._keyboard.bind(on_key_down=self._on_keyboard_down)
-        self._keyboard.bind(on_key_up=self._on_keyboard_up)
+        if platform in ('linux', 'windows', 'macosx'):
+            self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+            self._keyboard.bind(on_key_down=self._on_keyboard_down)
+            self._keyboard.bind(on_key_up=self._on_keyboard_up)
         #Window.bind(on_joy_hat=self.on_joy_hat)
         #Window.bind(on_joy_ball=self.on_joy_ball)
         Window.bind(on_joy_axis=self.on_joy_axis)
@@ -587,6 +583,7 @@ class DrubbleGame(Widget):
             if self.actionButt.detect_touch(loc):
                 cycleModes(gs, stats, engine)
                 self.actionButt.text = p.actionMSG[gs.gameMode]
+                self.actionButt.background_color = (0, 0.5, 1, 0.5)
             if self.optionButt.detect_touch(loc):
                 gs.gameMode = 1
                 self.remove_game_widgets()
@@ -596,6 +593,7 @@ class DrubbleGame(Widget):
                     Rectangle(size=(self.width, self.height))
                 self.add_option_buttons()
                 cycleModes(gs, stats, engine)
+                self.optionButt.background_color = (0, 0.5, 1, 0.5)
 
             # Detect control inputs
             xy = touchStick(loc, self.moveStick)
@@ -632,6 +630,9 @@ class DrubbleGame(Widget):
             if touch.id == self.tiltStick.id_code:
                 self.tiltStick.update_el(0, 0)
                 gs.ctrl[2:4] = [0, 0]
+
+            self.actionButt.background_color = (1, 1, 1, 0.75)
+            self.optionButt.background_color = (1, 1, 1, 0.75)
 
     def on_joy_axis(self, win, stickid, axisid, value):
         print('me')
@@ -670,8 +671,8 @@ class DrubbleGame(Widget):
 
     # Time step the game
     def update(self, dt):
-        if platform == 'android':
-            Window.release_all_keyboards()
+        #if platform == 'android':
+        #    Window.release_all_keyboards()
 
         if self.weHaveWidgets:
             self.actionButt.text = p.actionMSG[gs.gameMode]
@@ -691,8 +692,15 @@ class DrubbleGame(Widget):
         # ANGLE AND SPEED SETTINGS
         if 2 < gs.gameMode < 6:
             gs.setAngleSpeed()
-        
-        gs.simStep(p, gs, stats)
+
+        # Call the simStep method
+        ddt = gs.simStep(p, gs, stats)
+
+        # Adjust pitch of the loop that is playing (TBR not working)
+        #print(ddt*fs)
+        #for k in range(num_loops):
+        #    loop[k].pitch = ddt * fs
+
         if gs.gameMode > 2:
             stats.update(gs)
 
@@ -726,10 +734,10 @@ class DrubbleGame(Widget):
 
             # Make the bounce sounds
             if gs.StoolBounce:
-                stool_sound.volume = abs(gs.dyb) / 50.0
+                stool_sound.volume = min(0.1, norm([gs.dxb, gs.dyb]) / 50.0)
                 stool_sound.play()
             elif gs.FloorBounce:
-                floor_sound.volume = abs(gs.dyb) / 15.0
+                floor_sound.volume = norm([gs.dxb, gs.dyb]) / 15.0
                 floor_sound.play()
 
 

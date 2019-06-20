@@ -498,6 +498,8 @@ class GameState:
         # Named states    
         self = varStates(self)
 
+        return ddt
+
     def setAngleSpeed(self):
         if self.gameMode == 4:
             self.startAngle = 0.25*pi*(1 + 0.75*sin(self.phase))
