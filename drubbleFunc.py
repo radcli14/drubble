@@ -135,7 +135,7 @@ class Parameters:
     stoolColor = (white, black)
 
     # This is the text used in the upper right button
-    actionMSG = ['', '', '', 'Begin', 'Set Angle', 'Set Speed', 'Restart']
+    actionMSG = ['', '', '', 'Begin', 'Set Angle', 'Set Speed', 'High Scores', 'Restart']
 
 p = Parameters()
 
@@ -396,7 +396,7 @@ class GameState:
         self.n += 1
 
         # Active player
-        pAct = stats.stoolCount % p.nPlayer
+        pAct = stats.stool_count % p.nPlayer
 
         # Initial assumption, there was no event
         self.StoolBounce = False
@@ -452,7 +452,7 @@ class GameState:
             # Change ball states depending on if it was a stool or floor bounce
             if self.StoolBounce:
                 # Obtain the bounce velocity
-                vBounce, vRecoil = BallBounce(self, stats.stoolCount % p.nPlayer)
+                vBounce, vRecoil = BallBounce(self, stats.stool_count % p.nPlayer)
                 self.ue[2] = vBounce[0]
                 self.ue[3] = vBounce[1]
                 
@@ -535,9 +535,14 @@ def cycleModes(gs, stats, engine):
     if gs.game_mode == 5:
         gs.game_mode = 6
         return
-        
-    # Reset the game
+
+    # Show the high scores
     if gs.game_mode == 6:
+        gs.game_mode = 7
+        return
+
+    # Reset the game
+    if gs.game_mode == 7:
         stats.__init__()
         gs.__init__(p.u0, engine)
         gs.game_mode = 3
@@ -546,37 +551,43 @@ def cycleModes(gs, stats, engine):
 
 class GameScore:
     # Import high scores, or set to zero
-    highStoolCount = 0
-    highStoolDist = 0
-    highHeight = 0
-    highScore = 0
+    high_stool_dist = 0.0
+    high_height = 0.0
+    high_stool_count = 0
+    high_score = 0
 
     # Initiate statistics as zeros
     def __init__(self):
         # Timing
         self.t = 0
         self.n = 0
-        self.averageStepTime = 0
+        # self.average_step_time = 0
 
         # Scores for the current game
-        self.stoolCount = 0
-        self.stoolDist = 0
-        self.maxHeight = 0
-        self.floorCount = 0
+        self.stool_count = 0
+        self.stool_dist = 0
+        self.max_height = 0
+        self.floor_count = 0
         self.score = 0
         
     # Update statistics for the current game state    
     def update(self, gs):
         self.t = gs.t
         self.n = gs.n
-        if gs.StoolBounce and self.stoolDist < gs.xb:
-            self.stoolDist = gs.xb
-        if self.maxHeight < gs.yb and self.stoolCount > 0:
-            self.maxHeight = gs.yb   
-        self.stoolCount += gs.StoolBounce
-        self.floorCount += gs.FloorBounce
-        self.score = int(self.stoolDist*self.maxHeight*self.stoolCount)
+        if gs.StoolBounce and self.stool_dist < gs.xb:
+            self.stool_dist = gs.xb
+        if self.max_height < gs.yb and self.stool_count > 0:
+            self.max_height = gs.yb
+        self.stool_count += gs.StoolBounce
+        self.floor_count += gs.FloorBounce
+        self.score = int(self.stool_dist * self.max_height * self.stool_count)
 
+    # Update high scores
+    def update_high(self):
+        self.high_stool_dist = max(self.high_stool_dist, self.stool_dist)
+        self.high_height = max(self.high_height, self.max_height)
+        self.high_stool_count = max(self.high_stool_count, self.stool_count)
+        self.high_score = max(self.high_score, self.score)
 
 # Equation of Motion
 def PlayerAndStool(t, u, p, gs, stats):
@@ -693,7 +704,7 @@ def control_logic(t, u, k, p, gs, stats):
     # Control horizontal acceleration based on zero effort miss (ZEM)
     # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
     # ball moving forward 
-    ZEM = (gs.xI+10.0*(p.nPlayer-1-(stats.stoolCount % 2))-0.1) - xp[k] - dxp[k]*abs(gs.timeUntilBounce-1.0)
+    ZEM = (gs.xI+10.0*(p.nPlayer-1-(stats.stool_count % 2))-0.1) - xp[k] - dxp[k]*abs(gs.timeUntilBounce-1.0)
     if p.userControlled[k][0]:
         if gs.ctrl[0] == 0:
             Bx = 0.0 if dxp[k] == 0.0 else -erf(dxp[k])  # Friction

@@ -20,6 +20,7 @@ from kivy.graphics import *
 from kivy.core.audio import SoundLoader
 from kivy.utils import platform
 from kivy.config import Config
+from kivy.animation import Animation
 
 # Import drubbleFunc to get the supporting functions and classes
 from drubbleFunc import *
@@ -439,7 +440,6 @@ class ScoreLabel(Widget):
 
 class HighScoreLabel(Widget):
     label_text = StringProperty('')
-    label_left = NumericProperty(0)
     label_font = StringProperty('a/airstrea.ttf')
     this_run = StringProperty('')
     best_run = StringProperty('')
@@ -452,18 +452,48 @@ class HighScoreLabel(Widget):
         self.outside_position = outside_position
         self.vertical_position= vertical_position
         self.label_text = label_text
-        self.label_left = 0.1 * w
+        self.label_left = 0.2 * w
         self.this_run = this_run
         self.best_run = best_run
         self.width = 0.8 * w
-        self.pos = (self.label_left, (0.8 - 0.1 * self.vertical_position) * h)
+        self.pos = [self.label_left, (0.8 - 0.1 * self.vertical_position) * h]
         self.height = 0.1 * h
         self.font_size = 0.09 * h
 
+        # Start with the widget off-screen
+        if self.outside_position == 'left':
+            self.pos[0] = -self.width
+        elif self.outside_position == 'right':
+            self.pos[0]  = w
+        if outside_position == 'bottom':
+            self.pos[1]  = -self.size[1]
+        elif outside_position == 'top':
+            self.pos[1]  = h
+
+    def anim_in(self, h=height*screen_scf, duration=1):
+        in_x = self.label_left
+        in_y = (0.8 - 0.1 * self.vertical_position) * h
+        anim = Animation(x=in_x, y=in_y, duration=duration, t='out_elastic')
+        anim.start(self)
+
+    def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=1):
+        out_x = self.pos[0]
+        out_y = self.pos[1]
+        if self.outside_position == 'left':
+            out_x = -self.width
+        elif self.outside_position == 'right':
+            out_x = w
+        if self.outside_position == 'bottom':
+            out_y = -self.size[1]
+        elif self.outside_position == 'top':
+            out_y = h
+        anim = Animation(x=out_x, y=out_y, duration=duration, t='in_elastic')
+        anim.start(self)
+
     def resize(self, w=width*screen_scf, h=height*screen_scf):
-        self.label_left = 0.1 * w
+        self.label_left = 0.2 * w
         self.width = 0.8 * w
-        self.pos = (self.label_left, (0.8 - 0.1 * self.vertical_position) * h)
+        self.pos = [self.label_left, (0.8 - 0.1 * self.vertical_position) * h]
         self.height = 0.1 * h
         self.font_size = 0.09 * h
 
@@ -504,6 +534,27 @@ class DrubbleGame(Widget):
             self.LadyFace = MyFace(image_source='a/LadyFace.png', jersey_source='a/LadyJersey.png',
                                    shorts_source='a/LadyShorts.png', line_color=pink, stool_color=gray)
 
+            # Initialize the high score labels
+            self.high_score_header = HighScoreLabel()
+            self.add_widget(self.high_score_header)
+            self.high_dist_label = HighScoreLabel(outside_position='left', vertical_position=1,
+                                                  label_text='Distance', this_run='%0.1f' % stats.stool_dist,
+                                                  best_run='%0.1f' % stats.high_stool_dist)
+            self.add_widget(self.high_dist_label)
+            self.high_height_label = HighScoreLabel(outside_position='right', vertical_position=2,
+                                                    label_text='Height', this_run='%0.2f' % stats.max_height,
+                                                    best_run='%0.2f' % stats.high_height)
+            self.add_widget(self.high_height_label)
+            self.high_boing_label = HighScoreLabel(outside_position='left', vertical_position=3,
+                                                   label_text='Boing!', this_run='%0.0f' % stats.stool_count,
+                                                   best_run='%0.0f' % stats.high_stool_count)
+            self.add_widget(self.high_boing_label)
+            self.high_score_label = HighScoreLabel(outside_position='right', vertical_position=4,
+                                                   label_text='Score', this_run='%0.0f' % stats.score,
+                                                   best_run='%0.0f' % stats.high_score)
+            self.add_widget(self.high_score_label)
+
+
     def add_game_widgets(self): 
         # Add game widgets
         with self.canvas:
@@ -532,26 +583,6 @@ class DrubbleGame(Widget):
             self.add_widget(self.high_label)
             self.add_widget(self.boing_label)
             self.add_widget(self.score_label)
-
-            # Initialize the high score labels
-            self.high_score_header = HighScoreLabel()
-            self.add_widget(self.high_score_header)
-            self.high_dist_label = HighScoreLabel(outside_position='left', vertical_position=1,
-                                                  label_text='Distance', this_run='%0.1f' % stats.stoolDist,
-                                                  best_run='%0.1f' % stats.highStoolDist)
-            self.add_widget(self.high_dist_label)
-            self.high_height_label = HighScoreLabel(outside_position='right', vertical_position=2,
-                                                    label_text='Height', this_run='%0.2f' % stats.maxHeight,
-                                                    best_run='%0.2f' % stats.highHeight)
-            self.add_widget(self.high_height_label)
-            self.high_boing_label = HighScoreLabel(outside_position='left', vertical_position=3,
-                                                   label_text='Boing!', this_run='%0.0f' % stats.stoolCount,
-                                                   best_run='%0.0f' % stats.highStoolCount)
-            self.add_widget(self.high_boing_label)
-            self.high_score_label = HighScoreLabel(outside_position='right', vertical_position=4,
-                                                   label_text='Score', this_run='%0.0f' % stats.score,
-                                                   best_run='%0.0f' % stats.highScore)
-            self.add_widget(self.high_score_label)
 
             # Initialize the option and action buttons
             self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06),
@@ -590,6 +621,37 @@ class DrubbleGame(Widget):
                                                    norm_pos=(0.15, 0.4),  norm_font_size=0.15,
                                                    w=self.width, h=self.height, color=red)
 
+    def add_high_scores(self):
+        # Update the strings for the current scores
+        self.high_dist_label.this_run = '%0.1f' % stats.stool_dist
+        self.high_height_label.this_run = '%0.2f' % stats.max_height
+        self.high_boing_label.this_run = '%0.0f' % stats.stool_count
+        self.high_score_label.this_run = '%0.0f' % stats.score
+
+        # Update the strings for the high scores
+        self.high_dist_label.best_run = '%0.1f' % stats.high_stool_dist
+        self.high_height_label.best_run = '%0.2f' % stats.high_height
+        self.high_boing_label.best_run = '%0.0f' % stats.high_stool_count
+        self.high_score_label.best_run = '%0.0f' % stats.high_score
+
+        # Bring the high scores onto the screen
+        self.high_score_header.anim_in(h=self.height, duration=1)
+        self.high_dist_label.anim_in(h=self.height, duration=1)
+        self.high_height_label.anim_in(h=self.height, duration=1)
+        self.high_boing_label.anim_in(h=self.height, duration=1)
+        self.high_score_label.anim_in(h=self.height, duration=1)
+
+        # Update the high scores
+        stats.update_high()
+
+    def remove_high_scores(self, duration=1):
+        # Take the high scores off the screen
+        self.high_score_header.anim_out(w=self.width, h=self.height, duration=duration)
+        self.high_dist_label.anim_out(w=self.width, h=self.height, duration=duration)
+        self.high_height_label.anim_out(w=self.width, h=self.height, duration=duration)
+        self.high_boing_label.anim_out(w=self.width, h=self.height, duration=duration)
+        self.high_score_label.anim_out(w=self.width, h=self.height, duration=duration)
+
     # Controls
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
@@ -603,6 +665,10 @@ class DrubbleGame(Widget):
         elif keycode[1] == 'spacebar':
             cycleModes(gs, stats, engine)
             self.actionButt.text = p.actionMSG[gs.game_mode]
+            if gs.game_mode == 7:
+                self.add_high_scores()
+            else:
+                self.remove_high_scores()
         elif keycode[1] == 'escape':
             gs.game_mode = 1
             self.remove_game_widgets()
@@ -612,6 +678,7 @@ class DrubbleGame(Widget):
                 Rectangle(size=(self.width, self.height))
             self.add_option_buttons()
             cycleModes(gs, stats, engine)
+            self.remove_high_scores(duration=0)
         return True
     
     def _on_keyboard_up(self, keyboard, keycode):
@@ -722,9 +789,6 @@ class DrubbleGame(Widget):
 
     # Time step the game
     def update(self, dt):
-        #if platform == 'android':
-        #    Window.release_all_keyboards()
-
         if self.weHaveWidgets:
             self.actionButt.text = p.actionMSG[gs.game_mode]
 
@@ -757,9 +821,9 @@ class DrubbleGame(Widget):
 
             # Update score line
             self.time_label.update('Time %9.1f' % gs.t)
-            self.dist_label.update('Distance %6.1f' % stats.stoolDist)
-            self.high_label.update('Height %7.2f' % stats.maxHeight)
-            self.boing_label.update('Boing! %7.0f' % stats.stoolCount)
+            self.dist_label.update('Distance %6.1f' % stats.stool_dist)
+            self.high_label.update('Height %7.2f' % stats.max_height)
+            self.boing_label.update('Boing! %7.0f' % stats.stool_count)
             self.score_label.update('Score %8.0f' % stats.score)
 
         # Player drawing settings        
