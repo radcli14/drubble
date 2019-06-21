@@ -310,7 +310,7 @@ class GameState {
     // 6 = In game
     // 7 = Game over, resume option
     // 8 = Game over, high scores
-    var gameMode = 1
+    var game_mode = 1
     var showedSplash = false
     
     // Initialize the ctrl (control) array
@@ -438,36 +438,36 @@ class GameState {
     }
     
     func cycle_modes() {
-        if self.gameMode == 1 {
+        if self.game_mode == 1 {
             // Exit splash screen
-            self.gameMode += 1
-        } else if gs.gameMode == 2 {
+            self.game_mode += 1
+        } else if gs.game_mode == 2 {
             // Exit options screen and reset game
             stats.re_init()
             self.re_init()
-            self.gameMode = 3
-        } else if (self.gameMode == 3 || self.gameMode == 4) {
+            self.game_mode = 3
+        } else if (self.game_mode == 3 || self.game_mode == 4) {
             // Progress through angle and speed selection
-            self.gameMode += 1
+            self.game_mode += 1
             self.phase = 0
-        } else if self.gameMode == 5 {
+        } else if self.game_mode == 5 {
             // Start the ball moving!
-            self.gameMode = 6
-        } else if self.gameMode == 6 {
+            self.game_mode = 6
+        } else if self.game_mode == 6 {
             // Reset the game
             stats.re_init()
             self.re_init()
-            self.gameMode = 3
+            self.game_mode = 3
         }
     }
     
     func setAngleSpeed() {
-        if self.gameMode == 4 {
+        if self.game_mode == 4 {
             self.startAngle = 0.25*pi*(1 + 0.75*sin(self.phase))
-        } else if self.gameMode == 5 {
+        } else if self.game_mode == 5 {
             self.startSpeed = p.ss*(1 + 0.75*sin(self.phase))
         }
-        if self.gameMode == 4 || self.gameMode == 5 {
+        if self.game_mode == 4 || self.game_mode == 5 {
             self.phase += 3.0 * dt
             self.u[2] = self.startSpeed * cos(self.startAngle)
             self.u[3] = self.startSpeed * sin(self.startAngle)
@@ -476,10 +476,10 @@ class GameState {
     
     // Define a function to predict motion of the ball
     func ball_predict() {
-        if self.dyb == 0 || self.gameMode <= 2 {
+        if self.dyb == 0 || self.game_mode <= 2 {
             // Ball is not moving, impact time is zero
             self.tI = 0
-        } else if self.gameMode > 2 && (self.dyb > 0) && (self.yb < self.yp[0] + p.d + self.lp[0]) {
+        } else if self.game_mode > 2 && (self.dyb > 0) && (self.yb < self.yp[0] + p.d + self.lp[0]) {
             // Ball is in play, moving upward and below the stool
             // Solve for time and height at apogee
             let ta = self.dyb / p.g
@@ -487,7 +487,7 @@ class GameState {
         
             // Solve for time the ball would hit the ground
             self.tI = ta + sqrt(2.0 * ya / p.g)
-        } else if self.gameMode > 2 || (self.yb > self.yp[0] + p.d + self.lp[0]) {
+        } else if self.game_mode > 2 || (self.yb > self.yp[0] + p.d + self.lp[0]) {
             // Ball is in play, above the stool
             // Solve for time that the ball would hit the stool
             self.tI = -(-self.dyb - sqrt(pow(self.dyb, 2) + 2.0 * p.g * (self.yb - self.yp[0] - p.d - self.lp[0]))) / p.g
@@ -792,13 +792,13 @@ class GameState {
         }
         
         // Generate the new ball trajectory prediction line
-        if self.StoolBounce || self.FloorBounce || self.gameMode < 7 {
+        if self.StoolBounce || self.FloorBounce || self.game_mode < 7 {
             // Predict the future trajectory of the ball
             self.ball_predict()
         }
         
         // Stop the ball from moving if the player hasn't hit space yet
-        if self.gameMode < 6 {
+        if self.game_mode < 6 {
             self.t = 0
             self.n = 0
             self.u[0] = p.u0[0]

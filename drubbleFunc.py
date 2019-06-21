@@ -180,7 +180,7 @@ class DrumBeat:
         whichSequence = np.floor(self.n/self.nps)
         whereInSequence = self.n-whichSequence*self.nps
         beat = whereInSequence/self.npb
-        numDrums = max(1,gs.gameMode-2)
+        numDrums = max(1,gs.game_mode-2)
         if not np.mod(beat,1):
             b = int(beat)
             for k in range(numDrums):
@@ -255,10 +255,10 @@ def zeros(ztup):
 
 # Predict motion of the ball
 def BallPredict(gs):
-    if gs.dyb == 0 or gs.gameMode <= 2:
+    if gs.dyb == 0 or gs.game_mode <= 2:
         # Ball is not moving, impact time is zero
         tI = 0
-    elif gs.gameMode > 2 and (gs.dyb > 0) and (gs.yb < gs.yp[0] + p.d + gs.lp[0]):
+    elif gs.game_mode > 2 and (gs.dyb > 0) and (gs.yb < gs.yp[0] + p.d + gs.lp[0]):
         # Ball is in play, moving upward and below the stool
         # Solve for time and height at apogee
         ta = gs.dyb / p.g
@@ -266,7 +266,7 @@ def BallPredict(gs):
 
         # Solve for time the ball would hit the ground
         tI = ta + sqrt(2.0 * ya / p.g)
-    elif gs.gameMode > 2 and (gs.yb > gs.yp[0] + p.d + gs.lp[0]):
+    elif gs.game_mode > 2 and (gs.yb > gs.yp[0] + p.d + gs.lp[0]):
         # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
         tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - gs.yp[0] - p.d - gs.lp[0]))) / p.g
@@ -320,7 +320,7 @@ class GameState:
         # 6 = In game
         # 7 = Game over, resume option
         # 8 = Game over, high scores
-        self.gameMode = 1
+        self.game_mode = 1
         self.showedSplash = False
         
         # Determine the control method, and initialize ctrl variable
@@ -485,12 +485,12 @@ class GameState:
             self.u[3] = 0
         
         # Generate the new ball trajectory prediction line
-        if self.StoolBounce or self.FloorBounce or self.gameMode<7:    
+        if self.StoolBounce or self.FloorBounce or self.game_mode<7:    
             # Predict the future trajectory of the ball
             self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = BallPredict(self)
 
         # Stop the ball from moving if the player hasn't hit space yet
-        if self.gameMode<6:
+        if self.game_mode<6:
             self.t = 0
             self.n = 0
             self.u[0] = p.u0[0]
@@ -501,11 +501,11 @@ class GameState:
         return ddt
 
     def setAngleSpeed(self):
-        if self.gameMode == 4:
+        if self.game_mode == 4:
             self.startAngle = 0.25*pi*(1 + 0.75*sin(self.phase))
-        if self.gameMode == 5:
+        if self.game_mode == 5:
             self.startSpeed = p.ss*(1 + 0.75*sin(self.phase))
-        if self.gameMode == 4 or self.gameMode == 5:
+        if self.game_mode == 4 or self.game_mode == 5:
             self.phase += 3*dt
             self.u[2] = self.startSpeed*cos(self.startAngle)
             self.u[3] = self.startSpeed*sin(self.startAngle)
@@ -513,48 +513,57 @@ class GameState:
 
 def cycleModes(gs, stats, engine):
     # Exit splash screen
-    if gs.gameMode == 1:
-        gs.gameMode += 1
+    if gs.game_mode == 1:
+        gs.game_mode += 1
         return
     
     # Exit options screen 
-    if gs.gameMode == 2:
+    if gs.game_mode == 2:
         # Reset game
         stats.__init__()
         gs.__init__(p.u0, engine)
-        gs.gameMode = 3
+        gs.game_mode = 3
         return
         
     # Progress through angle and speed selection
-    if (gs.gameMode==3 or gs.gameMode==4): 
-        gs.gameMode += 1
+    if (gs.game_mode==3 or gs.game_mode==4): 
+        gs.game_mode += 1
         gs.phase = 0
         return
         
     # Start the ball moving!
-    if gs.gameMode == 5:
-        gs.gameMode = 6
+    if gs.game_mode == 5:
+        gs.game_mode = 6
         return
         
     # Reset the game
-    if gs.gameMode == 6:
+    if gs.game_mode == 6:
         stats.__init__()
         gs.__init__(p.u0, engine)
-        gs.gameMode = 3
+        gs.game_mode = 3
         return
 
 
 class GameScore:
+    # Import high scores, or set to zero
+    highStoolCount = 0
+    highStoolDist = 0
+    highHeight = 0
+    highScore = 0
+
     # Initiate statistics as zeros
     def __init__(self):
+        # Timing
         self.t = 0
         self.n = 0
+        self.averageStepTime = 0
+
+        # Scores for the current game
         self.stoolCount = 0
         self.stoolDist = 0
         self.maxHeight = 0
         self.floorCount = 0
         self.score = 0
-        self.averageStepTime = 0
         
     # Update statistics for the current game state    
     def update(self, gs):

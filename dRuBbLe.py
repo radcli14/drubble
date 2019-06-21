@@ -377,23 +377,23 @@ if engine == 'ista':
             # Update if there was a touch
             if self.touchCycle:
                 cycleModes(gs, stats, engine)
-                if gs.gameMode == 2:
+                if gs.game_mode == 2:
                     self.singleButt.add()
                     self.doubleButt.add()
                     
-                if gs.gameMode == 3:
+                if gs.game_mode == 3:
                     self.singleButt.rm()
                     self.doubleButt.rm()
                     toggleVisibleSprites(self,True)
                     
                     
-                if gs.gameMode == 4:
+                if gs.game_mode == 4:
                     self.actionButt.text('Set Angle')
                     
-                if gs.gameMode == 5:
+                if gs.game_mode == 5:
                     self.actionButt.text('Set Speed')
                     
-                if gs.gameMode == 6:
+                if gs.game_mode == 6:
                     self.actionButt.text('Restart')
                     
                 self.touchCycle = False
@@ -401,7 +401,7 @@ if engine == 'ista':
             # Get control inputs
             if gs.ctrlMode == 'motion':
                 gs.setControl(g=motion.get_gravity(), a=motion.get_user_acceleration())    
-            elif gs.ctrlMode == 'vStick' and gs.gameMode>1:
+            elif gs.ctrlMode == 'vStick' and gs.game_mode>1:
                 gs.setControl(moveStick=self.moveStick.ctrl,
                               tiltStick=self.tiltStick.ctrl)
                 
@@ -415,12 +415,12 @@ if engine == 'ista':
                 self.tiltAura.position = (c[0]+xy[0]*s,c[1]+xy[1]*s)
                 
             ## ANGLE AND SPEED SETTINGS
-            if gs.gameMode>2 and gs.gameMode<6:
+            if gs.game_mode>2 and gs.game_mode<6:
                 gs.setAngleSpeed()
             
             # Run one simulation step
             gs.simStep(p, gs, stats)
-            if gs.gameMode == 6:
+            if gs.game_mode == 6:
                 stats.update(gs)
             xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u, width)
             if gs.StoolBounce:
@@ -474,7 +474,7 @@ if engine == 'ista':
             
         def draw(self):
             # Show the splash screen
-            if gs.gameMode == 1:
+            if gs.game_mode == 1:
                 #makeSplashScreen(self)
                 if not gs.showedSplash:
                     self.kSplash += 2
@@ -482,12 +482,12 @@ if engine == 'ista':
                 xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u, width)
             
                 # Generate the background
-                if gs.gameMode>2:
+                if gs.game_mode>2:
                     # Update the background
                     xMean = (gs.xb+gs.xp[0])/2.0
                     self.bg.update(xMean,gs.yb,width,height,m2p)
             
-                if gs.gameMode>2:
+                if gs.game_mode>2:
                     # Generate the bottom line
                     stroke(black)
                     stroke_weight(height/20)
@@ -509,12 +509,12 @@ if engine == 'ista':
                         
         def touch_began(self, touch):
             # Reset if necessary
-            if gs.gameMode == 1 and self.kSplash >= 255: 
+            if gs.game_mode == 1 and self.kSplash >= 255:
                 self.touchCycle = True
                 move_action = Action.move_to(0, -height, 0.5, TIMING_SINODIAL)
                 self.splash.run_action(move_action)
             
-            if gs.gameMode == 2:
+            if gs.game_mode == 2:
                 b1 = self.singleButt.detect_touch(touch.location)
                 b2 = self.doubleButt.detect_touch(touch.location)
                 if b1 or b2:
@@ -523,11 +523,11 @@ if engine == 'ista':
                     self.singleButt.rm()
                     self.doubleButt.rm()
             
-            if gs.gameMode > 2 and self.actionButt.detect_touch(touch.location):
+            if gs.game_mode > 2 and self.actionButt.detect_touch(touch.location):
                 self.touchCycle = True
             
-            if gs.gameMode > 2 and self.optionButt.detect_touch(touch.location):
-                gs.gameMode = 1
+            if gs.game_mode > 2 and self.optionButt.detect_touch(touch.location):
+                gs.game_mode = 1
                 toggleVisibleSprites(self,False)
                 self.touchCycle = True
                 

@@ -379,7 +379,6 @@ class Stick(Widget):
         self.ts_y = [self.norm_pos[1] * w, self.norm_pos[1] * w + self.norm_size[1] * w]
 
 
-
 # Create OptionButtons class
 class OptionButtons(Widget):
     background_color = ListProperty([1, 1, 1, 0.75])
@@ -436,6 +435,37 @@ class ScoreLabel(Widget):
         self.label_size = int(0.02*w)
         self.width = w
         self.height = h
+
+
+class HighScoreLabel(Widget):
+    label_text = StringProperty('')
+    label_left = NumericProperty(0)
+    label_font = StringProperty('a/airstrea.ttf')
+    this_run = StringProperty('')
+    best_run = StringProperty('')
+    font_size = NumericProperty(0)
+
+    def __init__(self, outside_position='top', vertical_position=0,
+                 label_text='', this_run='This Run', best_run='Best',
+                 w=width*screen_scf, h=height*screen_scf, **kwargs):
+        super(HighScoreLabel, self).__init__()
+        self.outside_position = outside_position
+        self.vertical_position= vertical_position
+        self.label_text = label_text
+        self.label_left = 0.1 * w
+        self.this_run = this_run
+        self.best_run = best_run
+        self.width = 0.8 * w
+        self.pos = (self.label_left, (0.8 - 0.1 * self.vertical_position) * h)
+        self.height = 0.1 * h
+        self.font_size = 0.09 * h
+
+    def resize(self, w=width*screen_scf, h=height*screen_scf):
+        self.label_left = 0.1 * w
+        self.width = 0.8 * w
+        self.pos = (self.label_left, (0.8 - 0.1 * self.vertical_position) * h)
+        self.height = 0.1 * h
+        self.font_size = 0.09 * h
 
 
 class DrubbleGame(Widget):
@@ -503,6 +533,27 @@ class DrubbleGame(Widget):
             self.add_widget(self.boing_label)
             self.add_widget(self.score_label)
 
+            # Initialize the high score labels
+            self.high_score_header = HighScoreLabel()
+            self.add_widget(self.high_score_header)
+            self.high_dist_label = HighScoreLabel(outside_position='left', vertical_position=1,
+                                                  label_text='Distance', this_run='%0.1f' % stats.stoolDist,
+                                                  best_run='%0.1f' % stats.highStoolDist)
+            self.add_widget(self.high_dist_label)
+            self.high_height_label = HighScoreLabel(outside_position='right', vertical_position=2,
+                                                    label_text='Height', this_run='%0.2f' % stats.maxHeight,
+                                                    best_run='%0.2f' % stats.highHeight)
+            self.add_widget(self.high_height_label)
+            self.high_boing_label = HighScoreLabel(outside_position='left', vertical_position=3,
+                                                   label_text='Boing!', this_run='%0.0f' % stats.stoolCount,
+                                                   best_run='%0.0f' % stats.highStoolCount)
+            self.add_widget(self.high_boing_label)
+            self.high_score_label = HighScoreLabel(outside_position='right', vertical_position=4,
+                                                   label_text='Score', this_run='%0.0f' % stats.score,
+                                                   best_run='%0.0f' % stats.highScore)
+            self.add_widget(self.high_score_label)
+
+            # Initialize the option and action buttons
             self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06),
                                             norm_pos=(0.01, 0.88), norm_font_size=0.05, color=red)
             self.add_widget(self.optionButt)
@@ -547,13 +598,13 @@ class DrubbleGame(Widget):
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         self.keyPush = ctrl2keyPush(gs)
         gs.setControl(keyPush=kvUpdateKey(self.keyPush, keycode, 1))
-        if gs.gameMode == 1 and gs.showedSplash:
+        if gs.game_mode == 1 and gs.showedSplash:
             cycleModes(gs, stats, engine)
         elif keycode[1] == 'spacebar':
             cycleModes(gs, stats, engine)
-            self.actionButt.text = p.actionMSG[gs.gameMode]
+            self.actionButt.text = p.actionMSG[gs.game_mode]
         elif keycode[1] == 'escape':
-            gs.gameMode = 1
+            gs.game_mode = 1
             self.remove_game_widgets()
             self.canvas.clear()
             with self.canvas:
@@ -570,22 +621,22 @@ class DrubbleGame(Widget):
     
     def on_touch_down(self, touch):
         loc = (touch.x, touch.y)
-        if gs.gameMode == 1 and gs.showedSplash:
+        if gs.game_mode == 1 and gs.showedSplash:
             cycleModes(gs, stats, engine)
-        elif gs.gameMode == 2 and self.singleDrubbleButt.detect_touch(loc):
+        elif gs.game_mode == 2 and self.singleDrubbleButt.detect_touch(loc):
             p.nPlayer = 1
             cycleModes(gs, stats, engine)
-        elif gs.gameMode == 2 and self.doubleDrubbleButt.detect_touch(loc):
+        elif gs.game_mode == 2 and self.doubleDrubbleButt.detect_touch(loc):
             p.nPlayer = 2
             cycleModes(gs, stats, engine)
-        elif gs.gameMode > 2:
+        elif gs.game_mode > 2:
             # Cycle through modes if touch above the halfway point
             if self.actionButt.detect_touch(loc):
                 cycleModes(gs, stats, engine)
-                self.actionButt.text = p.actionMSG[gs.gameMode]
+                self.actionButt.text = p.actionMSG[gs.game_mode]
                 self.actionButt.background_color = (0, 0.5, 1, 0.5)
             if self.optionButt.detect_touch(loc):
-                gs.gameMode = 1
+                gs.game_mode = 1
                 self.remove_game_widgets()
                 self.canvas.clear()
                 with self.canvas:
@@ -609,7 +660,7 @@ class DrubbleGame(Widget):
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
 
     def on_touch_move(self, touch):
-        if gs.gameMode > 2 and self.weHaveWidgets:
+        if gs.game_mode > 2 and self.weHaveWidgets:
             # Detect control inputs
             xy = touchStick((touch.x,touch.y), self.moveStick)
             if touch.id == self.moveStick.id_code and xy[0] != 0:
@@ -622,7 +673,7 @@ class DrubbleGame(Widget):
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
 
     def on_touch_up(self, touch):
-        if gs.gameMode > 2 and self.weHaveWidgets:
+        if gs.game_mode > 2 and self.weHaveWidgets:
             if touch.id == self.moveStick.id_code:
                 self.moveStick.update_el(0, 0)
                 gs.ctrl[0:2] = [0, 0]
@@ -675,22 +726,22 @@ class DrubbleGame(Widget):
         #    Window.release_all_keyboards()
 
         if self.weHaveWidgets:
-            self.actionButt.text = p.actionMSG[gs.gameMode]
+            self.actionButt.text = p.actionMSG[gs.game_mode]
 
         # Either update the splash, or add the widgets
-        if gs.gameMode == 1:
+        if gs.game_mode == 1:
             self.splash.resize(w=self.width, h=self.height)
             self.splash.update(True)
-        elif gs.gameMode == 2 and not self.weHaveButtons:
+        elif gs.game_mode == 2 and not self.weHaveButtons:
             self.add_option_buttons()
             self.splash.clear()
             self.remove_widget(self.splash)
             self.weHaveButtons = True
-        elif gs.gameMode > 2 and not self.weHaveWidgets:
+        elif gs.game_mode > 2 and not self.weHaveWidgets:
             self.add_game_widgets()            
 
         # ANGLE AND SPEED SETTINGS
-        if 2 < gs.gameMode < 6:
+        if 2 < gs.game_mode < 6:
             gs.setAngleSpeed()
 
         # Call the simStep method
@@ -701,7 +752,7 @@ class DrubbleGame(Widget):
         #for k in range(num_loops):
         #    loop[k].pitch = ddt * fs
 
-        if gs.gameMode > 2:
+        if gs.game_mode > 2:
             stats.update(gs)
 
             # Update score line
@@ -720,7 +771,7 @@ class DrubbleGame(Widget):
         p1.update(gs, self.width)
         p2.update(gs, self.width)
         
-        if gs.gameMode > 2:
+        if gs.game_mode > 2:
             xMean = (gs.xb+gs.xp[0])/2.0
             self.bg.update(xMean, gs.yb, self.width, self.height, m2p)
             self.moveStick.update_el(gs.ctrl[0], gs.ctrl[1])
