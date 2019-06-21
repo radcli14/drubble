@@ -21,6 +21,7 @@ from kivy.core.audio import SoundLoader
 from kivy.utils import platform
 from kivy.config import Config
 from kivy.animation import Animation
+from kivy.storage.jsonstore import JsonStore
 
 # Import drubbleFunc to get the supporting functions and classes
 from drubbleFunc import *
@@ -155,6 +156,14 @@ class MyBackground(Widget):
         overlap = 0.0
         self.bg_left0 = edge - (1 - overlap) * self.img_w
         self.bg_left1 = edge - overlap * self.img_w
+
+    def anim_in(self, duration=1):
+        anim = Animation(opacity=1, duration=duration)
+        anim.start(self)
+
+    def anim_out(self, duration=1):
+        anim = Animation(opacity=0, duration=duration)
+        anim.start(self)
 
 
 def make_markers(self, p):
@@ -439,40 +448,57 @@ class ScoreLabel(Widget):
 
 
 class HighScoreLabel(Widget):
+    # Initiate the widget properties
     label_text = StringProperty('')
     label_font = StringProperty('a/airstrea.ttf')
     this_run = StringProperty('')
     best_run = StringProperty('')
+    is_high = StringProperty('')
     font_size = NumericProperty(0)
+    ratio_from_top = 0.77
+    is_on_screen = False
 
     def __init__(self, outside_position='top', vertical_position=0,
                  label_text='', this_run='This Run', best_run='Best',
                  w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(HighScoreLabel, self).__init__()
+        # Outside position is a string, determining where the button goes when off-screen
         self.outside_position = outside_position
+
+        # Vertical position is an integer, goes from top [0] to bottom [4] when on-screen
         self.vertical_position= vertical_position
+
+        # Label text is the left column [distance, height, boing, or score]
         self.label_text = label_text
-        self.label_left = 0.2 * w
+
+        # Left position of the widget when on-screen
+        self.label_left = 0.1 * w
+
+        # Current scores and the saved best score
         self.this_run = this_run
         self.best_run = best_run
-        self.width = 0.8 * w
-        self.pos = [self.label_left, (0.8 - 0.1 * self.vertical_position) * h]
+
+        # Sizing
+        self.width = 0.9 * w
         self.height = 0.1 * h
         self.font_size = 0.09 * h
 
         # Start with the widget off-screen
-        if self.outside_position == 'left':
-            self.pos[0] = -self.width
-        elif self.outside_position == 'right':
-            self.pos[0]  = w
-        if outside_position == 'bottom':
-            self.pos[1]  = -self.size[1]
-        elif outside_position == 'top':
-            self.pos[1]  = h
+        if self.is_on_screen:
+            self.pos = [self.label_left, (self.ratio_from_top - 0.1 * self.vertical_position) * h]
+        else:
+            if self.outside_position == 'left':
+                self.pos[0] = -self.width
+            elif self.outside_position == 'right':
+                self.pos[0] = w
+            if self.outside_position == 'bottom':
+                self.pos[1] = -self.size[1]
+            elif self.outside_position == 'top':
+                self.pos[1] = h
 
     def anim_in(self, h=height*screen_scf, duration=1):
         in_x = self.label_left
-        in_y = (0.8 - 0.1 * self.vertical_position) * h
+        in_y = (self.ratio_from_top - 0.1 * self.vertical_position) * h
         anim = Animation(x=in_x, y=in_y, duration=duration, t='out_elastic')
         anim.start(self)
 
@@ -491,12 +517,22 @@ class HighScoreLabel(Widget):
         anim.start(self)
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
-        self.label_left = 0.2 * w
-        self.width = 0.8 * w
-        self.pos = [self.label_left, (0.8 - 0.1 * self.vertical_position) * h]
+        self.label_left = 0.1 * w
+        self.width = 0.9 * w
         self.height = 0.1 * h
         self.font_size = 0.09 * h
 
+        if self.is_on_screen:
+            self.pos = [self.label_left, (self.ratio_from_top - 0.1 * self.vertical_position) * h]
+        else:
+            if self.outside_position == 'left':
+                self.pos[0] = -self.width
+            elif self.outside_position == 'right':
+                self.pos[0] = w
+            if self.outside_position == 'bottom':
+                self.pos[1] = -self.size[1]
+            elif self.outside_position == 'top':
+                self.pos[1] = h
 
 class DrubbleGame(Widget):
     def __init__(self, **kwargs):
@@ -524,6 +560,8 @@ class DrubbleGame(Widget):
 
             # Initialize the background
             self.bg = MyBackground()
+            self.bg.anim_out(duration=0)
+            self.add_widget(self.bg)
 
             # Initialize the ball
             self.ball = Ball()
@@ -554,12 +592,12 @@ class DrubbleGame(Widget):
                                                    best_run='%0.0f' % stats.high_score)
             self.add_widget(self.high_score_label)
 
-
     def add_game_widgets(self): 
         # Add game widgets
         with self.canvas:
 
-            self.add_widget(self.bg)
+            #self.add_widget(self.bg)
+            self.bg.anim_in()
             self.add_widget(self.myFace)
             self.add_widget(self.LadyFace)
             self.add_widget(self.ball)
@@ -628,6 +666,12 @@ class DrubbleGame(Widget):
         self.high_boing_label.this_run = '%0.0f' % stats.stool_count
         self.high_score_label.this_run = '%0.0f' % stats.score
 
+        hstr = 'New High!'
+        self.high_dist_label.is_high = hstr if stats.stool_dist > stats.high_stool_dist else ''
+        self.high_height_label.is_high = hstr if stats.max_height > stats.high_height else ''
+        self.high_boing_label.is_high = hstr if stats.stool_count > stats.high_stool_count else ''
+        self.high_score_label.is_high = hstr if stats.score > stats.high_score else ''
+
         # Update the strings for the high scores
         self.high_dist_label.best_run = '%0.1f' % stats.high_stool_dist
         self.high_height_label.best_run = '%0.2f' % stats.high_height
@@ -643,6 +687,14 @@ class DrubbleGame(Widget):
 
         # Update the high scores
         stats.update_high()
+        try:
+            store = JsonStore('my_score.json')
+            store.put('high_stool_dist', value=stats.high_stool_dist)
+            store.put('high_height', value=stats.high_height)
+            store.put('high_stool_count', value=stats.high_stool_count)
+            store.put('high_score', value=stats.high_score)
+        except:
+            print('failed exporting high scores to json')
 
     def remove_high_scores(self, duration=1):
         # Take the high scores off the screen
@@ -667,8 +719,10 @@ class DrubbleGame(Widget):
             self.actionButt.text = p.actionMSG[gs.game_mode]
             if gs.game_mode == 7:
                 self.add_high_scores()
-            else:
+                self.bg.anim_out()
+            elif gs.game_mode == 3:
                 self.remove_high_scores()
+                self.bg.anim_in()
         elif keycode[1] == 'escape':
             gs.game_mode = 1
             self.remove_game_widgets()
@@ -702,6 +756,12 @@ class DrubbleGame(Widget):
                 cycleModes(gs, stats, engine)
                 self.actionButt.text = p.actionMSG[gs.game_mode]
                 self.actionButt.background_color = (0, 0.5, 1, 0.5)
+                if gs.game_mode == 7:
+                    self.add_high_scores()
+                    self.bg.anim_out()
+                elif gs.game_mode == 3:
+                    self.remove_high_scores()
+                    self.bg.anim_in()
             if self.optionButt.detect_touch(loc):
                 gs.game_mode = 1
                 self.remove_game_widgets()
@@ -771,6 +831,13 @@ class DrubbleGame(Widget):
                 self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
 
     def resize_canvas(self, *args):
+        # High score labels
+        self.high_score_header.resize(w=self.width, h=self.height)
+        self.high_dist_label.resize(w=self.width, h=self.height)
+        self.high_height_label.resize(w=self.width, h=self.height)
+        self.high_boing_label.resize(w=self.width, h=self.height)
+        self.high_score_label.resize(w=self.width, h=self.height)
+
         if self.weHaveWidgets:
             self.time_label.resize(w=self.width, h=self.height)
             self.dist_label.resize(w=self.width, h=self.height)
@@ -789,6 +856,9 @@ class DrubbleGame(Widget):
 
     # Time step the game
     def update(self, dt):
+        if gs.n == 0:
+            self.resize_canvas()
+
         if self.weHaveWidgets:
             self.actionButt.text = p.actionMSG[gs.game_mode]
 

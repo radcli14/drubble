@@ -2,6 +2,8 @@
 #import numpy as np
 #from numpy import array
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
+from kivy.storage.jsonstore import JsonStore
+
 import sys
 # Frame rate
 if 'dRuBbLe' in sys.argv[0]:
@@ -551,10 +553,20 @@ def cycleModes(gs, stats, engine):
 
 class GameScore:
     # Import high scores, or set to zero
-    high_stool_dist = 0.0
-    high_height = 0.0
-    high_stool_count = 0
-    high_score = 0
+    try:
+        # Load from JsonStore
+        store = JsonStore('my_score.json')
+        high_stool_dist = store.get('high_stool_dist')['value']
+        high_height = store.get('high_height')['value']
+        high_stool_count = store.get('high_stool_count')['value']
+        high_score = store.get('high_score')['value']
+    except:
+        print('failed importing high scores, initiating as zeros')
+        # Initialize as zero
+        high_stool_dist = 0.0
+        high_height = 0.0
+        high_stool_count = 0
+        high_score = 0
 
     # Initiate statistics as zeros
     def __init__(self):
