@@ -563,10 +563,10 @@ class GameScore:
     except:
         print('failed importing high scores, initiating as zeros')
         # Initialize as zero
-        high_stool_dist = 0.0
-        high_height = 0.0
-        high_stool_count = 0
-        high_score = 0
+        high_stool_dist = [0.0, 0.0]
+        high_height = [0.0, 0.0]
+        high_stool_count = [0, 0]
+        high_score = [0, 0]
 
     # Initiate statistics as zeros
     def __init__(self):

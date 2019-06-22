@@ -577,19 +577,19 @@ class DrubbleGame(Widget):
             self.add_widget(self.high_score_header)
             self.high_dist_label = HighScoreLabel(outside_position='left', vertical_position=1,
                                                   label_text='Distance', this_run='%0.1f' % stats.stool_dist,
-                                                  best_run='%0.1f' % stats.high_stool_dist)
+                                                  best_run='%0.1f' % stats.high_stool_dist[p.nPlayer-1])
             self.add_widget(self.high_dist_label)
             self.high_height_label = HighScoreLabel(outside_position='right', vertical_position=2,
                                                     label_text='Height', this_run='%0.2f' % stats.max_height,
-                                                    best_run='%0.2f' % stats.high_height)
+                                                    best_run='%0.2f' % stats.high_height[p.nPlayer-1])
             self.add_widget(self.high_height_label)
             self.high_boing_label = HighScoreLabel(outside_position='left', vertical_position=3,
                                                    label_text='Boing!', this_run='%0.0f' % stats.stool_count,
-                                                   best_run='%0.0f' % stats.high_stool_count)
+                                                   best_run='%0.0f' % stats.high_stool_count[p.nPlayer-1])
             self.add_widget(self.high_boing_label)
             self.high_score_label = HighScoreLabel(outside_position='right', vertical_position=4,
                                                    label_text='Score', this_run='%0.0f' % stats.score,
-                                                   best_run='%0.0f' % stats.high_score)
+                                                   best_run='%0.0f' % stats.high_score[p.nPlayer-1])
             self.add_widget(self.high_score_label)
 
     def add_game_widgets(self): 
@@ -667,16 +667,16 @@ class DrubbleGame(Widget):
         self.high_score_label.this_run = '%0.0f' % stats.score
 
         hstr = 'New High!'
-        self.high_dist_label.is_high = hstr if stats.stool_dist > stats.high_stool_dist else ''
-        self.high_height_label.is_high = hstr if stats.max_height > stats.high_height else ''
-        self.high_boing_label.is_high = hstr if stats.stool_count > stats.high_stool_count else ''
-        self.high_score_label.is_high = hstr if stats.score > stats.high_score else ''
+        self.high_dist_label.is_high = hstr if stats.stool_dist > stats.high_stool_dist[p.nPlayer-1] else ''
+        self.high_height_label.is_high = hstr if stats.max_height > stats.high_height[p.nPlayer-1] else ''
+        self.high_boing_label.is_high = hstr if stats.stool_count > stats.high_stool_count[p.nPlayer-1] else ''
+        self.high_score_label.is_high = hstr if stats.score > stats.high_score[p.nPlayer-1] else ''
 
         # Update the strings for the high scores
-        self.high_dist_label.best_run = '%0.1f' % stats.high_stool_dist
-        self.high_height_label.best_run = '%0.2f' % stats.high_height
-        self.high_boing_label.best_run = '%0.0f' % stats.high_stool_count
-        self.high_score_label.best_run = '%0.0f' % stats.high_score
+        self.high_dist_label.best_run = '%0.1f' % stats.high_stool_dist[p.nPlayer-1]
+        self.high_height_label.best_run = '%0.2f' % stats.high_height[p.nPlayer-1]
+        self.high_boing_label.best_run = '%0.0f' % stats.high_stool_count[p.nPlayer-1]
+        self.high_score_label.best_run = '%0.0f' % stats.high_score[p.nPlayer-1]
 
         # Bring the high scores onto the screen
         self.high_score_header.anim_in(h=self.height, duration=1)
