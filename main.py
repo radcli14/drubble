@@ -747,9 +747,11 @@ class DrubbleGame(Widget):
         elif gs.game_mode == 2 and self.singleDrubbleButt.detect_touch(loc):
             p.nPlayer = 1
             cycleModes(gs, stats, engine)
+            self.bg.anim_in()
         elif gs.game_mode == 2 and self.doubleDrubbleButt.detect_touch(loc):
             p.nPlayer = 2
             cycleModes(gs, stats, engine)
+            self.bg.anim_in()
         elif gs.game_mode > 2:
             # Cycle through modes if touch above the halfway point
             if self.actionButt.detect_touch(loc):

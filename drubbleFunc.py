@@ -596,10 +596,11 @@ class GameScore:
 
     # Update high scores
     def update_high(self):
-        self.high_stool_dist[p.nPlayer-1] = max(self.high_stool_dist, self.stool_dist)
-        self.high_height[p.nPlayer-1] = max(self.high_height, self.max_height)
-        self.high_stool_count[p.nPlayer-1] = max(self.high_stool_count, self.stool_count)
-        self.high_score[p.nPlayer-1] = max(self.high_score, self.score)
+        self.high_stool_dist[p.nPlayer-1] = max(self.high_stool_dist[p.nPlayer-1], self.stool_dist)
+        self.high_height[p.nPlayer-1] = max(self.high_height[p.nPlayer-1], self.max_height)
+        self.high_stool_count[p.nPlayer-1] = max(self.high_stool_count[p.nPlayer-1], self.stool_count)
+        self.high_score[p.nPlayer-1] = max(self.high_score[p.nPlayer-1], self.score)
+
 
 # Equation of Motion
 def PlayerAndStool(t, u, p, gs, stats):
