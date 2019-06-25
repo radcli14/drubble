@@ -24,6 +24,9 @@ from kivy.animation import Animation
 from kivy.storage.jsonstore import JsonStore
 
 # Import drubbleFunc to get the supporting functions and classes
+import sys
+sys.path.append("_applibs")
+sys.path.append(".")
 from drubbleFunc import *
 
 # Initialize Game State
@@ -57,7 +60,7 @@ except:
     print('failed loading wav')
 
 # Set the sky blue background color
-Window.clearcolor = (skyBlue[0], skyBlue[1], skyBlue[2], 1)
+Window.clearcolor = (cyan[0], cyan[1], cyan[2], 1)
 print('dRuBbLe game launched from the ', platform, ' platform')
 if platform in ('linux', 'windows', 'win', 'macosx'):
     """Config.set('graphics', 'width', '1200')
@@ -211,12 +214,12 @@ class SplashScreen(Widget):
     text_alpha = NumericProperty(0)
     lbl_height = 0.2 * height * screen_scf
 
-    def __init__(self, w=width, h=height, **kwargs):
+    def __init__(self, w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(SplashScreen, self).__init__(**kwargs)
         self.width = w
         self.height = h
 
-    def resize(self, w=width, h=height):
+    def resize(self, w=width*screen_scf, h=height*screen_scf):
         self.width = w
         self.height = h
 
@@ -230,8 +233,13 @@ class SplashScreen(Widget):
             
     def clear(self):
         with self.canvas:
-            Color(skyBlue[0]*self.k/255.0, skyBlue[1]*self.k/255.0, skyBlue[2]*self.k/255.0, 1)
+            Color(cyan[0]*self.k/255.0, cyan[1]*self.k/255.0, cyan[2]*self.k/255.0, 1)
             Rectangle(pos=(0, 0), size=(self.width, self.height))
+
+    def anim_out(self, w=width*screen_scf):
+        #anim = Animation(opacity=0, duration=0.5)
+        anim = Animation(x=w/2.0, y=0, size=(0, 0), opacity=0, duration=0.25)
+        anim.start(self)
 
 
 class MyFace(Widget):
@@ -300,7 +308,7 @@ class Ball(Widget):
     image_source = StringProperty(None)
     ball_alpha = NumericProperty(0.0)
     trajectory = ListProperty([])
-    line_width = screen_scf
+    line_width = screen_scf * 1.5
     if platform in ('linux', 'windows', 'macosx'):
         line_alpha = NumericProperty(0.5)
     else:
@@ -534,6 +542,7 @@ class HighScoreLabel(Widget):
             elif self.outside_position == 'top':
                 self.pos[1] = h
 
+
 class DrubbleGame(Widget):
     def __init__(self, **kwargs):
         super(DrubbleGame, self).__init__(**kwargs)
@@ -624,11 +633,11 @@ class DrubbleGame(Widget):
 
             # Initialize the option and action buttons
             self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06),
-                                            norm_pos=(0.01, 0.88), norm_font_size=0.05, color=red)
+                                            norm_pos=(0.01, 0.88), norm_font_size=0.055, color=red)
             self.add_widget(self.optionButt)
 
             self.actionButt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.06),
-                                            norm_pos=(0.81, 0.88),  norm_font_size=0.05, color=red)
+                                            norm_pos=(0.81, 0.88),  norm_font_size=0.055, color=red)
             self.add_widget(self.actionButt)
 
             self.weHaveWidgets = True
@@ -826,8 +835,9 @@ class DrubbleGame(Widget):
         if self.weHaveWidgets:
             self.canvas.clear()
             with self.canvas:
-                # Draw Bottom Line
-                make_markers(self, p1)
+                if gs.game_mode < 7:
+                    # Draw Bottom Line
+                    make_markers(self, p1)
 
                 # Draw the ball
                 self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
@@ -870,8 +880,7 @@ class DrubbleGame(Widget):
             self.splash.update(True)
         elif gs.game_mode == 2 and not self.weHaveButtons:
             self.add_option_buttons()
-            self.splash.clear()
-            self.remove_widget(self.splash)
+            self.splash.anim_out()
             self.weHaveButtons = True
         elif gs.game_mode > 2 and not self.weHaveWidgets:
             self.add_game_widgets()            
