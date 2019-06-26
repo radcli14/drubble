@@ -237,8 +237,7 @@ class SplashScreen(Widget):
             Rectangle(pos=(0, 0), size=(self.width, self.height))
 
     def anim_out(self, w=width*screen_scf):
-        #anim = Animation(opacity=0, duration=0.5)
-        anim = Animation(x=w/2.0, y=0, size=(0, 0), opacity=0, duration=0.25)
+        anim = Animation(x=w/2.0, y=0, size=(0, 0), opacity=0, duration=0.5, t='in_back')
         anim.start(self)
 
 
@@ -325,7 +324,10 @@ class Ball(Widget):
         self.img_bottom = int(y - p1.m2p * p.rb)
         self.ball_alpha = 1.0
         x, y = xy2p(gs.xTraj, gs.yTraj, m2p, po, w, h)
-        self.trajectory = intersperse(x, y)
+        if gs.game_mode < 7:
+            self.trajectory = intersperse(x, y)
+        else:
+            self.trajectory = []
 
     def clear(self):
         self.ball_alpha = 0.0
@@ -836,11 +838,12 @@ class DrubbleGame(Widget):
             self.canvas.clear()
             with self.canvas:
                 if gs.game_mode < 7:
-                    # Draw Bottom Line
+                    # Draw markers
                     make_markers(self, p1)
-
-                # Draw the ball
-                self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
+                else:
+                    # Delete the marker text
+                    for k in range(self.nMarks):
+                        self.yardMark[k].text = ''
 
     def resize_canvas(self, *args):
         # High score labels
@@ -880,7 +883,7 @@ class DrubbleGame(Widget):
             self.splash.update(True)
         elif gs.game_mode == 2 and not self.weHaveButtons:
             self.add_option_buttons()
-            self.splash.anim_out()
+            self.splash.anim_out(w=self.width)
             self.weHaveButtons = True
         elif gs.game_mode > 2 and not self.weHaveWidgets:
             self.add_game_widgets()            
@@ -923,6 +926,10 @@ class DrubbleGame(Widget):
             self.tiltStick.update_el(-gs.ctrl[3], gs.ctrl[2])
             self.myFace.update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], m2p, po,
                                self.width, self.height, p1.player)
+
+            # Update the ball
+            self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
+
             if p.nPlayer > 1:
                 self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], m2p, po,
                                      self.width, self.height, p2.player)
