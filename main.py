@@ -108,6 +108,10 @@ class MyBackground(Widget):
     bg_text1 = ObjectProperty(None)
     bg_alpha = NumericProperty(0.0)
 
+    # Markers
+    yardMark = []
+    nMarks = 0
+
     # Randomize the start location in the backgroun
     xpos = randint(0, 100*num_bg)
 
@@ -186,7 +190,6 @@ def make_markers(self, p):
         [start_x, start_y] = xy2p(xr, 0, p.m2p, p.po, self.width, self.height)
         [end_x, end_y] = xy2p(xr, -1, p.m2p, p.po, self.width, self.height)
         Color(white[0], white[1], white[2], 1)
-        Line(points=(start_x, start_y, end_x, end_y), width=1.5)
 
         # Numbers
         strxr = str(xr)  # String form of xr
@@ -194,6 +197,7 @@ def make_markers(self, p):
         xypos = (int(start_x + 5), self.height / 20 - fsize)  # Position of text
         lsize = (len(strxr) * fsize / 2.0, fsize)  # Label size
         if k >= self.nMarks:
+            self.yardLine.append(Line(points=(start_x, start_y, end_x, end_y), width=1.5))
             self.yardMark.append(Label(font_size=fsize,
                                        size=lsize, pos=xypos,
                                        text=strxr, color=(1, 1, 1, 1),
@@ -201,6 +205,7 @@ def make_markers(self, p):
             self.add_widget(self.yardMark[k])
             self.nMarks += 1
         else:
+            self.yardLine[k].points = (start_x, start_y, end_x, end_y)
             self.yardMark[k].font_size = fsize
             self.yardMark[k].size = lsize
             self.yardMark[k].pos = xypos
@@ -407,9 +412,10 @@ class OptionButtons(Widget):
     label_font = StringProperty('a/airstrea.ttf')
     label_font_size = NumericProperty(0.0)
     label_color = ListProperty([0.0, 0.0, 0.0, 1.0])
+    out_position = StringProperty('')
 
     def __init__(self, norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
-                 w=width*screen_scf, h=height*screen_scf, **kwargs):
+                 w=width*screen_scf, h=height*screen_scf, out_position='top', **kwargs):
         super(OptionButtons, self).__init__()
         self.pos = (norm_pos[0] * w, norm_pos[1] * h)
         self.size = (norm_size[0] * w, norm_size[1] * h)
@@ -419,6 +425,17 @@ class OptionButtons(Widget):
         self.norm_font_size = norm_font_size
         self.label_font_size = norm_font_size * h
         self.label_color = [kwargs['color'][0], kwargs['color'][1], kwargs['color'][2], 1]
+        self.out_position = out_position
+
+        # Initialize with the button positioned outside
+        if self.out_position == 'top':
+            self.pos[1] = h*screen_Scf
+        elif self.out_position == 'bottom':
+            self.pos[1] = -self.size[1]
+        elif self.out_position == 'left':
+            self.pos[0] = -self.size[0]
+        elif self.out_position == 'right':
+            self.pos[0] = w*screen_scf
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
         self.size = (self.norm_size[0] * w, self.norm_size[1] * h)
@@ -431,6 +448,24 @@ class OptionButtons(Widget):
                             loc[1] > self.pos[1],
                             loc[1] < self.pos[1] + self.size[1]]
         return all(touch_conditions)
+
+    def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
+        anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=duration, t='out_elastic')
+        anim.start(self)
+
+    def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
+        out_x = self.pos[0]
+        out_y = self.pos[1]
+        if self.out_position == 'left':
+            out_x = -self.width
+        elif self.out_position == 'right':
+            out_x = w
+        if self.out_position == 'bottom':
+            out_y = -self.size[1]
+        elif self.out_position == 'top':
+            out_y = h
+        anim = Animation(x=out_x, y=out_y, duration=duration, t='in_elastic')
+        anim.start(self)
 
 
 class ScoreLabel(Widget):
@@ -561,6 +596,7 @@ class DrubbleGame(Widget):
         #Window.bind(on_joy_button_up=self.on_joy_button_up)
         Window.bind(on_joy_button_down=self.on_joy_button_down)
         self.nMarks = 0
+        self.yardLine = []
         self.yardMark = []
         self.weHaveWidgets = False
         self.weHaveButtons = False
@@ -603,12 +639,33 @@ class DrubbleGame(Widget):
                                                    best_run='%0.0f' % stats.high_score[p.nPlayer-1])
             self.add_widget(self.high_score_label)
 
-    def add_game_widgets(self): 
+            # Initialize the option and action buttons
+            self.singleDrubbleButt = OptionButtons(text='Single dRuBbLe', norm_size=(0.7, 0.2), out_position='left',
+                                                   norm_pos=(0.15, 0.7),  norm_font_size=0.15,  color=red)
+            self.doubleDrubbleButt = OptionButtons(text='Double dRuBbLe', norm_size=(0.7, 0.2), out_position='right',
+                                                   norm_pos=(0.15, 0.4),  norm_font_size=0.15,  color=red)
+
+            self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06), out_position='left',
+                                            norm_pos=(0.01, 0.88), norm_font_size=0.055, color=red)
+            self.add_widget(self.optionButt)
+
+            self.actionButt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.06), out_position='right',
+                                            norm_pos=(0.81, 0.88),  norm_font_size=0.055, color=red)
+            self.add_widget(self.actionButt)
+
+    def add_game_widgets(self):
+        # Background
+        self.bg.anim_in()
+
+        # Option and action buttons
+        self.optionButt.anim_in(w=self.width, h=self.height)
+        self.actionButt.anim_in(w=self.width, h=self.height)
+
         # Add game widgets
         with self.canvas:
 
             #self.add_widget(self.bg)
-            self.bg.anim_in()
+
             self.add_widget(self.myFace)
             self.add_widget(self.LadyFace)
             self.add_widget(self.ball)
@@ -633,15 +690,6 @@ class DrubbleGame(Widget):
             self.add_widget(self.boing_label)
             self.add_widget(self.score_label)
 
-            # Initialize the option and action buttons
-            self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06),
-                                            norm_pos=(0.01, 0.88), norm_font_size=0.055, color=red)
-            self.add_widget(self.optionButt)
-
-            self.actionButt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.06),
-                                            norm_pos=(0.81, 0.88),  norm_font_size=0.055, color=red)
-            self.add_widget(self.actionButt)
-
             self.weHaveWidgets = True
 
             self.resize_canvas()
@@ -662,13 +710,13 @@ class DrubbleGame(Widget):
 
     def add_option_buttons(self):
         # Add option screen buttons
-        with self.canvas:
-            self.singleDrubbleButt = OptionButtons(text='Single dRuBbLe', norm_size=(0.7, 0.2),
-                                                   norm_pos=(0.15, 0.7),  norm_font_size=0.15,
-                                                   w=self.width, h=self.height, color=red)
-            self.doubleDrubbleButt = OptionButtons(text='Double dRuBbLe', norm_size=(0.7, 0.2),
-                                                   norm_pos=(0.15, 0.4),  norm_font_size=0.15,
-                                                   w=self.width, h=self.height, color=red)
+        self.singleDrubbleButt.anim_in(w=self.width, h=self.height)
+        self.doubleDrubbleButt.anim_in(w=self.width, h=self.height)
+
+    def remove_option_buttons(self):
+        # Add option screen buttons
+        self.singleDrubbleButt.anim_out(w=self.width, h=self.height)
+        self.doubleDrubbleButt.anim_out(w=self.width, h=self.height)
 
     def add_high_scores(self):
         # Update the strings for the current scores
@@ -737,10 +785,10 @@ class DrubbleGame(Widget):
         elif keycode[1] == 'escape':
             gs.game_mode = 1
             self.remove_game_widgets()
-            self.canvas.clear()
-            with self.canvas:
-                Color(skyBlue[0], skyBlue[1], skyBlue[2], 1)
-                Rectangle(size=(self.width, self.height))
+            #self.canvas.clear()
+            #with self.canvas:
+            #    Color(skyBlue[0], skyBlue[1], skyBlue[2], 1)
+            #    Rectangle(size=(self.width, self.height))
             self.add_option_buttons()
             cycleModes(gs, stats, engine)
             self.remove_high_scores(duration=0)
@@ -759,10 +807,12 @@ class DrubbleGame(Widget):
             p.nPlayer = 1
             cycleModes(gs, stats, engine)
             self.bg.anim_in()
+            self.remove_option_buttons()
         elif gs.game_mode == 2 and self.doubleDrubbleButt.detect_touch(loc):
             p.nPlayer = 2
             cycleModes(gs, stats, engine)
             self.bg.anim_in()
+            self.remove_option_buttons()
         elif gs.game_mode > 2:
             # Cycle through modes if touch above the halfway point
             if self.actionButt.detect_touch(loc):
@@ -778,10 +828,10 @@ class DrubbleGame(Widget):
             if self.optionButt.detect_touch(loc):
                 gs.game_mode = 1
                 self.remove_game_widgets()
-                self.canvas.clear()
-                with self.canvas:
-                    Color(skyBlue[0], skyBlue[1], skyBlue[2], 1)
-                    Rectangle(size=(self.width, self.height))
+                #self.canvas.clear()
+                #with self.canvas:
+                #    Color(skyBlue[0], skyBlue[1], skyBlue[2], 1)
+                #    Rectangle(size=(self.width, self.height))
                 self.add_option_buttons()
                 cycleModes(gs, stats, engine)
                 self.optionButt.background_color = (0, 0.5, 1, 0.5)
@@ -835,7 +885,7 @@ class DrubbleGame(Widget):
     # Drawing commands
     def update_canvas(self,*args):
         if self.weHaveWidgets:
-            self.canvas.clear()
+            #self.canvas.clear()
             with self.canvas:
                 if gs.game_mode < 7:
                     # Draw markers
