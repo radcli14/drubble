@@ -211,6 +211,14 @@ def make_markers(self, p):
             self.yardMark[k].pos = xypos
             self.yardMark[k].text = strxr
 
+    # Cleanup
+    if self.nMarks > xrng_n:
+        for k in range(self.nMarks - xrng_n):
+            self.yardMark.pop(xrng_n)
+            self.yardLine[xrng_n].points = (0, 0)
+            self.yardLine.pop(xrng_n)
+            self.nMarks = xrng_n
+
 
 class SplashScreen(Widget):
     k = 0.0
