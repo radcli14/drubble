@@ -385,7 +385,7 @@ class Stick(Widget):
     ctrl_y = NumericProperty(0.0)
 
     def __init__(self, norm_size=(0.2, 0.2), norm_pos=(0.0, 0.0),
-                 w=width*screen_scf, h=height*screen_scf, **kwargs):
+                 w=width*screen_scf, h=height*screen_scf, out_position='left', **kwargs):
         super(Stick, self).__init__(**kwargs)
         self.size = width * screen_scf, height * screen_scf
         self.norm_size = norm_size
@@ -397,6 +397,14 @@ class Stick(Widget):
         self.ts_x = [norm_pos[0] * w, norm_pos[0] * w + norm_size[0] * w]
         self.ts_y = [norm_pos[1] * w, norm_pos[1] * w + norm_size[1] * w]
         self.ctrl = (0, 0)
+        self.pos = [0, 0]
+
+        # Start with it off screen
+        self.out_position = out_position
+        if self.out_position == 'left':
+            self.pos[0] = -norm_size[0] * w
+        else:
+            self.pos[0] = w
 
     def update_el(self, x, y):
         self.ctrl_x = x
@@ -410,6 +418,18 @@ class Stick(Widget):
 
         self.ts_x = [self.norm_pos[0] * w, self.norm_pos[0] * w + self.norm_size[0] * w]
         self.ts_y = [self.norm_pos[1] * w, self.norm_pos[1] * w + self.norm_size[1] * w]
+
+    def anim_in(self, w=width*screen_scf, h=height*screen_scf):
+        anim = Animation(x=0, y=0, duration=0.25, t='out_back')
+        anim.start(self)
+
+    def anim_out(self, w=width*screen_scf, h=height*screen_scf):
+        if self.out_position == 'left':
+            out_x = -norm_size[0] * w
+        else:
+            out_x = w
+        anim = Animation(x=out_x, y=0, duration=0.25, t='in_back')
+        anim.start(self)
 
 
 # Create OptionButtons class
@@ -425,8 +445,8 @@ class OptionButtons(Widget):
     def __init__(self, norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
                  w=width*screen_scf, h=height*screen_scf, out_position='top', **kwargs):
         super(OptionButtons, self).__init__()
-        self.pos = (norm_pos[0] * w, norm_pos[1] * h)
-        self.size = (norm_size[0] * w, norm_size[1] * h)
+        self.pos = [norm_pos[0] * w, norm_pos[1] * h]
+        self.size = [norm_size[0] * w, norm_size[1] * h]
         self.text = kwargs['text']
         self.norm_pos = norm_pos
         self.norm_size = norm_size
@@ -446,8 +466,8 @@ class OptionButtons(Widget):
             self.pos[0] = w*screen_scf
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
-        self.size = (self.norm_size[0] * w, self.norm_size[1] * h)
-        self.pos = (self.norm_pos[0] * w, self.norm_pos[1] * h)
+        self.size = [self.norm_size[0] * w, self.norm_size[1] * h]
+        self.pos = [self.norm_pos[0] * w, self.norm_pos[1] * h]
         self.label_font_size = self.norm_font_size * h
 
     def detect_touch(self, loc):
@@ -459,6 +479,7 @@ class OptionButtons(Widget):
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
         anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=duration, t='out_elastic')
+        Animation.cancel_all(self)
         anim.start(self)
 
     def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
@@ -473,6 +494,7 @@ class OptionButtons(Widget):
         elif self.out_position == 'top':
             out_y = h
         anim = Animation(x=out_x, y=out_y, duration=duration, t='in_elastic')
+        Animation.cancel_all
         anim.start(self)
 
 
@@ -620,12 +642,21 @@ class DrubbleGame(Widget):
 
             # Initialize the ball
             self.ball = Ball()
+            self.add_widget(self.ball)
+
+            # Initialize the sticks
+            self.moveStick = Stick(norm_size=(0.2, 0.2), norm_pos=(0.8, 0.05), out_position='right')
+            self.tiltStick = Stick(norm_size=(0.2, 0.2), norm_pos=(0.0, 0.05), out_position='left')
+            self.add_widget(self.moveStick)
+            self.add_widget(self.tiltStick)
 
             # Initialize the player faces
             self.myFace = MyFace(image_source='a/myFace.png', jersey_source='a/MyJersey.png',
                                  shorts_source='a/MyShorts.png', line_color=green, stool_color=white)
             self.LadyFace = MyFace(image_source='a/LadyFace.png', jersey_source='a/LadyJersey.png',
                                    shorts_source='a/LadyShorts.png', line_color=pink, stool_color=gray)
+            self.add_widget(self.myFace)
+            self.add_widget(self.LadyFace)
 
             # Initialize the high score labels
             self.high_score_header = HighScoreLabel()
@@ -669,22 +700,20 @@ class DrubbleGame(Widget):
         self.optionButt.anim_in(w=self.width, h=self.height)
         self.actionButt.anim_in(w=self.width, h=self.height)
 
+        # Sticks
+        self.moveStick.anim_in(w=self.width, h=self.height)
+        self.moveStick.anim_out(w=self.width, h=self.height)
+
         # Add game widgets
         with self.canvas:
 
             #self.add_widget(self.bg)
 
-            self.add_widget(self.myFace)
-            self.add_widget(self.LadyFace)
-            self.add_widget(self.ball)
+            #self.add_widget(self.myFace)
+            #self.add_widget(self.LadyFace)
+            #self.add_widget(self.ball)
 
             self.bg.resize(w=self.width, h=self.height)
-
-            # Initialize the sticks
-            self.moveStick = Stick(norm_size=(0.2, 0.2), norm_pos=(0.8, 0.05))
-            self.tiltStick = Stick(norm_size=(0.2, 0.2), norm_pos=(0.0, 0.05))
-            self.add_widget(self.moveStick)
-            self.add_widget(self.tiltStick)
 
             # Initialize the score line
             self.time_label = ScoreLabel(text='Time', norm_left=0.0)
@@ -703,11 +732,13 @@ class DrubbleGame(Widget):
             self.resize_canvas()
 
     def remove_game_widgets(self):
-        self.remove_widget(self.bg)
-        self.remove_widget(self.moveStick)
-        self.remove_widget(self.tiltStick)
-        self.remove_widget(self.myFace)
-        self.remove_widget(self.LadyFace)
+        self.bg.anim_out()
+        self.moveStick.anim_out(w=self.width, h=self.height)
+        self.moveStick.anim_out(w=self.width, h=self.height)
+        #self.remove_widget(self.moveStick)
+        #self.remove_widget(self.tiltStick)
+        #self.remove_widget(self.myFace)
+        #self.remove_widget(self.LadyFace)
         self.myFace.clear()
         self.LadyFace.clear()
         self.remove_widget(self.time_label)
@@ -715,6 +746,8 @@ class DrubbleGame(Widget):
         self.remove_widget(self.high_label)
         self.remove_widget(self.boing_label)
         self.remove_widget(self.score_label)
+        self.optionButt.anim_out(w=self.width, h=self.height)
+        self.actionButt.anim_out(w=self.width, h=self.height)
 
     def add_option_buttons(self):
         # Add option screen buttons
@@ -789,14 +822,10 @@ class DrubbleGame(Widget):
                 self.bg.anim_out()
             elif gs.game_mode == 3:
                 self.remove_high_scores()
-                self.bg.anim_in()
+                self.add_game_widgets()
         elif keycode[1] == 'escape':
             gs.game_mode = 1
             self.remove_game_widgets()
-            #self.canvas.clear()
-            #with self.canvas:
-            #    Color(skyBlue[0], skyBlue[1], skyBlue[2], 1)
-            #    Rectangle(size=(self.width, self.height))
             self.add_option_buttons()
             cycleModes(gs, stats, engine)
             self.remove_high_scores(duration=0)
@@ -814,12 +843,12 @@ class DrubbleGame(Widget):
         elif gs.game_mode == 2 and self.singleDrubbleButt.detect_touch(loc):
             p.nPlayer = 1
             cycleModes(gs, stats, engine)
-            self.bg.anim_in()
+            self.add_game_widgets()
             self.remove_option_buttons()
         elif gs.game_mode == 2 and self.doubleDrubbleButt.detect_touch(loc):
             p.nPlayer = 2
             cycleModes(gs, stats, engine)
-            self.bg.anim_in()
+            self.add_game_widgets()
             self.remove_option_buttons()
         elif gs.game_mode > 2:
             # Cycle through modes if touch above the halfway point
@@ -836,10 +865,6 @@ class DrubbleGame(Widget):
             if self.optionButt.detect_touch(loc):
                 gs.game_mode = 1
                 self.remove_game_widgets()
-                #self.canvas.clear()
-                #with self.canvas:
-                #    Color(skyBlue[0], skyBlue[1], skyBlue[2], 1)
-                #    Rectangle(size=(self.width, self.height))
                 self.add_option_buttons()
                 cycleModes(gs, stats, engine)
                 self.optionButt.background_color = (0, 0.5, 1, 0.5)
@@ -944,7 +969,7 @@ class DrubbleGame(Widget):
             self.splash.anim_out(w=self.width)
             self.weHaveButtons = True
         elif gs.game_mode > 2 and not self.weHaveWidgets:
-            self.add_game_widgets()            
+            self.add_game_widgets()
 
         # ANGLE AND SPEED SETTINGS
         if 2 < gs.game_mode < 6:
