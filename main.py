@@ -94,7 +94,7 @@ class MyBackground(Widget):
     img_h = NumericProperty(h_orig)
 
     # Number of background images
-    num_bg = 3
+    num_bg = 4
 
     # Create the properties for the left edges of the bg images
     bg_left0 = NumericProperty(0.0)
@@ -352,15 +352,15 @@ def get_stick_pos(ch):
 
 
 def touchStick(loc, stick):
-    tCnd = [loc[0] > stick.ts_x[0],
-            loc[0] < stick.ts_x[1],
-            loc[1] > stick.ts_y[0],
-            loc[1] < stick.ts_y[1]]
+    tCnd = [loc[0] > stick.pos[0],
+            loc[0] < stick.pos[0] + stick.size[0],
+            loc[1] > stick.pos[1],
+            loc[1] < stick.pos[1] + stick.size[1]]
 
     # Touched inside the stick
     if all(tCnd):
-        x = min(max(p.tsens * (2.0 * (loc[0] - stick.ts_x[0]) / stick.ch_s - 1), -1), 1)
-        y = min(max(p.tsens * (2.0 * (loc[1] - stick.ts_y[0]) / stick.ch_s - 1), -1), 1)
+        x = min(max(p.tsens * (2.0 * (loc[0] - stick.pos[0]) / stick.size[0] - 1), -1), 1)
+        y = min(max(p.tsens * (2.0 * (loc[1] - stick.pos[1]) / stick.size[1] - 1), -1), 1)
         return x, y
         # mag = sqrt(x ** 2 + y ** 2)
         # ang = round(4.0 * atan2(y, x) / pi) * pi / 4
@@ -371,33 +371,22 @@ def touchStick(loc, stick):
 
 class Stick(Widget):
     id_code = None
-    # Crosshair position (ch_x, ch_y) and size (ch_s)
-    ch_x = NumericProperty(0.0)
-    ch_y = NumericProperty(0.0)
-    ch_s = NumericProperty(0.0)
-
-    # Touch stick locations in pixels, for detecting control input
-    ts_x = [0.0, 0.0]
-    ts_y = [0.0, 0.0]
 
     # Control values
-    ctrl_x = NumericProperty(0.0)
-    ctrl_y = NumericProperty(0.0)
+    ctrl = ListProperty([0.0, 0.0])
 
     def __init__(self, norm_size=(0.2, 0.2), norm_pos=(0.0, 0.0),
                  w=width*screen_scf, h=height*screen_scf, out_position='left', **kwargs):
         super(Stick, self).__init__(**kwargs)
-        self.size = width * screen_scf, height * screen_scf
         self.norm_size = norm_size
         self.norm_pos = norm_pos
-        self.ch_x = norm_pos[0] * w
-        self.ch_y = norm_pos[1] * h
-        self.ch_s = norm_size[0] * w
+        self.size = self.norm_size[0] * width * screen_scf, self.norm_size[1] * width * screen_scf
+        self.pos = self.norm_pos[0] * width * screen_scf, self.norm_pos[1] * height * screen_scf
 
-        self.ts_x = [norm_pos[0] * w, norm_pos[0] * w + norm_size[0] * w]
-        self.ts_y = [norm_pos[1] * w, norm_pos[1] * w + norm_size[1] * w]
-        self.ctrl = (0, 0)
-        self.pos = [0, 0]
+        self.ctrl = [0, 0]
+
+        # Print some information
+        print('Instantiated a stick at pos =', self.pos, 'and size =', self.size)
 
         # Start with it off screen
         self.out_position = out_position
@@ -407,17 +396,11 @@ class Stick(Widget):
             self.pos[0] = w
 
     def update_el(self, x, y):
-        self.ctrl_x = x
-        self.ctrl_y = y
-        self.ctrl = (x, y)
+        self.ctrl = [x, y]
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
-        self.ch_x = self.norm_pos[0] * w
-        self.ch_y = self.norm_pos[1] * h
-        self.ch_s = self.norm_size[0] * w
-
-        self.ts_x = [self.norm_pos[0] * w, self.norm_pos[0] * w + self.norm_size[0] * w]
-        self.ts_y = [self.norm_pos[1] * w, self.norm_pos[1] * w + self.norm_size[1] * w]
+        self.size = self.norm_size[0] * width * screen_scf, self.norm_size[1] * width * screen_scf
+        self.pos = self.norm_pos[0] * width * screen_scf, self.norm_pos[1] * height * screen_scf
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf):
         anim = Animation(x=0, y=0, duration=0.25, t='out_back')
@@ -425,7 +408,7 @@ class Stick(Widget):
 
     def anim_out(self, w=width*screen_scf, h=height*screen_scf):
         if self.out_position == 'left':
-            out_x = -norm_size[0] * w
+            out_x = -self.norm_size[0] * w
         else:
             out_x = w
         anim = Animation(x=out_x, y=0, duration=0.25, t='in_back')
