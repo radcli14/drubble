@@ -399,8 +399,8 @@ class Stick(Widget):
         self.ctrl = [x, y]
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
-        self.size = self.norm_size[0] * width * screen_scf, self.norm_size[1] * width * screen_scf
-        self.pos = self.norm_pos[0] * width * screen_scf, self.norm_pos[1] * height * screen_scf
+        self.size = self.norm_size[0] * w, self.norm_size[1] * w
+        self.pos = self.norm_pos[0] * w, self.norm_pos[1] * h
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf):
         anim = Animation(x=0, y=0, duration=0.25, t='out_back')
