@@ -135,22 +135,21 @@
         Color:
             rgba: 1, 1, 1, 0.75
         Rectangle:
-            pos: self.label_left, self.height-self.label_size-4
-            size: 0.2*root.width, root.label_size+4
+            pos: self.pos
+            size: self.size
         Color:
             rgba: 0.53, 0.89, 1, 1
-            #rgba: 0, 0, 0, 1
         Line:
             width: 2
-            rectangle: self.label_left, self.height-self.label_size-4, 0.2*root.width, root.label_size+4
+            rectangle: self.pos[0], self.pos[1], self.size[0], self.size[1]
     Label:
         font_name: root.label_font
         text: root.label_text
         font_size: root.label_size
         halign: 'left'
-        pos: (root.label_left, root.height-root.label_size-2)
-        size: (0.2*root.width, root.label_size)
-        color: (0, 0, 0, 1)
+        pos: root.pos
+        size: root.size
+        color: 0, 0, 0, 1
 
 
 <HighScoreLabel>:
