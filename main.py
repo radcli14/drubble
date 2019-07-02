@@ -109,6 +109,7 @@ class MyBackground(Widget):
     bg_alpha = NumericProperty(0.0)
 
     # Markers
+    yardLine = []
     yardMark = []
     nMarks = 0
 
@@ -172,52 +173,52 @@ class MyBackground(Widget):
         anim = Animation(opacity=0, duration=duration)
         anim.start(self)
 
+    def make_markers(self, p):
+        with self.canvas:
+            # xrng_r is the first and last markers on the screen, xrng_n is the
+            # number of markers
+            xrng_r = [round(p.xrng[i], -1) for i in range(2)]
+            xrng_n = int((xrng_r[1] - xrng_r[0]) / 10.0) + 1
 
-def make_markers(self, p):
-    # xrng_r is the first and last markers on the screen, xrng_n is the
-    # number of markers
-    xrng_r = [round(p.xrng[i], -1) for i in range(2)]
-    xrng_n = int((xrng_r[1] - xrng_r[0]) / 10.0) + 1
+            for k in range(self.nMarks):
+                self.yardMark[k].text = ''
 
-    for k in range(self.nMarks):
-        self.yardMark[k].text = ''
+            for k in range(xrng_n):
+                # Current yardage
+                xr = int(xrng_r[0] + 10 * k)
 
-    for k in range(xrng_n):
-        # Current yardage
-        xr = int(xrng_r[0] + 10 * k)
+                # Lines
+                [start_x, start_y] = xy2p(xr, 0, p.m2p, p.po, self.width, self.height)
+                [end_x, end_y] = xy2p(xr, -1, p.m2p, p.po, self.width, self.height)
+                Color(white[0], white[1], white[2], 1)
 
-        # Lines
-        [start_x, start_y] = xy2p(xr, 0, p.m2p, p.po, self.width, self.height)
-        [end_x, end_y] = xy2p(xr, -1, p.m2p, p.po, self.width, self.height)
-        Color(white[0], white[1], white[2], 1)
+                # Numbers
+                strxr = str(xr)  # String form of xr
+                fsize = min(24 * screen_scf, int(p.m2p))  # Font size
+                xypos = (int(start_x + 5), self.height / 20 - fsize)  # Position of text
+                lsize = (len(strxr) * fsize / 2.0, fsize)  # Label size
+                if k >= self.nMarks:
+                    self.yardLine.append(Line(points=(start_x, start_y, end_x, end_y), width=1.5))
+                    self.yardMark.append(Label(font_size=fsize,
+                                               size=lsize, pos=xypos,
+                                               text=strxr, color=(1, 1, 1, 1),
+                                               halign='left', valign='top'))
+                    self.add_widget(self.yardMark[k])
+                    self.nMarks += 1
+                else:
+                    self.yardLine[k].points = (start_x, start_y, end_x, end_y)
+                    self.yardMark[k].font_size = fsize
+                    self.yardMark[k].size = lsize
+                    self.yardMark[k].pos = xypos
+                    self.yardMark[k].text = strxr
 
-        # Numbers
-        strxr = str(xr)  # String form of xr
-        fsize = min(24 * screen_scf, int(p.m2p))  # Font size
-        xypos = (int(start_x + 5), self.height / 20 - fsize)  # Position of text
-        lsize = (len(strxr) * fsize / 2.0, fsize)  # Label size
-        if k >= self.nMarks:
-            self.yardLine.append(Line(points=(start_x, start_y, end_x, end_y), width=1.5))
-            self.yardMark.append(Label(font_size=fsize,
-                                       size=lsize, pos=xypos,
-                                       text=strxr, color=(1, 1, 1, 1),
-                                       halign='left', valign='top'))
-            self.add_widget(self.yardMark[k])
-            self.nMarks += 1
-        else:
-            self.yardLine[k].points = (start_x, start_y, end_x, end_y)
-            self.yardMark[k].font_size = fsize
-            self.yardMark[k].size = lsize
-            self.yardMark[k].pos = xypos
-            self.yardMark[k].text = strxr
-
-    # Cleanup
-    if self.nMarks > xrng_n:
-        for k in range(self.nMarks - xrng_n):
-            self.yardMark.pop(xrng_n)
-            self.yardLine[xrng_n].points = (0, 0)
-            self.yardLine.pop(xrng_n)
-            self.nMarks = xrng_n
+            # Cleanup
+            if self.nMarks > xrng_n:
+                for k in range(self.nMarks - xrng_n):
+                    self.yardMark.pop(xrng_n)
+                    self.yardLine[xrng_n].points = (0, 0)
+                    self.yardLine.pop(xrng_n)
+                    self.nMarks = xrng_n
 
 
 class SplashScreen(Widget):
@@ -344,6 +345,14 @@ class Ball(Widget):
 
     def clear(self):
         self.ball_alpha = 0.0
+
+    def anim_in(self):
+        anim = Animation(opacity=1.0, duration=1)
+        anim.start(self)
+
+    def anim_out(self):
+        anim = Animation(opacity=0.0, duration=1)
+        anim.start(self)
 
 
 # Returns the center_x, center_y, and diameter of the stick
@@ -649,8 +658,8 @@ class DrubbleGame(Widget):
         #Window.bind(on_joy_button_up=self.on_joy_button_up)
         Window.bind(on_joy_button_down=self.on_joy_button_down)
         self.nMarks = 0
-        self.yardLine = []
-        self.yardMark = []
+        #self.yardLine = []
+        #self.yardMark = []
         self.weHaveWidgets = False
         self.weHaveButtons = False
         self.needToResize = True
@@ -734,6 +743,9 @@ class DrubbleGame(Widget):
         # Background
         self.bg.anim_in()
 
+        # Ball
+        self.ball.anim_in()
+
         # Option and action buttons
         self.optionButt.anim_in(w=self.width, h=self.height)
         self.actionButt.anim_in(w=self.width, h=self.height)
@@ -754,6 +766,7 @@ class DrubbleGame(Widget):
 
     def remove_game_widgets(self):
         self.bg.anim_out()
+        self.ball.anim_out()
         self.moveStick.anim_out(w=self.width, h=self.height)
         self.tiltStick.anim_out(w=self.width, h=self.height)
         self.myFace.clear()
@@ -936,6 +949,8 @@ class DrubbleGame(Widget):
 
     # Drawing commands
     def update_canvas(self,*args):
+        return
+        '''
         if self.weHaveWidgets:
             #self.canvas.clear()
             with self.canvas:
@@ -947,6 +962,7 @@ class DrubbleGame(Widget):
                     for k in range(self.nMarks):
                         self.yardLine[k].points = (0, 0)
                         self.yardMark[k].text = ''
+        '''
 
     def resize_canvas(self, *args):
         # High score labels
@@ -1031,6 +1047,7 @@ class DrubbleGame(Widget):
         if gs.game_mode > 2:
             xMean = (gs.xb+gs.xp[0])/2.0
             self.bg.update(xMean, gs.yb, self.width, self.height, m2p)
+            self.bg.make_markers(p1)
             self.moveStick.update_el(gs.ctrl[0], gs.ctrl[1])
             self.tiltStick.update_el(-gs.ctrl[3], gs.ctrl[2])
             self.myFace.update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], m2p, po,
