@@ -38,22 +38,28 @@ stats = GameScore()
 try:
     # Initialize drums
     num_loops = 2
-    current_loop = 0
     loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.wav') for k in range(num_loops)]
     for k in range(num_loops):
         loop[k].volume = 0.4
 
     def sound_stopped(self):
-        current_loop = randint(0, num_loops-1)
+        # Randomize which loop to play, but prevent repeats of the intro
+        if self.id_number == 0:
+            current_loop = randint(1, num_loops-1)
+        else:
+            current_loop = randint(0, num_loops-1)
+
+        # Restart playing a new drum loop
         loop[current_loop].play()
 
     for k in range(num_loops):
-        try:
-            loop[k].bind(on_stop=sound_stopped)
-        except:
-            print('failed binding to sound_stopped')
-    loop[current_loop].play()
+        loop[k].bind(on_stop=sound_stopped)
+        loop[k].id_number = k
 
+    # Start the intro loop playing
+    loop[0].play()
+
+    # Load the sounds that play on bounces
     stool_sound = SoundLoader.load('a/GoGo_crank_hit_Stool.wav')
     floor_sound = SoundLoader.load('a/GoGo_guitar_hit_slide_Floor.wav')
 except:
@@ -651,8 +657,6 @@ class HighScoreLabel(Widget):
 class DrubbleGame(Widget):
     def __init__(self, **kwargs):
         super(DrubbleGame, self).__init__(**kwargs)
-        self.bind(pos=self.update_canvas)
-        self.bind(size=self.update_canvas)
         self.bind(size=self.resize_canvas)
         if platform in ('linux', 'windows', 'win', 'macosx'):
             self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
@@ -664,8 +668,6 @@ class DrubbleGame(Widget):
         #Window.bind(on_joy_button_up=self.on_joy_button_up)
         Window.bind(on_joy_button_down=self.on_joy_button_down)
         self.nMarks = 0
-        #self.yardLine = []
-        #self.yardMark = []
         self.weHaveWidgets = False
         self.weHaveButtons = False
         self.needToResize = True
@@ -704,7 +706,7 @@ class DrubbleGame(Widget):
             self.myFace = MyFace(image_source='a/myFace.png', jersey_source='a/MyJersey.png',
                                  shorts_source='a/MyShorts.png', line_color=green, stool_color=white)
             self.LadyFace = MyFace(image_source='a/LadyFace.png', jersey_source='a/LadyJersey.png',
-                                   shorts_source='a/LadyShorts.png', line_color=pink, stool_color=gray)
+                                   shorts_source='a/LadyShorts.png', line_color=olive, stool_color=gray)
             self.add_widget(self.myFace)
             self.add_widget(self.LadyFace)
 
@@ -914,13 +916,12 @@ class DrubbleGame(Widget):
                 self.tiltStick.update_el(0, 0)
                 gs.ctrl[2:4] = [0, 0]
 
-            self.actionButt.background_color = (1, 1, 1, 0.75)
-            self.optionButt.background_color = (1, 1, 1, 0.75)
-
     def on_joy_axis(self, win, stickid, axisid, value):
         if axisid == 0:
+            # Stool tilt
             gs.ctrl[3] = -value / 32768
         elif axisid == 1:
+            # Stool up/down
             gs.ctrl[2] = value / 32768
         elif axisid == 2:
             # Left/right movement
@@ -933,17 +934,17 @@ class DrubbleGame(Widget):
         if gs.game_mode == 1:
             cycleModes(gs, stats, engine)
         elif gs.game_mode == 2:
-            if buttonid == 0:
+            if buttonid in (0, 6):
                 # A button
                 self.single_drubble_button_press()
-            elif buttonid == 1:
+            elif buttonid in (1, 7):
                 # B button
                 self.double_drubble_button_press()
         elif gs.game_mode > 2:
-            if buttonid == 6:
+            if buttonid in (1, 6):
                 # Left trigger
                 self.option_button_press()
-            elif buttonid == 7:
+            elif buttonid in (0, 7):
                 # Right trigger
                 self.action_button_press()
 
@@ -972,7 +973,7 @@ class DrubbleGame(Widget):
         self.remove_option_buttons()
 
         # Turn the button blue momentarily
-        self.optionButt.background_touched()
+        self.doubleDrubbleButt.background_touched()
         Clock.schedule_once(self.doubleDrubbleButt.background_untouched, 0.1)
 
     # What to do when option button is pressed
@@ -1011,10 +1012,6 @@ class DrubbleGame(Widget):
         # Turn the button blue momentarily
         self.actionButt.background_touched()
         Clock.schedule_once(self.actionButt.background_untouched, 0.1)
-
-    # Drawing commands
-    def update_canvas(self,*args):
-        return
 
     def resize_canvas(self, *args):
         # High score labels
@@ -1111,7 +1108,6 @@ class DrubbleGame(Widget):
             if p.nPlayer > 1:
                 self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], m2p, po,
                                      self.width, self.height, p2.player)
-            self.update_canvas()
 
             # Make the bounce sounds
             if gs.StoolBounce:

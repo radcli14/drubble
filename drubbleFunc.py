@@ -27,6 +27,7 @@ skyBlue = (135.0/255.0, 226.0/255.0, 255.0/255.0)
 cyan = (0.0, 1.0, 1.0)
 darkGreen = (0, 120.0/255.0, 0)
 pink = (1.0, 182.0/255.0, 193.0/255.0)
+olive = (128.0/255.0, 128.0/255.0, 0.0)
 
 # Convert physical coordinates to pixels
 def xy2p(x, y, m2p, po, w, h):
@@ -416,7 +417,7 @@ class GameState:
         near_condition = abs(self.xb - self.xp[pAct]) < 1.0
         if 0.0 < time_condition < 0.5 and near_condition:
             # Slow speed
-            ddt = dt / 2.0
+            ddt = dt / 1.5
             nStep = 4 * p.nEulerSteps
         else:
             # Regular speed
