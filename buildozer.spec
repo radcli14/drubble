@@ -29,7 +29,7 @@ source.exclude_dirs = tests,bin,audio,build,dc,dist,figs,photos,venv,venv2,fonts
 source.exclude_patterns = dRuBbLe.py,dRuBbLe_x.playground,demoDrubble.py
 
 # (str) Application versioning (method 1)
-version = 0.6
+version = 0.7
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]

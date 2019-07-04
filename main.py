@@ -494,6 +494,12 @@ class OptionButtons(Widget):
                             loc[1] < self.pos[1] + self.size[1]]
         return all(touch_conditions)
 
+    def background_touched(self, dt=0):
+        self.background_color = (0, 0, 1, 0.5)
+
+    def background_untouched(self, dt=0):
+        self.background_color = (1, 1, 1, 0.75)
+
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
         anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=duration, t='out_back')
         anim.start(self)
@@ -847,20 +853,9 @@ class DrubbleGame(Widget):
         if gs.game_mode == 1 and gs.showedSplash:
             cycleModes(gs, stats, engine)
         elif keycode[1] == 'spacebar':
-            cycleModes(gs, stats, engine)
-            self.actionButt.text = p.actionMSG[gs.game_mode]
-            if gs.game_mode == 7:
-                self.add_high_scores()
-                self.bg.anim_out()
-            elif gs.game_mode == 3:
-                self.remove_high_scores()
-                self.add_game_widgets()
+            self.action_button_press()
         elif keycode[1] == 'escape':
-            gs.game_mode = 1
-            self.remove_game_widgets()
-            self.add_option_buttons()
-            cycleModes(gs, stats, engine)
-            self.remove_high_scores(duration=0)
+            self.option_button_press()
         return True
     
     def _on_keyboard_up(self, keyboard, keycode):
@@ -873,33 +868,15 @@ class DrubbleGame(Widget):
         if gs.game_mode == 1 and gs.showedSplash:
             cycleModes(gs, stats, engine)
         elif gs.game_mode == 2 and self.singleDrubbleButt.detect_touch(loc):
-            p.nPlayer = 1
-            cycleModes(gs, stats, engine)
-            self.add_game_widgets()
-            self.remove_option_buttons()
+            self.single_drubble_button_press()
         elif gs.game_mode == 2 and self.doubleDrubbleButt.detect_touch(loc):
-            p.nPlayer = 2
-            cycleModes(gs, stats, engine)
-            self.add_game_widgets()
-            self.remove_option_buttons()
+            self.double_drubble_button_press()
         elif gs.game_mode > 2:
-            # Cycle through modes if touch above the halfway point
+            # Cycle through modes if touched the action or option_butt
             if self.actionButt.detect_touch(loc):
-                cycleModes(gs, stats, engine)
-                self.actionButt.text = p.actionMSG[gs.game_mode]
-                self.actionButt.background_color = (0, 0.5, 1, 0.5)
-                if gs.game_mode == 7:
-                    self.add_high_scores()
-                    self.bg.anim_out()
-                elif gs.game_mode == 3:
-                    self.remove_high_scores()
-                    self.bg.anim_in()
+                self.action_button_press()
             if self.optionButt.detect_touch(loc):
-                gs.game_mode = 1
-                self.remove_game_widgets()
-                self.add_option_buttons()
-                cycleModes(gs, stats, engine)
-                self.optionButt.background_color = (0, 0.5, 1, 0.5)
+                self.option_button_press()
 
             # Detect control inputs
             xy = touchStick(loc, self.moveStick)
@@ -941,28 +918,103 @@ class DrubbleGame(Widget):
             self.optionButt.background_color = (1, 1, 1, 0.75)
 
     def on_joy_axis(self, win, stickid, axisid, value):
-        print('me')
-        print(win)
+        if axisid == 0:
+            gs.ctrl[3] = -value / 32768
+        elif axisid == 1:
+            gs.ctrl[2] = value / 32768
+        elif axisid == 2:
+            # Left/right movement
+            gs.ctrl[0] = value / 32768
+        elif axisid == 3:
+            # Up/down movement
+            gs.ctrl[1] = value / 32768
 
     def on_joy_button_down(self, win, stickid, buttonid):
-        print('butt')
+        if gs.game_mode == 1:
+            cycleModes(gs, stats, engine)
+        elif gs.game_mode == 2:
+            if buttonid == 0:
+                # A button
+                self.single_drubble_button_press()
+            elif buttonid == 1:
+                # B button
+                self.double_drubble_button_press()
+        elif gs.game_mode > 2:
+            if buttonid == 6:
+                # Left trigger
+                self.option_button_press()
+            elif buttonid == 7:
+                # Right trigger
+                self.action_button_press()
+
+    # What to do when the single drubble button is pressed
+    def single_drubble_button_press(self):
+        # Specify that this will be the one player version, and start game
+        p.nPlayer = 1
+        cycleModes(gs, stats, engine)
+
+        # Add the in-game widgets
+        self.add_game_widgets()
+        self.remove_option_buttons()
+
+        # Turn the button blue momentarily
+        self.singleDrubbleButt.background_touched()
+        Clock.schedule_once(self.singleDrubbleButt.background_untouched, 0.1)
+
+    # What to do when the couble drubble button is pressed
+    def double_drubble_button_press(self):
+        # Specify this will be the two player version, and start game
+        p.nPlayer = 2
+        cycleModes(gs, stats, engine)
+
+        # Add the in-game widgets
+        self.add_game_widgets()
+        self.remove_option_buttons()
+
+        # Turn the button blue momentarily
+        self.optionButt.background_touched()
+        Clock.schedule_once(self.doubleDrubbleButt.background_untouched, 0.1)
+
+    # What to do when option button is pressed
+    def option_button_press(self):
+        # Return to the option screen, removing the in-game widgets
+        gs.game_mode = 1
+        self.remove_game_widgets()
+        self.remove_high_scores()
+        self.add_option_buttons()
+
+        # Reset game states and scores
+        cycleModes(gs, stats, engine)
+
+        # Turn the button blue momentarily
+        self.optionButt.background_touched()
+        Clock.schedule_once(self.optionButt.background_untouched, 0.1)
+
+    # What to do when action button is pressed
+    def action_button_press(self):
+        # Progress through the speed/angle setting, game, then high score
+        cycleModes(gs, stats, engine)
+
+        # Update the button text and color
+        self.actionButt.text = p.actionMSG[gs.game_mode]
+        self.actionButt.background_color = (0, 0.5, 1, 0.5)
+
+        # If on completion of the game, add the high scores
+        # If on restart of game, remove the high scores
+        if gs.game_mode == 7:
+            self.add_high_scores()
+            self.bg.anim_out()
+        elif gs.game_mode == 3:
+            self.remove_high_scores()
+            self.bg.anim_in()
+
+        # Turn the button blue momentarily
+        self.actionButt.background_touched()
+        Clock.schedule_once(self.actionButt.background_untouched, 0.1)
 
     # Drawing commands
     def update_canvas(self,*args):
         return
-        '''
-        if self.weHaveWidgets:
-            #self.canvas.clear()
-            with self.canvas:
-                if 2 < gs.game_mode < 7:
-                    # Draw markers
-                    make_markers(self, p1)
-                else:
-                    # Delete the marker text
-                    for k in range(self.nMarks):
-                        self.yardLine[k].points = (0, 0)
-                        self.yardMark[k].text = ''
-        '''
 
     def resize_canvas(self, *args):
         # High score labels
