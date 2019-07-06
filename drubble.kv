@@ -89,7 +89,7 @@
 <Ball>:
     canvas:
         Color:
-            rgba: (1.0, 1.0, 1.0, self.line_alpha)
+            rgba: (1.0, 0.4, 0.8, self.line_alpha)
         Line:
             points: self.trajectory
             width: self.line_width
@@ -107,11 +107,11 @@
             rgba: 1, 1, 1, 0.25
         Rectangle:
             source: 'a/crossHair.png'
-            pos: self.ch_x, self.ch_y
-            size: self.ch_s, self.ch_s
+            pos: self.pos
+            size: self.size
         Ellipse:
-            pos: self.ch_x + self.ch_s*(1+self.ctrl_x)/4.0, self.ch_y + self.ch_s*(1+self.ctrl_y)/4.0
-            size: self.ch_s/2.0, self.ch_s/2.0
+            pos: self.pos[0] + self.size[0]*(1+self.ctrl[0])/4.0, self.pos[1] + self.size[1]*(1+self.ctrl[1])/4.0
+            size: self.size[0]/2.0, self.size[1]/2.0
 
 
 <OptionButtons>:
@@ -135,22 +135,21 @@
         Color:
             rgba: 1, 1, 1, 0.75
         Rectangle:
-            pos: self.label_left, self.height-self.label_size-4
-            size: 0.2*root.width, root.label_size+4
+            pos: self.pos
+            size: self.size
         Color:
             rgba: 0.53, 0.89, 1, 1
-            #rgba: 0, 0, 0, 1
         Line:
             width: 2
-            rectangle: self.label_left, self.height-self.label_size-4, 0.2*root.width, root.label_size+4
+            rectangle: self.pos[0], self.pos[1], self.size[0], self.size[1]
     Label:
         font_name: root.label_font
         text: root.label_text
         font_size: root.label_size
         halign: 'left'
-        pos: (root.label_left, root.height-root.label_size-2)
-        size: (0.2*root.width, root.label_size)
-        color: (0, 0, 0, 1)
+        pos: root.pos
+        size: root.size
+        color: 0, 0, 0, 1
 
 
 <HighScoreLabel>:

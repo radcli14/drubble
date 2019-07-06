@@ -38,22 +38,28 @@ stats = GameScore()
 try:
     # Initialize drums
     num_loops = 2
-    current_loop = 0
     loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.wav') for k in range(num_loops)]
     for k in range(num_loops):
         loop[k].volume = 0.4
 
     def sound_stopped(self):
-        current_loop = randint(0, num_loops-1)
+        # Randomize which loop to play, but prevent repeats of the intro
+        if self.id_number == 0:
+            current_loop = randint(1, num_loops-1)
+        else:
+            current_loop = randint(0, num_loops-1)
+
+        # Restart playing a new drum loop
         loop[current_loop].play()
 
     for k in range(num_loops):
-        try:
-            loop[k].bind(on_stop=sound_stopped)
-        except:
-            print('failed binding to sound_stopped')
-    loop[current_loop].play()
+        loop[k].bind(on_stop=sound_stopped)
+        loop[k].id_number = k
 
+    # Start the intro loop playing
+    loop[0].play()
+
+    # Load the sounds that play on bounces
     stool_sound = SoundLoader.load('a/GoGo_crank_hit_Stool.wav')
     floor_sound = SoundLoader.load('a/GoGo_guitar_hit_slide_Floor.wav')
 except:
@@ -94,7 +100,7 @@ class MyBackground(Widget):
     img_h = NumericProperty(h_orig)
 
     # Number of background images
-    num_bg = 3
+    num_bg = 4
 
     # Create the properties for the left edges of the bg images
     bg_left0 = NumericProperty(0.0)
@@ -109,6 +115,7 @@ class MyBackground(Widget):
     bg_alpha = NumericProperty(0.0)
 
     # Markers
+    yardLine = []
     yardMark = []
     nMarks = 0
 
@@ -172,52 +179,52 @@ class MyBackground(Widget):
         anim = Animation(opacity=0, duration=duration)
         anim.start(self)
 
+    def make_markers(self, p):
+        with self.canvas:
+            # xrng_r is the first and last markers on the screen, xrng_n is the
+            # number of markers
+            xrng_r = [round(p.xrng[i], -1) for i in range(2)]
+            xrng_n = int((xrng_r[1] - xrng_r[0]) / 10.0) + 1
 
-def make_markers(self, p):
-    # xrng_r is the first and last markers on the screen, xrng_n is the
-    # number of markers
-    xrng_r = [round(p.xrng[i], -1) for i in range(2)]
-    xrng_n = int((xrng_r[1] - xrng_r[0]) / 10.0) + 1
+            for k in range(self.nMarks):
+                self.yardMark[k].text = ''
 
-    for k in range(self.nMarks):
-        self.yardMark[k].text = ''
+            for k in range(xrng_n):
+                # Current yardage
+                xr = int(xrng_r[0] + 10 * k)
 
-    for k in range(xrng_n):
-        # Current yardage
-        xr = int(xrng_r[0] + 10 * k)
+                # Lines
+                [start_x, start_y] = xy2p(xr, 0, p.m2p, p.po, self.width, self.height)
+                [end_x, end_y] = xy2p(xr, -1, p.m2p, p.po, self.width, self.height)
+                Color(white[0], white[1], white[2], 1)
 
-        # Lines
-        [start_x, start_y] = xy2p(xr, 0, p.m2p, p.po, self.width, self.height)
-        [end_x, end_y] = xy2p(xr, -1, p.m2p, p.po, self.width, self.height)
-        Color(white[0], white[1], white[2], 1)
+                # Numbers
+                strxr = str(xr)  # String form of xr
+                fsize = min(24 * screen_scf, int(p.m2p))  # Font size
+                xypos = (int(start_x + 5), self.height / 20 - fsize)  # Position of text
+                lsize = (len(strxr) * fsize / 2.0, fsize)  # Label size
+                if k >= self.nMarks:
+                    self.yardLine.append(Line(points=(start_x, start_y, end_x, end_y), width=1.5))
+                    self.yardMark.append(Label(font_size=fsize,
+                                               size=lsize, pos=xypos,
+                                               text=strxr, color=(1, 1, 1, 1),
+                                               halign='left', valign='top'))
+                    self.add_widget(self.yardMark[k])
+                    self.nMarks += 1
+                else:
+                    self.yardLine[k].points = (start_x, start_y, end_x, end_y)
+                    self.yardMark[k].font_size = fsize
+                    self.yardMark[k].size = lsize
+                    self.yardMark[k].pos = xypos
+                    self.yardMark[k].text = strxr
 
-        # Numbers
-        strxr = str(xr)  # String form of xr
-        fsize = min(24 * screen_scf, int(p.m2p))  # Font size
-        xypos = (int(start_x + 5), self.height / 20 - fsize)  # Position of text
-        lsize = (len(strxr) * fsize / 2.0, fsize)  # Label size
-        if k >= self.nMarks:
-            self.yardLine.append(Line(points=(start_x, start_y, end_x, end_y), width=1.5))
-            self.yardMark.append(Label(font_size=fsize,
-                                       size=lsize, pos=xypos,
-                                       text=strxr, color=(1, 1, 1, 1),
-                                       halign='left', valign='top'))
-            self.add_widget(self.yardMark[k])
-            self.nMarks += 1
-        else:
-            self.yardLine[k].points = (start_x, start_y, end_x, end_y)
-            self.yardMark[k].font_size = fsize
-            self.yardMark[k].size = lsize
-            self.yardMark[k].pos = xypos
-            self.yardMark[k].text = strxr
-
-    # Cleanup
-    if self.nMarks > xrng_n:
-        for k in range(self.nMarks - xrng_n):
-            self.yardMark.pop(xrng_n)
-            self.yardLine[xrng_n].points = (0, 0)
-            self.yardLine.pop(xrng_n)
-            self.nMarks = xrng_n
+            # Cleanup
+            if self.nMarks > xrng_n:
+                for k in range(self.nMarks - xrng_n):
+                    self.yardMark.pop(xrng_n)
+                    self.yardLine[xrng_n].points = (0, 0)
+                    self.yardLine.pop(xrng_n)
+                    self.nMarks = xrng_n
 
 
 class SplashScreen(Widget):
@@ -345,6 +352,14 @@ class Ball(Widget):
     def clear(self):
         self.ball_alpha = 0.0
 
+    def anim_in(self):
+        anim = Animation(opacity=1.0, duration=1)
+        anim.start(self)
+
+    def anim_out(self):
+        anim = Animation(opacity=0.0, duration=1)
+        anim.start(self)
+
 
 # Returns the center_x, center_y, and diameter of the stick
 def get_stick_pos(ch):
@@ -352,15 +367,15 @@ def get_stick_pos(ch):
 
 
 def touchStick(loc, stick):
-    tCnd = [loc[0] > stick.ts_x[0],
-            loc[0] < stick.ts_x[1],
-            loc[1] > stick.ts_y[0],
-            loc[1] < stick.ts_y[1]]
+    tCnd = [loc[0] > stick.pos[0],
+            loc[0] < stick.pos[0] + stick.size[0],
+            loc[1] > stick.pos[1],
+            loc[1] < stick.pos[1] + stick.size[1]]
 
     # Touched inside the stick
     if all(tCnd):
-        x = min(max(p.tsens * (2.0 * (loc[0] - stick.ts_x[0]) / stick.ch_s - 1), -1), 1)
-        y = min(max(p.tsens * (2.0 * (loc[1] - stick.ts_y[0]) / stick.ch_s - 1), -1), 1)
+        x = min(max(p.tsens * (2.0 * (loc[0] - stick.pos[0]) / stick.size[0] - 1), -1), 1)
+        y = min(max(p.tsens * (2.0 * (loc[1] - stick.pos[1]) / stick.size[1] - 1), -1), 1)
         return x, y
         # mag = sqrt(x ** 2 + y ** 2)
         # ang = round(4.0 * atan2(y, x) / pi) * pi / 4
@@ -371,65 +386,62 @@ def touchStick(loc, stick):
 
 class Stick(Widget):
     id_code = None
-    # Crosshair position (ch_x, ch_y) and size (ch_s)
-    ch_x = NumericProperty(0.0)
-    ch_y = NumericProperty(0.0)
-    ch_s = NumericProperty(0.0)
-
-    # Touch stick locations in pixels, for detecting control input
-    ts_x = [0.0, 0.0]
-    ts_y = [0.0, 0.0]
+    is_on_screen = False
 
     # Control values
-    ctrl_x = NumericProperty(0.0)
-    ctrl_y = NumericProperty(0.0)
+    ctrl = ListProperty([0.0, 0.0])
 
     def __init__(self, norm_size=(0.2, 0.2), norm_pos=(0.0, 0.0),
                  w=width*screen_scf, h=height*screen_scf, out_position='left', **kwargs):
         super(Stick, self).__init__(**kwargs)
-        self.size = width * screen_scf, height * screen_scf
         self.norm_size = norm_size
         self.norm_pos = norm_pos
-        self.ch_x = norm_pos[0] * w
-        self.ch_y = norm_pos[1] * h
-        self.ch_s = norm_size[0] * w
+        self.size = self.norm_size[0] * width * screen_scf, self.norm_size[1] * width * screen_scf
+        self.pos = self.norm_pos[0] * width * screen_scf, self.norm_pos[1] * height * screen_scf
 
-        self.ts_x = [norm_pos[0] * w, norm_pos[0] * w + norm_size[0] * w]
-        self.ts_y = [norm_pos[1] * w, norm_pos[1] * w + norm_size[1] * w]
-        self.ctrl = (0, 0)
-        self.pos = [0, 0]
+        self.ctrl = [0, 0]
 
         # Start with it off screen
         self.out_position = out_position
         if self.out_position == 'left':
-            self.pos[0] = -norm_size[0] * w
+            self.pos[0] = -self.norm_size[0] * w
         else:
             self.pos[0] = w
 
+        # print('Instantiated a stick at pos =', self.pos, 'and size =', self.size)
+
     def update_el(self, x, y):
-        self.ctrl_x = x
-        self.ctrl_y = y
-        self.ctrl = (x, y)
+        self.ctrl = [x, y]
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
-        self.ch_x = self.norm_pos[0] * w
-        self.ch_y = self.norm_pos[1] * h
-        self.ch_s = self.norm_size[0] * w
-
-        self.ts_x = [self.norm_pos[0] * w, self.norm_pos[0] * w + self.norm_size[0] * w]
-        self.ts_y = [self.norm_pos[1] * w, self.norm_pos[1] * w + self.norm_size[1] * w]
+        if self.is_on_screen:
+            self.pos[0] = self.norm_pos[0] * w
+        elif self.out_position == 'left':
+            self.pos[0] = -self.norm_size[0] * w
+        else:
+            self.pos[0] = w
+        self.size = self.norm_size[0] * w, self.norm_size[1] * w
+        self.pos[1] = self.norm_pos[1] * h
+        # print('Resized a stick to size =', self.size, 'and pos =', self.pos)
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf):
-        anim = Animation(x=0, y=0, duration=0.25, t='out_back')
+        in_x = self.norm_pos[0] * w
+        in_y = self.norm_pos[1] * h
+        anim = Animation(x=in_x, y=in_y, duration=0.25, t='out_back')
         anim.start(self)
+        self.is_on_screen = True
+        # print('Moved a stick (anim_in) to size =', self.size, 'and pos =', (in_x, in_y))
 
     def anim_out(self, w=width*screen_scf, h=height*screen_scf):
         if self.out_position == 'left':
-            out_x = -norm_size[0] * w
+            out_x = -self.norm_size[0] * w
         else:
             out_x = w
-        anim = Animation(x=out_x, y=0, duration=0.25, t='in_back')
+        out_y = self.norm_pos[1] * h
+        anim = Animation(x=out_x, y=out_y, duration=0.25, t='in_back')
         anim.start(self)
+        self.is_on_screen = False
+        # print('Moved a stick (anim_out) to size =', self.size, 'and pos =', (out_x, out_y))
 
 
 # Create OptionButtons class
@@ -441,6 +453,7 @@ class OptionButtons(Widget):
     label_font_size = NumericProperty(0.0)
     label_color = ListProperty([0.0, 0.0, 0.0, 1.0])
     out_position = StringProperty('')
+    is_on_screen = False
 
     def __init__(self, norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
                  w=width*screen_scf, h=height*screen_scf, out_position='top', **kwargs):
@@ -457,17 +470,27 @@ class OptionButtons(Widget):
 
         # Initialize with the button positioned outside
         if self.out_position == 'top':
-            self.pos[1] = h*screen_Scf
+            self.pos[1] = h
         elif self.out_position == 'bottom':
             self.pos[1] = -self.size[1]
         elif self.out_position == 'left':
             self.pos[0] = -self.size[0]
         elif self.out_position == 'right':
-            self.pos[0] = w*screen_scf
+            self.pos[0] = w
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
         self.size = [self.norm_size[0] * w, self.norm_size[1] * h]
-        self.pos = [self.norm_pos[0] * w, self.norm_pos[1] * h]
+        if self.is_on_screen:
+            self.pos = [self.norm_pos[0] * w, self.norm_pos[1] * h]
+        elif self.out_position == 'top':
+            self.pos = [self.norm_pos[0] * w, h]
+        elif self.out_position == 'bottom':
+            self.pos = [self.norm_pos[0] * w, -self.size[1]]
+        elif self.out_position == 'left':
+            self.pos = [-self.size[0],  self.norm_pos[1] * h]
+        elif self.out_position == 'right':
+            self.pos = [w, self.norm_pos[1] * h]
+
         self.label_font_size = self.norm_font_size * h
 
     def detect_touch(self, loc):
@@ -477,10 +500,16 @@ class OptionButtons(Widget):
                             loc[1] < self.pos[1] + self.size[1]]
         return all(touch_conditions)
 
+    def background_touched(self, dt=0):
+        self.background_color = (0, 0, 1, 0.5)
+
+    def background_untouched(self, dt=0):
+        self.background_color = (1, 1, 1, 0.75)
+
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
-        anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=duration, t='out_elastic')
-        Animation.cancel_all(self)
+        anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=duration, t='out_back')
         anim.start(self)
+        self.is_on_screen = True
 
     def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
         out_x = self.pos[0]
@@ -493,33 +522,48 @@ class OptionButtons(Widget):
             out_y = -self.size[1]
         elif self.out_position == 'top':
             out_y = h
-        anim = Animation(x=out_x, y=out_y, duration=duration, t='in_elastic')
-        Animation.cancel_all
+        anim = Animation(x=out_x, y=out_y, duration=duration, t='in_back')
         anim.start(self)
+        self.is_on_screen = False
 
 
 class ScoreLabel(Widget):
     label_text = StringProperty('')
-    label_left = NumericProperty(0.0)
     label_font = StringProperty('a/VeraMono.ttf')
     label_size = NumericProperty(int(0.02 * width * screen_scf))
+    is_on_screen = False
 
     def __init__(self, norm_left=0.0, w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(ScoreLabel, self).__init__()
         self.label_text = kwargs['text']
         self.norm_left = norm_left
-        self.label_left = norm_left * w
-        self.width = width * screen_scf
-        self.height = height * screen_scf
+        self.size = [0.2 * w, 0.02 * width * screen_scf + 4]
+        self.pos = [self.norm_left * w, h]
 
     def update(self, label_string):
         self.label_text = label_string
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
-        self.label_left = self.norm_left * w
         self.label_size = int(0.02*w)
-        self.width = w
-        self.height = h
+        self.size = [0.2 * w, 0.02 * width * screen_scf + 4]
+        if self.is_on_screen:
+            self.pos = [self.norm_left * w, h - self.label_size - 4]
+        else:
+            self.pos = [self.norm_left * w, h]
+
+    def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.1):
+        in_x = self.norm_left * w
+        in_y = h - self.label_size - 4
+        anim = Animation(x=in_x, y=in_y, duration=duration)
+        anim.start(self)
+        self.is_on_screen = True
+
+    def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=0.1):
+        out_x = self.norm_left * w
+        out_y = h
+        anim = Animation(x=out_x, y=out_y, duration=duration, t='in_elastic')
+        anim.start(self)
+        self.is_on_screen = False
 
 
 class HighScoreLabel(Widget):
@@ -613,8 +657,6 @@ class HighScoreLabel(Widget):
 class DrubbleGame(Widget):
     def __init__(self, **kwargs):
         super(DrubbleGame, self).__init__(**kwargs)
-        self.bind(pos=self.update_canvas)
-        self.bind(size=self.update_canvas)
         self.bind(size=self.resize_canvas)
         if platform in ('linux', 'windows', 'win', 'macosx'):
             self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
@@ -626,10 +668,9 @@ class DrubbleGame(Widget):
         #Window.bind(on_joy_button_up=self.on_joy_button_up)
         Window.bind(on_joy_button_down=self.on_joy_button_down)
         self.nMarks = 0
-        self.yardLine = []
-        self.yardMark = []
         self.weHaveWidgets = False
         self.weHaveButtons = False
+        self.needToResize = True
         with self.canvas:
             # Splash screen, init right away
             self.splash = SplashScreen(w=width*screen_scf, h=height*screen_scf)
@@ -637,7 +678,6 @@ class DrubbleGame(Widget):
 
             # Initialize the background
             self.bg = MyBackground()
-            self.bg.anim_out(duration=0)
             self.add_widget(self.bg)
 
             # Initialize the ball
@@ -649,71 +689,6 @@ class DrubbleGame(Widget):
             self.tiltStick = Stick(norm_size=(0.2, 0.2), norm_pos=(0.0, 0.05), out_position='left')
             self.add_widget(self.moveStick)
             self.add_widget(self.tiltStick)
-
-            # Initialize the player faces
-            self.myFace = MyFace(image_source='a/myFace.png', jersey_source='a/MyJersey.png',
-                                 shorts_source='a/MyShorts.png', line_color=green, stool_color=white)
-            self.LadyFace = MyFace(image_source='a/LadyFace.png', jersey_source='a/LadyJersey.png',
-                                   shorts_source='a/LadyShorts.png', line_color=pink, stool_color=gray)
-            self.add_widget(self.myFace)
-            self.add_widget(self.LadyFace)
-
-            # Initialize the high score labels
-            self.high_score_header = HighScoreLabel()
-            self.add_widget(self.high_score_header)
-            self.high_dist_label = HighScoreLabel(outside_position='left', vertical_position=1,
-                                                  label_text='Distance', this_run='%0.1f' % stats.stool_dist,
-                                                  best_run='%0.1f' % stats.high_stool_dist[p.nPlayer-1])
-            self.add_widget(self.high_dist_label)
-            self.high_height_label = HighScoreLabel(outside_position='right', vertical_position=2,
-                                                    label_text='Height', this_run='%0.2f' % stats.max_height,
-                                                    best_run='%0.2f' % stats.high_height[p.nPlayer-1])
-            self.add_widget(self.high_height_label)
-            self.high_boing_label = HighScoreLabel(outside_position='left', vertical_position=3,
-                                                   label_text='Boing!', this_run='%0.0f' % stats.stool_count,
-                                                   best_run='%0.0f' % stats.high_stool_count[p.nPlayer-1])
-            self.add_widget(self.high_boing_label)
-            self.high_score_label = HighScoreLabel(outside_position='right', vertical_position=4,
-                                                   label_text='Score', this_run='%0.0f' % stats.score,
-                                                   best_run='%0.0f' % stats.high_score[p.nPlayer-1])
-            self.add_widget(self.high_score_label)
-
-            # Initialize the option and action buttons
-            self.singleDrubbleButt = OptionButtons(text='Single dRuBbLe', norm_size=(0.7, 0.2), out_position='left',
-                                                   norm_pos=(0.15, 0.7),  norm_font_size=0.15,  color=red)
-            self.doubleDrubbleButt = OptionButtons(text='Double dRuBbLe', norm_size=(0.7, 0.2), out_position='right',
-                                                   norm_pos=(0.15, 0.4),  norm_font_size=0.15,  color=red)
-
-            self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06), out_position='left',
-                                            norm_pos=(0.01, 0.88), norm_font_size=0.055, color=red)
-            self.add_widget(self.optionButt)
-
-            self.actionButt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.06), out_position='right',
-                                            norm_pos=(0.81, 0.88),  norm_font_size=0.055, color=red)
-            self.add_widget(self.actionButt)
-
-    def add_game_widgets(self):
-        # Background
-        self.bg.anim_in()
-
-        # Option and action buttons
-        self.optionButt.anim_in(w=self.width, h=self.height)
-        self.actionButt.anim_in(w=self.width, h=self.height)
-
-        # Sticks
-        self.moveStick.anim_in(w=self.width, h=self.height)
-        self.moveStick.anim_out(w=self.width, h=self.height)
-
-        # Add game widgets
-        with self.canvas:
-
-            #self.add_widget(self.bg)
-
-            #self.add_widget(self.myFace)
-            #self.add_widget(self.LadyFace)
-            #self.add_widget(self.ball)
-
-            self.bg.resize(w=self.width, h=self.height)
 
             # Initialize the score line
             self.time_label = ScoreLabel(text='Time', norm_left=0.0)
@@ -727,27 +702,92 @@ class DrubbleGame(Widget):
             self.add_widget(self.boing_label)
             self.add_widget(self.score_label)
 
-            self.weHaveWidgets = True
+            # Initialize the player faces
+            self.myFace = MyFace(image_source='a/myFace.png', jersey_source='a/MyJersey.png',
+                                 shorts_source='a/MyShorts.png', line_color=green, stool_color=white)
+            self.LadyFace = MyFace(image_source='a/LadyFace.png', jersey_source='a/LadyJersey.png',
+                                   shorts_source='a/LadyShorts.png', line_color=olive, stool_color=gray)
+            self.add_widget(self.myFace)
+            self.add_widget(self.LadyFace)
 
-            self.resize_canvas()
+            # Initialize the high score labels
+            self.high_score_header = HighScoreLabel()
+            self.high_dist_label = HighScoreLabel(outside_position='left', vertical_position=1,
+                                                  label_text='Distance', this_run='%0.1f' % stats.stool_dist,
+                                                  best_run='%0.1f' % stats.high_stool_dist[p.nPlayer-1])
+
+            self.high_height_label = HighScoreLabel(outside_position='right', vertical_position=2,
+                                                    label_text='Height', this_run='%0.2f' % stats.max_height,
+                                                    best_run='%0.2f' % stats.high_height[p.nPlayer-1])
+
+            self.high_boing_label = HighScoreLabel(outside_position='left', vertical_position=3,
+                                                   label_text='Boing!', this_run='%0.0f' % stats.stool_count,
+                                                   best_run='%0.0f' % stats.high_stool_count[p.nPlayer-1])
+            self.high_score_label = HighScoreLabel(outside_position='right', vertical_position=4,
+                                                   label_text='Score', this_run='%0.0f' % stats.score,
+                                                   best_run='%0.0f' % stats.high_score[p.nPlayer-1])
+            self.add_widget(self.high_score_header)
+            self.add_widget(self.high_dist_label)
+            self.add_widget(self.high_height_label)
+            self.add_widget(self.high_boing_label)
+            self.add_widget(self.high_score_label)
+
+            # Initialize the option and action buttons
+            self.singleDrubbleButt = OptionButtons(text='Single dRuBbLe', norm_size=(0.7, 0.2), out_position='left',
+                                                   norm_pos=(0.15, 0.7),  norm_font_size=0.15,  color=red)
+            self.doubleDrubbleButt = OptionButtons(text='Double dRuBbLe', norm_size=(0.7, 0.2), out_position='right',
+                                                   norm_pos=(0.15, 0.4),  norm_font_size=0.15,  color=red)
+            self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06), out_position='left',
+                                            norm_pos=(0.01, 0.88), norm_font_size=0.055, color=red)
+
+            self.actionButt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.06), out_position='right',
+                                            norm_pos=(0.81, 0.88),  norm_font_size=0.055, color=red)
+            self.add_widget(self.singleDrubbleButt)
+            self.add_widget(self.doubleDrubbleButt)
+            self.add_widget(self.optionButt)
+            self.add_widget(self.actionButt)
+
+    def add_game_widgets(self):
+        # Background
+        self.bg.anim_in()
+
+        # Ball
+        self.ball.anim_in()
+
+        # Option and action buttons
+        self.optionButt.anim_in(w=self.width, h=self.height)
+        self.actionButt.anim_in(w=self.width, h=self.height)
+
+        # Sticks
+        self.moveStick.anim_in(w=self.width, h=self.height)
+        self.tiltStick.anim_in(w=self.width, h=self.height)
+
+        # Score labels
+        self.time_label.anim_in(w=self.width, h=self.height, duration=0.1)
+        self.dist_label.anim_in(w=self.width, h=self.height, duration=0.2)
+        self.high_label.anim_in(w=self.width, h=self.height, duration=0.3)
+        self.boing_label.anim_in(w=self.width, h=self.height, duration=0.4)
+        self.score_label.anim_in(w=self.width, h=self.height, duration=0.5)
+
+        self.weHaveWidgets = True
+        self.resize_canvas()
 
     def remove_game_widgets(self):
         self.bg.anim_out()
+        self.ball.anim_out()
         self.moveStick.anim_out(w=self.width, h=self.height)
-        self.moveStick.anim_out(w=self.width, h=self.height)
-        #self.remove_widget(self.moveStick)
-        #self.remove_widget(self.tiltStick)
-        #self.remove_widget(self.myFace)
-        #self.remove_widget(self.LadyFace)
+        self.tiltStick.anim_out(w=self.width, h=self.height)
         self.myFace.clear()
         self.LadyFace.clear()
-        self.remove_widget(self.time_label)
-        self.remove_widget(self.dist_label)
-        self.remove_widget(self.high_label)
-        self.remove_widget(self.boing_label)
-        self.remove_widget(self.score_label)
+        self.time_label.anim_out(w=self.width, h=self.height, duration=0.15)
+        self.dist_label.anim_out(w=self.width, h=self.height, duration=0.30)
+        self.high_label.anim_out(w=self.width, h=self.height, duration=0.45)
+        self.boing_label.anim_out(w=self.width, h=self.height, duration=0.60)
+        self.score_label.anim_out(w=self.width, h=self.height, duration=0.75)
+
         self.optionButt.anim_out(w=self.width, h=self.height)
         self.actionButt.anim_out(w=self.width, h=self.height)
+        self.weHaveWidgets = False
 
     def add_option_buttons(self):
         # Add option screen buttons
@@ -815,20 +855,9 @@ class DrubbleGame(Widget):
         if gs.game_mode == 1 and gs.showedSplash:
             cycleModes(gs, stats, engine)
         elif keycode[1] == 'spacebar':
-            cycleModes(gs, stats, engine)
-            self.actionButt.text = p.actionMSG[gs.game_mode]
-            if gs.game_mode == 7:
-                self.add_high_scores()
-                self.bg.anim_out()
-            elif gs.game_mode == 3:
-                self.remove_high_scores()
-                self.add_game_widgets()
+            self.action_button_press()
         elif keycode[1] == 'escape':
-            gs.game_mode = 1
-            self.remove_game_widgets()
-            self.add_option_buttons()
-            cycleModes(gs, stats, engine)
-            self.remove_high_scores(duration=0)
+            self.option_button_press()
         return True
     
     def _on_keyboard_up(self, keyboard, keycode):
@@ -841,33 +870,15 @@ class DrubbleGame(Widget):
         if gs.game_mode == 1 and gs.showedSplash:
             cycleModes(gs, stats, engine)
         elif gs.game_mode == 2 and self.singleDrubbleButt.detect_touch(loc):
-            p.nPlayer = 1
-            cycleModes(gs, stats, engine)
-            self.add_game_widgets()
-            self.remove_option_buttons()
+            self.single_drubble_button_press()
         elif gs.game_mode == 2 and self.doubleDrubbleButt.detect_touch(loc):
-            p.nPlayer = 2
-            cycleModes(gs, stats, engine)
-            self.add_game_widgets()
-            self.remove_option_buttons()
+            self.double_drubble_button_press()
         elif gs.game_mode > 2:
-            # Cycle through modes if touch above the halfway point
+            # Cycle through modes if touched the action or option_butt
             if self.actionButt.detect_touch(loc):
-                cycleModes(gs, stats, engine)
-                self.actionButt.text = p.actionMSG[gs.game_mode]
-                self.actionButt.background_color = (0, 0.5, 1, 0.5)
-                if gs.game_mode == 7:
-                    self.add_high_scores()
-                    self.bg.anim_out()
-                elif gs.game_mode == 3:
-                    self.remove_high_scores()
-                    self.bg.anim_in()
+                self.action_button_press()
             if self.optionButt.detect_touch(loc):
-                gs.game_mode = 1
-                self.remove_game_widgets()
-                self.add_option_buttons()
-                cycleModes(gs, stats, engine)
-                self.optionButt.background_color = (0, 0.5, 1, 0.5)
+                self.option_button_press()
 
             # Detect control inputs
             xy = touchStick(loc, self.moveStick)
@@ -905,28 +916,102 @@ class DrubbleGame(Widget):
                 self.tiltStick.update_el(0, 0)
                 gs.ctrl[2:4] = [0, 0]
 
-            self.actionButt.background_color = (1, 1, 1, 0.75)
-            self.optionButt.background_color = (1, 1, 1, 0.75)
-
     def on_joy_axis(self, win, stickid, axisid, value):
-        print('me')
-        print(win)
+        if axisid == 0:
+            # Stool tilt
+            gs.ctrl[3] = -value / 32768
+        elif axisid == 1:
+            # Stool up/down
+            gs.ctrl[2] = value / 32768
+        elif axisid == 2:
+            # Left/right movement
+            gs.ctrl[0] = value / 32768
+        elif axisid == 3:
+            # Up/down movement
+            gs.ctrl[1] = value / 32768
 
     def on_joy_button_down(self, win, stickid, buttonid):
-        print('butt')
+        if gs.game_mode == 1:
+            cycleModes(gs, stats, engine)
+        elif gs.game_mode == 2:
+            if buttonid in (0, 6):
+                # A button
+                self.single_drubble_button_press()
+            elif buttonid in (1, 7):
+                # B button
+                self.double_drubble_button_press()
+        elif gs.game_mode > 2:
+            if buttonid in (1, 6):
+                # Left trigger
+                self.option_button_press()
+            elif buttonid in (0, 7):
+                # Right trigger
+                self.action_button_press()
 
-    # Drawing commands
-    def update_canvas(self,*args):
-        if self.weHaveWidgets:
-            #self.canvas.clear()
-            with self.canvas:
-                if gs.game_mode < 7:
-                    # Draw markers
-                    make_markers(self, p1)
-                else:
-                    # Delete the marker text
-                    for k in range(self.nMarks):
-                        self.yardMark[k].text = ''
+    # What to do when the single drubble button is pressed
+    def single_drubble_button_press(self):
+        # Specify that this will be the one player version, and start game
+        p.nPlayer = 1
+        cycleModes(gs, stats, engine)
+
+        # Add the in-game widgets
+        self.add_game_widgets()
+        self.remove_option_buttons()
+
+        # Turn the button blue momentarily
+        self.singleDrubbleButt.background_touched()
+        Clock.schedule_once(self.singleDrubbleButt.background_untouched, 0.1)
+
+    # What to do when the couble drubble button is pressed
+    def double_drubble_button_press(self):
+        # Specify this will be the two player version, and start game
+        p.nPlayer = 2
+        cycleModes(gs, stats, engine)
+
+        # Add the in-game widgets
+        self.add_game_widgets()
+        self.remove_option_buttons()
+
+        # Turn the button blue momentarily
+        self.doubleDrubbleButt.background_touched()
+        Clock.schedule_once(self.doubleDrubbleButt.background_untouched, 0.1)
+
+    # What to do when option button is pressed
+    def option_button_press(self):
+        # Return to the option screen, removing the in-game widgets
+        gs.game_mode = 1
+        self.remove_game_widgets()
+        self.remove_high_scores()
+        self.add_option_buttons()
+
+        # Reset game states and scores
+        cycleModes(gs, stats, engine)
+
+        # Turn the button blue momentarily
+        self.optionButt.background_touched()
+        Clock.schedule_once(self.optionButt.background_untouched, 0.1)
+
+    # What to do when action button is pressed
+    def action_button_press(self):
+        # Progress through the speed/angle setting, game, then high score
+        cycleModes(gs, stats, engine)
+
+        # Update the button text and color
+        self.actionButt.text = p.actionMSG[gs.game_mode]
+        self.actionButt.background_color = (0, 0.5, 1, 0.5)
+
+        # If on completion of the game, add the high scores
+        # If on restart of game, remove the high scores
+        if gs.game_mode == 7:
+            self.add_high_scores()
+            self.bg.anim_out()
+        elif gs.game_mode == 3:
+            self.remove_high_scores()
+            self.bg.anim_in()
+
+        # Turn the button blue momentarily
+        self.actionButt.background_touched()
+        Clock.schedule_once(self.actionButt.background_untouched, 0.1)
 
     def resize_canvas(self, *args):
         # High score labels
@@ -936,26 +1021,32 @@ class DrubbleGame(Widget):
         self.high_boing_label.resize(w=self.width, h=self.height)
         self.high_score_label.resize(w=self.width, h=self.height)
 
-        if self.weHaveWidgets:
-            self.time_label.resize(w=self.width, h=self.height)
-            self.dist_label.resize(w=self.width, h=self.height)
-            self.high_label.resize(w=self.width, h=self.height)
-            self.boing_label.resize(w=self.width, h=self.height)
-            self.score_label.resize(w=self.width, h=self.height)
+        # Score labels
+        self.time_label.resize(w=self.width, h=self.height)
+        self.dist_label.resize(w=self.width, h=self.height)
+        self.high_label.resize(w=self.width, h=self.height)
+        self.boing_label.resize(w=self.width, h=self.height)
+        self.score_label.resize(w=self.width, h=self.height)
 
-            self.moveStick.resize(w=self.width, h=self.height)
-            self.tiltStick.resize(w=self.width, h=self.height)
+        # Sticks
+        self.moveStick.resize(w=self.width, h=self.height)
+        self.tiltStick.resize(w=self.width, h=self.height)
 
-            self.bg.resize(self.width, self.height)
-            self.bg.bottomLineHeight = self.height/20.0
+        # Background image
+        self.bg.resize(self.width, self.height)
+        self.bg.bottomLineHeight = self.height/20.0
 
-            self.actionButt.resize(w=self.width, h=self.height)
-            self.optionButt.resize(w=self.width, h=self.height)
+        # Buttons
+        self.singleDrubbleButt.resize(w=self.width, h=self.height)
+        self.doubleDrubbleButt.resize(w=self.width, h=self.height)
+        self.actionButt.resize(w=self.width, h=self.height)
+        self.optionButt.resize(w=self.width, h=self.height)
 
     # Time step the game
     def update(self, dt):
-        if gs.n == 0:
+        if self.needToResize:
             self.resize_canvas()
+            self.needToResize = False
 
         if self.weHaveWidgets:
             self.actionButt.text = p.actionMSG[gs.game_mode]
@@ -1005,6 +1096,7 @@ class DrubbleGame(Widget):
         if gs.game_mode > 2:
             xMean = (gs.xb+gs.xp[0])/2.0
             self.bg.update(xMean, gs.yb, self.width, self.height, m2p)
+            self.bg.make_markers(p1)
             self.moveStick.update_el(gs.ctrl[0], gs.ctrl[1])
             self.tiltStick.update_el(-gs.ctrl[3], gs.ctrl[2])
             self.myFace.update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], m2p, po,
@@ -1016,7 +1108,6 @@ class DrubbleGame(Widget):
             if p.nPlayer > 1:
                 self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], m2p, po,
                                      self.width, self.height, p2.player)
-            self.update_canvas()
 
             # Make the bounce sounds
             if gs.StoolBounce:
