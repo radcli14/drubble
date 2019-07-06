@@ -100,7 +100,7 @@ class MyBackground(Widget):
     img_h = NumericProperty(h_orig)
 
     # Number of background images
-    num_bg = 4
+    num_bg = 5
 
     # Create the properties for the left edges of the bg images
     bg_left0 = NumericProperty(0.0)
@@ -545,7 +545,7 @@ class ScoreLabel(Widget):
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
         self.label_size = int(0.02*w)
-        self.size = [0.2 * w, 0.02 * width * screen_scf + 4]
+        self.size = [0.2 * w, 0.02 * w + 4]
         if self.is_on_screen:
             self.pos = [self.norm_left * w, h - self.label_size - 4]
         else:
