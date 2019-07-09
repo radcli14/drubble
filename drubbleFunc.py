@@ -3,6 +3,7 @@
 #from numpy import array
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
 from kivy.storage.jsonstore import JsonStore
+from kivy.app import App
 
 import sys
 # Frame rate
@@ -554,21 +555,15 @@ def cycleModes(gs, stats, engine):
 
 
 class GameScore:
-    # Import high scores, or set to zero
-    try:
-        # Load from JsonStore
-        store = JsonStore('my_score.json')
-        high_stool_dist = store.get('high_stool_dist')['value']
-        high_height = store.get('high_height')['value']
-        high_stool_count = store.get('high_stool_count')['value']
-        high_score = store.get('high_score')['value']
-    except:
-        print('failed importing high scores, initiating as zeros')
-        # Initialize as zero
-        high_stool_dist = [0.0, 0.0]
-        high_height = [0.0, 0.0]
-        high_stool_count = [0, 0]
-        high_score = [0, 0]
+    # Set the high score file path and name
+    high_score_file = 'score.json'
+    store = None
+
+    # Initialize high scores as zero
+    high_stool_dist = [0.0, 0.0]
+    high_height = [0.0, 0.0]
+    high_stool_count = [0, 0]
+    high_score = [0, 0]
 
     # Initiate statistics as zeros
     def __init__(self):
@@ -596,12 +591,37 @@ class GameScore:
         self.floor_count += gs.FloorBounce
         self.score = int(self.stool_dist * self.max_height * self.stool_count)
 
+    # Initialize high scores from the user_data_dir
+    def init_high(self, high_score_file='score.json'):
+        self.high_score_file = high_score_file
+        print('Attempting to initialize high scores at ', self.high_score_file)
+        # Import high scores, or set to zero
+        try:
+            # Load from JsonStore
+            self.store = JsonStore(high_score_file)
+            self.high_stool_dist = self.store.get('high_stool_dist')['value']
+            self.high_height = self.store.get('high_height')['value']
+            self.high_stool_count = self.store.get('high_stool_count')['value']
+            self.high_score = self.store.get('high_score')['value']
+            print('imported high scores')
+        except:
+            print('Failed importing high scores, creating store')
+            self.store = JsonStore(high_score_file)
+
     # Update high scores
     def update_high(self):
         self.high_stool_dist[p.nPlayer-1] = max(self.high_stool_dist[p.nPlayer-1], self.stool_dist)
         self.high_height[p.nPlayer-1] = max(self.high_height[p.nPlayer-1], self.max_height)
         self.high_stool_count[p.nPlayer-1] = max(self.high_stool_count[p.nPlayer-1], self.stool_count)
         self.high_score[p.nPlayer-1] = max(self.high_score[p.nPlayer-1], self.score)
+
+        try:
+            self.store.put('high_stool_dist', value=self.high_stool_dist)
+            self.store.put('high_height', value=self.high_height)
+            self.store.put('high_stool_count', value=self.high_stool_count)
+            self.store.put('high_score', value=self.high_score)
+        except:
+            print('failed exporting high scores to ', self.high_score_file)
 
 
 # Equation of Motion

@@ -22,6 +22,7 @@ from kivy.utils import platform
 from kivy.config import Config
 from kivy.animation import Animation
 from kivy.storage.jsonstore import JsonStore
+from os.path import join
 
 # Import drubbleFunc to get the supporting functions and classes
 import sys
@@ -136,11 +137,13 @@ class MyBackground(Widget):
         self.bg_alpha = 1.0
 
         # xmod is normalized position of the player between 0 and num_bg
+        while x + self.xpos < 0:
+            x += 100.0 * self.num_bg
         xmod = fmod(x+self.xpos, 100.0 * self.num_bg) / 100.0
         xrem = fmod(xmod, 1)
         xflr = int(floor(xmod))
 
-        # xsel selects which background textures are used TBR
+        # xsel selects which background textures are used
         if xrem <= 0.5:
             xsel = xflr - 1
         else:
@@ -827,14 +830,6 @@ class DrubbleGame(Widget):
 
         # Update the high scores
         stats.update_high()
-        try:
-            store = JsonStore('my_score.json')
-            store.put('high_stool_dist', value=stats.high_stool_dist)
-            store.put('high_height', value=stats.high_height)
-            store.put('high_stool_count', value=stats.high_stool_count)
-            store.put('high_score', value=stats.high_score)
-        except:
-            print('failed exporting high scores to json')
 
     def remove_high_scores(self, duration=1):
         # Take the high scores off the screen
@@ -1123,6 +1118,8 @@ class DrubbleApp(App):
 
     def build(self):
         game = DrubbleGame()
+        data_dir = getattr(self, 'user_data_dir')
+        stats.init_high(join(data_dir, 'scores.json'))
         Clock.schedule_interval(game.update, 1.0/fs)
         return game
 
