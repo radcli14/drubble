@@ -23,6 +23,7 @@ from kivy.config import Config
 from kivy.animation import Animation
 from kivy.storage.jsonstore import JsonStore
 from os.path import join
+import cProfile
 
 # Import drubbleFunc to get the supporting functions and classes
 import sys
@@ -577,6 +578,9 @@ class HighScoreLabel(Widget):
     best_run = StringProperty('')
     is_high = StringProperty('')
     font_size = NumericProperty(0)
+    label_color = ListProperty([1, 0, 0, 1])
+    outline_width = NumericProperty(2 * screen_scf)
+    outline_color = ListProperty([1, 1, 1])
     ratio_from_top = 0.77
     is_on_screen = False
 
@@ -594,7 +598,7 @@ class HighScoreLabel(Widget):
         self.label_text = label_text
 
         # Left position of the widget when on-screen
-        self.label_left = 0.1 * w
+        self.label_left = 0.08 * w
 
         # Current scores and the saved best score
         self.this_run = this_run
@@ -623,6 +627,7 @@ class HighScoreLabel(Widget):
         in_y = (self.ratio_from_top - 0.1 * self.vertical_position) * h
         anim = Animation(x=in_x, y=in_y, duration=duration, t='out_elastic')
         anim.start(self)
+        print(self.label_text, ' ', self.this_run, ' ', self.best_run, ' ', self.is_high)
 
     def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=1):
         out_x = self.pos[0]
@@ -639,7 +644,7 @@ class HighScoreLabel(Widget):
         anim.start(self)
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
-        self.label_left = 0.1 * w
+        self.label_left = 0.08 * w
         self.width = 0.9 * w
         self.height = 0.1 * h
         self.font_size = 0.09 * h
@@ -809,11 +814,18 @@ class DrubbleGame(Widget):
         self.high_boing_label.this_run = '%0.0f' % stats.stool_count
         self.high_score_label.this_run = '%0.0f' % stats.score
 
+        # Calculate percentiles
+        pct_dist_str = return_percentile(stats.all_stool_dist[p.nPlayer-1], stats.stool_dist)
+        pct_height_str = return_percentile(stats.all_height[p.nPlayer - 1], stats.max_height)
+        pct_boing_str = return_percentile(stats.all_stool_count[p.nPlayer - 1], stats.stool_count)
+        pct_score_str = return_percentile(stats.all_score[p.nPlayer - 1], stats.score)
+
+        # Include either a percentile, or new high string
         hstr = 'New High!'
-        self.high_dist_label.is_high = hstr if stats.stool_dist > stats.high_stool_dist[p.nPlayer-1] else ''
-        self.high_height_label.is_high = hstr if stats.max_height > stats.high_height[p.nPlayer-1] else ''
-        self.high_boing_label.is_high = hstr if stats.stool_count > stats.high_stool_count[p.nPlayer-1] else ''
-        self.high_score_label.is_high = hstr if stats.score > stats.high_score[p.nPlayer-1] else ''
+        self.high_dist_label.is_high = hstr if stats.stool_dist > stats.high_stool_dist[p.nPlayer-1] else pct_dist_str
+        self.high_height_label.is_high = hstr if stats.max_height > stats.high_height[p.nPlayer-1] else pct_height_str
+        self.high_boing_label.is_high = hstr if stats.stool_count>stats.high_stool_count[p.nPlayer-1] else pct_boing_str
+        self.high_score_label.is_high = hstr if stats.score > stats.high_score[p.nPlayer-1] else pct_score_str
 
         # Update the strings for the high scores
         self.high_dist_label.best_run = '%0.1f' % stats.high_stool_dist[p.nPlayer-1]
@@ -849,9 +861,11 @@ class DrubbleGame(Widget):
         gs.setControl(keyPush=kvUpdateKey(self.keyPush, keycode, 1))
         if gs.game_mode == 1 and gs.showedSplash:
             cycleModes(gs, stats, engine)
-        elif keycode[1] == 'spacebar':
+        if gs.game_mode == 2 and keycode[1] == 'spacebar':
+            self.single_drubble_button_press()
+        elif gs.game_mode > 2 and keycode[1] == 'spacebar':
             self.action_button_press()
-        elif keycode[1] == 'escape':
+        elif gs.game_mode > 2 and keycode[1] == 'escape':
             self.option_button_press()
         return True
     
@@ -1080,7 +1094,7 @@ class DrubbleGame(Widget):
             self.score_label.update('Score %8.0f' % stats.score)
 
         # Player drawing settings        
-        xrng, yrng, m2p, po, m2r, ro = setRanges(gs.u, self.width)
+        xrng, yrng, m2p, po = set_ranges(gs.u, self.width)
             
         p1.width = p2.width = self.width
         p1.height = p2.height = self.height
@@ -1115,6 +1129,16 @@ class DrubbleGame(Widget):
 
 class DrubbleApp(App):
     icon = 'a/icon.png'
+
+    '''
+    def on_start(self):
+        self.profile = cProfile.Profile()
+        self.profile.enable()
+
+    def on_stop(self):
+        self.profile.disable()
+        self.profile.dump_stats('drubble.profile')
+    '''
 
     def build(self):
         game = DrubbleGame()

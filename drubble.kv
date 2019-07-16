@@ -159,25 +159,33 @@
         font_name: root.label_font
         pos: root.pos
         size: (0.2 * root.width, root.height)
-        color: (1, 1, 1, 1)
+        color: root.label_color
+        outline_width: root.outline_width
+        outline_color: root.outline_color
     Label:
         text: root.this_run
         font_size: root.font_size
         font_name: root.label_font
         pos: root.pos[0] + 0.26*root.size[0], root.pos[1]
         size: 0.2 * root.width, root.height
-        color: 1, 1, 1, 1
+        color: root.label_color
+        outline_width: root.outline_width
+        outline_color: root.outline_color
     Label:
         text: root.best_run
         font_size: root.font_size
         font_name: root.label_font
-        pos: root.pos[0] + 0.48*root.size[0], root.pos[1]
+        pos: root.pos[0] + 0.47*root.size[0], root.pos[1]
         size: 0.2 * root.width, root.height
-        color: 1, 1, 1, 1
+        color: root.label_color
+        outline_width: root.outline_width
+        outline_color: root.outline_color
     Label:
         text: root.is_high
         font_size: root.font_size
         font_name: root.label_font
-        pos: root.pos[0] + 0.7*root.size[0], root.pos[1]
+        pos: root.pos[0] + 0.72*root.size[0], root.pos[1]
         size: 0.2 * root.width, root.height
-        color: 1, 1, 1, 1
+        color: root.label_color
+        outline_width: root.outline_width
+        outline_color: root.outline_color

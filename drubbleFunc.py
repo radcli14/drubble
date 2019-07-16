@@ -559,6 +559,12 @@ class GameScore:
     high_score_file = 'score.json'
     store = None
 
+    # Initialize all scores as empty arrays
+    all_stool_dist = [[], []]
+    all_height = [[], []]
+    all_stool_count = [[], []]
+    all_score = [[], []]
+
     # Initialize high scores as zero
     high_stool_dist = [0.0, 0.0]
     high_height = [0.0, 0.0]
@@ -593,12 +599,18 @@ class GameScore:
 
     # Initialize high scores from the user_data_dir
     def init_high(self, high_score_file='score.json'):
+        # Initialize the JsonStore
         self.high_score_file = high_score_file
         print('Attempting to initialize high scores at ', self.high_score_file)
+        self.store = JsonStore(high_score_file)
+
         # Import high scores, or set to zero
         try:
             # Load from JsonStore
-            self.store = JsonStore(high_score_file)
+            self.all_stool_dist = self.store.get('all_stool_dist')['value']
+            self.all_height = self.store.get('all_height')['value']
+            self.all_stool_count = self.store.get('all_stool_count')['value']
+            self.all_score = self.store.get('all_score')['value']
             self.high_stool_dist = self.store.get('high_stool_dist')['value']
             self.high_height = self.store.get('high_height')['value']
             self.high_stool_count = self.store.get('high_stool_count')['value']
@@ -606,22 +618,41 @@ class GameScore:
             print('imported high scores')
         except:
             print('Failed importing high scores, creating store')
-            self.store = JsonStore(high_score_file)
 
     # Update high scores
     def update_high(self):
+        self.all_stool_dist[p.nPlayer-1].append(self.stool_dist)
+        self.all_height[p.nPlayer-1].append(self.max_height)
+        self.all_stool_count[p.nPlayer-1].append(self.stool_count)
+        self.all_score[p.nPlayer-1].append(self.score)
+
         self.high_stool_dist[p.nPlayer-1] = max(self.high_stool_dist[p.nPlayer-1], self.stool_dist)
         self.high_height[p.nPlayer-1] = max(self.high_height[p.nPlayer-1], self.max_height)
         self.high_stool_count[p.nPlayer-1] = max(self.high_stool_count[p.nPlayer-1], self.stool_count)
         self.high_score[p.nPlayer-1] = max(self.high_score[p.nPlayer-1], self.score)
 
         try:
+            self.store.put('all_stool_dist', value=self.all_stool_dist)
+            self.store.put('all_height', value=self.all_height)
+            self.store.put('all_stool_count', value=self.all_stool_count)
+            self.store.put('all_score', value=self.all_score)
             self.store.put('high_stool_dist', value=self.high_stool_dist)
             self.store.put('high_height', value=self.high_height)
             self.store.put('high_stool_count', value=self.high_stool_count)
             self.store.put('high_score', value=self.high_score)
         except:
             print('failed exporting high scores to ', self.high_score_file)
+
+
+# Determine from the stats what percentile the current game is, return string forms
+def return_percentile(all_stats, this_stat):
+    percent = 100 * len([i for i in all_stats if i > this_stat]) / len(all_stats)
+    if percent > 50.0:
+        percent = 100 - percent
+        percent_str = 'Bottom %0.1f%%' % percent
+    else:
+        percent_str = 'Top %0.1f%%' % percent
+    return percent_str
 
 
 # Equation of Motion
@@ -983,22 +1014,25 @@ def stickDude(inp, k):
 # Solve for the x and y ranges to include in the plot, scale factors to 
 # convert from meters to pixels, and pixel offset to the center line
 # Ratio refers to normalized positions in the window on the scale [0 0 1 1]
-def setRanges(u, w):
-    maxy = 1.25 * max([u[1], u[5] + p.d + u[6] * cos(u[7]), 3.0])
-    diffx = 1.25 * abs(u[0]-u[4])
-    midx = (u[0] + u[4]) / 2.0
-    if diffx > 2 * (maxy+1):
-        xrng = midx - 0.5 * diffx, midx + 0.5*diffx
-        yrng = -1.0, 0.5 * (diffx - 0.5)
-    else:
-        xrng = midx - maxy - 0.5, midx + maxy + 0.5
-        yrng = -1.0, maxy
+def set_ranges(u, w):
+    # Ranges are determined by the maximum height of the stool, and differential between ball and player
+    max_y = 1.1 * max([u[1], u[5] + p.d + u[6] * cos(u[7]), 3.0])
+    diff_x = abs(u[0] - u[4])
 
-    MeterToPixel = w/(xrng[1]-xrng[0])
-    MeterToRatio = 1.0/(xrng[1]-xrng[0])
-    PixelOffset = (xrng[0]+xrng[1])/2.0*MeterToPixel
-    RatioOffset = (xrng[0]+xrng[1])/2.0*MeterToRatio
-    return xrng, yrng, MeterToPixel, PixelOffset, MeterToRatio, RatioOffset
+    # Left and right edges are defined as the midpoint between ball and stool,
+    # plus or minus the maximum height and half the differential distance.
+    mid_x = (u[0] + u[4]) / 2.0
+    x_rng = mid_x - max_y - 0.5 * diff_x, mid_x + max_y + 0.5 * diff_x
+
+    # Bottom and top edges are defined as -1 meter and the max height
+    # plus half the differential distance
+    y_rng = -1.0, max_y + 0.5 * (diff_x - 0.5)
+
+    # Meter to pixel conversion is the screen width divided by differential
+    # distance. Pixel offset is the mean of the ranges, scaled to pixels.
+    meter_to_pixel = w / (x_rng[1] - x_rng[0])
+    pixel_offset = (x_rng[0] + x_rng[1]) / 2.0 * meter_to_pixel
+    return x_rng, y_rng, meter_to_pixel, pixel_offset
 
 
 def intersperse(list1, list2):
@@ -1020,7 +1054,7 @@ class playerLines():
         self.xv, self.yv, self.sx, self.sy = stickDude(gs, self.pnum)
         
         # Get ranges for drawing the player and ball
-        self.xrng, self.yrng, self.m2p, self.po, m2r, ro = setRanges(gs.u, w)
+        self.xrng, self.yrng, self.m2p, self.po = set_ranges(gs.u, w)
         
         # Convert to pixels
         self.player_x, self.player_y = xy2p(self.xv, self.yv, self.m2p, self.po,
@@ -1158,7 +1192,7 @@ if defObsoleteDemoFuncs:
         BA.set_data(XB[n,:],YB[n,:])
         
         # Update Axis Limits
-        xrng, yrng, m2p, po, m2r, ro = setRanges(Y[n,:])
+        xrng, yrng, m2p, po = set_ranges(Y[n,:])
         ax.set_xlim(xrng)
         ax.set_ylim(yrng)
         
