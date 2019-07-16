@@ -861,7 +861,7 @@ class DrubbleGame(Widget):
         gs.setControl(keyPush=kvUpdateKey(self.keyPush, keycode, 1))
         if gs.game_mode == 1 and gs.showedSplash:
             cycleModes(gs, stats, engine)
-        if gs.game_mode == 2 and keycode[1] == 'spacebar':
+        elif gs.game_mode == 2 and keycode[1] == 'spacebar':
             self.single_drubble_button_press()
         elif gs.game_mode > 2 and keycode[1] == 'spacebar':
             self.action_button_press()
