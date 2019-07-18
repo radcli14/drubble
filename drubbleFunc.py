@@ -646,13 +646,20 @@ class GameScore:
 
 # Determine from the stats what percentile the current game is, return string forms
 def return_percentile(all_stats, this_stat):
-    percent = 100 * len([i for i in all_stats if i > this_stat]) / len(all_stats)
-    if percent > 50.0:
-        percent = 100 - percent
-        percent_str = 'Bottom %0.1f%%' % percent
+    if len(all_stats) == 0 and this_stat > 0:
+        # First run, so must be a new high
+        return 'New High!'
+    elif len(all_stats) == 0 and this_stat == 0:
+        # First run, but didn't do anything
+        return ' '
     else:
-        percent_str = 'Top %0.1f%%' % percent
-    return percent_str
+        percent = 100 * len([i for i in all_stats if i > this_stat]) / len(all_stats)
+        if percent > 50.0:
+            percent = 100 - percent
+            percent_str = 'Bottom %0.1f%%' % percent
+        else:
+            percent_str = 'Top %0.1f%%' % percent
+        return percent_str
 
 
 # Equation of Motion
