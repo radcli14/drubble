@@ -23,7 +23,7 @@ let darkGreen = (0.0, 120.0/255.0, 0)
 let pi = 3.14159
 
 // Convert physical coordinates to pixels
-func xy2p(x: Double, y: Double, m2p: Double,po: Double,w: Double,h: Double) -> (Double, Double) {
+func xy2p(x: Double, y: Double, m2p: Double, po: Double, w: Double, h: Double) -> (Double, Double) {
     let xout = x*m2p-po+w/2
     let yout = y*m2p+h/20
     return (xout, yout)
@@ -668,10 +668,8 @@ class GameState {
             // Output State Derivatives
             i1 = k * 8 + 4
             i2 = k * 8 + 12
-            du[i1...i2] = [dxp[k], dyp[k], dlp[k], dtp[k], ddq[0], ddq[1], ddq[2], ddq[3]]
-            
+            du[i1..<i2] = [dxp[k], dyp[k], dlp[k], dtp[k], ddq[0], ddq[1], ddq[2], ddq[3]]
         }
-        
         return du
     }
     
@@ -689,7 +687,7 @@ class GameState {
         
         // Prevent event detection if there was already one within 0.1 seconds,
         // or if the ball is far from the stool or ground
-        let L = ballHitStool(t: self.t, u: self.u, k: pAct)  // Distance to stool
+        // let L = ballHitStool(t: self.t, u: self.u, k: pAct)  // Distance to stool
         let vBall = [self.dxb, self.dyb] // Velocity
         let sBall = norm(vec: vBall)     // Speed
         
@@ -710,11 +708,12 @@ class GameState {
         // Initialize state variables
         var U = [[Double]()]
         let rep = Array(repeating: 0.0, count: 20)
-        U.append(self.u)
-        for _ in 0 ..< nStep {
+        //U.append(self.u)
+        U[0] = self.u
+        for _ in 0 ... nStep {
             U.append(rep)
         }
-        
+
         var dudt = [Double](), Ls = 0.0, Lf = 0.0, tBreak = 0.0
         for k in 0 ... nStep {
             // Increment time
@@ -722,7 +721,7 @@ class GameState {
             
             // Calculate the derivatives of states w.r.t. time
             dudt = self.playerAndStool(u: U[k])
-            
+
             // Calculate the states at the next step
             for i in 0 ..< 20 {
                 U[k+1][i] = U[k][i] + dudt[i] * Double(ddt) / Double(nStep)
@@ -773,7 +772,7 @@ class GameState {
             self.t += ddt - tBreak
             dudt = self.playerAndStool(u: self.ue)
             for i in 0 ..< 20 {
-                self.u = self.ue[i] + dudt[i] * (ddt - tBreak)
+                self.u[i] = self.ue[i] + dudt[i] * (ddt - tBreak)
             }
         
             // Stuck
@@ -811,9 +810,12 @@ class GameState {
 }
 
 var gs = GameState()
-print(gs.u)
-print(gs.ball_predict())
-print(gs.tI)
+print("Initial u[0] = \(gs.u)")
+gs.sim_step()
+print("Stepped u[1] = \(gs.u)")
+gs.ball_predict()
+print("Predicted trajectory xTraj = \(gs.xTraj), yTraj = \(gs.yTraj)")
+print("Predicted tI = \(gs.tI)")
 
 // Define a class to animate the background screen
 class MyBackground {
