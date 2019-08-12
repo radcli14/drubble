@@ -20,7 +20,8 @@ The stool is modeled as a point mass that is first offset vertically from the pl
 Given the description above, the dynamics are represented by a 4 degree-of-freedom 4-DOF system where the generalized coordinates are **q** = (*x*, *y*, *l*, *$\theta$*), which is visually represented in Figure 1.
 
 ![Dynamics Model Diagram](extra_data/figs/diagram.png)
-** Figure 1 - Dynamics Model Diagram **
+
+**Figure 1 - Dynamics Model Diagram**
 
 
 ## Task List Before Release
