@@ -16,9 +16,12 @@ First person throws it, second person bounces it to the third person, who bounce
 ## Dynamics Model
 The player is modeled as a mass that is allowed to translate in the horizontal *x* and vertical *y* directions. 
 A spring and damper attach the player to the ground in the *y* coordinate.
-The stool is modeled as a point mass that is first offset vertically from the player mass, then radially from this offset point by an additional distance *l*, where the rotation of the offset relative to the vertical axis is given by the angle $\theta$.
+The stool is modeled as a point mass that is first offset vertically from the player mass by a distance *d*, then radially from this offset point by an additional distance *l*, where the rotation of the offset relative to the vertical axis is given by the angle $\theta$.
+Given the description above, the dynamics are represented by a 4 degree-of-freedom 4-DOF system where the generalized coordinates are **q** = (*x*, *y*, *l*, *$\theta$*), which is visually represented in Figure 1.
 
-![Dynamics Model Diagram](https://github.com/radcli14/drubble/extra_data/figs/diagram.png)
+![Dynamics Model Diagram](extra_data/figs/diagram.png)
+** Figure 1 - Dynamics Model Diagram **
+
 
 ## Task List Before Release
 - [ ] Move buttons out of the way so I can add a banner ad on the high score screen
