@@ -573,7 +573,7 @@ class ScoreLabel(Widget):
 class HighScoreLabel(Widget):
     # Initiate the widget properties
     label_text = StringProperty('')
-    label_font = StringProperty('a/airstrea.ttf')
+    label_font = StringProperty('a/Airstream.ttf')
     this_run = StringProperty('')
     best_run = StringProperty('')
     is_high = StringProperty('')
@@ -711,7 +711,7 @@ class DrubbleGame(Widget):
             self.add_widget(self.score_label)
 
             # Initialize the player faces
-            self.myFace = MyFace(image_source='a/myFace.png', jersey_source='a/MyJersey.png',
+            self.myFace = MyFace(image_source='a/myFace2.png', jersey_source='a/MyJersey.png',
                                  shorts_source='a/MyShorts.png', line_color=green, stool_color=white)
             self.LadyFace = MyFace(image_source='a/LadyFace.png', jersey_source='a/LadyJersey.png',
                                    shorts_source='a/LadyShorts.png', line_color=olive, stool_color=gray)

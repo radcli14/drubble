@@ -656,9 +656,9 @@ def return_percentile(all_stats, this_stat):
         percent = 100 * len([i for i in all_stats if i > this_stat]) / len(all_stats)
         if percent > 50.0:
             percent = 100 - percent
-            percent_str = 'Bottom %0.1f%%' % percent
+            percent_str = 'Bottom %0.0f%%' % percent
         else:
-            percent_str = 'Top %0.1f%%' % percent
+            percent_str = 'Top %0.0f%%' % percent
         return percent_str
 
 
