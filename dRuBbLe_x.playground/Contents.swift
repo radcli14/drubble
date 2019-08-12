@@ -1,4 +1,6 @@
 import UIKit
+import SpriteKit
+import GameplayKit
 
 // Timing variables
 let fs = 60.0
@@ -883,3 +885,13 @@ print("h_orig = \(bg.h_orig) ")
 print(bg.name)
 print(bg.update(x: 320.0, m2p: 40, w: 800, h: 500))
 print(xy2p(x: 10,y: 3,m2p: 40, po: 5, w: 800, h: 500))
+
+
+// Make the game window
+class GameScene: SKScene {
+    override func didMove(to view: SKView) {
+    }
+    
+    override func sceneDidLoad() {
+    }
+}
