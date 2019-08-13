@@ -516,7 +516,7 @@ class GameState:
             self.u[3] = self.startSpeed*sin(self.startAngle)
 
 
-def cycleModes(gs, stats, engine):
+def cycle_modes(gs, stats, engine):
     # Exit splash screen
     if gs.game_mode == 1:
         gs.game_mode += 1
@@ -531,7 +531,7 @@ def cycleModes(gs, stats, engine):
         return
         
     # Progress through angle and speed selection
-    if (gs.game_mode==3 or gs.game_mode==4): 
+    if gs.game_mode == 3 or gs.game_mode == 4:
         gs.game_mode += 1
         gs.phase = 0
         return

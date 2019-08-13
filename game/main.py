@@ -860,7 +860,7 @@ class DrubbleGame(Widget):
         self.keyPush = ctrl2keyPush(gs)
         gs.setControl(keyPush=kvUpdateKey(self.keyPush, keycode, 1))
         if gs.game_mode == 1 and gs.showedSplash:
-            cycleModes(gs, stats, engine)
+            cycle_modes(gs, stats, engine)
         elif gs.game_mode == 2 and keycode[1] == 'spacebar':
             self.single_drubble_button_press()
         elif gs.game_mode > 2 and keycode[1] == 'spacebar':
@@ -877,7 +877,7 @@ class DrubbleGame(Widget):
     def on_touch_down(self, touch):
         loc = (touch.x, touch.y)
         if gs.game_mode == 1 and gs.showedSplash:
-            cycleModes(gs, stats, engine)
+            cycle_modes(gs, stats, engine)
         elif gs.game_mode == 2 and self.singleDrubbleButt.detect_touch(loc):
             self.single_drubble_button_press()
         elif gs.game_mode == 2 and self.doubleDrubbleButt.detect_touch(loc):
@@ -941,7 +941,7 @@ class DrubbleGame(Widget):
 
     def on_joy_button_down(self, win, stickid, buttonid):
         if gs.game_mode == 1:
-            cycleModes(gs, stats, engine)
+            cycle_modes(gs, stats, engine)
         elif gs.game_mode == 2:
             if buttonid in (0, 6):
                 # A button
@@ -961,7 +961,7 @@ class DrubbleGame(Widget):
     def single_drubble_button_press(self):
         # Specify that this will be the one player version, and start game
         p.nPlayer = 1
-        cycleModes(gs, stats, engine)
+        cycle_modes(gs, stats, engine)
 
         # Add the in-game widgets
         self.add_game_widgets()
@@ -975,7 +975,7 @@ class DrubbleGame(Widget):
     def double_drubble_button_press(self):
         # Specify this will be the two player version, and start game
         p.nPlayer = 2
-        cycleModes(gs, stats, engine)
+        cycle_modes(gs, stats, engine)
 
         # Add the in-game widgets
         self.add_game_widgets()
@@ -994,7 +994,7 @@ class DrubbleGame(Widget):
         self.add_option_buttons()
 
         # Reset game states and scores
-        cycleModes(gs, stats, engine)
+        cycle_modes(gs, stats, engine)
 
         # Turn the button blue momentarily
         self.optionButt.background_touched()
@@ -1003,7 +1003,7 @@ class DrubbleGame(Widget):
     # What to do when action button is pressed
     def action_button_press(self):
         # Progress through the speed/angle setting, game, then high score
-        cycleModes(gs, stats, engine)
+        cycle_modes(gs, stats, engine)
 
         # Update the button text and color
         self.actionButt.text = p.actionMSG[gs.game_mode]
@@ -1014,9 +1014,13 @@ class DrubbleGame(Widget):
         if gs.game_mode == 7:
             self.add_high_scores()
             self.bg.anim_out()
+            self.moveStick.anim_out(w=self.width, h=self.height)
+            self.tiltStick.anim_out(w=self.width, h=self.height)
         elif gs.game_mode == 3:
             self.remove_high_scores()
             self.bg.anim_in()
+            self.moveStick.anim_in(w=self.width, h=self.height)
+            self.tiltStick.anim_in(w=self.width, h=self.height)
 
         # Turn the button blue momentarily
         self.actionButt.background_touched()
