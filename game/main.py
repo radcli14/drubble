@@ -680,6 +680,33 @@ class HighScoreLabel(Widget):
                 self.pos[1] = h
 
 
+class Tutorial(Widget):
+    n = 0
+    msg = ['Welcome to dRuBbLe!!! Tap to Begin',
+           'Touch the stick on the lower left to move the stool',
+           'Touch the stick on the lower right to move the player',
+           'Your goal is to bounce the ball off the top of your stool, as far and as high as possible']
+    tutorial_text = StringProperty(msg[0])
+    label_color = ListProperty([1, 0, 0, 1])
+    outline_width = NumericProperty(2 * screen_scf)
+    outline_color = ListProperty([1, 1, 1])
+
+    def __init__(self, w=width*screen_scf, h=height*screen_scf, **kwargs):
+        super(Tutorial, self).__init__()
+        self.width = w
+        self.height = h
+
+    def override_states(self, app_object, gs, stats):
+        return app_object, gs, stats
+
+    def check_touches(self, app_object, gs, stats):
+        was_touched = False
+        if was_touched:
+            n += 1
+            self.tutorial_text = msg[n]
+        return app_object, gs, stats
+
+
 class DrubbleGame(Widget):
     def __init__(self, **kwargs):
         super(DrubbleGame, self).__init__(**kwargs)
@@ -741,11 +768,9 @@ class DrubbleGame(Widget):
             self.high_dist_label = HighScoreLabel(outside_position='left', vertical_position=1,
                                                   label_text='Distance', this_run='%0.1f' % stats.stool_dist,
                                                   best_run='%0.1f' % stats.high_stool_dist[p.nPlayer-1])
-
             self.high_height_label = HighScoreLabel(outside_position='right', vertical_position=2,
                                                     label_text='Height', this_run='%0.2f' % stats.max_height,
                                                     best_run='%0.2f' % stats.high_height[p.nPlayer-1])
-
             self.high_boing_label = HighScoreLabel(outside_position='left', vertical_position=3,
                                                    label_text='Boing!', this_run='%0.0f' % stats.stool_count,
                                                    best_run='%0.0f' % stats.high_stool_count[p.nPlayer-1])
@@ -763,13 +788,15 @@ class DrubbleGame(Widget):
                                                    norm_pos=(0.15, 0.7),  norm_font_size=0.15,  color=red)
             self.doubleDrubbleButt = OptionButtons(text='Double dRuBbLe', norm_size=(0.7, 0.2), out_position='right',
                                                    norm_pos=(0.15, 0.4),  norm_font_size=0.15,  color=red)
+            self.tutorial_butt = OptionButtons(text='Tutorial', norm_size=(0.7, 0.2), out_position='left',
+                                                   norm_pos=(0.15, 0.1),  norm_font_size=0.15,  color=red)
             self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06), out_position='left',
                                             norm_pos=(0.01, 0.88), norm_font_size=0.055, color=red)
-
             self.actionButt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.06), out_position='right',
                                             norm_pos=(0.81, 0.88),  norm_font_size=0.055, color=red)
             self.add_widget(self.singleDrubbleButt)
             self.add_widget(self.doubleDrubbleButt)
+            self.add_widget(self.tutorial_butt)
             self.add_widget(self.optionButt)
             self.add_widget(self.actionButt)
 
@@ -819,11 +846,13 @@ class DrubbleGame(Widget):
         # Add option screen buttons
         self.singleDrubbleButt.anim_in(w=self.width, h=self.height)
         self.doubleDrubbleButt.anim_in(w=self.width, h=self.height)
+        self.tutorial_butt.anim_in(w=self.width, h=self.height)
 
     def remove_option_buttons(self):
         # Add option screen buttons
         self.singleDrubbleButt.anim_out(w=self.width, h=self.height)
         self.doubleDrubbleButt.anim_out(w=self.width, h=self.height)
+        self.tutorial_butt.anim_out(w=self.width, h=self.height)
 
     def add_high_scores(self):
         # Update the strings for the current scores
@@ -900,6 +929,8 @@ class DrubbleGame(Widget):
             self.single_drubble_button_press()
         elif gs.game_mode == 2 and self.doubleDrubbleButt.detect_touch(loc):
             self.double_drubble_button_press()
+        elif gs.game_mode == 2 and self.tutorial_butt.detect_touch(loc):
+            self.tutorial_button_press()
         elif gs.game_mode > 2:
             # Cycle through modes if touched the action or option_butt
             if self.actionButt.detect_touch(loc):
@@ -989,7 +1020,7 @@ class DrubbleGame(Widget):
         self.singleDrubbleButt.background_touched()
         Clock.schedule_once(self.singleDrubbleButt.background_untouched, 0.1)
 
-    # What to do when the couble drubble button is pressed
+    # What to do when the double drubble button is pressed
     def double_drubble_button_press(self):
         # Specify this will be the two player version, and start game
         p.nPlayer = 2
@@ -1002,6 +1033,15 @@ class DrubbleGame(Widget):
         # Turn the button blue momentarily
         self.doubleDrubbleButt.background_touched()
         Clock.schedule_once(self.doubleDrubbleButt.background_untouched, 0.1)
+
+    # What to do when the tutorial button is pressed
+    def tutorial_button_press(self):
+        # Specify that this will be the one player version, and start game
+        p.nPlayer = 1
+
+        # Turn the button blue momentarily
+        self.tutorial_butt.background_touched()
+        Clock.schedule_once(self.tutorial_butt.background_untouched, 0.1)
 
     # What to do when option button is pressed
     def option_button_press(self):
@@ -1073,6 +1113,7 @@ class DrubbleGame(Widget):
         # Buttons
         self.singleDrubbleButt.resize(w=self.width, h=self.height)
         self.doubleDrubbleButt.resize(w=self.width, h=self.height)
+        self.tutorial_butt.resize(w=self.width, h=self.height)
         self.actionButt.resize(w=self.width, h=self.height)
         self.optionButt.resize(w=self.width, h=self.height)
 
@@ -1101,7 +1142,7 @@ class DrubbleGame(Widget):
             gs.setAngleSpeed()
 
         # Call the simStep method
-        ddt = gs.simStep(p, gs, stats)
+        ddt = gs.sim_step(p, gs, stats)
 
         # Adjust pitch of the loop that is playing (TBR not working)
         #print(ddt*fs)

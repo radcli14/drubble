@@ -142,6 +142,16 @@ class Parameters:
     # This is the text used in the upper right button
     actionMSG = ['', '', '', 'Begin', 'Set Angle', 'Set Speed', 'High Scores', 'Restart']
 
+    # Put in limits for the states to prevent crashing
+    dxp_lim = [-20, 20]
+    yp_lim = [-1, 4]
+    dyp_lim = [-20, 20]
+    lp_lim = [-1, 3]
+    dlp_lim = [-20, 20]
+    tp_lim = [-3.14, 3.14]
+    dth_lim = [-20, 20]
+
+
 p = Parameters()
 
 
@@ -204,6 +214,7 @@ class DrumBeat:
 
     def check_kivy(self):
         pass
+
 
 def varStates(obj):
     obj.xb = obj.u[0]         # Ball distance [m]
@@ -396,7 +407,7 @@ class GameState:
             self.ctrl = [moveStick[0], moveStick[1], tiltStick[1], -tiltStick[0]]
         
     # Execute a simulation step of duration dt    
-    def simStep(self, p, gs, stats):
+    def sim_step(self, p, gs, stats):
         # Increment n 
         self.n += 1
 
@@ -435,7 +446,7 @@ class GameState:
             
             # Calculate the derivatives of states w.r.t. time
             dudt = PlayerAndStool(self.t, U[k-1], p, gs, stats)
-            
+
             # Calculate the states at the next step
             # U[k] = U[k-1] + np.array(dudt)*dt/p.nEulerSteps
             U[k] = [U[k-1][i] + dudt[i] * ddt / nStep for i in range(20)]
@@ -452,7 +463,7 @@ class GameState:
                     tBreak = k * ddt / nStep
                     break 
         
-        # If an event occured, increment the counter, otherwise continue
+        # If an event occurred, increment the counter, otherwise continue
         if self.StoolBounce or self.FloorBounce:        
             # Change ball states depending on if it was a stool or floor bounce
             if self.StoolBounce:
@@ -483,10 +494,20 @@ class GameState:
         else:   
             # Update states
             self.u = U[-1]
-        
+
+        # Ensure that the states did not go out of limits, prevent crashing
+        self.u[1] = max(self.u[1], p.rb)
+        self.u[5] = min(max(self.u[5], p.yp_lim[0]), p.yp_lim[1])
+        self.u[6] = min(max(self.u[6], p.lp_lim[0]), p.lp_lim[1])
+        self.u[7] = min(max(self.u[7], p.tp_lim[0]), p.tp_lim[1])
+        self.u[13] = min(max(self.u[13], p.yp_lim[0]), p.yp_lim[1])
+        self.u[14] = min(max(self.u[14], p.lp_lim[0]), p.lp_lim[1])
+        self.u[15] = min(max(self.u[15], p.tp_lim[0]), p.tp_lim[1])
+
+        # If stuck, keep it rolling
         if self.Stuck:
             self.u[1] = p.rb
-            self.u[2] = 0.9999*self.u[2]
+            self.u[2] = (1-0.01*ddt)*self.u[2]
             self.u[3] = 0
         
         # Generate the new ball trajectory prediction line

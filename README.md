@@ -9,7 +9,7 @@ A Silly Game With Silly Stools!
 There are two virtual sticks which appear as crosshairs on the screen. 
 Touch the stick on the lower left to move the stool. 
 Touch the stick on the lower right to move the player.
-The "Options" button in the upper left will return to the 
+The "Options" button in the upper left will return to the game selection screen.
 Your goal is to bounce the ball off the top of your stool, as far and as high as possible. 
 There are sub-variations on the game, "Single dRuBbLe," and "Double dRuBbLe."
 
@@ -52,6 +52,7 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 ### Before Release
 - [x] Move sticks and buttons out of the way so I can add a banner ad on the high score screen
 - [x] Fix the computer player control
+- [ ] Put in limits for the states to prevent crashing
 - [ ] Add a tutorial
 - [ ] Add audio for setting ball speed, button presses
 - [ ] Add a background screen connecting the last screen to the first, geographically
