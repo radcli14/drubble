@@ -530,6 +530,24 @@ class OptionButtons(Widget):
         anim.start(self)
         self.is_on_screen = False
 
+    def anim_out_then_in(self, w=width*screen_scf, h=height*screen_scf, duration=10):
+        out_x = self.pos[0]
+        out_y = self.pos[1]
+        if self.out_position == 'left':
+            out_x = -self.width
+        elif self.out_position == 'right':
+            out_x = w
+        if self.out_position == 'bottom':
+            out_y = -self.size[1]
+        elif self.out_position == 'top':
+            out_y = h
+        anim_out = Animation(x=out_x, y=out_y, duration=0.5, t='in_back')
+        anim_pause = Animation(x=out_x, y=out_y, duration=(duration-1), t='in_back')
+        anim_in = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=0.5, t='out_back')
+        anim = anim_out + anim_pause + anim_in
+        anim.start(self)
+        self.is_on_screen = True
+
 
 class ScoreLabel(Widget):
     label_text = StringProperty('')
@@ -1011,11 +1029,14 @@ class DrubbleGame(Widget):
 
         # If on completion of the game, add the high scores
         # If on restart of game, remove the high scores
+        # Also move the sticks and option buttons out of the way
         if gs.game_mode == 7:
             self.add_high_scores()
             self.bg.anim_out()
             self.moveStick.anim_out(w=self.width, h=self.height)
             self.tiltStick.anim_out(w=self.width, h=self.height)
+            self.optionButt.anim_out_then_in(w=self.width, h=self.height)
+            self.actionButt.anim_out_then_in(w=self.width, h=self.height)
         elif gs.game_mode == 3:
             self.remove_high_scores()
             self.bg.anim_in()

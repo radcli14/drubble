@@ -259,11 +259,11 @@ def zeros(ztup):
 
 
 # Predict motion of the ball
-def BallPredict(gs):
+def ball_predict(gs, pAct):
     if gs.dyb == 0 or gs.game_mode <= 2:
         # Ball is not moving, impact time is zero
         tI = 0
-    elif gs.game_mode > 2 and (gs.dyb > 0) and (gs.yb < gs.yp[0] + p.d + gs.lp[0]):
+    elif gs.game_mode > 2 and (gs.dyb > 0) and (gs.yb < gs.yp[pAct] + p.d + gs.lp[pAct]):
         # Ball is in play, moving upward and below the stool
         # Solve for time and height at apogee
         ta = gs.dyb / p.g
@@ -271,10 +271,10 @@ def BallPredict(gs):
 
         # Solve for time the ball would hit the ground
         tI = ta + sqrt(2.0 * ya / p.g)
-    elif gs.game_mode > 2 and (gs.yb > gs.yp[0] + p.d + gs.lp[0]):
+    elif gs.game_mode > 2 and (gs.yb > gs.yp[pAct] + p.d + gs.lp[pAct]):
         # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
-        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - gs.yp[0] - p.d - gs.lp[0]))) / p.g
+        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - gs.yp[pAct] - p.d - gs.lp[pAct]))) / p.g
     else:
         tI = 0
 
@@ -351,7 +351,7 @@ class GameState:
        
         # Event states
         self.ue = u0[:]
-        self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = BallPredict(self)
+        self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = ball_predict(self, 0)
         
         # Angle and Speed Conditions
         self.startAngle = p.sa
@@ -492,7 +492,7 @@ class GameState:
         # Generate the new ball trajectory prediction line
         if self.StoolBounce or self.FloorBounce or self.game_mode<7:    
             # Predict the future trajectory of the ball
-            self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = BallPredict(self)
+            self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = ball_predict(self, pAct)
 
         # Stop the ball from moving if the player hasn't hit space yet
         if self.game_mode<6:
@@ -774,21 +774,26 @@ def control_logic(t, u, k, p, gs, stats):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
-    # Control horizontal acceleration based on zero effort miss (ZEM)
-    # Subtract 1 secoond to get there early, and subtract 0.01 m to keep the
-    # ball moving forward 
-    ZEM = (gs.xI+10.0*(p.nPlayer-1-(stats.stool_count % 2))-0.1) - xp[k] - dxp[k]*abs(gs.timeUntilBounce-1.0)
+    # Run to the projected intercept point (pip). If the computer
+    # Is the active player, this will be at gs.xI, otherwise will be at
+    # gs.xI + 10
+    player_run_ahead = 10.0*(p.nPlayer-1-(stats.stool_count % 2))
+    pip = gs.xI + player_run_ahead
     if p.userControlled[k][0]:
         if gs.ctrl[0] == 0:
             Bx = 0.0 if dxp[k] == 0.0 else -erf(dxp[k])  # Friction
         else:
             Bx = gs.ctrl[0]
     else:
-        Bx = p.Gx*ZEM
-        if Bx > 1.0:
-            Bx = 1.0
-        elif (Bx < -1) or (gs.timeUntilBounce < 0 and gs.timeUntilBounce > 0):
-            Bx = -1.0
+        if gs.timeUntilBounce > 0:
+            if pip - xp[k] > 3:
+                Bx = 1.0
+            elif pip - xp[k] < -3:
+                Bx = -1.0
+            else:
+                Bx = min(max(p.Gx * (pip - xp[k]) - 0.4*dxp[k], -1), 1)
+        else:
+            Bx = min(max(p.Gx * (xb - xp[k] + player_run_ahead), -1), 1)
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
     if p.userControlled[k][1]:

@@ -50,11 +50,13 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 
 ## Task List 
 ### Before Release
-- [ ] Move sticks and buttons out of the way so I can add a banner ad on the high score screen
+- [x] Move sticks and buttons out of the way so I can add a banner ad on the high score screen
+- [x] Fix the computer player control
+- [ ] Add a tutorial
 - [ ] Add audio for setting ball speed, button presses
 - [ ] Add a background screen connecting the last screen to the first, geographically
 - [ ] Add one more base audio file
-- [ ] Add a tutorial
+
 
 ### Future
 - [ ] Add a VolleyDrubble sub-game
