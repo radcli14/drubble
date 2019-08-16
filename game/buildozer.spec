@@ -29,7 +29,7 @@ source.exclude_dirs = tests,bin,audio,build,dc,dist,figs,photos,venv,venv2,fonts
 source.exclude_patterns = dRuBbLe.py,dRuBbLe_x.playground,demoDrubble.py
 
 # (str) Application versioning (method 1)
-version = 0.7.32
+version = 0.7.64
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -202,8 +202,8 @@ android.logcat_filters = *:S python:D
 #android.copy_libs = 1
 
 # (str) The Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
-android.arch = armeabi-v7a
-#android.arch = arm64-v8a
+#android.arch = armeabi-v7a
+android.arch = arm64-v8a
 
 #
 # Python for android (p4a) specific
