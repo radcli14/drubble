@@ -22,6 +22,7 @@ from kivy.utils import platform
 from kivy.config import Config
 from kivy.animation import Animation
 from kivy.storage.jsonstore import JsonStore
+from kivy.core.text.markup import MarkupLabel
 from os.path import join
 import cProfile
 
@@ -682,32 +683,74 @@ class HighScoreLabel(Widget):
 
 class Tutorial(Widget):
     n = 0
-    msg = ['Welcome to dRuBbLe!!! Tap to Begin',
-           'Touch the stick on the lower left to move the stool',
-           'Touch the stick on the lower right to move the player',
-           'Your goal is to bounce the ball off the top of your stool, as far and as high as possible']
-    tutorial_text = StringProperty(msg[0])
+    msg = ['Welcome to dRuBbLe!!!\nTap to Begin',
+           'Touch the stick on the\nlower left to move the stool',
+           'Touch the stick on the\nlower right to move the player',
+           'Your goal is to bounce\nthe ball off the top of your stool,\nas far and as high as possible',
+           '']
+    is_paused = True
+    tutorial_text = StringProperty('')
     label_color = ListProperty([1, 0, 0, 1])
-    outline_width = NumericProperty(2 * screen_scf)
+    outline_width = NumericProperty(3.0 * screen_scf)
     outline_color = ListProperty([1, 1, 1])
 
     def __init__(self, w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(Tutorial, self).__init__()
-        self.width = w
-        self.height = h
+        self.width = 0
+        self.height = 0
+        self.pos = [-0.5 * w, 0.5 * h]
+
+    def set_pause_false(self, dt):
+        self.is_paused = False
+
+    def change_message(self, dt):
+        self.tutorial_text = self.msg[self.n]
+
+    def pause(self, dt):
+        Clock.schedule_once(self.set_pause_false, dt)
 
     def override_states(self, app_object, gs, stats):
         return app_object, gs, stats
 
     def check_touches(self, app_object, gs, stats):
+        if self.is_paused:
+            return
         was_touched = False
+        if self.n == 0:
+            was_touched = True
+            app_object.tiltStick.anim_in(w=self.width, h=self.height)
+        elif self.n == 1 and abs(gs.ctrl[2]) + abs(gs.ctrl[3]) != 0.0:
+            was_touched = True
+            app_object.moveStick.anim_in(w=self.width, h=self.height)
+        elif self.n == 2 and abs(gs.ctrl[1]) + abs(gs.ctrl[2]) != 0.0:
+            was_touched = True
+            app_object.optionButt.anim_in(w=self.width, h=self.height)
+            app_object.actionButt.anim_in(w=self.width, h=self.height)
+        elif self.n == 3:
+            was_touched = True
+
         if was_touched:
-            n += 1
-            self.tutorial_text = msg[n]
+            self.pause(2)
+            self.n += 1
+            Clock.schedule_once(self.change_message, 2)
+            self.switch(w=app_object.width, h=app_object.height, duration=5.0)
         return app_object, gs, stats
+
+    def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1):
+        anim = Animation(size=(w, h), pos=(0, 0), duration=duration, t='out_elastic')
+        anim.start(self)
+
+    def switch(self, w=width*screen_scf, h=height*screen_scf, duration=1):
+        anim_out = Animation(size=(0, 0), pos=(-0.1*w, 0.5*h), duration=0.2*duration, t='in_elastic')
+        anim_pause = Animation(size=(0, 0), pos=(-0.1*w, 0.5*h), duration=0.6*duration, t='in_elastic')
+        anim_in = Animation(size=(w, h), pos=(0, 0), duration=0.2*duration, t='out_elastic')
+        anim = anim_out + anim_pause + anim_in
+        anim.start(self)
 
 
 class DrubbleGame(Widget):
+    tutorial_mode = False
+
     def __init__(self, **kwargs):
         super(DrubbleGame, self).__init__(**kwargs)
         self.bind(size=self.resize_canvas)
@@ -799,6 +842,10 @@ class DrubbleGame(Widget):
             self.add_widget(self.tutorial_butt)
             self.add_widget(self.optionButt)
             self.add_widget(self.actionButt)
+
+            # Initialize the tutorial
+            self.tutorial = Tutorial()
+            self.add_widget(self.tutorial)
 
     def add_game_widgets(self):
         # Background
@@ -951,6 +998,9 @@ class DrubbleGame(Widget):
                 self.tiltStick.update_el(xy[0], xy[1])
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
 
+        if self.tutorial_mode:
+            self.tutorial.check_touches(self, gs, stats)
+
     def on_touch_move(self, touch):
         if gs.game_mode > 2 and self.weHaveWidgets:
             # Detect control inputs
@@ -1034,15 +1084,6 @@ class DrubbleGame(Widget):
         self.doubleDrubbleButt.background_touched()
         Clock.schedule_once(self.doubleDrubbleButt.background_untouched, 0.1)
 
-    # What to do when the tutorial button is pressed
-    def tutorial_button_press(self):
-        # Specify that this will be the one player version, and start game
-        p.nPlayer = 1
-
-        # Turn the button blue momentarily
-        self.tutorial_butt.background_touched()
-        Clock.schedule_once(self.tutorial_butt.background_untouched, 0.1)
-
     # What to do when option button is pressed
     def option_button_press(self):
         # Return to the option screen, removing the in-game widgets
@@ -1086,6 +1127,28 @@ class DrubbleGame(Widget):
         # Turn the button blue momentarily
         self.actionButt.background_touched()
         Clock.schedule_once(self.actionButt.background_untouched, 0.1)
+
+    # What to do when the tutorial button is pressed
+    def tutorial_button_press(self):
+        # Specify that this will be the one player version, and start game
+        p.nPlayer = 1
+
+        # Turn on tutorial mode
+        self.tutorial_mode = True
+        self.tutorial.__init__(w=self.width, h=self.height)
+        self.tutorial.tutorial_text = self.tutorial.msg[0]
+        self.tutorial.anim_in(w=self.width, h=self.height, duration=1.0)
+        self.tutorial.pause(2)
+
+        # Add selected widgets
+        gs.game_mode = 3
+        self.bg.anim_in()
+        self.remove_option_buttons()
+        self.weHaveWidgets = True
+
+        # Turn the button blue momentarily
+        self.tutorial_butt.background_touched()
+        Clock.schedule_once(self.tutorial_butt.background_untouched, 0.1)
 
     def resize_canvas(self, *args):
         # High score labels
@@ -1137,7 +1200,7 @@ class DrubbleGame(Widget):
         elif gs.game_mode > 2 and not self.weHaveWidgets:
             self.add_game_widgets()
 
-        # ANGLE AND SPEED SETTINGS
+        # Angle and speed settings
         if 2 < gs.game_mode < 6:
             gs.setAngleSpeed()
 
@@ -1191,6 +1254,10 @@ class DrubbleGame(Widget):
             elif gs.FloorBounce:
                 floor_sound.volume = norm([gs.dxb, gs.dyb]) / 15.0
                 floor_sound.play()
+
+            # If running tutorial, then override states
+            if self.tutorial_mode:
+                self.tutorial.override_states(self, gs, stats)
 
 
 class DrubbleApp(App):

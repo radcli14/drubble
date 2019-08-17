@@ -149,7 +149,7 @@ class Parameters:
     lp_lim = [-1, 3]
     dlp_lim = [-20, 20]
     tp_lim = [-3.14, 3.14]
-    dth_lim = [-20, 20]
+    dtp_lim = [-20, 20]
 
 
 p = Parameters()
@@ -500,9 +500,18 @@ class GameState:
         self.u[5] = min(max(self.u[5], p.yp_lim[0]), p.yp_lim[1])
         self.u[6] = min(max(self.u[6], p.lp_lim[0]), p.lp_lim[1])
         self.u[7] = min(max(self.u[7], p.tp_lim[0]), p.tp_lim[1])
-        self.u[13] = min(max(self.u[13], p.yp_lim[0]), p.yp_lim[1])
-        self.u[14] = min(max(self.u[14], p.lp_lim[0]), p.lp_lim[1])
-        self.u[15] = min(max(self.u[15], p.tp_lim[0]), p.tp_lim[1])
+        self.u[8] = min(max(self.u[8], p.dxp_lim[0]), p.dxp_lim[1])
+        self.u[9] = min(max(self.u[9], p.dyp_lim[0]), p.dyp_lim[1])
+        self.u[10] = min(max(self.u[10], p.dlp_lim[0]), p.dlp_lim[1])
+        self.u[11] = min(max(self.u[11], p.dtp_lim[0]), p.dtp_lim[1])
+        if p.nPlayer > 1:
+            self.u[13] = min(max(self.u[13], p.yp_lim[0]), p.yp_lim[1])
+            self.u[14] = min(max(self.u[14], p.lp_lim[0]), p.lp_lim[1])
+            self.u[15] = min(max(self.u[15], p.tp_lim[0]), p.tp_lim[1])
+            self.u[16] = min(max(self.u[16], p.dxp_lim[0]), p.dxp_lim[1])
+            self.u[17] = min(max(self.u[17], p.dyp_lim[0]), p.dyp_lim[1])
+            self.u[18] = min(max(self.u[18], p.dlp_lim[0]), p.dlp_lim[1])
+            self.u[19] = min(max(self.u[19], p.dtp_lim[0]), p.dtp_lim[1])
 
         # If stuck, keep it rolling
         if self.Stuck:
