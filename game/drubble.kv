@@ -190,15 +190,12 @@
         outline_width: root.outline_width
         outline_color: root.outline_color
 
-
-<Tutorial>:
-    Label:
-        text: root.tutorial_text
-        font_size: 0.07 * root.height
-        pos: (0.2*root.width, 0.6*root.height)
-        size: (0.6*root.width, 0.3*root.height)
-        color: root.label_color
-        outline_width: root.outline_width
-        outline_color: root.outline_color
-        halign: 'center'
-        valign: 'center'
+<RotatingRing>:
+    canvas.before:
+        PushMatrix
+        Rotate:
+            angle: self.angle
+            axis: (0, 0, 1)
+            origin: self.center
+    canvas.after:
+        PopMatrix

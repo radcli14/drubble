@@ -681,6 +681,21 @@ class HighScoreLabel(Widget):
                 self.pos[1] = h
 
 
+class RotatingRing(Image):
+    angle = NumericProperty(0.0)
+    center = ListProperty((0.0, 0.0))
+
+    def start_rotation(self):
+        anim = Animation(angle=360, duration=3.14)
+        anim += Animation(angle=360, duration=3.14)
+        anim.repeat = True
+        anim.start(self)
+
+    def on_angle(self, item, angle):
+        if angle == 360:
+            item.angle = 0
+
+
 class Tutorial(Widget):
     n = 0
     msg = ['Welcome to dRuBbLe!!!\nTap to Begin',
@@ -692,28 +707,30 @@ class Tutorial(Widget):
            'Your goal is to bounce\nthe ball off the top of your stool,\nas far and as high as possible',
            '']
     is_paused = False
-    tutorial_text = StringProperty('')
-    label_color = ListProperty([1, 0, 0, 1])
-    outline_width = NumericProperty(3.0 * screen_scf)
-    outline_color = ListProperty([1, 1, 1])
 
     def __init__(self, w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(Tutorial, self).__init__()
-        self.width = 0
-        self.height = 0
-        self.pos = [-0.5 * w, 0.5 * h]
+        self.n = 0
+        self.width = w
+        self.height = h
+        self.pos = (0, 0)
 
         # Create the ring widget
         with self.canvas:
-            Color(rgba=(1, 1, 1, 0.75))
-            self.ring = Image(source='a/tutorial_ring.png', size=self.size, pos=self.pos)
+            self.label = Label(text='', font_size=0.0,
+                               pos=(0.5*self.width, 0.6*self.height), size=(0, 0), color=(0, 0, 1, 1),
+                               outline_width=3.0*screen_scf, outline_color=(1, 1, 1), font_name='a/Airstream.ttf',
+                               halign='center', valign='center')
+            self.add_widget(self.label)
+            self.ring = RotatingRing(source='a/tutorial_ring.png', size=(0, 0))
             self.add_widget(self.ring)
+            self.ring.start_rotation()
+
+    def change_message(self, dt):
+        self.label.text = self.msg[self.n]
 
     def set_pause_false(self, dt):
         self.is_paused = False
-
-    def change_message(self, dt):
-        self.tutorial_text = self.msg[self.n]
 
     def pause(self, dt):
         self.is_paused = True
@@ -721,10 +738,16 @@ class Tutorial(Widget):
 
     def new_ring_position(self, ring_size=(0, 0), ring_pos=(0, 0), in_duration=0.0, out_duration=0.0):
         anim_ring_out = Animation(opacity=0.0, duration=out_duration)
-        anim_ring_pos = Animation(size=ring_size, pos=ring_pos, duration=0)
+        anim_ring_pos = Animation(size=ring_size, pos=ring_pos,
+                                  center=(ring_pos[0]+0.5*ring_size[0], ring_pos[1]+0.5*ring_size[1]),
+                                  opacity=0.0, duration=0)
         anim_ring_in = Animation(opacity=1.0, duration=in_duration)
         anim = anim_ring_out + anim_ring_pos + anim_ring_in
         anim.start(self.ring)
+
+    def clear_ring(self, out_duration=1.0):
+        anim_ring_out = Animation(opacity=0.0, duration=out_duration)
+        anim_ring_out.start(self.ring)
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
         # Determine the width and height scale factors
@@ -745,6 +768,7 @@ class Tutorial(Widget):
     def check_touches(self, app_object, gs, stats):
         if self.is_paused:
             return
+
         was_touched = False
         w = self.width
         h = self.height
@@ -757,12 +781,12 @@ class Tutorial(Widget):
             was_touched = True
             app_object.moveStick.anim_in(w=self.width, h=self.height, duration=1)
             self.new_ring_position(ring_size=(0.36*w, 0.36*w), ring_pos=(0.72*w, -0.08*w+0.05*h),
-                                   in_duration=2.0, out_duration=1.0)
+                                   in_duration=2.0, out_duration=2.0)
         elif self.n == 2 and abs(gs.ctrl[1]) + abs(gs.ctrl[2]) != 0.0:
             was_touched = True
             app_object.actionButt.anim_in(w=self.width, h=self.height)
             self.new_ring_position(ring_size=(0.36*w, 0.36*w), ring_pos=(0.72*w, 0.59*h),
-                                   in_duration=2.0, out_duration=1.0)
+                                   in_duration=2.0, out_duration=2.0)
         elif self.n == 3:
             was_touched = True
         elif self.n == 4:
@@ -771,28 +795,34 @@ class Tutorial(Widget):
             was_touched = True
         elif self.n == 6:
             was_touched = True
+            self.clear_ring(out_duration=1.0)
             app_object.optionButt.anim_in(w=self.width, h=self.height)
 
         if was_touched:
             self.pause(3)
             self.n += 1
             Clock.schedule_once(self.change_message, 2)
-            self.switch(w=app_object.width, h=app_object.height, duration=3.0)
-        return app_object, gs, stats
+            self.switch(w=app_object.width, h=app_object.height, duration=4.0)
+        # return app_object, gs, stats
+        return
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1):
-        anim = Animation(size=(w, h), pos=(0, 0), duration=duration, t='out_elastic')
-        anim.start(self)
+        anim = Animation(size=(0.6*w, 0.3*h), pos=(0.2*w, 0.6*h), opacity=1.0, font_size=0.12*h,
+                         duration=duration, t='out_elastic')
+        anim.start(self.label)
+
+    def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=1):
+        anim = Animation(size=(0.6*w, 0.3*h), pos=(0.2*w, 0.6*h), opacity=1.0, font_size=0.07*self.height,
+                         duration=0.33*duration, t='out_elastic')
+        anim.start(self.label)
 
     def switch(self, w=width*screen_scf, h=height*screen_scf, duration=1):
-        anim_out = Animation(size=(0, 0), pos=(-0.1*w, 0.5*h), duration=0.33*duration, t='in_elastic')
-        anim_pause = Animation(size=(0, 0), pos=(-0.1*w, 0.5*h), duration=0.34*duration, t='in_elastic')
-        anim_in = Animation(size=(w, h), pos=(0, 0), duration=0.33*duration, t='out_elastic')
+        anim_out = Animation(size=(0, 0), pos=(0.5*w, 0.5*h), opacity=0.0, font_size=0.0, duration=0.25*duration, t='in_elastic')
+        anim_pause = Animation(duration=0.5*duration)
+        anim_in = Animation(size=(0.6*w, 0.3*h), pos=(0.2*w, 0.6*h), opacity=1.0, font_size=0.12*self.height,
+                            duration=0.25*duration, t='out_elastic')
         anim = anim_out + anim_pause + anim_in
-        anim.start(self)
-
-    def override_states(self, app_object, gs, stats):
-        return app_object, gs, stats
+        anim.start(self.label)
 
 
 class DrubbleGame(Widget):
@@ -1183,7 +1213,7 @@ class DrubbleGame(Widget):
         # Turn on tutorial mode
         self.tutorial_mode = True
         self.tutorial.__init__(w=self.width, h=self.height)
-        self.tutorial.tutorial_text = self.tutorial.msg[0]
+        self.tutorial.label.text = self.tutorial.msg[0]
         self.tutorial.anim_in(w=self.width, h=self.height, duration=1.0)
         self.tutorial.pause(2)
 
@@ -1304,10 +1334,6 @@ class DrubbleGame(Widget):
             elif gs.FloorBounce:
                 floor_sound.volume = norm([gs.dxb, gs.dyb]) / 15.0
                 floor_sound.play()
-
-            # If running tutorial, then override states
-            if self.tutorial_mode:
-                self.tutorial.override_states(self, gs, stats)
 
 
 class DrubbleApp(App):
