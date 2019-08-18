@@ -429,10 +429,10 @@ class Stick(Widget):
         self.pos[1] = self.norm_pos[1] * h
         # print('Resized a stick to size =', self.size, 'and pos =', self.pos)
 
-    def anim_in(self, w=width*screen_scf, h=height*screen_scf):
+    def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.25):
         in_x = self.norm_pos[0] * w
         in_y = self.norm_pos[1] * h
-        anim = Animation(x=in_x, y=in_y, duration=0.25, t='out_back')
+        anim = Animation(x=in_x, y=in_y, duration=duration, t='out_back')
         anim.start(self)
         self.is_on_screen = True
         # print('Moved a stick (anim_in) to size =', self.size, 'and pos =', (in_x, in_y))
@@ -686,9 +686,12 @@ class Tutorial(Widget):
     msg = ['Welcome to dRuBbLe!!!\nTap to Begin',
            'Touch the stick on the\nlower left to move the stool',
            'Touch the stick on the\nlower right to move the player',
+           'Use the action button in\nthe upper right to start the game',
+           'Tap once to set the launch angle',
+           'Tap again to set the speed',
            'Your goal is to bounce\nthe ball off the top of your stool,\nas far and as high as possible',
            '']
-    is_paused = True
+    is_paused = False
     tutorial_text = StringProperty('')
     label_color = ListProperty([1, 0, 0, 1])
     outline_width = NumericProperty(3.0 * screen_scf)
@@ -700,6 +703,12 @@ class Tutorial(Widget):
         self.height = 0
         self.pos = [-0.5 * w, 0.5 * h]
 
+        # Create the ring widget
+        with self.canvas:
+            Color(rgba=(1, 1, 1, 0.75))
+            self.ring = Image(source='a/tutorial_ring.png', size=self.size, pos=self.pos)
+            self.add_widget(self.ring)
+
     def set_pause_false(self, dt):
         self.is_paused = False
 
@@ -707,33 +716,68 @@ class Tutorial(Widget):
         self.tutorial_text = self.msg[self.n]
 
     def pause(self, dt):
+        self.is_paused = True
         Clock.schedule_once(self.set_pause_false, dt)
 
-    def override_states(self, app_object, gs, stats):
-        return app_object, gs, stats
+    def new_ring_position(self, ring_size=(0, 0), ring_pos=(0, 0), in_duration=0.0, out_duration=0.0):
+        anim_ring_out = Animation(opacity=0.0, duration=out_duration)
+        anim_ring_pos = Animation(size=ring_size, pos=ring_pos, duration=0)
+        anim_ring_in = Animation(opacity=1.0, duration=in_duration)
+        anim = anim_ring_out + anim_ring_pos + anim_ring_in
+        anim.start(self.ring)
+
+    def resize(self, w=width*screen_scf, h=height*screen_scf):
+        # Determine the width and height scale factors
+        if self.width > 0:
+            width_scale = w / self.width
+            height_scale = h / self.height
+        else:
+            width_scale = 1.0
+            height_scale = 1.0
+
+        # Resize the entire widget
+        self.width = w
+        self.height = h
+
+        # Resize the ring
+        self.ring.pos = (self.ring.pos[0] * width_scale, self.ring.pos[1] * height_scale)
 
     def check_touches(self, app_object, gs, stats):
         if self.is_paused:
             return
         was_touched = False
+        w = self.width
+        h = self.height
         if self.n == 0:
             was_touched = True
-            app_object.tiltStick.anim_in(w=self.width, h=self.height)
+            app_object.tiltStick.anim_in(w=self.width, h=self.height, duration=1)
+            self.new_ring_position(ring_size=(0.36*w, 0.36*w), ring_pos=(-0.08*w, -0.08*w+0.05*h),
+                                   in_duration=3.0, out_duration=0.0)
         elif self.n == 1 and abs(gs.ctrl[2]) + abs(gs.ctrl[3]) != 0.0:
             was_touched = True
-            app_object.moveStick.anim_in(w=self.width, h=self.height)
+            app_object.moveStick.anim_in(w=self.width, h=self.height, duration=1)
+            self.new_ring_position(ring_size=(0.36*w, 0.36*w), ring_pos=(0.72*w, -0.08*w+0.05*h),
+                                   in_duration=2.0, out_duration=1.0)
         elif self.n == 2 and abs(gs.ctrl[1]) + abs(gs.ctrl[2]) != 0.0:
             was_touched = True
-            app_object.optionButt.anim_in(w=self.width, h=self.height)
             app_object.actionButt.anim_in(w=self.width, h=self.height)
+            self.new_ring_position(ring_size=(0.36*w, 0.36*w), ring_pos=(0.72*w, 0.59*h),
+                                   in_duration=2.0, out_duration=1.0)
         elif self.n == 3:
             was_touched = True
+        elif self.n == 4:
+            was_touched = True
+        elif self.n == 5:
+            was_touched = True
+        elif self.n == 6:
+            was_touched = True
+            app_object.optionButt.anim_in(w=self.width, h=self.height)
 
         if was_touched:
-            self.pause(2)
+            self.pause(3)
             self.n += 1
             Clock.schedule_once(self.change_message, 2)
-            self.switch(w=app_object.width, h=app_object.height, duration=5.0)
+            self.switch(w=app_object.width, h=app_object.height, duration=3.0)
         return app_object, gs, stats
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1):
@@ -741,11 +785,14 @@ class Tutorial(Widget):
         anim.start(self)
 
     def switch(self, w=width*screen_scf, h=height*screen_scf, duration=1):
-        anim_out = Animation(size=(0, 0), pos=(-0.1*w, 0.5*h), duration=0.2*duration, t='in_elastic')
-        anim_pause = Animation(size=(0, 0), pos=(-0.1*w, 0.5*h), duration=0.6*duration, t='in_elastic')
-        anim_in = Animation(size=(w, h), pos=(0, 0), duration=0.2*duration, t='out_elastic')
+        anim_out = Animation(size=(0, 0), pos=(-0.1*w, 0.5*h), duration=0.33*duration, t='in_elastic')
+        anim_pause = Animation(size=(0, 0), pos=(-0.1*w, 0.5*h), duration=0.34*duration, t='in_elastic')
+        anim_in = Animation(size=(w, h), pos=(0, 0), duration=0.33*duration, t='out_elastic')
         anim = anim_out + anim_pause + anim_in
         anim.start(self)
+
+    def override_states(self, app_object, gs, stats):
+        return app_object, gs, stats
 
 
 class DrubbleGame(Widget):
@@ -1179,6 +1226,9 @@ class DrubbleGame(Widget):
         self.tutorial_butt.resize(w=self.width, h=self.height)
         self.actionButt.resize(w=self.width, h=self.height)
         self.optionButt.resize(w=self.width, h=self.height)
+
+        # Tutorial
+        self.tutorial.resize(w=self.width, h=self.height)
 
     # Time step the game
     def update(self, dt):
