@@ -705,7 +705,7 @@ class Tutorial(Widget):
            'Tap once to set the launch angle',
            'Tap again to set the speed',
            'Try to bounce the ball\noff the top of your stool',
-           'As far and as high as possible',
+           'Bounce as far and as high as possible',
            'Good Luck!!!',
            '']
     is_paused = False
@@ -750,6 +750,10 @@ class Tutorial(Widget):
     def clear_ring(self, out_duration=1.0):
         anim_ring_out = Animation(opacity=0.0, duration=out_duration)
         anim_ring_out.start(self.ring)
+
+    def remove_widgets(self, dt):
+        self.remove_widget(self.label)
+        self.remove_widget(self.ring)
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
         # Determine the width and height scale factors
@@ -805,12 +809,17 @@ class Tutorial(Widget):
         elif self.n == 8:
             was_touched = True
 
+        # Switch to the next message if there was a touch
         next_pause_duration = 3.0 if self.n < 6 else 5.0
         if was_touched:
             self.pause(next_pause_duration)
             self.n += 1
             Clock.schedule_once(self.change_message, 2)
             self.switch(w=app_object.width, h=app_object.height, duration=4.0)
+
+        # Remove widgets if reached end of tutorial
+        if self.n >= self.msg.__len__():
+            Clock.schedule_once(self.remove_widgets, 2)
         return
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1):
@@ -915,12 +924,12 @@ class DrubbleGame(Widget):
             self.add_widget(self.high_score_label)
 
             # Initialize the option and action buttons
-            self.singleDrubbleButt = OptionButtons(text='Single dRuBbLe', norm_size=(0.7, 0.2), out_position='left',
-                                                   norm_pos=(0.15, 0.7),  norm_font_size=0.15,  color=red)
-            self.doubleDrubbleButt = OptionButtons(text='Double dRuBbLe', norm_size=(0.7, 0.2), out_position='right',
-                                                   norm_pos=(0.15, 0.4),  norm_font_size=0.15,  color=red)
-            self.tutorial_butt = OptionButtons(text='Tutorial', norm_size=(0.7, 0.2), out_position='left',
-                                                   norm_pos=(0.15, 0.1),  norm_font_size=0.15,  color=red)
+            self.singleDrubbleButt = OptionButtons(text='Single dRuBbLe', norm_size=(0.5, 0.2), out_position='left',
+                                                   norm_pos=(0.1, 0.7),  norm_font_size=0.14,  color=red)
+            self.doubleDrubbleButt = OptionButtons(text='Double dRuBbLe', norm_size=(0.8, 0.2), out_position='right',
+                                                   norm_pos=(0.1, 0.4),  norm_font_size=0.14,  color=red)
+            self.tutorial_butt = OptionButtons(text='How2', norm_size=(0.25, 0.2), out_position='left',
+                                               norm_pos=(0.65, 0.7),  norm_font_size=0.14,  color=red)
             self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06), out_position='left',
                                             norm_pos=(0.01, 0.88), norm_font_size=0.055, color=red)
             self.actionButt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.06), out_position='right',
