@@ -704,7 +704,9 @@ class Tutorial(Widget):
            'Use the action button in\nthe upper right to start the game',
            'Tap once to set the launch angle',
            'Tap again to set the speed',
-           'Your goal is to bounce\nthe ball off the top of your stool,\nas far and as high as possible',
+           'Try to bounce the ball\noff the top of your stool',
+           'As far and as high as possible',
+           'Good Luck!!!',
            '']
     is_paused = False
 
@@ -765,13 +767,14 @@ class Tutorial(Widget):
         # Resize the ring
         self.ring.pos = (self.ring.pos[0] * width_scale, self.ring.pos[1] * height_scale)
 
-    def check_touches(self, app_object, gs, stats):
+    def check_touches(self, app_object):
         if self.is_paused:
             return
 
         was_touched = False
         w = self.width
         h = self.height
+
         if self.n == 0:
             was_touched = True
             app_object.tiltStick.anim_in(w=self.width, h=self.height, duration=1)
@@ -787,23 +790,27 @@ class Tutorial(Widget):
             app_object.actionButt.anim_in(w=self.width, h=self.height)
             self.new_ring_position(ring_size=(0.36*w, 0.36*w), ring_pos=(0.72*w, 0.59*h),
                                    in_duration=2.0, out_duration=2.0)
-        elif self.n == 3:
+        elif self.n == 3 and gs.game_mode >= 4:
             was_touched = True
-        elif self.n == 4:
+        elif self.n == 4 and gs.game_mode >= 5:
             was_touched = True
-        elif self.n == 5:
+        elif self.n == 5 and gs.game_mode >= 6:
             was_touched = True
         elif self.n == 6:
             was_touched = True
             self.clear_ring(out_duration=1.0)
             app_object.optionButt.anim_in(w=self.width, h=self.height)
+        elif self. n == 7:
+            was_touched = True
+        elif self.n == 8:
+            was_touched = True
 
+        next_pause_duration = 3.0 if self.n < 6 else 5.0
         if was_touched:
-            self.pause(3)
+            self.pause(next_pause_duration)
             self.n += 1
             Clock.schedule_once(self.change_message, 2)
             self.switch(w=app_object.width, h=app_object.height, duration=4.0)
-        # return app_object, gs, stats
         return
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1):
@@ -852,6 +859,10 @@ class DrubbleGame(Widget):
             # Initialize the background
             self.bg = MyBackground()
             self.add_widget(self.bg)
+
+            # Initialize the tutorial
+            self.tutorial = Tutorial()
+            self.add_widget(self.tutorial)
 
             # Initialize the ball
             self.ball = Ball()
@@ -920,10 +931,6 @@ class DrubbleGame(Widget):
             self.add_widget(self.optionButt)
             self.add_widget(self.actionButt)
 
-            # Initialize the tutorial
-            self.tutorial = Tutorial()
-            self.add_widget(self.tutorial)
-
     def add_game_widgets(self):
         # Background
         self.bg.anim_in()
@@ -931,13 +938,14 @@ class DrubbleGame(Widget):
         # Ball
         self.ball.anim_in()
 
-        # Option and action buttons
-        self.optionButt.anim_in(w=self.width, h=self.height)
-        self.actionButt.anim_in(w=self.width, h=self.height)
+        if not self.tutorial_mode:
+            # Option and action buttons
+            self.optionButt.anim_in(w=self.width, h=self.height)
+            self.actionButt.anim_in(w=self.width, h=self.height)
 
-        # Sticks
-        self.moveStick.anim_in(w=self.width, h=self.height)
-        self.tiltStick.anim_in(w=self.width, h=self.height)
+            # Sticks
+            self.moveStick.anim_in(w=self.width, h=self.height)
+            self.tiltStick.anim_in(w=self.width, h=self.height)
 
         # Score labels
         self.time_label.anim_in(w=self.width, h=self.height, duration=0.1)
@@ -1057,7 +1065,7 @@ class DrubbleGame(Widget):
             self.tutorial_button_press()
         elif gs.game_mode > 2:
             # Cycle through modes if touched the action or option_butt
-            if self.actionButt.detect_touch(loc):
+            if self.actionButt.detect_touch(loc) and not self.tutorial.is_paused:
                 self.action_button_press()
             if self.optionButt.detect_touch(loc):
                 self.option_button_press()
@@ -1076,7 +1084,7 @@ class DrubbleGame(Widget):
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
 
         if self.tutorial_mode:
-            self.tutorial.check_touches(self, gs, stats)
+            self.tutorial.check_touches(self)
 
     def on_touch_move(self, touch):
         if gs.game_mode > 2 and self.weHaveWidgets:
@@ -1209,6 +1217,7 @@ class DrubbleGame(Widget):
     def tutorial_button_press(self):
         # Specify that this will be the one player version, and start game
         p.nPlayer = 1
+        cycle_modes(gs, stats, engine)
 
         # Turn on tutorial mode
         self.tutorial_mode = True
@@ -1218,10 +1227,8 @@ class DrubbleGame(Widget):
         self.tutorial.pause(2)
 
         # Add selected widgets
-        gs.game_mode = 3
-        self.bg.anim_in()
+        self.add_game_widgets()
         self.remove_option_buttons()
-        self.weHaveWidgets = True
 
         # Turn the button blue momentarily
         self.tutorial_butt.background_touched()
