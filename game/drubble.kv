@@ -5,13 +5,13 @@
     canvas:
         Rectangle:
             source: 'a/splash.png'
-            pos: self.pos
+            #pos: self.pos
             size: root.width, root.height
-        Color:
-            rgba: 1, 1, 1, self.splash_fade
-        Rectangle:
-            pos: self.pos
-            size: root.width, root.height
+        #Color:
+        #    rgba: 1, 1, 1, self.splash_fade
+        #Rectangle:
+        #    pos: self.pos
+        #    size: root.width, root.height
 
 
 <MyBackground>:
@@ -199,3 +199,30 @@
             origin: self.center
     canvas.after:
         PopMatrix
+
+<Tutorial>:
+    canvas:
+        PushMatrix
+        Rotate:
+            angle: self.ring_angle
+            axis: (0, 0, 1)
+            origin: self.ring_center
+        Color:
+            rgba: 1, 1, 1, self.ring_opacity
+        Rectangle:
+            source: 'a/tutorial_ring.png'
+            pos: self.ring_pos
+            size: self.ring_size
+        PopMatrix
+    Label:
+        text: root.label_text
+        font_size: root.label_font_size
+        pos: root.label_pos
+        size: root.label_size
+        color: 0, 0, 1, 1
+        opacity: root.label_opacity
+        outline_width: root.label_outline_width
+        outline_color: 1, 1, 1, 1
+        font_name: 'a/Airstream.ttf'
+        halign: 'center'
+        valign: 'center'
