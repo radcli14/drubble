@@ -680,6 +680,12 @@ class RotatingRing(Image):
     angle = NumericProperty(0.0)
     center = ListProperty((0.0, 0.0))
 
+    def __init__(self):
+        super(RotatingRing, self).__init__()
+        self.source = 'a/tutorial_ring.png'
+        self.size = [0.0, 0.0]
+        self.opacity = 1.0
+
     def start_rotation(self):
         anim = Animation(angle=360, duration=3.14)
         anim += Animation(angle=360, duration=3.14)
@@ -714,13 +720,6 @@ class Tutorial(Widget):
     label_opacity = NumericProperty(0.0)
     label_font_name = StringProperty('a/Airstream.ttf')
 
-    # Rotating ring properties
-    ring_pos = ListProperty([0.0, 0.0])
-    ring_size = ListProperty([0.0, 0.0])
-    ring_angle = NumericProperty(0.0)
-    ring_center = ListProperty((0.0, 0.0))
-    ring_opacity = NumericProperty(0.0)
-
     def __init__(self, w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(Tutorial, self).__init__()
         self.n = 0
@@ -736,10 +735,10 @@ class Tutorial(Widget):
         self.label_opacity = 0.0
 
         # Create the ring widget
-        self.ring_pos = [0.0, 0.0]
-        self.ring_size = [0.0, 0.0]
-        self.ring_center = [0.0, 0.0]
-        self.ring_opacity = 0.0
+        with self.canvas:
+            self.ring = RotatingRing()
+            self.add_widget(self.ring)
+            self.ring.start_rotation()
 
     def on_angle(self, item, angle):
         if angle == 360:
@@ -756,18 +755,17 @@ class Tutorial(Widget):
         Clock.schedule_once(self.set_pause_false, dt)
 
     def new_ring_position(self, ring_size=(0, 0), ring_pos=(0, 0), in_duration=0.0, out_duration=0.0):
-        anim_ring_out = Animation(ring_opacity=0.0, duration=out_duration)
-        anim_ring_pos = Animation(ring_size=ring_size, ring_pos=ring_pos, ring_angle=0.0,
-                                  ring_center=(ring_pos[0]+0.5*ring_size[0], ring_pos[1]+0.5*ring_size[1]),
-                                  ring_opacity=0.0, duration=0)
-        anim_ring_in = Animation(ring_opacity=1.0, ring_angle=360, duration=in_duration)
-        anim_ring_rotate = Animation(ring_angle=1080, duration=2*in_duration)
-        anim = anim_ring_out + anim_ring_pos + anim_ring_in + anim_ring_rotate
-        anim.start(self)
+        anim_ring_out = Animation(opacity=0.0, duration=out_duration)
+        anim_ring_pos = Animation(size=ring_size, pos=ring_pos,
+                                  center=(ring_pos[0]+0.5*ring_size[0], ring_pos[1]+0.5*ring_size[1]),
+                                  opacity=0.0, duration=0)
+        anim_ring_in = Animation(opacity=1.0, duration=in_duration)
+        anim = anim_ring_out + anim_ring_pos + anim_ring_in
+        anim.start(self.ring)
 
     def clear_ring(self, out_duration=1.0):
-        anim_ring_out = Animation(ring_opacity=0.0, duration=out_duration)
-        anim_ring_out.start(self)
+        anim_ring_out = Animation(opacity=0.0, duration=out_duration)
+        anim_ring_out.start(self.ring)
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
         # Determine the width and height scale factors
@@ -788,9 +786,9 @@ class Tutorial(Widget):
         self.label_size = [0.6 * w, 0.3 * h]
 
         # Resize the ring
-        self.ring_size = (self.ring_size[0] * width_scale, self.ring_size[1] * height_scale)
-        self.ring_pos = (self.ring_pos[0] * width_scale, self.ring_pos[1] * height_scale)
-        self.ring_center = (self.ring_pos[0] + 0.5 * self.ring_size[0], self.ring_pos[1] + 0.5 * self.ring_size[1])
+        self.ring.size = (self.ring.size[0] * width_scale, self.ring.size[1] * height_scale)
+        self.ring.pos = (self.ring.pos[0] * width_scale, self.ring.pos[1] * height_scale)
+        self.ring.center = (self.ring.pos[0] + 0.5 * self.ring.size[0], self.ring.pos[1] + 0.5 * self.ring.size[1])
 
     def check_touches(self, app_object):
         if self.is_paused:
@@ -804,17 +802,17 @@ class Tutorial(Widget):
             was_touched = True
             app_object.tiltStick.anim_in(w=self.width, h=self.height, duration=1)
             self.new_ring_position(ring_size=(0.36*w, 0.36*w), ring_pos=(-0.08*w, -0.08*w+0.05*h),
-                                   in_duration=3.0, out_duration=0.0)
+                                   in_duration=2.0, out_duration=0.0)
         elif self.n == 1 and abs(gs.ctrl[2]) + abs(gs.ctrl[3]) != 0.0:
             was_touched = True
             app_object.moveStick.anim_in(w=self.width, h=self.height, duration=1)
             self.new_ring_position(ring_size=(0.36*w, 0.36*w), ring_pos=(0.72*w, -0.08*w+0.05*h),
-                                   in_duration=2.0, out_duration=3.0)
+                                   in_duration=2.0, out_duration=2.0)
         elif self.n == 2 and abs(gs.ctrl[1]) + abs(gs.ctrl[2]) != 0.0:
             was_touched = True
             app_object.actionButt.anim_in(w=self.width, h=self.height)
             self.new_ring_position(ring_size=(0.36*w, 0.36*w), ring_pos=(0.72*w, 0.59*h),
-                                   in_duration=2.0, out_duration=3.0)
+                                   in_duration=2.0, out_duration=2.0)
         elif self.n == 3 and gs.game_mode >= 4:
             was_touched = True
         elif self.n == 4 and gs.game_mode >= 5:
@@ -840,6 +838,7 @@ class Tutorial(Widget):
 
         # Remove widgets if reached end of tutorial
         if self.n >= self.msg.__len__():
+            self.clear_ring()
             self.anim_out()
             Clock.schedule_once(app_object.remove_tutorial_callback, 1.0)
             app_object.tutorial_mode = False
@@ -852,7 +851,6 @@ class Tutorial(Widget):
 
     def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=1):
         anim = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.6*h), label_opacity=0.0,
-                         ring_size=(0, 0), ring_opacity=0.0,
                          label_font_size=0.07*self.height, duration=0.33*duration, t='out_elastic')
         anim.start(self)
 

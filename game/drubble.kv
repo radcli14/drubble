@@ -204,19 +204,6 @@
 
 
 <Tutorial>:
-    canvas:
-        PushMatrix
-        Rotate:
-            angle: self.ring_angle
-            axis: (0, 0, 1)
-            origin: self.ring_center
-        Color:
-            rgba: 1, 1, 1, self.ring_opacity
-        Rectangle:
-            source: 'a/tutorial_ring.png'
-            pos: self.ring_pos
-            size: self.ring_size
-        PopMatrix
     Label:
         text: root.label_text
         font_size: root.label_font_size
