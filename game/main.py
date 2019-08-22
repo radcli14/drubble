@@ -269,7 +269,6 @@ class MyFace(Widget):
     stool_angle = NumericProperty(0.0)
     rotate_center = ListProperty([0, 0])
     image_source = StringProperty(None)
-    face_alpha = NumericProperty(0.0)
     stool_color = ListProperty([0, 0, 0])
     line_list = ListProperty([0, 0])
     line_color = ListProperty([0, 0, 0])
@@ -288,6 +287,7 @@ class MyFace(Widget):
         self.shorts_source1 = shorts_source.replace('.', '1.')
         self.stool_color = stool_color
         self.line_color = line_color
+        self.opacity = 0.0
 
     def update(self, x, y, l, th, m2p, po, w, h, player):
         xp, yp = xy2p(x, y, m2p, po, w, h)
@@ -307,10 +307,17 @@ class MyFace(Widget):
         self.line_list = player
         self.shorts_angle0 = -atan2(player[4]-player[6], player[5]-player[7]) * 180.0 / pi
         self.shorts_angle1 = -atan2(player[4]-player[2], player[5]-player[3]) * 180.0 / pi
-        self.face_alpha = 1.0
+
+    def anim_in(self, duration=1.0):
+        anim = Animation(opacity=1.0, duration=duration)
+        anim.start(self)
+
+    def anim_out(self, duration=1.0):
+        anim = Animation(opacity=0.0, duration=duration)
+        anim.start(self)
 
     def clear(self):
-        self.face_alpha = 0.0
+        self.opacity = 0.0
 
 
 class Ball(Widget):
@@ -705,6 +712,7 @@ class Tutorial(Widget):
     label_size = ListProperty([0.0, 0.0])
     label_outline_width = 3.0 * screen_scf
     label_opacity = NumericProperty(0.0)
+    label_font_name = StringProperty('a/Airstream.ttf')
 
     # Rotating ring properties
     ring_pos = ListProperty([0.0, 0.0])
@@ -833,12 +841,13 @@ class Tutorial(Widget):
         # Remove widgets if reached end of tutorial
         if self.n >= self.msg.__len__():
             self.anim_out()
+            Clock.schedule_once(app_object.remove_tutorial_callback, 1.0)
             app_object.tutorial_mode = False
         return
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1):
-        anim = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.6*h), label_opacity=1.0,
-                         label_font_size=0.12*h, duration=duration, t='out_elastic')
+        anim = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.5*h), label_opacity=1.0,
+                         label_font_size=0.1*h, duration=duration, t='out_elastic')
         anim.start(self)
 
     def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=1):
@@ -851,8 +860,8 @@ class Tutorial(Widget):
         anim_out = Animation(label_size=(0, 0), label_pos=(0.5*w, 0.5*h), label_opacity=0.0, label_font_size=0.0,
                              duration=0.25*duration, t='in_elastic')
         anim_pause = Animation(duration=0.5*duration)
-        anim_in = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.6*h), label_opacity=1.0,
-                            label_font_size=0.12*self.height, duration=0.25*duration, t='out_elastic')
+        anim_in = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.5*h), label_opacity=1.0,
+                            label_font_size=0.1*self.height, duration=0.25*duration, t='out_elastic')
         anim = anim_out + anim_pause + anim_in
         anim.start(self)
 
@@ -883,21 +892,16 @@ class DrubbleGame(Widget):
 
             # Initialize the background
             self.bg = MyBackground()
-            #self.add_widget(self.bg)
 
             # Initialize the tutorial
             self.tutorial = Tutorial()
-            #self.add_widget(self.tutorial)
 
             # Initialize the ball
             self.ball = Ball()
-            #self.add_widget(self.ball)
 
             # Initialize the sticks
             self.moveStick = Stick(norm_size=(0.2, 0.2), norm_pos=(0.8, 0.05), out_position='right')
             self.tiltStick = Stick(norm_size=(0.2, 0.2), norm_pos=(0.0, 0.05), out_position='left')
-            self.add_widget(self.moveStick)
-            self.add_widget(self.tiltStick)
 
             # Initialize the score line
             self.time_label = ScoreLabel(text='Time', norm_left=0.0)
@@ -905,11 +909,6 @@ class DrubbleGame(Widget):
             self.high_label = ScoreLabel(text='Height', norm_left=0.4)
             self.boing_label = ScoreLabel(text='Boing!', norm_left=0.6)
             self.score_label = ScoreLabel(text='Score', norm_left=0.8)
-            self.add_widget(self.time_label)
-            self.add_widget(self.dist_label)
-            self.add_widget(self.high_label)
-            self.add_widget(self.boing_label)
-            self.add_widget(self.score_label)
 
             # Initialize the player faces
             self.myFace = MyFace(image_source='a/myFace2.png', jersey_source='a/MyJersey.png',
@@ -932,10 +931,6 @@ class DrubbleGame(Widget):
                                                    label_text='Score', this_run='%0.0f' % stats.score,
                                                    best_run='%0.0f' % stats.high_score[p.nPlayer-1])
             self.add_widget(self.high_score_header)
-            self.add_widget(self.high_dist_label)
-            self.add_widget(self.high_height_label)
-            self.add_widget(self.high_boing_label)
-            self.add_widget(self.high_score_label)
 
             # Initialize the option and action buttons
             self.singleDrubbleButt = OptionButtons(text='Single dRuBbLe', norm_size=(0.5, 0.2), out_position='left',
@@ -948,8 +943,6 @@ class DrubbleGame(Widget):
                                             norm_pos=(0.01, 0.88), norm_font_size=0.055, color=red)
             self.actionButt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.06), out_position='right',
                                             norm_pos=(0.81, 0.88),  norm_font_size=0.055, color=red)
-            self.add_widget(self.optionButt)
-            self.add_widget(self.actionButt)
 
     def remove_splash(self, dt):
         self.remove_widget(self.splash)
@@ -967,6 +960,14 @@ class DrubbleGame(Widget):
         # Players
         self.add_widget(self.myFace)
         self.add_widget(self.LadyFace)
+        self.myFace.anim_in()
+        self.LadyFace.anim_in()
+
+        # Sticks and buttons
+        self.add_widget(self.moveStick)
+        self.add_widget(self.tiltStick)
+        self.add_widget(self.optionButt)
+        self.add_widget(self.actionButt)
 
         if self.tutorial_mode:
             self.add_widget(self.tutorial)
@@ -980,6 +981,11 @@ class DrubbleGame(Widget):
             self.tiltStick.anim_in(w=self.width, h=self.height)
 
         # Score labels
+        self.add_widget(self.time_label)
+        self.add_widget(self.dist_label)
+        self.add_widget(self.high_label)
+        self.add_widget(self.boing_label)
+        self.add_widget(self.score_label)
         self.time_label.anim_in(w=self.width, h=self.height, duration=0.1)
         self.dist_label.anim_in(w=self.width, h=self.height, duration=0.2)
         self.high_label.anim_in(w=self.width, h=self.height, duration=0.3)
@@ -991,12 +997,13 @@ class DrubbleGame(Widget):
         print('  --> Done!')
 
     def remove_game_widgets(self):
+        print('Removing game widgets')
         self.bg.anim_out()
         self.ball.anim_out()
         self.moveStick.anim_out(w=self.width, h=self.height)
         self.tiltStick.anim_out(w=self.width, h=self.height)
-        self.myFace.clear()
-        self.LadyFace.clear()
+        self.myFace.anim_out()
+        self.LadyFace.anim_out()
         self.time_label.anim_out(w=self.width, h=self.height, duration=0.15)
         self.dist_label.anim_out(w=self.width, h=self.height, duration=0.30)
         self.high_label.anim_out(w=self.width, h=self.height, duration=0.45)
@@ -1016,8 +1023,19 @@ class DrubbleGame(Widget):
         self.remove_widget(self.ball)
         self.remove_widget(self.myFace)
         self.remove_widget(self.LadyFace)
+        self.remove_widget(self.moveStick)
+        self.remove_widget(self.tiltStick)
+        self.remove_widget(self.optionButt)
+        self.remove_widget(self.actionButt)
+        self.remove_widget(self.time_label)
+        self.remove_widget(self.dist_label)
+        self.remove_widget(self.high_label)
+        self.remove_widget(self.boing_label)
+        self.remove_widget(self.score_label)
+        print('  --> Done!')
 
     def add_option_buttons(self, dt):
+        print('Adding option buttons')
         # Add option screen buttons
         self.add_widget(self.singleDrubbleButt)
         self.add_widget(self.doubleDrubbleButt)
@@ -1025,17 +1043,24 @@ class DrubbleGame(Widget):
         self.singleDrubbleButt.anim_in(w=self.width, h=self.height)
         self.doubleDrubbleButt.anim_in(w=self.width, h=self.height)
         self.tutorial_butt.anim_in(w=self.width, h=self.height)
+        print('  --> Done!')
 
     def remove_option_buttons(self):
+        print('Removing option buttons')
         # Add option screen buttons
         self.singleDrubbleButt.anim_out(w=self.width, h=self.height)
         self.doubleDrubbleButt.anim_out(w=self.width, h=self.height)
         self.tutorial_butt.anim_out(w=self.width, h=self.height)
+        Clock.schedule_once(self.remove_option_buttons_callback, 1.0)
+
+    def remove_option_buttons_callback(self, dt):
         self.remove_widget(self.singleDrubbleButt)
         self.remove_widget(self.doubleDrubbleButt)
         self.remove_widget(self.tutorial_butt)
+        print('  --> Done!')
 
     def add_high_scores(self):
+        print('Adding High Scores')
         # Update the strings for the current scores
         self.high_dist_label.this_run = '%0.1f' % stats.stool_dist
         self.high_height_label.this_run = '%0.2f' % stats.max_height
@@ -1062,6 +1087,10 @@ class DrubbleGame(Widget):
         self.high_score_label.best_run = '%0.0f' % stats.high_score[p.nPlayer-1]
 
         # Bring the high scores onto the screen
+        self.add_widget(self.high_dist_label)
+        self.add_widget(self.high_height_label)
+        self.add_widget(self.high_boing_label)
+        self.add_widget(self.high_score_label)
         self.high_score_header.anim_in(h=self.height, duration=1)
         self.high_dist_label.anim_in(h=self.height, duration=1)
         self.high_height_label.anim_in(h=self.height, duration=1)
@@ -1070,14 +1099,24 @@ class DrubbleGame(Widget):
 
         # Update the high scores
         stats.update_high()
+        print('  --> Done!')
 
     def remove_high_scores(self, duration=1):
+        print('Removing High Scores')
         # Take the high scores off the screen
         self.high_score_header.anim_out(w=self.width, h=self.height, duration=duration)
         self.high_dist_label.anim_out(w=self.width, h=self.height, duration=duration)
         self.high_height_label.anim_out(w=self.width, h=self.height, duration=duration)
         self.high_boing_label.anim_out(w=self.width, h=self.height, duration=duration)
         self.high_score_label.anim_out(w=self.width, h=self.height, duration=duration)
+        Clock.schedule_once(self.remove_high_scores_callback, 1.0)
+
+    def remove_high_scores_callback(self, dt):
+        self.remove_widget(self.high_dist_label)
+        self.remove_widget(self.high_height_label)
+        self.remove_widget(self.high_boing_label)
+        self.remove_widget(self.high_score_label)
+        print('  --> Done!')
 
     # Controls
     def _keyboard_closed(self):
@@ -1233,6 +1272,12 @@ class DrubbleGame(Widget):
         self.optionButt.background_touched()
         Clock.schedule_once(self.optionButt.background_untouched, 0.1)
 
+        if self.tutorial_mode:
+            print('Removing the tutorial')
+            self.tutorial.anim_out(w=self.width, h=self.height, duration=1.0)
+            Clock.schedule_once(self.remove_tutorial_callback, 1.0)
+            self.tutorial_mode = False
+
     # What to do when action button is pressed
     def action_button_press(self):
         # Progress through the speed/angle setting, game, then high score
@@ -1283,9 +1328,14 @@ class DrubbleGame(Widget):
         self.tutorial_butt.background_touched()
         Clock.schedule_once(self.tutorial_butt.background_untouched, 0.1)
 
+    def remove_tutorial_callback(self, dt):
+        self.tutorial.label_text = ''
+        self.remove_widget(self.tutorial)
+        print('  --> Done!')
+
     def resize_canvas(self, *args):
         # Splash screen
-        if not gs.showedSplash:
+        if gs.game_mode == 1:
             self.splash.resize(w=self.width, h=self.height)
 
         # High score labels
@@ -1329,9 +1379,10 @@ class DrubbleGame(Widget):
         if self.weHaveWidgets:
             self.actionButt.text = p.actionMSG[gs.game_mode]
 
-        # Either update the splash, or add the widgets
+        # Remove the splash and add the option buttons
         if gs.game_mode == 2 and not self.weHaveButtons:
             self.splash.anim_out(w=self.width)
+            gs.showedSplash = True
             Clock.schedule_once(self.remove_splash, 1.0)
             Clock.schedule_once(self.add_option_buttons, 1.0)
             self.weHaveButtons = True

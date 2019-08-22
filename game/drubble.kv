@@ -36,17 +36,17 @@
 <MyFace>:
     canvas:
         Color:
-            rgba: (self.line_color[0], self.line_color[1], self.line_color[2], self.face_alpha)
+            rgba: self.line_color[0], self.line_color[1], self.line_color[2], 1
         Line:
             points: self.line_list
             width: self.line_width
         Color:
-            rgba: (0.7, 0.7, 0.7, self.face_alpha)
+            rgba: 0.7, 0.7, 0.7, 1
         Ellipse:
             pos: self.jersey_left+0.1*self.sz, self.jersey_bottom-0.3*self.sz
             size: 0.4*self.sz, 0.6*self.sz
         Color:
-            rgba: (1, 1, 1, self.face_alpha)
+            rgba: 1, 1, 1, 1
         PushMatrix
         Rotate:
             angle: self.shorts_angle0
@@ -78,7 +78,7 @@
             angle: self.stool_angle
             origin: self.rotate_center
         Color:
-            rgba: (self.stool_color[0], self.stool_color[1], self.stool_color[2], self.face_alpha)
+            rgba: self.stool_color[0], self.stool_color[1], self.stool_color[2], 1
         Rectangle:
             source: 'a/stool.png'
             pos: self.stool_left, self.stool_bottom
@@ -129,6 +129,7 @@
         pos: root.pos
         size: root.size
         color: root.label_color
+
 
 <ScoreLabel>:
     canvas:
@@ -190,6 +191,7 @@
         outline_width: root.outline_width
         outline_color: root.outline_color
 
+
 <RotatingRing>:
     canvas.before:
         PushMatrix
@@ -199,6 +201,7 @@
             origin: self.center
     canvas.after:
         PopMatrix
+
 
 <Tutorial>:
     canvas:
@@ -221,8 +224,8 @@
         size: root.label_size
         color: 0, 0, 1, 1
         opacity: root.label_opacity
-        outline_width: root.label_outline_width
+        outline_width: 0.05 * root.label_font_size
         outline_color: 1, 1, 1, 1
-        font_name: 'a/Airstream.ttf'
+        #font_name: root.label_font_name
         halign: 'center'
         valign: 'center'
