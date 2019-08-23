@@ -89,16 +89,16 @@ fullscreen = 0
 #android.permissions = INTERNET
 
 # (int) Target Android API, should be as high as possible.
-#android.api = 27
+android.api = 28
 
 # (int) Minimum API your APK will support.
-#android.minapi = 21
+#android.minapi = 19
 
 # (int) Android SDK version to use
-#android.sdk = 20
+#android.sdk = 23
 
 # (str) Android NDK version to use
-android.ndk = 17c
+#android.ndk = 17c
 
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
 #android.ndk_api = 21
@@ -160,7 +160,7 @@ android.ndk = 17c
 #android.add_activites = com.example.ExampleActivity
 
 # (str) python-for-android branch to use, defaults to master
-#p4a.branch = master
+p4a.branch = master
 
 # (str) OUYA Console category. Should be one of GAME or APP
 # If you leave this blank, OUYA support will not be enabled
