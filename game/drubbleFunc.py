@@ -151,6 +151,11 @@ class Parameters:
     tp_lim = [-3.14, 3.14]
     dtp_lim = [-20, 20]
 
+    # Number of points to include in the future trajectory predictions (ball_predict() function)
+    num_future_points = 10
+
+    # Time increment between future trajectory points
+    future_increment = 0.15
 
 p = Parameters()
 
@@ -297,19 +302,26 @@ def ball_predict(gs, pAct):
     yI = gs.yb + gs.dyb * tI - 0.5 * p.g * tI ** 2
 
     # Solve for time that the ball would hit the ground
-    tG = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * gs.yb)) / p.g
+    tG = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb-p.rb))) / p.g
 
-    # Solve for the arc for the next 1.2 seconds, or until ball hits ground
-    T = linspace(0, min(1.2, tG), 20)
-    xTraj = []
-    yTraj = []
-    for n in range(20):
-        xTraj.append(gs.xb + gs.dxb * T[n])
-        yTraj.append(gs.yb + gs.dyb * T[n] - 0.5 * p.g * T[n] ** 2)
+    # Solve at 0.15 second increments or until ball hits ground
+    time_offset = dt + p.future_increment - fmod(gs.t / p.future_increment, 1.0) * p.future_increment
+    T = zeros(p.num_future_points)
+    for n in range(p.num_future_points):
+        t = time_offset + p.future_increment * n
+        T[n] = t if t < tG else tG
+
+    xTraj = zeros(p.num_future_points)
+    yTraj = zeros(p.num_future_points)
+    n = -1
+    for t in T:
+        n += 1
+        xTraj[n] = gs.xb + gs.dxb * t
+        yTraj[n] = gs.yb + gs.dyb * t - 0.5 * p.g * t ** 2
 
     # Time until event
-    timeUntilBounce = tI
-    tI = timeUntilBounce + gs.t
+    time_until_bounce = tI
+    tI = time_until_bounce + gs.t
 
     # Output variables
     # xI = Ball distance at impact [m]
@@ -317,7 +329,7 @@ def ball_predict(gs, pAct):
     # tI = Time at impact [s]
     # xTraj = Ball trajectory distances [m]
     # yTraj = Ball trajectory heights [m]
-    return xI, yI, tI, xTraj, yTraj, timeUntilBounce
+    return xI, yI, tI, xTraj, yTraj, time_until_bounce
 
 
 class GameState:
@@ -1080,7 +1092,7 @@ def set_ranges(u, w):
 def intersperse(list1, list2):
     result = [None] * (len(list1) + len(list2))
     result[::2] = list1
-    result[1::2] = list2    
+    result[1::2] = list2
     return result
 
 

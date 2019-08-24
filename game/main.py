@@ -324,33 +324,30 @@ class Ball(Widget):
     img_left = NumericProperty(0.0)
     img_bottom = NumericProperty(0.0)
     sz = NumericProperty(0)
-    image_source = StringProperty(None)
-    ball_alpha = NumericProperty(0.0)
-    trajectory = ListProperty([])
-    line_width = screen_scf * 1.5
-    if platform in ('linux', 'windows', 'macosx'):
-        line_alpha = NumericProperty(0.5)
-    else:
-        line_alpha = NumericProperty(1.0)
 
     def __init__(self, image_source='a/ball.png', **kwargs):
         super(Ball, self).__init__(**kwargs)
-        self.image_source = image_source
+
+        self.future = []
+        with self.canvas:
+            Color(rgba=(1.0, 0.4, 0.8, 0.35))
+            self.future = [Ellipse(size=(0, 0)) for _ in range(10)]
+            Color(rgba=(1, 1, 1, 1))
+            self.now = Ellipse(size=(self.sz, self.sz), source=image_source, pos=self.pos)
 
     def update(self, xb, yb, m2p, po, w, h):
         x, y = xy2p(xb, yb, m2p, po, w, h)
         self.sz = int(2.0 * p1.m2p * p.rb)
         self.img_left = int(x - p1.m2p * p.rb)
         self.img_bottom = int(y - p1.m2p * p.rb)
-        self.ball_alpha = 1.0
-        x, y = xy2p(gs.xTraj, gs.yTraj, m2p, po, w, h)
-        if gs.game_mode < 7:
-            self.trajectory = intersperse(x, y)
-        else:
-            self.trajectory = []
 
-    def clear(self):
-        self.ball_alpha = 0.0
+        X, Y = xy2p(gs.xTraj, gs.yTraj, m2p, po, w, h)
+        self.now.pos = (self.img_left, self.img_bottom)
+        self.now.size = (self.sz, self.sz)
+        for n in range(X.__len__()):
+            sz = self.sz * (1 - n / p.num_future_points)
+            self.future[n].pos = (X[n] - 0.5 * sz, Y[n] - 0.5 * sz)
+            self.future[n].size = (sz, sz)
 
     def anim_in(self):
         anim = Animation(opacity=1.0, duration=1)
