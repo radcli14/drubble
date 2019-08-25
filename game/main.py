@@ -606,7 +606,7 @@ class HighScoreLabel(Widget):
         self.outside_position = outside_position
 
         # Vertical position is an integer, goes from top [0] to bottom [4] when on-screen
-        self.vertical_position= vertical_position
+        self.vertical_position = vertical_position
 
         # Label text is the left column [distance, height, boing, or score]
         self.label_text = label_text
@@ -916,32 +916,38 @@ class DrubbleGame(Widget):
                                    shorts_source='a/LadyShorts.png', line_color=olive, stool_color=gray)
 
             # Initialize the high score labels
+            j = p.difficult_level
+            k = p.nPlayer - 1
+            self.high_score_game_type = HighScoreLabel(outside_position='left', vertical_position=-1,
+                                                       label_text='', this_run='',
+                                                       best_run=p.difficult_text[p.difficult_level])
             self.high_score_header = HighScoreLabel()
             self.high_dist_label = HighScoreLabel(outside_position='left', vertical_position=1,
                                                   label_text='Distance', this_run='%0.1f' % stats.stool_dist,
-                                                  best_run='%0.1f' % stats.high_stool_dist[p.nPlayer-1])
+                                                  best_run='%0.1f' % stats.high_stool_dist[j][k])
             self.high_height_label = HighScoreLabel(outside_position='right', vertical_position=2,
                                                     label_text='Height', this_run='%0.2f' % stats.max_height,
-                                                    best_run='%0.2f' % stats.high_height[p.nPlayer-1])
+                                                    best_run='%0.2f' % stats.high_height[j][k])
             self.high_boing_label = HighScoreLabel(outside_position='left', vertical_position=3,
                                                    label_text='Boing!', this_run='%0.0f' % stats.stool_count,
-                                                   best_run='%0.0f' % stats.high_stool_count[p.nPlayer-1])
+                                                   best_run='%0.0f' % stats.high_stool_count[j][k])
             self.high_score_label = HighScoreLabel(outside_position='right', vertical_position=4,
                                                    label_text='Score', this_run='%0.0f' % stats.score,
-                                                   best_run='%0.0f' % stats.high_score[p.nPlayer-1])
-            self.add_widget(self.high_score_header)
+                                                   best_run='%0.0f' % stats.high_score[j][k])
 
             # Initialize the option and action buttons
             self.single_drubble_butt = OptionButtons(text='Single dRuBbLe', norm_size=(0.5, 0.2), out_position='left',
-                                                   norm_pos=(0.1, 0.7),  norm_font_size=0.14,  color=red)
-            self.double_drubble_butt = OptionButtons(text='Double dRuBbLe', norm_size=(0.8, 0.2), out_position='right',
-                                                   norm_pos=(0.1, 0.4),  norm_font_size=0.14,  color=red)
+                                                     norm_pos=(0.1, 0.7),  norm_font_size=0.14,  color=red)
+            self.double_drubble_butt = OptionButtons(text='Double dRuBbLe', norm_size=(0.5, 0.2), out_position='right',
+                                                     norm_pos=(0.1, 0.4),  norm_font_size=0.14,  color=red)
             self.tutorial_butt = OptionButtons(text='How2', norm_size=(0.25, 0.2), out_position='left',
                                                norm_pos=(0.65, 0.7),  norm_font_size=0.14,  color=red)
+            self.difficult_butt = OptionButtons(text=p.difficult_text[p.difficult_level], norm_size=(0.25, 0.2),
+                                                out_position='right', norm_pos=(0.65, 0.4),  norm_font_size=0.14,  color=red)
             self.option_butt = OptionButtons(text='Options', norm_size=(0.18, 0.09), out_position='left',
-                                            norm_pos=(0.01, 0.85), norm_font_size=0.07, color=red)
+                                             norm_pos=(0.01, 0.85), norm_font_size=0.07, color=red)
             self.action_butt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.09), out_position='right',
-                                            norm_pos=(0.81, 0.85),  norm_font_size=0.07, color=red)
+                                             norm_pos=(0.81, 0.85),  norm_font_size=0.07, color=red)
 
     def remove_splash(self, dt):
         self.remove_widget(self.splash)
@@ -1041,9 +1047,12 @@ class DrubbleGame(Widget):
         self.add_widget(self.single_drubble_butt)
         self.add_widget(self.double_drubble_butt)
         self.add_widget(self.tutorial_butt)
+        self.add_widget(self.difficult_butt)
+        self.difficult_butt.text = p.difficult_text[p.difficult_level]
         self.single_drubble_butt.anim_in(w=self.width, h=self.height)
         self.double_drubble_butt.anim_in(w=self.width, h=self.height)
         self.tutorial_butt.anim_in(w=self.width, h=self.height)
+        self.difficult_butt.anim_in(w=self.width, h=self.height)
         print('  --> Done!')
 
     def remove_option_buttons(self):
@@ -1052,16 +1061,22 @@ class DrubbleGame(Widget):
         self.single_drubble_butt.anim_out(w=self.width, h=self.height)
         self.double_drubble_butt.anim_out(w=self.width, h=self.height)
         self.tutorial_butt.anim_out(w=self.width, h=self.height)
+        self.difficult_butt.anim_out(w=self.width, h=self.height)
         Clock.schedule_once(self.remove_option_buttons_callback, 1.0)
 
     def remove_option_buttons_callback(self, dt):
         self.remove_widget(self.single_drubble_butt)
         self.remove_widget(self.double_drubble_butt)
         self.remove_widget(self.tutorial_butt)
+        self.remove_widget(self.difficult_butt)
         print('  --> Done!')
 
     def add_high_scores(self):
         print('Adding High Scores')
+        # Indices for the high scores
+        j = p.difficult_level
+        k = p.nPlayer - 1
+
         # Update the strings for the current scores
         self.high_dist_label.this_run = '%0.1f' % stats.stool_dist
         self.high_height_label.this_run = '%0.2f' % stats.max_height
@@ -1069,34 +1084,37 @@ class DrubbleGame(Widget):
         self.high_score_label.this_run = '%0.0f' % stats.score
 
         # Calculate percentiles
-        pct_dist_str = return_percentile(stats.all_stool_dist[p.nPlayer-1], stats.stool_dist)
-        pct_height_str = return_percentile(stats.all_height[p.nPlayer - 1], stats.max_height)
-        pct_boing_str = return_percentile(stats.all_stool_count[p.nPlayer - 1], stats.stool_count)
-        pct_score_str = return_percentile(stats.all_score[p.nPlayer - 1], stats.score)
+        pct_dist_str = return_percentile(stats.all_stool_dist[j][k], stats.stool_dist)
+        pct_height_str = return_percentile(stats.all_height[j][k], stats.max_height)
+        pct_boing_str = return_percentile(stats.all_stool_count[j][k], stats.stool_count)
+        pct_score_str = return_percentile(stats.all_score[j][k], stats.score)
 
         # Include either a percentile, or new high string
         hstr = 'New High!'
-        self.high_dist_label.is_high = hstr if stats.stool_dist > stats.high_stool_dist[p.nPlayer-1] else pct_dist_str
-        self.high_height_label.is_high = hstr if stats.max_height > stats.high_height[p.nPlayer-1] else pct_height_str
-        self.high_boing_label.is_high = hstr if stats.stool_count>stats.high_stool_count[p.nPlayer-1] else pct_boing_str
-        self.high_score_label.is_high = hstr if stats.score > stats.high_score[p.nPlayer-1] else pct_score_str
+        self.high_dist_label.is_high = hstr if stats.stool_dist > stats.high_stool_dist[j][k] else pct_dist_str
+        self.high_height_label.is_high = hstr if stats.max_height > stats.high_height[j][k] else pct_height_str
+        self.high_boing_label.is_high = hstr if stats.stool_count>stats.high_stool_count[j][k] else pct_boing_str
+        self.high_score_label.is_high = hstr if stats.score > stats.high_score[j][k] else pct_score_str
 
         # Update the strings for the high scores
-        self.high_dist_label.best_run = '%0.1f' % stats.high_stool_dist[p.nPlayer-1]
-        self.high_height_label.best_run = '%0.2f' % stats.high_height[p.nPlayer-1]
-        self.high_boing_label.best_run = '%0.0f' % stats.high_stool_count[p.nPlayer-1]
-        self.high_score_label.best_run = '%0.0f' % stats.high_score[p.nPlayer-1]
+        self.high_dist_label.best_run = '%0.1f' % stats.high_stool_dist[j][k]
+        self.high_height_label.best_run = '%0.2f' % stats.high_height[j][k]
+        self.high_boing_label.best_run = '%0.0f' % stats.high_stool_count[j][k]
+        self.high_score_label.best_run = '%0.0f' % stats.high_score[j][k]
 
         # Bring the high scores onto the screen
+        self.add_widget(self.high_score_game_type)
+        self.add_widget(self.high_score_header)
         self.add_widget(self.high_dist_label)
         self.add_widget(self.high_height_label)
         self.add_widget(self.high_boing_label)
         self.add_widget(self.high_score_label)
-        self.high_score_header.anim_in(h=self.height, duration=1)
-        self.high_dist_label.anim_in(h=self.height, duration=1)
-        self.high_height_label.anim_in(h=self.height, duration=1)
-        self.high_boing_label.anim_in(h=self.height, duration=1)
-        self.high_score_label.anim_in(h=self.height, duration=1)
+        self.high_score_game_type.anim_in(h=self.height, duration=0.5)
+        self.high_score_header.anim_in(h=self.height, duration=1.0)
+        self.high_dist_label.anim_in(h=self.height, duration=1.5)
+        self.high_height_label.anim_in(h=self.height, duration=2.0)
+        self.high_boing_label.anim_in(h=self.height, duration=2.5)
+        self.high_score_label.anim_in(h=self.height, duration=3.0)
 
         # Update the high scores
         stats.update_high()
@@ -1105,6 +1123,7 @@ class DrubbleGame(Widget):
     def remove_high_scores(self, duration=1):
         print('Removing High Scores')
         # Take the high scores off the screen
+        self.high_score_game_type.anim_out(w=self.width, h=self.height, duration=duration)
         self.high_score_header.anim_out(w=self.width, h=self.height, duration=duration)
         self.high_dist_label.anim_out(w=self.width, h=self.height, duration=duration)
         self.high_height_label.anim_out(w=self.width, h=self.height, duration=duration)
@@ -1113,6 +1132,8 @@ class DrubbleGame(Widget):
         Clock.schedule_once(self.remove_high_scores_callback, 1.0)
 
     def remove_high_scores_callback(self, dt):
+        self.remove_widget(self.high_score_game_type)
+        self.remove_widget(self.high_score_header)
         self.remove_widget(self.high_dist_label)
         self.remove_widget(self.high_height_label)
         self.remove_widget(self.high_boing_label)
@@ -1152,6 +1173,8 @@ class DrubbleGame(Widget):
             self.double_drubble_button_press()
         elif gs.game_mode == 2 and self.tutorial_butt.detect_touch(loc):
             self.tutorial_button_press()
+        elif gs.game_mode == 2 and self.difficult_butt.detect_touch(loc):
+            self.difficult_button_press()
         elif gs.game_mode > 2:
             # Cycle through modes if touched the action or option_butt
             if self.action_butt.detect_touch(loc) and not self.tutorial.is_paused:
@@ -1244,6 +1267,9 @@ class DrubbleGame(Widget):
         self.single_drubble_butt.background_touched()
         Clock.schedule_once(self.single_drubble_butt.background_untouched, 0.1)
 
+        # Update the high score game type
+        self.high_score_game_type.this_run = 'Single dRuBbLe'
+
     # What to do when the double drubble button is pressed
     def double_drubble_button_press(self):
         # Specify this will be the two player version, and start game
@@ -1257,6 +1283,9 @@ class DrubbleGame(Widget):
         # Turn the button blue momentarily
         self.double_drubble_butt.background_touched()
         Clock.schedule_once(self.double_drubble_butt.background_untouched, 0.1)
+
+        # Update the high score game type
+        self.high_score_game_type.this_run = 'Single dRuBbLe'
 
     # What to do when option button is pressed
     def option_button_press(self):
@@ -1329,6 +1358,23 @@ class DrubbleGame(Widget):
         self.tutorial_butt.background_touched()
         Clock.schedule_once(self.tutorial_butt.background_untouched, 0.1)
 
+    def difficult_button_press(self):
+        # Increment the difficulty level
+        if p.difficult_level < 2:
+            p.difficult_level += 1
+        else:
+            p.difficult_level = 0
+
+        # Channge the button text
+        self.difficult_butt.text = p.difficult_text[p.difficult_level]
+
+        # Turn the button blue momentarily
+        self.difficult_butt.background_touched()
+        Clock.schedule_once(self.difficult_butt.background_untouched, 0.1)
+
+        # Update the high score game type
+        self.high_score_game_type.best_run = p.difficult_text[p.difficult_level]
+
     def remove_tutorial_callback(self, dt):
         self.tutorial.label_text = ''
         self.remove_widget(self.tutorial)
@@ -1365,6 +1411,7 @@ class DrubbleGame(Widget):
         self.single_drubble_butt.resize(w=self.width, h=self.height)
         self.double_drubble_butt.resize(w=self.width, h=self.height)
         self.tutorial_butt.resize(w=self.width, h=self.height)
+        self.difficult_butt.resize(w=self.width, h=self.height)
         self.action_butt.resize(w=self.width, h=self.height)
         self.option_butt.resize(w=self.width, h=self.height)
 

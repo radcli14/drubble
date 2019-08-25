@@ -129,7 +129,7 @@ class Parameters:
     
     # Parameter settings I'm using to try to improve running speed
     linearMass = False
-    nEulerSteps = 1
+    nEulerSteps = 2
     timeRun = False
     
     # Font settings
@@ -156,6 +156,12 @@ class Parameters:
 
     # Time increment between future trajectory points
     future_increment = 0.15
+
+    # Difficulty levels
+    difficult_text = ['Easy', 'Hard', 'Silly']
+    difficult_speed_scale = [0.75, 1.0, 1.3]
+    difficult_level = 0
+
 
 p = Parameters()
 
@@ -441,11 +447,11 @@ class GameState:
         near_condition = abs(self.xb - self.xp[pAct]) < 1.0
         if 0.0 < time_condition < 0.5 and near_condition:
             # Slow speed
-            ddt = dt / 1.5
+            ddt = dt / 1.5 * p.difficult_speed_scale[p.difficult_level]
             nStep = 4 * p.nEulerSteps
         else:
             # Regular speed
-            ddt = dt
+            ddt = dt * p.difficult_speed_scale[p.difficult_level]
             nStep = p.nEulerSteps
 
         # Integrate using Euler method
@@ -548,13 +554,13 @@ class GameState:
 
     def setAngleSpeed(self):
         if self.game_mode == 4:
-            self.startAngle = 0.25*pi*(1 + 0.75*sin(self.phase))
+            self.startAngle = 0.25 * pi * (1 + 0.75*sin(self.phase))
         if self.game_mode == 5:
-            self.startSpeed = p.ss*(1 + 0.75*sin(self.phase))
+            self.startSpeed = p.ss * (1 + 0.75*sin(self.phase))
         if self.game_mode == 4 or self.game_mode == 5:
-            self.phase += 3*dt
-            self.u[2] = self.startSpeed*cos(self.startAngle)
-            self.u[3] = self.startSpeed*sin(self.startAngle)
+            self.phase += 3 * dt * p.difficult_speed_scale[p.difficult_level]
+            self.u[2] = self.startSpeed * cos(self.startAngle)
+            self.u[3] = self.startSpeed * sin(self.startAngle)
 
 
 def cycle_modes(gs, stats, engine):
@@ -601,16 +607,16 @@ class GameScore:
     store = None
 
     # Initialize all scores as empty arrays
-    all_stool_dist = [[], []]
-    all_height = [[], []]
-    all_stool_count = [[], []]
-    all_score = [[], []]
+    all_stool_dist = [[[], []], [[], []], [[], []]]
+    all_height = [[[], []], [[], []], [[], []]]
+    all_stool_count = [[[], []], [[], []], [[], []]]
+    all_score = [[[], []], [[], []], [[], []]]
 
     # Initialize high scores as zero
-    high_stool_dist = [0.0, 0.0]
-    high_height = [0.0, 0.0]
-    high_stool_count = [0, 0]
-    high_score = [0, 0]
+    high_stool_dist = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
+    high_height = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
+    high_stool_count = [[0, 0], [0, 0], [0, 0]]
+    high_score = [[0, 0], [0, 0], [0, 0]]
 
     # Initiate statistics as zeros
     def __init__(self):
@@ -648,6 +654,7 @@ class GameScore:
         # Import high scores, or set to zero
         try:
             # Load from JsonStore
+            p.difficult_level = self.store.get('difficult_level')['value']
             self.all_stool_dist = self.store.get('all_stool_dist')['value']
             self.all_height = self.store.get('all_height')['value']
             self.all_stool_count = self.store.get('all_stool_count')['value']
@@ -662,17 +669,24 @@ class GameScore:
 
     # Update high scores
     def update_high(self):
-        self.all_stool_dist[p.nPlayer-1].append(self.stool_dist)
-        self.all_height[p.nPlayer-1].append(self.max_height)
-        self.all_stool_count[p.nPlayer-1].append(self.stool_count)
-        self.all_score[p.nPlayer-1].append(self.score)
+        # Indices for the high scores
+        j = p.difficult_level
+        k = p.nPlayer - 1
 
-        self.high_stool_dist[p.nPlayer-1] = max(self.high_stool_dist[p.nPlayer-1], self.stool_dist)
-        self.high_height[p.nPlayer-1] = max(self.high_height[p.nPlayer-1], self.max_height)
-        self.high_stool_count[p.nPlayer-1] = max(self.high_stool_count[p.nPlayer-1], self.stool_count)
-        self.high_score[p.nPlayer-1] = max(self.high_score[p.nPlayer-1], self.score)
+        # Append to the complete database
+        self.all_stool_dist[j][k].append(self.stool_dist)
+        self.all_height[j][k].append(self.max_height)
+        self.all_stool_count[j][k].append(self.stool_count)
+        self.all_score[j][k].append(self.score)
+
+        # Determine if this is a new high in any category
+        self.high_stool_dist[j][k] = max(self.high_stool_dist[j][k], self.stool_dist)
+        self.high_height[j][k] = max(self.high_height[j][k], self.max_height)
+        self.high_stool_count[j][k] = max(self.high_stool_count[j][k], self.stool_count)
+        self.high_score[j][k] = max(self.high_score[j][k], self.score)
 
         try:
+            self.store.put('difficult_level', value=p.difficult_level)
             self.store.put('all_stool_dist', value=self.all_stool_dist)
             self.store.put('all_height', value=self.all_height)
             self.store.put('all_stool_count', value=self.all_stool_count)
