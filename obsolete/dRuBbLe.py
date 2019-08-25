@@ -89,7 +89,7 @@ def toggleVisibleSprites(self, boule):
         self.boing_label.alpha = 1
         self.score_label.alpha = 1
         self.actionButt.add()
-        self.optionButt.add()
+        self.option_butt.add()
     else:
         self.moveStick.alpha = 0
         self.moveAura.alpha = 0
@@ -106,7 +106,7 @@ def toggleVisibleSprites(self, boule):
         self.boing_label.alpha = 0
         self.score_label.alpha = 0
         self.actionButt.rm()
-        self.optionButt.rm()
+        self.option_butt.rm()
 
 def makeMarkers(xrng, m2p, po):
 
@@ -351,12 +351,12 @@ if engine == 'ista':
             # Initialize Buttons
             self.actionButt = OptionButtons(text='Begin', font=(p.MacsFavoriteFont, 20), position=(0.99*width, 0.92*height), size=(0.18 * width, 0.04 * width), anchor_point=(1,1))
             
-            self.optionButt = OptionButtons(text='Options', font=(p.MacsFavoriteFont, 20), position=(0.01*width,0.92*height), size=(0.18 * width, 0.04 * width), anchor_point=(0,1))
+            self.option_butt = OptionButtons(text='Options', font=(p.MacsFavoriteFont, 20), position=(0.01*width,0.92*height), size=(0.18 * width, 0.04 * width), anchor_point=(0,1))
             
             self.add_child(self.actionButt.butt)
             self.add_child(self.actionButt.img)
-            self.add_child(self.optionButt.butt)
-            self.add_child(self.optionButt.img)
+            self.add_child(self.option_butt.butt)
+            self.add_child(self.option_butt.img)
             self.actionButt.text('Begin')
             
             self.singleButt = OptionButtons(text='Single Drubble', font=(p.MacsFavoriteFont,36), size=(0.8*width,0.2*height),  position=(0.5*width, 0.75*height),  rm_pos=(-1.5*width, 0.75*height))
@@ -526,7 +526,7 @@ if engine == 'ista':
             if gs.game_mode > 2 and self.actionButt.detect_touch(touch.location):
                 self.touchCycle = True
             
-            if gs.game_mode > 2 and self.optionButt.detect_touch(touch.location):
+            if gs.game_mode > 2 and self.option_butt.detect_touch(touch.location):
                 gs.game_mode = 1
                 toggleVisibleSprites(self,False)
                 self.touchCycle = True

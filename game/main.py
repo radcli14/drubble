@@ -95,7 +95,7 @@ p2 = playerLines(1, gs, width, height)
 
 class MyBackground(Widget):
     # Size of the black bar on the bottom of the screen
-    bottomLineHeight = NumericProperty(height * screen_scf / 20.0)
+    bottom_line_height = NumericProperty(height * screen_scf / 20.0)
 
     # Set size of the background, before updates
     sz_orig = w_orig, h_orig = (2400.0, 400.0)
@@ -928,16 +928,16 @@ class DrubbleGame(Widget):
             self.add_widget(self.high_score_header)
 
             # Initialize the option and action buttons
-            self.singleDrubbleButt = OptionButtons(text='Single dRuBbLe', norm_size=(0.5, 0.2), out_position='left',
+            self.single_drubble_butt = OptionButtons(text='Single dRuBbLe', norm_size=(0.5, 0.2), out_position='left',
                                                    norm_pos=(0.1, 0.7),  norm_font_size=0.14,  color=red)
-            self.doubleDrubbleButt = OptionButtons(text='Double dRuBbLe', norm_size=(0.8, 0.2), out_position='right',
+            self.double_drubble_butt = OptionButtons(text='Double dRuBbLe', norm_size=(0.8, 0.2), out_position='right',
                                                    norm_pos=(0.1, 0.4),  norm_font_size=0.14,  color=red)
             self.tutorial_butt = OptionButtons(text='How2', norm_size=(0.25, 0.2), out_position='left',
                                                norm_pos=(0.65, 0.7),  norm_font_size=0.14,  color=red)
-            self.optionButt = OptionButtons(text='Options', norm_size=(0.18, 0.06), out_position='left',
-                                            norm_pos=(0.01, 0.88), norm_font_size=0.055, color=red)
-            self.actionButt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.06), out_position='right',
-                                            norm_pos=(0.81, 0.88),  norm_font_size=0.055, color=red)
+            self.option_butt = OptionButtons(text='Options', norm_size=(0.18, 0.09), out_position='left',
+                                            norm_pos=(0.01, 0.85), norm_font_size=0.07, color=red)
+            self.action_butt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.09), out_position='right',
+                                            norm_pos=(0.81, 0.85),  norm_font_size=0.07, color=red)
 
     def remove_splash(self, dt):
         self.remove_widget(self.splash)
@@ -961,15 +961,15 @@ class DrubbleGame(Widget):
         # Sticks and buttons
         self.add_widget(self.moveStick)
         self.add_widget(self.tiltStick)
-        self.add_widget(self.optionButt)
-        self.add_widget(self.actionButt)
+        self.add_widget(self.option_butt)
+        self.add_widget(self.action_butt)
 
         if self.tutorial_mode:
             self.add_widget(self.tutorial)
         else:
             # Option and action buttons
-            self.optionButt.anim_in(w=self.width, h=self.height)
-            self.actionButt.anim_in(w=self.width, h=self.height)
+            self.option_butt.anim_in(w=self.width, h=self.height)
+            self.action_butt.anim_in(w=self.width, h=self.height)
 
             # Sticks
             self.moveStick.anim_in(w=self.width, h=self.height)
@@ -1005,8 +1005,8 @@ class DrubbleGame(Widget):
         self.boing_label.anim_out(w=self.width, h=self.height, duration=0.60)
         self.score_label.anim_out(w=self.width, h=self.height, duration=0.75)
 
-        self.optionButt.anim_out(w=self.width, h=self.height)
-        self.actionButt.anim_out(w=self.width, h=self.height)
+        self.option_butt.anim_out(w=self.width, h=self.height)
+        self.action_butt.anim_out(w=self.width, h=self.height)
 
         Clock.schedule_once(self.remove_game_widgets_callback, 1.0)
         self.weHaveWidgets = False
@@ -1020,8 +1020,8 @@ class DrubbleGame(Widget):
         self.remove_widget(self.LadyFace)
         self.remove_widget(self.moveStick)
         self.remove_widget(self.tiltStick)
-        self.remove_widget(self.optionButt)
-        self.remove_widget(self.actionButt)
+        self.remove_widget(self.option_butt)
+        self.remove_widget(self.action_butt)
         self.remove_widget(self.time_label)
         self.remove_widget(self.dist_label)
         self.remove_widget(self.high_label)
@@ -1032,25 +1032,25 @@ class DrubbleGame(Widget):
     def add_option_buttons(self, dt):
         print('Adding option buttons')
         # Add option screen buttons
-        self.add_widget(self.singleDrubbleButt)
-        self.add_widget(self.doubleDrubbleButt)
+        self.add_widget(self.single_drubble_butt)
+        self.add_widget(self.double_drubble_butt)
         self.add_widget(self.tutorial_butt)
-        self.singleDrubbleButt.anim_in(w=self.width, h=self.height)
-        self.doubleDrubbleButt.anim_in(w=self.width, h=self.height)
+        self.single_drubble_butt.anim_in(w=self.width, h=self.height)
+        self.double_drubble_butt.anim_in(w=self.width, h=self.height)
         self.tutorial_butt.anim_in(w=self.width, h=self.height)
         print('  --> Done!')
 
     def remove_option_buttons(self):
         print('Removing option buttons')
         # Add option screen buttons
-        self.singleDrubbleButt.anim_out(w=self.width, h=self.height)
-        self.doubleDrubbleButt.anim_out(w=self.width, h=self.height)
+        self.single_drubble_butt.anim_out(w=self.width, h=self.height)
+        self.double_drubble_butt.anim_out(w=self.width, h=self.height)
         self.tutorial_butt.anim_out(w=self.width, h=self.height)
         Clock.schedule_once(self.remove_option_buttons_callback, 1.0)
 
     def remove_option_buttons_callback(self, dt):
-        self.remove_widget(self.singleDrubbleButt)
-        self.remove_widget(self.doubleDrubbleButt)
+        self.remove_widget(self.single_drubble_butt)
+        self.remove_widget(self.double_drubble_butt)
         self.remove_widget(self.tutorial_butt)
         print('  --> Done!')
 
@@ -1140,17 +1140,17 @@ class DrubbleGame(Widget):
         loc = (touch.x, touch.y)
         if gs.game_mode == 1 and gs.showedSplash:
             cycle_modes(gs, stats, engine)
-        elif gs.game_mode == 2 and self.singleDrubbleButt.detect_touch(loc):
+        elif gs.game_mode == 2 and self.single_drubble_butt.detect_touch(loc):
             self.single_drubble_button_press()
-        elif gs.game_mode == 2 and self.doubleDrubbleButt.detect_touch(loc):
+        elif gs.game_mode == 2 and self.double_drubble_butt.detect_touch(loc):
             self.double_drubble_button_press()
         elif gs.game_mode == 2 and self.tutorial_butt.detect_touch(loc):
             self.tutorial_button_press()
         elif gs.game_mode > 2:
             # Cycle through modes if touched the action or option_butt
-            if self.actionButt.detect_touch(loc) and not self.tutorial.is_paused:
+            if self.action_butt.detect_touch(loc) and not self.tutorial.is_paused:
                 self.action_button_press()
-            if self.optionButt.detect_touch(loc):
+            if self.option_butt.detect_touch(loc):
                 self.option_button_press()
 
             # Detect control inputs
@@ -1235,8 +1235,8 @@ class DrubbleGame(Widget):
         self.remove_option_buttons()
 
         # Turn the button blue momentarily
-        self.singleDrubbleButt.background_touched()
-        Clock.schedule_once(self.singleDrubbleButt.background_untouched, 0.1)
+        self.single_drubble_butt.background_touched()
+        Clock.schedule_once(self.single_drubble_butt.background_untouched, 0.1)
 
     # What to do when the double drubble button is pressed
     def double_drubble_button_press(self):
@@ -1249,8 +1249,8 @@ class DrubbleGame(Widget):
         self.remove_option_buttons()
 
         # Turn the button blue momentarily
-        self.doubleDrubbleButt.background_touched()
-        Clock.schedule_once(self.doubleDrubbleButt.background_untouched, 0.1)
+        self.double_drubble_butt.background_touched()
+        Clock.schedule_once(self.double_drubble_butt.background_untouched, 0.1)
 
     # What to do when option button is pressed
     def option_button_press(self):
@@ -1264,8 +1264,8 @@ class DrubbleGame(Widget):
         cycle_modes(gs, stats, engine)
 
         # Turn the button blue momentarily
-        self.optionButt.background_touched()
-        Clock.schedule_once(self.optionButt.background_untouched, 0.1)
+        self.option_butt.background_touched()
+        Clock.schedule_once(self.option_butt.background_untouched, 0.1)
 
         if self.tutorial_mode:
             print('Removing the tutorial')
@@ -1279,8 +1279,8 @@ class DrubbleGame(Widget):
         cycle_modes(gs, stats, engine)
 
         # Update the button text and color
-        self.actionButt.text = p.actionMSG[gs.game_mode]
-        self.actionButt.background_color = (0, 0.5, 1, 0.5)
+        self.action_butt.text = p.actionMSG[gs.game_mode]
+        self.action_butt.background_color = (0, 0.5, 1, 0.5)
 
         # If on completion of the game, add the high scores
         # If on restart of game, remove the high scores
@@ -1290,8 +1290,8 @@ class DrubbleGame(Widget):
             self.bg.anim_out()
             self.moveStick.anim_out(w=self.width, h=self.height)
             self.tiltStick.anim_out(w=self.width, h=self.height)
-            self.optionButt.anim_out_then_in(w=self.width, h=self.height)
-            self.actionButt.anim_out_then_in(w=self.width, h=self.height)
+            self.option_butt.anim_out_then_in(w=self.width, h=self.height)
+            self.action_butt.anim_out_then_in(w=self.width, h=self.height)
         elif gs.game_mode == 3:
             self.remove_high_scores()
             self.bg.anim_in()
@@ -1299,8 +1299,8 @@ class DrubbleGame(Widget):
             self.tiltStick.anim_in(w=self.width, h=self.height)
 
         # Turn the button blue momentarily
-        self.actionButt.background_touched()
-        Clock.schedule_once(self.actionButt.background_untouched, 0.1)
+        self.action_butt.background_touched()
+        Clock.schedule_once(self.action_butt.background_untouched, 0.1)
 
     # What to do when the tutorial button is pressed
     def tutorial_button_press(self):
@@ -1353,14 +1353,14 @@ class DrubbleGame(Widget):
 
         # Background image
         self.bg.resize(self.width, self.height)
-        self.bg.bottomLineHeight = self.height/20.0
+        self.bg.bottom_line_height = self.height/20.0
 
         # Buttons
-        self.singleDrubbleButt.resize(w=self.width, h=self.height)
-        self.doubleDrubbleButt.resize(w=self.width, h=self.height)
+        self.single_drubble_butt.resize(w=self.width, h=self.height)
+        self.double_drubble_butt.resize(w=self.width, h=self.height)
         self.tutorial_butt.resize(w=self.width, h=self.height)
-        self.actionButt.resize(w=self.width, h=self.height)
-        self.optionButt.resize(w=self.width, h=self.height)
+        self.action_butt.resize(w=self.width, h=self.height)
+        self.option_butt.resize(w=self.width, h=self.height)
 
         # Tutorial
         self.tutorial.resize(w=self.width, h=self.height)
@@ -1372,7 +1372,7 @@ class DrubbleGame(Widget):
             self.needToResize = False
 
         if self.weHaveWidgets:
-            self.actionButt.text = p.actionMSG[gs.game_mode]
+            self.action_butt.text = p.actionMSG[gs.game_mode]
 
         # Remove the splash and add the option buttons
         if gs.game_mode == 2 and not self.weHaveButtons:
