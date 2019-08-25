@@ -115,7 +115,6 @@ class MyBackground(Widget):
         textures.append(Image(source='a/bg'+str(n)+'.png').texture)
     bg_text0 = ObjectProperty(None)
     bg_text1 = ObjectProperty(None)
-    bg_alpha = NumericProperty(0.0)
 
     # Markers
     yardLine = []
@@ -129,15 +128,13 @@ class MyBackground(Widget):
         super(MyBackground, self).__init__(**kwargs)
         self.width = w
         self.height = h
+        self.opacity = 0.0
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
         self.width = w
         self.height = h
 
     def update(self, x, y, w, h, m2p):
-        # Since we're updating, you probably want it visible
-        self.bg_alpha = 1.0
-
         # xmod is normalized position of the player between 0 and num_bg
         while x + self.xpos < 0:
             x += 100.0 * self.num_bg
@@ -176,7 +173,9 @@ class MyBackground(Widget):
         self.bg_left0 = edge - (1 - overlap) * self.img_w
         self.bg_left1 = edge - overlap * self.img_w
 
-    def anim_in(self, duration=1):
+    def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1):
+        self.width = w
+        self.height = h
         anim = Animation(opacity=1, duration=duration)
         anim.start(self)
 
@@ -308,7 +307,9 @@ class MyFace(Widget):
         self.shorts_angle0 = -atan2(player[4]-player[6], player[5]-player[7]) * 180.0 / pi
         self.shorts_angle1 = -atan2(player[4]-player[2], player[5]-player[3]) * 180.0 / pi
 
-    def anim_in(self, duration=1.0):
+    def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1.0):
+        self.width = w
+        self.height = h
         anim = Animation(opacity=1.0, duration=duration)
         anim.start(self)
 
@@ -327,7 +328,7 @@ class Ball(Widget):
 
     def __init__(self, image_source='a/ball.png', **kwargs):
         super(Ball, self).__init__(**kwargs)
-
+        self.opacity = 0.0
         self.future = []
         with self.canvas:
             Color(rgba=(1.0, 0.4, 0.8, 0.35))
@@ -349,8 +350,10 @@ class Ball(Widget):
             self.future[n].pos = (X[n] - 0.5 * sz, Y[n] - 0.5 * sz)
             self.future[n].size = (sz, sz)
 
-    def anim_in(self):
-        anim = Animation(opacity=1.0, duration=1)
+    def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1.0):
+        self.width = w
+        self.height = h
+        anim = Animation(opacity=1.0, duration=duration)
         anim.start(self)
 
     def anim_out(self):
@@ -723,6 +726,7 @@ class Tutorial(Widget):
         self.width = w
         self.height = h
         self.pos = (0, 0)
+        self.opacity = 0.0
 
         # Text Label Properties
         self.label_text = ''
@@ -807,7 +811,7 @@ class Tutorial(Widget):
                                    in_duration=2.0, out_duration=2.0)
         elif self.n == 2 and abs(gs.ctrl[1]) + abs(gs.ctrl[2]) != 0.0:
             was_touched = True
-            app_object.actionButt.anim_in(w=self.width, h=self.height)
+            app_object.action_butt.anim_in(w=self.width, h=self.height)
             self.new_ring_position(ring_size=(0.36*w, 0.36*w), ring_pos=(0.72*w, 0.59*h),
                                    in_duration=2.0, out_duration=2.0)
         elif self.n == 3 and gs.game_mode >= 4:
@@ -819,8 +823,8 @@ class Tutorial(Widget):
         elif self.n == 6:
             was_touched = True
             self.clear_ring(out_duration=1.0)
-            app_object.optionButt.anim_in(w=self.width, h=self.height)
-        elif self. n == 7:
+            app_object.option_butt.anim_in(w=self.width, h=self.height)
+        elif self.n == 7:
             was_touched = True
         elif self.n == 8:
             was_touched = True
@@ -842,18 +846,18 @@ class Tutorial(Widget):
         return
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1):
-        anim = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.5*h), label_opacity=1.0,
+        anim = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.5*h), opacity=1.0, label_opacity=1.0,
                          label_font_size=0.1*h, duration=duration, t='out_elastic')
         anim.start(self)
 
     def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=1):
-        anim = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.6*h), label_opacity=0.0,
+        anim = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.6*h), opacity=0.0, label_opacity=0.0,
                          label_font_size=0.07*self.height, duration=0.33*duration, t='out_elastic')
         anim.start(self)
 
     def switch(self, w=width*screen_scf, h=height*screen_scf, duration=1):
-        anim_out = Animation(label_size=(0, 0), label_pos=(0.5*w, 0.5*h), label_opacity=0.0, label_font_size=0.0,
-                             duration=0.25*duration, t='in_elastic')
+        anim_out = Animation(label_size=(0, 0), label_pos=(0.5*w, 0.5*h), label_opacity=0.0,
+                             label_font_size=0.0, duration=0.25*duration, t='in_elastic')
         anim_pause = Animation(duration=0.5*duration)
         anim_in = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.5*h), label_opacity=1.0,
                             label_font_size=0.1*self.height, duration=0.25*duration, t='out_elastic')
@@ -946,17 +950,18 @@ class DrubbleGame(Widget):
         print('Adding game widgets')
         # Background
         self.add_widget(self.bg)
-        self.bg.anim_in()
+        self.bg.anim_in(w=self.width, h=self.height, duration=0.5)
 
         # Ball
         self.add_widget(self.ball)
-        self.ball.anim_in()
+        self.ball.anim_in(w=self.width, h=self.height, duration=1.0)
 
         # Players
         self.add_widget(self.myFace)
         self.add_widget(self.LadyFace)
-        self.myFace.anim_in()
-        self.LadyFace.anim_in()
+        self.myFace.anim_in(w=self.width, h=self.height, duration=1.5)
+        if p.nPlayer > 1:
+            self.LadyFace.anim_in(w=self.width, h=self.height, duration=1.5)
 
         # Sticks and buttons
         self.add_widget(self.moveStick)
@@ -966,14 +971,15 @@ class DrubbleGame(Widget):
 
         if self.tutorial_mode:
             self.add_widget(self.tutorial)
+            self.tutorial.anim_in(w=self.width, h=self.height, duration=2.0)
         else:
             # Option and action buttons
-            self.option_butt.anim_in(w=self.width, h=self.height)
-            self.action_butt.anim_in(w=self.width, h=self.height)
+            self.option_butt.anim_in(w=self.width, h=self.height, duration=3.0)
+            self.action_butt.anim_in(w=self.width, h=self.height, duration=3.0)
 
             # Sticks
-            self.moveStick.anim_in(w=self.width, h=self.height)
-            self.tiltStick.anim_in(w=self.width, h=self.height)
+            self.moveStick.anim_in(w=self.width, h=self.height, duration=2.5)
+            self.tiltStick.anim_in(w=self.width, h=self.height, duration=2.5)
 
         # Score labels
         self.add_widget(self.time_label)
@@ -1317,7 +1323,7 @@ class DrubbleGame(Widget):
 
         # Add selected widgets
         self.remove_option_buttons()
-        Clock.schedule_once(self.add_game_widgets, 1.0)
+        Clock.schedule_once(self.add_game_widgets, 0.25)
 
         # Turn the button blue momentarily
         self.tutorial_butt.background_touched()
@@ -1381,8 +1387,6 @@ class DrubbleGame(Widget):
             Clock.schedule_once(self.remove_splash, 1.0)
             Clock.schedule_once(self.add_option_buttons, 1.0)
             self.weHaveButtons = True
-        #elif gs.game_mode > 2 and not self.weHaveWidgets:
-        #    Clock.schedule_once(self.add_game_widgets, 1.0)
 
         # Angle and speed settings
         if 2 < gs.game_mode < 6:

@@ -17,19 +17,19 @@
 <MyBackground>:
     canvas:
         Color:
-            rgba: (1,1,1,self.bg_alpha)
+            rgba: 1, 1, 1, 1
         Rectangle:
             texture: self.bg_text0
             pos: self.bg_left0, self.bottom_line_height
-            size: self.img_w, self.img_h
+            size: 1.01 * self.img_w, 1.01 * self.img_h
         Rectangle:
             texture: self.bg_text1
             pos: self.bg_left1, self.bottom_line_height
-            size: self.img_w, self.img_h
+            size: 1.01 * self.img_w, 1.01 * self.img_h
         Color:
-            rgba: (0,0,0,self.bg_alpha)
+            rgba: 0, 0, 0, 1
         Rectangle:
-            pos: (0,0)
+            pos: 0, 0
             size: root.width, self.bottom_line_height
 
 

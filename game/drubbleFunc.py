@@ -530,11 +530,9 @@ class GameState:
             self.u[1] = p.rb
             self.u[2] = (1-0.01*ddt)*self.u[2]
             self.u[3] = 0
-        
-        # Generate the new ball trajectory prediction line
-        if self.StoolBounce or self.FloorBounce or self.game_mode<7:    
-            # Predict the future trajectory of the ball
-            self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = ball_predict(self, pAct)
+
+        # Predict the future trajectory of the ball
+        self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = ball_predict(self, pAct)
 
         # Stop the ball from moving if the player hasn't hit space yet
         if self.game_mode<6:
@@ -542,6 +540,7 @@ class GameState:
             self.n = 0
             self.u[0] = p.u0[0]
             self.u[1] = p.u0[1]
+
         # Named states    
         self = varStates(self)
 
