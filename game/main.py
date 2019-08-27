@@ -332,7 +332,7 @@ class Ball(Widget):
         self.future = []
         with self.canvas:
             Color(rgba=(1.0, 0.4, 0.8, 0.35))
-            self.future = [Ellipse(size=(0, 0)) for _ in range(10)]
+            self.future = [Ellipse(size=(0, 0)) for _ in range(p.num_future_points)]
             Color(rgba=(1, 1, 1, 1))
             self.now = Ellipse(size=(self.sz, self.sz), source=image_source, pos=self.pos)
 
@@ -520,8 +520,8 @@ class OptionButtons(Widget):
 
     def anim_in_to_high_score(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
         anim = Animation(x=0.2*w+0.6*self.norm_pos[0]*w, y=0.82*h,
-                         size=(0.5*self.norm_size[0]*w, 0.5*self.norm_size[1]*h),
-                         label_font_size=0.5*self.norm_font_size*h, duration=duration, t='out_back')
+                         size=(0.6*self.norm_size[0]*w, 0.5*self.norm_size[1]*h),
+                         label_font_size=0.6*self.norm_font_size*h, duration=duration, t='out_back')
         anim.start(self)
         self.is_high_score = True
         self.is_on_screen = True

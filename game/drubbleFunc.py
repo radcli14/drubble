@@ -30,6 +30,7 @@ darkGreen = (0, 120.0/255.0, 0)
 pink = (1.0, 182.0/255.0, 193.0/255.0)
 olive = (128.0/255.0, 128.0/255.0, 0.0)
 
+
 # Convert physical coordinates to pixels
 def xy2p(x, y, m2p, po, w, h):
     try:
@@ -48,9 +49,9 @@ def xy2p(x, y, m2p, po, w, h):
 # Parameters
 class Parameters:
     # Game parameters
-    g = 9.81   # Gravitational acceleration [m/s^2]
-    COR = 0.8  # Coefficient of restitution
-    rb = 0.2   # Radius of the ball
+    g = 9.81    # Gravitational acceleration [m/s^2]
+    COR = 0.90  # Coefficient of restitution
+    rb = 0.2    # Radius of the ball
 
     # Player parameters
     mc = 50.0    # Mass of player [kg]
@@ -64,23 +65,23 @@ class Parameters:
     Qx = ax*m*g  # Max horizontal force [N]
     Gx = 1.5     # Control gain on Qx
     fy = 0.8     # vertical frequency [Hz]
-    Ky = m*(fy*2*pi)**2  # Leg stiffness [N/m]
+    Ky = m * (fy*2*pi)**2  # Leg stiffness [N/m]
     Qy = Ky*0.3  # Leg strength [N], to be updated
     fl = 2.2     # Stool extension frequency
-    Kl = mg*(fl*2*pi)**2  # Arm stiffness [N/m]
+    Kl = mg * (fl*2*pi)**2  # Arm stiffness [N/m]
     Ql = Kl*0.3  # Arm strength [N]
     ft = 1.5     # Stool tilt frequency [Hz]
-    Kt = (mg*l0*l0)*(ft*2*pi)**2  # Tilt stiffness [N-m/rad]
+    Kt = (mg*l0*l0) * (ft*2*pi)**2  # Tilt stiffness [N-m/rad]
     Qt = 0.6*Kt  # Tilt strength [N-m]
     Gt = 0.8     # Control gain on Qt
     vx = 10.0    # Horizontal top speed [m/s]
     Cx = Qx/vx   # Horizontal damping [N-s/m]
     zy = 0.1     # Vertical damping ratio
-    Cy = 2*zy*sqrt(Ky*m)  # Vertical damping [N-s/m]
+    Cy = 2 * zy * sqrt(Ky*m)  # Vertical damping [N-s/m]
     zl = 0.08    # Arm damping ratio
-    Cl = 2*zl*sqrt(Kl*m)  # Arm damping [N-s/m]
+    Cl = 2 * zl * sqrt(Kl*m)  # Arm damping [N-s/m]
     zt = 0.09    # Stool tilt damping ratio
-    Ct = 2.0*zl*sqrt(Kt*m)  # Tilt damping [N-m-s/rad]
+    Ct = 2.0 * zl * sqrt(Kt*m)  # Tilt damping [N-m-s/rad]
 
     # Initial states
     q0 = [0.0, y0,  l0, 0.0]
@@ -152,10 +153,10 @@ class Parameters:
     dtp_lim = [-20, 20]
 
     # Number of points to include in the future trajectory predictions (ball_predict() function)
-    num_future_points = 10
+    num_future_points = 20
 
     # Time increment between future trajectory points
-    future_increment = 0.15
+    future_increment = 0.10
 
     # Difficulty levels
     difficult_text = ['Easy', 'Hard', 'Silly']

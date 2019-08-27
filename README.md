@@ -54,7 +54,7 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 - [x] Move sticks and buttons out of the way so I can add a banner ad on the high score screen
 - [x] Fix the computer player control
 - [x] Put in limits for the states to prevent crashing
-- [ ] Add a tutorial
+- [x] Add a tutorial
 - [ ] Add audio for setting ball speed, button presses
 - [ ] Add a background screen connecting the last screen to the first, geographically
 - [ ] Add one more base audio file
