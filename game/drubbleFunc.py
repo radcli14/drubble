@@ -1,6 +1,12 @@
 # Import modules
-#import numpy as np
-#from numpy import array
+try:
+    import numpy as np
+    from numpy import array
+    USE_NUMPY = False
+    print('Successfully imported numpy')
+except:
+    USE_NUMPY = False
+    print('Failed importing numpy')
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
 from kivy.storage.jsonstore import JsonStore
 from kivy.app import App
@@ -49,9 +55,11 @@ def xy2p(x, y, m2p, po, w, h):
 # Parameters
 class Parameters:
     # Game parameters
-    g = 9.81    # Gravitational acceleration [m/s^2]
-    COR = 0.90  # Coefficient of restitution
-    rb = 0.2    # Radius of the ball
+    g = 9.81      # Gravitational acceleration [m/s^2]
+    COR_s = 0.90  # Coefficient of restitution (COR) when ball hits stool
+    COR_g = 0.70  # COR when ball hits ground
+    COR_n = 1.00  # Cor when ball hits net
+    rb = 0.2      # Radius of the ball
 
     # Player parameters
     mc = 50.0    # Mass of player [kg]
@@ -487,7 +495,7 @@ class GameState:
             # Change ball states depending on if it was a stool or floor bounce
             if self.StoolBounce:
                 # Obtain the bounce velocity
-                vBounce, vRecoil = BallBounce(self, stats.stool_count % p.nPlayer)
+                vBounce, vRecoil = ball_bounce(self, stats.stool_count % p.nPlayer)
                 self.ue[2] = vBounce[0]
                 self.ue[3] = vBounce[1]
                 
@@ -499,11 +507,11 @@ class GameState:
                 
             elif self.FloorBounce:
                 # Reverse direction of the ball
-                self.ue[2] = +p.COR*self.ue[2]
-                self.ue[3] = -p.COR*self.ue[3]     
+                self.ue[2] = +p.COR_g * self.ue[2]
+                self.ue[3] = -p.COR_g * self.ue[3]
 
             # Re-initialize from the event states
-            self.t += ddt-tBreak
+            self.t += ddt - tBreak
             dudt = PlayerAndStool(self.t, self.ue, p, gs, stats)
             self.u = [self.ue[i] + dudt[i]*(ddt-tBreak) for i in range(20)]
             
@@ -927,15 +935,19 @@ def BallHitStool(t, u, k):
 BallHitStool.terminal = True 
 
 
-def BallBounce(gs, k):
+def ball_bounce(gs, k):
     # Get the stool locations using stickDude function
     xv, yv, sx, sy = stickDude(gs.u, k)
-    
+
+    # Calculate sines and cosines of the tilt angle
+    c = cos(gs.tp[k])
+    s = sin(gs.tp[k])
+
     # Vectors from the left edge of the stool to the right, and to the ball
-    r1 = [sx[1]-sx[0], sy[1]-sy[0]]
+    r1 = [sx[1] - sx[0], sy[1] - sy[0]]
     
     # Calculate z that minimizes the distance
-    z = ((gs.xb-sx[0])*r1[0] + (gs.yb-sy[0])*r1[1])/(r1[0]**2 + r1[1]**2)
+    z = ((gs.xb - sx[0]) * r1[0] + (gs.yb - sy[0]) * r1[1]) / (r1[0]**2 + r1[1]**2)
     
     # Find the closest point of impact on the stool
     if z < 0:
@@ -943,46 +955,55 @@ def BallBounce(gs, k):
     elif z > 1:
         ri = [sx[1], sy[1]]
     else:
-        ri = [sx[0]+z*r1[0], sy[0]+z*r1[1]]
+        ri = [sx[0] + z * r1[0], sy[0] + z * r1[1]]
     
     # Velocity of the stool at the impact point 
-    vi = [gs.dxp[k]-gs.lp[k]*sin(gs.tp[k])-(ri[1]-gs.yp[k])*gs.dtp[k],
-          gs.dyp[k]+gs.lp[k]*cos(gs.tp[k])+(ri[0]-gs.xp[k])*gs.dtp[k]]
+    vi = [gs.dxp[k] - gs.lp[k] * s - (ri[1] - gs.yp[k]) * gs.dtp[k],
+          gs.dyp[k] + gs.lp[k] * c + (ri[0] - gs.xp[k]) * gs.dtp[k]]
     
     # Velocity of the ball relative to impact point
     vbrel = [gs.dxb - vi[0], gs.dyb - vi[1]]
     
     # Vector from the closest point of impact to the center of the ball    
-    r2 = [gs.xb-ri[0], gs.yb-ri[1]]
+    r2 = [gs.xb - ri[0], gs.yb - ri[1]]
     nr2 = norm(r2)
-    u2 = [r2[0]/nr2, r2[1]/nr2]
+    u2 = [r2[0] / nr2, r2[1] / nr2]
 
     # Delta ball velocity
-    delta_vb = [2.0*p.COR*u2[0]*vbrel[0], 2.0*p.COR*u2[1]*vbrel[1]]
-    
-    # Velocity after bounce
-    vBounce = [-u2[0]*delta_vb[1]+gs.dxb, -u2[1]*delta_vb[1]+gs.dyb]
-    # vBounce = -np.array(u2)*delta_vb + np.array([gs.dxb, gs.dyb])
-    
-    # Obtain the player recoil states
-    BounceImpulse = [-p.mg*vBounce[0], -p.mg*vBounce[1]]
-    # BounceImpulse = -p.mg*vBounce
-    c = cos(gs.tp[k])
-    s = sin(gs.tp[k])
-    # dRdq = np.array([[ 1.0    , 0.0 ],
-    #                  [ 0.0    , 1.0 ],
-    #                  [-s      , c   ],
-    #                  [-c*gs.lp[k],-s*gs.lp[k]]])
-    Q = [BounceImpulse[0], BounceImpulse[1],
-          -s * BounceImpulse[0] + c * BounceImpulse[1],
-          -c * gs.lp[k] * BounceImpulse[0] - s * gs.lp[k] * BounceImpulse[1]]
-    # Qi = dRdq.dot(BounceImpulse)
-    vRecoil = [1.0*Q[2]*sin(gs.tp[k])/p.mc + 1.0*Q[3]*cos(gs.tp[k])/(p.mc*gs.lp[k]) + 1.0*Q[0]/p.mc,
-               -1.0*Q[2]*cos(gs.tp[k])/p.mc + 1.0*Q[3]*sin(gs.tp[k])/(p.mc*gs.lp[k]) + 1.0*Q[1]/p.mc,
-               Q[2]*(1.0/p.mg + 1.0/p.mc) + 1.0*Q[0]*sin(gs.tp[k])/p.mc - 1.0*Q[1]*cos(gs.tp[k])/p.mc,
-               1.0*Q[3]*(p.mc + p.mg)/(p.mc*p.mg*gs.lp[k]**2) + 1.0*Q[0]*cos(gs.tp[k])/(p.mc*gs.lp[k]) + 1.0*Q[1]*sin(gs.tp[k])/(p.mc*gs.lp[k])]
-    #vRecoil = p.invM.dot(Qi)
-    return vBounce, vRecoil
+    delta_vb = [2.0 * p.COR_s * u2[0] * vbrel[0], 2.0 * p.COR_s * u2[1] * vbrel[1]]
+
+    if USE_NUMPY:
+        # Velocity after bounce
+        v_bounce = -np.array(u2) * delta_vb + np.array([gs.dxb, gs.dyb])
+
+        # Obtain the generalized impulse
+        bounce_impulse = -p.mg * v_bounce
+        dRdq = np.array([[1.0, 0.0],
+                         [0.0, 1.0],
+                         [-s, c],
+                         [-c * gs.lp[k], -s * gs.lp[k]]])
+        Qi = dRdq.dot(bounce_impulse)
+
+        # Obtain the player recoil states
+        v_recoil = p.invM.dot(Qi)
+    else:
+        # Velocity after bounce
+        v_bounce = [-u2[0] * delta_vb[1] + gs.dxb, -u2[1] * delta_vb[1] + gs.dyb]
+
+        # Obtain the generalized impulse
+        bounce_impulse = [-p.mg * v_bounce[0], -p.mg * v_bounce[1]]
+        Q = [bounce_impulse[0], bounce_impulse[1],
+             -s * bounce_impulse[0] + c * bounce_impulse[1],
+             -c * gs.lp[k] * bounce_impulse[0] - s * gs.lp[k] * bounce_impulse[1]]
+
+        # Obtain the player recoil states
+        v_recoil = [Q[2] * s / p.mc + Q[3] * c / (p.mc * gs.lp[k]) + Q[0] / p.mc,
+                    - Q[2] * c / p.mc + Q[3] * s / (p.mc * gs.lp[k]) + Q[1] / p.mc,
+                    Q[2] * (1.0 / p.mg + 1.0 / p.mc) + Q[0] * s / p.mc - Q[1] * c / p.mc,
+                    Q[3] * (p.mc + p.mg) / (p.mc * p.mg * gs.lp[k]**2)
+                    + Q[0] * c / (p.mc * gs.lp[k]) + Q[1] * s / (p.mc * gs.lp[k])]
+
+    return v_bounce, v_recoil
 
 
 def norm(V):
