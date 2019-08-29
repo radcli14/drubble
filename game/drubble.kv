@@ -5,13 +5,7 @@
     canvas:
         Rectangle:
             source: 'a/splash.png'
-            #pos: self.pos
             size: root.width, root.height
-        #Color:
-        #    rgba: 1, 1, 1, self.splash_fade
-        #Rectangle:
-        #    pos: self.pos
-        #    size: root.width, root.height
 
 
 <MyBackground>:
@@ -97,6 +91,15 @@
         Ellipse:
             pos: self.pos[0] + self.size[0]*(1+self.ctrl[0])/4.0, self.pos[1] + self.size[1]*(1+self.ctrl[1])/4.0
             size: self.size[0]/2.0, self.size[1]/2.0
+
+
+<VolleyNet>:
+    canvas:
+        Color:
+            rgba: 1, 0.5, 0.5, 0.5
+        Line:
+            points: self.line_points
+            width: self.line_width
 
 
 <OptionButtons>:

@@ -175,6 +175,11 @@ class Parameters:
     difficult_speed_scale = [0.75, 1.0, 1.3]
     difficult_level = 0
 
+    # VolleyDrubble Mode Settings
+    volley_mode = False
+    net_height = 5.0  # [m]
+    net_width = 0.5   # [m]
+
 
 p = Parameters()
 

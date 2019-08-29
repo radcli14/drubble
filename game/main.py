@@ -321,6 +321,28 @@ class MyFace(Widget):
         self.opacity = 0.0
 
 
+class VolleyNet(Widget):
+    line_points = ListProperty([0.0, 0.0, 0.0, 0.0])
+    line_width = NumericProperty(1.0)
+
+    def __init__(self):
+        super(VolleyNet, self).__init__()
+        self.opacity = 0.0
+
+    def update(self, m2p, po, w=Window.width):
+        x = - po + w/2
+        self.line_points = [x, 0.0, x, p.net_height * m2p]
+        self.line_width = p.net_width * m2p
+
+    def anim_in(self, duration=1.0):
+        anim = Animation(opacity=1.0, duration=duration)
+        anim.start(self)
+
+    def anim_out(self, duration=1.0):
+        anim = Animation(opacity=0.0, duration=duration)
+        anim.start(self)
+
+
 class Ball(Widget):
     img_left = NumericProperty(0.0)
     img_bottom = NumericProperty(0.0)
@@ -913,6 +935,9 @@ class DrubbleGame(Widget):
             # Initialize the tutorial
             self.tutorial = Tutorial()
 
+            # Initialize the volleyball net
+            self.net = VolleyNet()
+
             # Initialize the ball
             self.ball = Ball()
 
@@ -955,6 +980,8 @@ class DrubbleGame(Widget):
                                                      norm_pos=(0.1, 0.7),  norm_font_size=0.14,  color=red)
             self.double_drubble_butt = OptionButtons(text='Double dRuBbLe', norm_size=(0.5, 0.2), out_position='right',
                                                      norm_pos=(0.1, 0.4),  norm_font_size=0.14,  color=red)
+            self.volley_drubble_butt = OptionButtons(text='Volley dRuBbLe', norm_size=(0.5, 0.2), out_position='left',
+                                                     norm_pos=(0.1, 0.1), norm_font_size=0.14, color=red)
             self.tutorial_butt = OptionButtons(text='How2', norm_size=(0.25, 0.2), out_position='left',
                                                norm_pos=(0.65, 0.7),  norm_font_size=0.14,  color=red)
             self.difficult_butt = OptionButtons(text=p.difficult_text[p.difficult_level], norm_size=(0.25, 0.2),
@@ -972,6 +999,11 @@ class DrubbleGame(Widget):
         # Background
         self.add_widget(self.bg)
         self.bg.anim_in(w=self.width, h=self.height, duration=0.25)
+
+        # Volleyball net
+        if p.volley_mode:
+            self.add_widget(self.net)
+            self.net.anim_in(duration=0.35)
 
         # Ball
         self.add_widget(self.ball)
@@ -1021,6 +1053,9 @@ class DrubbleGame(Widget):
     def remove_game_widgets(self):
         print('Removing game widgets')
         self.bg.anim_out()
+        # Volleyball net
+        if p.volley_mode:
+            self.net.anim_out(duration=0.2)
         self.ball.anim_out()
         self.moveStick.anim_out(w=self.width, h=self.height)
         self.tiltStick.anim_out(w=self.width, h=self.height)
@@ -1043,6 +1078,11 @@ class DrubbleGame(Widget):
         # animations to complete before removing the widgets.
         self.remove_widget(self.bg)
         self.remove_widget(self.ball)
+        # Volleyball net
+        if p.volley_mode:
+            self.remove_widget(self.net)
+            p.volley_mode = False
+
         self.remove_widget(self.myFace)
         self.remove_widget(self.LadyFace)
         self.remove_widget(self.moveStick)
@@ -1061,11 +1101,13 @@ class DrubbleGame(Widget):
         # Add option screen buttons
         self.add_widget(self.single_drubble_butt)
         self.add_widget(self.double_drubble_butt)
+        self.add_widget(self.volley_drubble_butt)
         self.add_widget(self.tutorial_butt)
         self.add_widget(self.difficult_butt)
         self.difficult_butt.text = p.difficult_text[p.difficult_level]
         self.single_drubble_butt.anim_in(w=self.width, h=self.height)
         self.double_drubble_butt.anim_in(w=self.width, h=self.height)
+        self.volley_drubble_butt.anim_in(w=self.width, h=self.height)
         self.tutorial_butt.anim_in(w=self.width, h=self.height)
         self.difficult_butt.anim_in(w=self.width, h=self.height)
         print('  --> Done!')
@@ -1075,6 +1117,7 @@ class DrubbleGame(Widget):
         # Add option screen buttons
         self.single_drubble_butt.anim_out(w=self.width, h=self.height)
         self.double_drubble_butt.anim_out(w=self.width, h=self.height)
+        self.volley_drubble_butt.anim_out(w=self.width, h=self.height)
         self.tutorial_butt.anim_out(w=self.width, h=self.height)
         self.difficult_butt.anim_out(w=self.width, h=self.height)
         Clock.schedule_once(self.remove_option_buttons_callback, 1.0)
@@ -1082,6 +1125,7 @@ class DrubbleGame(Widget):
     def remove_option_buttons_callback(self, dt):
         self.remove_widget(self.single_drubble_butt)
         self.remove_widget(self.double_drubble_butt)
+        self.remove_widget(self.volley_drubble_butt)
         self.remove_widget(self.tutorial_butt)
         self.remove_widget(self.difficult_butt)
         print('  --> Done!')
@@ -1200,6 +1244,8 @@ class DrubbleGame(Widget):
             self.single_drubble_button_press()
         elif gs.game_mode == 2 and self.double_drubble_butt.detect_touch(loc):
             self.double_drubble_button_press()
+        elif gs.game_mode == 2 and self.volley_drubble_butt.detect_touch(loc):
+            self.volley_drubble_button_press()
         elif gs.game_mode == 2 and self.tutorial_butt.detect_touch(loc):
             self.tutorial_button_press()
         elif gs.game_mode == 2 and self.difficult_butt.detect_touch(loc):
@@ -1309,6 +1355,22 @@ class DrubbleGame(Widget):
         # Turn the button blue momentarily
         self.double_drubble_butt.background_touched()
         Clock.schedule_once(self.double_drubble_butt.background_untouched, 0.1)
+
+    # What to do when the volley drubble button is pressed
+    def volley_drubble_button_press(self):
+        # Specify this will be the two player version, and start game
+        p.nPlayer = 2
+        p.volley_mode = True
+        cycle_modes(gs, stats, engine)
+
+        # Add the in-game widgets
+        Clock.schedule_once(self.add_game_widgets, 1.0)
+        self.remove_option_buttons()
+
+        # Turn the button blue momentarily
+        self.volley_drubble_butt.background_touched()
+        Clock.schedule_once(self.volley_drubble_butt.background_untouched, 0.1)
+
 
     # What to do when option button is pressed
     def option_button_press(self):
@@ -1494,6 +1556,10 @@ class DrubbleGame(Widget):
             self.tiltStick.update_el(-gs.ctrl[3], gs.ctrl[2])
             self.myFace.update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], m2p, po,
                                self.width, self.height, p1.player)
+
+            # Update the net
+            if p.volley_mode:
+                self.net.update(p1.m2p, p1.po)
 
             # Update the ball
             self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
