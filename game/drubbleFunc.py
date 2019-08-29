@@ -2,7 +2,7 @@
 try:
     import numpy as np
     from numpy import array
-    USE_NUMPY = False
+    USE_NUMPY = True
     print('Successfully imported numpy')
 except:
     USE_NUMPY = False
@@ -111,21 +111,25 @@ class Parameters:
           -0.60, -0.60, -0.60,
           -0.90,  0.00,  0.00, -0.90]
 
-    try:
-        M = np.array([[  m    , 0  , 0  , -mg*l0  ],
-                      [  0    , m  , mg ,    0    ],
-                      [  0    , mg , mg ,    0    ],
-                      [-mg*l0 , 0  , 0  , mg*l0**2]])
+    if USE_NUMPY:
+        # q0 in numpy array form
+        q0_array = np.array([[q0[0]], [q0[1]], [q0[2]], [q0[3]]])
+
+        # Mass matrix
+        M = np.array([[m, 0, 0, -mg * l0],
+                      [0, m, mg, 0],
+                      [0, mg, mg, 0],
+                      [-mg * l0, 0, 0, mg * l0**2]])
         invM = np.linalg.inv(M)
-    except:
+
+        # Damping Matrix
+        C = np.diag([Cx,Cy,Cl,Ct])
+
+        # Stiffness Matrix
+        K = np.diag([0.0,Ky,Kl,Kt])
+    else:
         numpy_str = 'Do not have numpy'
-    
-    # Damping Matrix     
-    #C = np.diag([Cx,Cy,Cl,Ct])
-    
-    # Stiffness Matrix
-    #K = np.diag([0.0,Ky,Kl,Kt])
-    
+
     # Touch Stick Sensitivity
     tsens = 1.5
     
@@ -142,7 +146,7 @@ class Parameters:
     timeRun = False
     
     # Font settings
-    MacsFavoriteFont = 'Optima' #Papyrus'  # 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
+    MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Color settings
     playerColor = (darkGreen, red)
@@ -161,10 +165,10 @@ class Parameters:
     dtp_lim = [-20, 20]
 
     # Number of points to include in the future trajectory predictions (ball_predict() function)
-    num_future_points = 20
+    num_future_points = 16
 
     # Time increment between future trajectory points
-    future_increment = 0.10
+    future_increment = 0.12
 
     # Difficulty levels
     difficult_text = ['Easy', 'Hard', 'Silly']
@@ -472,7 +476,7 @@ class GameState:
             self.t += ddt / nStep
             
             # Calculate the derivatives of states w.r.t. time
-            dudt = PlayerAndStool(self.t, U[k-1], p, gs, stats)
+            dudt = player_and_stool(self.t, U[k-1], p, gs, stats)
 
             # Calculate the states at the next step
             # U[k] = U[k-1] + np.array(dudt)*dt/p.nEulerSteps
@@ -512,7 +516,7 @@ class GameState:
 
             # Re-initialize from the event states
             self.t += ddt - tBreak
-            dudt = PlayerAndStool(self.t, self.ue, p, gs, stats)
+            dudt = player_and_stool(self.t, self.ue, p, gs, stats)
             self.u = [self.ue[i] + dudt[i]*(ddt-tBreak) for i in range(20)]
             
             # Stuck
@@ -727,7 +731,7 @@ def return_percentile(all_stats, this_stat):
 
 
 # Equation of Motion
-def PlayerAndStool(t, u, p, gs, stats):
+def player_and_stool(t, u, p, gs, stats):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
@@ -737,58 +741,68 @@ def PlayerAndStool(t, u, p, gs, stats):
     
     # Loop over players
     for k in range(p.nPlayer):
-        # Create player state vectors
-        # q = np.matrix([[xp[k]], [yp[k]], [lp[k]], [tp[k]]])
-        # dq = np.matrix([[dxp[k]], [dyp[k]], [dlp[k]], [dtp[k]]])
-    
         # Sines and cosines of the stool angle
         s = sin(tp[k])
         c = cos(tp[k])
         
         # Mass Matrix
-        # if not p.linearMass:
-        #     M = np.array([[   p.m       ,    0        ,-p.mg*s,-p.mg*lp[k]*c ],
-        #                    [    0        ,   p.m       , p.mg*c,-p.mg*lp[k]*s ],
-        #                    [-p.mg*s      ,  p.mg*c     , p.mg  ,   0          ],
-        #                    [-p.mg*lp[k]*c,-p.mg*lp[k]*s,   0   , p.mg*lp[k]**2]])
-        
-        # Centripetal [0,1] and Coriolis [3] Force Vector
-        # D = np.array([[-p.mg*dlp[k]*dtp[k]*c + p.mg*lp[k]*dtp[k]*dtp[k]*s],
-        #                [-p.mg*dlp[k]*dtp[k]*s +p.mg*lp[k]*dtp[k]*dtp[k]*c],
-        #                [0.0],
-        #                [2.0*p.mg*dtp[k]]])
-        
-        # Gravitational Force Vector
-        # G = np.array([[ 0.0             ],
-        #               [ p.m*p.g         ],
-        #               [ p.mg*p.g*c      ],
-        #               [-p.mg*p.g*lp[k]*s]])
-    
-        # Fix the time, if supplied as tspan vector
-        # if np.size(t) > 1:
-        #     t = t[0]
+        if USE_NUMPY:
+            # Create player state vectors
+            q = np.array([[xp[k]], [yp[k]], [lp[k]], [tp[k]]])
+            dq = np.array([[dxp[k]], [dyp[k]], [dlp[k]], [dtp[k]]])
+
+            if not p.linearMass:
+                M = np.array([[p.m,                   0,          -p.mg * s, -p.mg * lp[k] * c],
+                              [0,                    p.m,          p.mg * c, -p.mg * lp[k] * s],
+                              [-p.mg * s,          p.mg * c,       p.mg,            0],
+                              [-p.mg * lp[k]*c, -p.mg * lp[k] * s,   0,       p.mg * lp[k]**2]])
+
+            # Centripetal [0,1] and Coriolis [3] Force Vector
+            D = np.array([[- p.mg * dlp[k] * dtp[k] * c + p.mg * lp[k] * dtp[k] * dtp[k] * s],
+                          [- p.mg * dlp[k] * dtp[k] * s + p.mg * lp[k] * dtp[k] * dtp[k] * c],
+                          [0.0],
+                          [2.0 * p.mg * dtp[k]]])
+
+            # Gravitational Force Vector
+            G = np.array([[0.0],
+                          [p.m * p.g],
+                          [p.mg * p.g * c],
+                          [-p.mg * p.g * lp[k] * s]])
+
+            # Fix the time, if supplied as tspan vector
+            if np.size(t) > 1:
+                t = t[0]
         
         # Control inputs form the generalized forces
         Qx, Qy, Ql, Qth = control_logic(t, u, k, p, gs, stats)
 
         # Equation of Motion
-        #RHS = -p.C.dot(dq)-p.K.dot(q)+p.K.dot(p.q0)-D-G+Q
-        #if p.linearMass:
-        #    ddq = p.invM.dot(RHS)
-        #else:
-        #    ddq = np.linalg.inv(M).dot(RHS)
+        if USE_NUMPY:
+            Q = np.array([[Qx], [Qy], [Ql], [Qth]])
+            rhs = - p.C.dot(dq) - p.K.dot(q) + p.K.dot(p.q0_array) - D - G + Q
+            if p.linearMass:
+                ddq = p.invM.dot(rhs)
+            else:
+                ddq = np.linalg.inv(M).dot(rhs)
+        else:
+            # Equations of motion, created in the Jupyter notebook eom.ipynb
+            ddq = [None, None, None, None]
+            ddq[0] = (-p.Cl*dlp[k]*lp[k]*s - p.Ct*dtp[k]*c - p.Cx*dxp[k]*lp[k] + p.Kl*p.l0*lp[k]*s - p.Kl*lp[k]**2*s
+                      - p.Kt*tp[k]*c + Ql*lp[k]*s + Qth*c + Qx*lp[k]) / (p.mc*lp[k])
+            ddq[1] = (-(p.Ct*dtp[k] + p.Kt*tp[k] - Qth + 2.0*dlp[k]*dtp[k]*p.mg*lp[k] - p.g*p.mg*lp[k]*s)*s
+                      + (p.Cl*dlp[k] - p.Kl*p.l0 + p.Kl*lp[k] - Ql - dtp[k]**2*p.mg*lp[k] + p.g*p.mg*c)*lp[k]*c
+                      - (p.Cy*dyp[k] - p.Ky*p.y0 + p.Ky*yp[k] - Qy - 2.0*dlp[k]*dtp[k]*p.mg*s - dtp[k]**2*p.mg*lp[k]*c
+                         + p.g*p.mc + p.g*p.mg)*lp[k])/(p.mc*lp[k])
+            ddq[2] = -p.Cl*dlp[k]/p.mg - p.Cl*dlp[k]/p.mc - p.Cx*dxp[k]*s/p.mc + p.Cy*dyp[k]*c/p.mc + p.Kl*p.l0/p.mg + p.Kl*p.l0/p.mc - p.Kl*lp[k]/p.mg - p.Kl*lp[k]/p.mc - p.Ky*p.y0*c/p.mc + p.Ky*yp[k]*c/p.mc + Ql/p.mg + Ql/p.mc + Qx*s/p.mc - Qy*c/p.mc + dtp[k]**2*lp[k]
+            ddq[3] = (-p.Ct*dtp[k]*p.mc - p.Ct*dtp[k]*p.mg - p.Cx*dxp[k]*p.mg*lp[k]*c - p.Cy*dyp[k]*p.mg*lp[k]*s - p.Kt*p.mc*tp[k] - p.Kt*p.mg*tp[k] + p.Ky*p.mg*p.y0*lp[k]*s - p.Ky*p.mg*lp[k]*yp[k]*s + Qth*p.mc + Qth*p.mg + Qx*p.mg*lp[k]*c + Qy*p.mg*lp[k]*s - 2.0*dlp[k]*dtp[k]*p.mc*p.mg*lp[k])/(p.mc*p.mg*lp[k]**2)
 
-        # Equations of motion, created in the Jupyter notebook eom.ipynb
-        ddq = [None, None, None, None]
-        ddq[0] = 1.0*(-p.Cl*dlp[k]*lp[k]*s - p.Ct*dtp[k]*c - p.Cx*dxp[k]*lp[k] + p.Kl*p.l0*lp[k]*s - p.Kl*lp[k]**2*s - p.Kt*tp[k]*c + Ql*lp[k]*s + Qth*c + Qx*lp[k])/(p.mc*lp[k])
-        ddq[1] = (-1.0*(p.Ct*dtp[k] + 1.0*p.Kt*tp[k] - Qth + 2.0*dlp[k]*dtp[k]*p.mg*lp[k] - p.g*p.mg*lp[k]*s)*s + 1.0*(p.Cl*dlp[k] - p.Kl*p.l0 + p.Kl*lp[k] - Ql - dtp[k]**2*p.mg*lp[k] + p.g*p.mg*c)*lp[k]*c - 1.0*(1.0*p.Cy*dyp[k] - 1.0*p.Ky*p.y0 + 1.0*p.Ky*yp[k] - 1.0*Qy - 2.0*dlp[k]*dtp[k]*p.mg*s - 1.0*dtp[k]**2*p.mg*lp[k]*c + 1.0*p.g*p.mc + 1.0*p.g*p.mg)*lp[k])/(p.mc*lp[k])
-        ddq[2] = -1.0*p.Cl*dlp[k]/p.mg - 1.0*p.Cl*dlp[k]/p.mc - 1.0*p.Cx*dxp[k]*s/p.mc + 1.0*p.Cy*dyp[k]*c/p.mc + 1.0*p.Kl*p.l0/p.mg + 1.0*p.Kl*p.l0/p.mc - 1.0*p.Kl*lp[k]/p.mg - 1.0*p.Kl*lp[k]/p.mc - 1.0*p.Ky*p.y0*c/p.mc + 1.0*p.Ky*yp[k]*c/p.mc + 1.0*Ql/p.mg + 1.0*Ql/p.mc + 1.0*Qx*s/p.mc - 1.0*Qy*c/p.mc + 1.0*dtp[k]**2*lp[k]
-        ddq[3] = (-1.0*p.Ct*dtp[k]*p.mc - 1.0*p.Ct*dtp[k]*p.mg - 1.0*p.Cx*dxp[k]*p.mg*lp[k]*c - 1.0*p.Cy*dyp[k]*p.mg*lp[k]*s - 1.0*p.Kt*p.mc*tp[k] - 1.0*p.Kt*p.mg*tp[k] + 1.0*p.Ky*p.mg*p.y0*lp[k]*s - 1.0*p.Ky*p.mg*lp[k]*yp[k]*s + 1.0*Qth*p.mc + 1.0*Qth*p.mg + 1.0*Qx*p.mg*lp[k]*c + 1.0*Qy*p.mg*lp[k]*s - 2.0*dlp[k]*dtp[k]*p.mc*p.mg*lp[k])/(p.mc*p.mg*lp[k]**2)
-
-        # Output State Derivatives
-        i1 = k*8+4
-        i2 = k*8+12
-        du[i1:i2] = [dxp[k], dyp[k], dlp[k], dtp[k], ddq[0], ddq[1], ddq[2], ddq[3]]  # Player velocities and accelerations
+        # Output state derivatives (Player velocities and accelerations)
+        i1 = k * 8 + 4
+        i2 = k * 8 + 12
+        if USE_NUMPY:
+            du[i1:i2] = [dxp[k], dyp[k], dlp[k], dtp[k], ddq[0, 0], ddq[1, 0], ddq[2, 0], ddq[3, 0]]
+        else:
+            du[i1:i2] = [dxp[k], dyp[k], dlp[k], dtp[k], ddq[0], ddq[1], ddq[2], ddq[3]]
     
     return du
 

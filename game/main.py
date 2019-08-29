@@ -291,21 +291,21 @@ class MyFace(Widget):
     def update(self, x, y, l, th, m2p, po, w, h, player):
         xp, yp = xy2p(x, y, m2p, po, w, h)
         self.sz = int(m2p*0.7)
-        self.img_left = int(xp-self.sz*0.5)
-        self.img_bottom = int(yp-0.05*m2p)
-        self.jersey_left = int(xp-self.sz*0.3)
-        self.jersey_bottom = int(yp-1.0*self.sz)
-        self.jersey_right = int(xp+self.sz*0.3)
-        self.stool_width = int(0.7*m2p)
+        self.img_left = int(xp - self.sz * 0.5)
+        self.img_bottom = int(yp - 0.05 * m2p)
+        self.jersey_left = int(xp - self.sz * 0.3)
+        self.jersey_bottom = int(yp - 1.0 * self.sz)
+        self.jersey_right = int(xp + self.sz * 0.3)
+        self.stool_width = int(0.7 * m2p)
         self.stool_height = int(m2p)
         self.stool_left = int(xp - 0.5 * self.stool_width)
         self.stool_bottom = int(yp + (l - 0.9 - 0.5 * p.d) * m2p)
-        self.stool_angle = th * 180.0 / pi
-        self.rotate_center = [self.img_left + self.sz*0.5, yp - 0.5 * p.d * m2p]
-        self.line_width = 0.075*m2p
+        self.stool_angle = float(th * 180.0 / pi)
+        self.rotate_center = [self.img_left + self.sz * 0.5, yp - 0.5 * p.d * m2p]
+        self.line_width = float(0.075 * m2p)
         self.line_list = player
-        self.shorts_angle0 = -atan2(player[4]-player[6], player[5]-player[7]) * 180.0 / pi
-        self.shorts_angle1 = -atan2(player[4]-player[2], player[5]-player[3]) * 180.0 / pi
+        self.shorts_angle0 = -atan2(player[4] - player[6], player[5] - player[7]) * 180.0 / pi
+        self.shorts_angle1 = -atan2(player[4] - player[2], player[5] - player[3]) * 180.0 / pi
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1.0):
         self.width = w
@@ -345,8 +345,9 @@ class Ball(Widget):
         X, Y = xy2p(gs.xTraj, gs.yTraj, m2p, po, w, h)
         self.now.pos = (self.img_left, self.img_bottom)
         self.now.size = (self.sz, self.sz)
+        nf = float(p.num_future_points)
         for n in range(X.__len__()):
-            sz = self.sz * (1 - n / p.num_future_points)
+            sz = self.sz * (1.0 - n / nf)
             self.future[n].pos = (X[n] - 0.5 * sz, Y[n] - 0.5 * sz)
             self.future[n].size = (sz, sz)
 
