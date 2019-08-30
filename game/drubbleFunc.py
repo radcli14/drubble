@@ -177,8 +177,8 @@ class Parameters:
 
     # VolleyDrubble Mode Settings
     volley_mode = False
-    net_height = 5.0  # [m]
-    net_width = 0.5   # [m]
+    net_height = 7.0  # [m]
+    net_width = 1.0   # [m]
 
 
 p = Parameters()
@@ -357,8 +357,8 @@ def ball_predict(gs, pAct):
 
 
 class GameState:
-    FloorBounce = False
-    StoolBounce = False
+    floor_bounce = False
+    stool_bounce = False
 
     # Initiate the state variables as a list, and as individual variables
     def __init__(self, u0, engine):
@@ -451,12 +451,13 @@ class GameState:
         pAct = stats.stool_count % p.nPlayer
 
         # Initial assumption, there was no event
-        self.StoolBounce = False
-        self.FloorBounce = False
+        self.stool_bounce = False
+        self.floor_bounce = False
+        self.net_bounce = False
         
         # Prevent event detection if there was already one within 0.1 seconds, 
         # or if the ball is far from the stool or ground
-        L = BallHitStool(self.t, self.u, pAct)  # Distance to stool
+        L = ball_hit_stool(self.t, self.u, pAct)  # Distance to stool
         vBall = (self.dxb, self.dyb)            # Velocity
         sBall = norm(vBall)                     # Speed
 
@@ -489,35 +490,43 @@ class GameState:
 
             # Check for events
             if (self.t-self.te) > 0.1:
-                if BallHitStool(self.t, U[k], pAct) < 0.0:
-                    self.StoolBounce = True
-                if BallHitFloor(self.t, U[k]) < 0.0:
-                    self.FloorBounce = True
-                if self.StoolBounce or self.FloorBounce:
+                if ball_hit_stool(self.t, U[k], pAct) < 0.0:
+                    self.stool_bounce = True
+                if ball_hit_floor(self.t, U[k]) < 0.0:
+                    self.floor_bounce = True
+                if p.volley_mode and ball_hit_net(self.t, U[k]) < 0.0:
+                    self.net_bounce = True
+                if self.stool_bounce or self.floor_bounce or self.net_bounce:
                     self.te = self.t
                     self.ue = U[k]
                     tBreak = k * ddt / nStep
                     break 
         
-        # If an event occurred, increment the counter, otherwise continue
-        if self.StoolBounce or self.FloorBounce:        
+        # If an event occurred, update the states, otherwise continue
+        if self.stool_bounce or self.floor_bounce or self.net_bounce:
             # Change ball states depending on if it was a stool or floor bounce
-            if self.StoolBounce:
+            if self.stool_bounce:
                 # Obtain the bounce velocity
-                vBounce, vRecoil = ball_bounce(self, stats.stool_count % p.nPlayer)
-                self.ue[2] = vBounce[0]
-                self.ue[3] = vBounce[1]
+                v_bounce, v_recoil = ball_bounce_stool(self, stats.stool_count % p.nPlayer)
+                self.ue[2] = v_bounce[0]
+                self.ue[3] = v_bounce[1]
                 
                 # Add  the recoil to the player
-                self.ue[8+pAct*8] = self.ue[8+pAct*8] + vRecoil[0]
-                self.ue[9+pAct*8] = self.ue[9] + vRecoil[1]
-                self.ue[10+pAct*8] = self.ue[10] + vRecoil[2]
-                self.ue[11+pAct*8] = self.ue[11] + vRecoil[3]
+                self.ue[8 + pAct * 8] = self.ue[8 + pAct * 8] + v_recoil[0]
+                self.ue[9 + pAct * 8] = self.ue[9] + v_recoil[1]
+                self.ue[10 + pAct * 8] = self.ue[10] + v_recoil[2]
+                self.ue[11 + pAct * 8] = self.ue[11] + v_recoil[3]
                 
-            elif self.FloorBounce:
+            elif self.floor_bounce:
                 # Reverse direction of the ball
                 self.ue[2] = +p.COR_g * self.ue[2]
                 self.ue[3] = -p.COR_g * self.ue[3]
+
+            elif self.net_bounce:
+                # Obtain the bounce velocity
+                v_bounce = ball_bounce_net(self)
+                self.ue[2] = v_bounce[0]
+                self.ue[3] = v_bounce[1]
 
             # Re-initialize from the event states
             self.t += ddt - tBreak
@@ -559,7 +568,7 @@ class GameState:
         self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = ball_predict(self, pAct)
 
         # Stop the ball from moving if the player hasn't hit space yet
-        if self.game_mode<6:
+        if self.game_mode < 6:
             self.t = 0
             self.n = 0
             self.u[0] = p.u0[0]
@@ -591,6 +600,10 @@ def cycle_modes(gs, stats, engine):
     if gs.game_mode == 2:
         # Reset game
         stats.__init__()
+        if p.volley_mode:
+            p.u0[0] = -10.0
+        else:
+            p.u0[0] = 0.0
         gs.__init__(p.u0, engine)
         gs.game_mode = 3
         return
@@ -654,12 +667,12 @@ class GameScore:
     def update(self, gs):
         self.t = gs.t
         self.n = gs.n
-        if gs.StoolBounce and self.stool_dist < gs.xb:
+        if gs.stool_bounce and self.stool_dist < gs.xb:
             self.stool_dist = gs.xb
         if self.max_height < gs.yb and self.stool_count > 0:
             self.max_height = gs.yb
-        self.stool_count += gs.StoolBounce
-        self.floor_count += gs.FloorBounce
+        self.stool_count += gs.stool_bounce
+        self.floor_count += gs.floor_bounce
         self.score = int(self.stool_dist * self.max_height * self.stool_count)
 
     # Initialize high scores from the user_data_dir
@@ -908,27 +921,24 @@ def control_logic(t, u, k, p, gs, stats):
         elif Bth < -1.0 or (0 < gs.timeUntilBounce < 0.017):
             Bth = -1.0
 
-    return Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt
-    # Q = (Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt)
-    # For some reason, the numpy matrix runs faster
-    # Q = np.matrix([[Bx*p.Qx], [By*p.Qy], [Bl*p.Ql], [Bth*p.Qt]])
-    # print(Q)
-    # return Q
+    if USE_NUMPY:
+        return np.array([Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt])
+    else:
+        return Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt
 
 
-def BallHitFloor(t,u):
+def ball_hit_floor(t, u):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u) 
     return yb-p.rb
-BallHitFloor.terminal = True
 
 
-def BallHitStool(t, u, k):
+def ball_hit_stool(t, u, k):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
         
-    # Get the stool locations using stickDude function
-    xv, yv, sx, sy = stickDude(u, k)
+    # Get the stool locations using stick_dude function
+    xv, yv, sx, sy = stick_dude(u, k)
     
     # Vectors from the left edge of the stool to the right, and to the ball
     r1 = [sx[1]-sx[0], sy[1]-sy[0]]
@@ -951,12 +961,11 @@ def BallHitStool(t, u, k):
     L = norm(r2) - p.rb
     
     return L 
-BallHitStool.terminal = True 
 
 
-def ball_bounce(gs, k):
-    # Get the stool locations using stickDude function
-    xv, yv, sx, sy = stickDude(gs.u, k)
+def ball_bounce_stool(gs, k):
+    # Get the stool locations using stick_dude function
+    xv, yv, sx, sy = stick_dude(gs.u, k)
 
     # Calculate sines and cosines of the tilt angle
     c = cos(gs.tp[k])
@@ -964,10 +973,10 @@ def ball_bounce(gs, k):
 
     # Vectors from the left edge of the stool to the right, and to the ball
     r1 = [sx[1] - sx[0], sy[1] - sy[0]]
-    
+
     # Calculate z that minimizes the distance
-    z = ((gs.xb - sx[0]) * r1[0] + (gs.yb - sy[0]) * r1[1]) / (r1[0]**2 + r1[1]**2)
-    
+    z = ((gs.xb - sx[0]) * r1[0] + (gs.yb - sy[0]) * r1[1]) / (r1[0] ** 2 + r1[1] ** 2)
+
     # Find the closest point of impact on the stool
     if z < 0:
         ri = [sx[0], sy[0]]
@@ -975,14 +984,14 @@ def ball_bounce(gs, k):
         ri = [sx[1], sy[1]]
     else:
         ri = [sx[0] + z * r1[0], sy[0] + z * r1[1]]
-    
+
     # Velocity of the stool at the impact point 
     vi = [gs.dxp[k] - gs.lp[k] * s - (ri[1] - gs.yp[k]) * gs.dtp[k],
           gs.dyp[k] + gs.lp[k] * c + (ri[0] - gs.xp[k]) * gs.dtp[k]]
-    
+
     # Velocity of the ball relative to impact point
     vbrel = [gs.dxb - vi[0], gs.dyb - vi[1]]
-    
+
     # Vector from the closest point of impact to the center of the ball    
     r2 = [gs.xb - ri[0], gs.yb - ri[1]]
     nr2 = norm(r2)
@@ -1019,10 +1028,45 @@ def ball_bounce(gs, k):
         v_recoil = [Q[2] * s / p.mc + Q[3] * c / (p.mc * gs.lp[k]) + Q[0] / p.mc,
                     - Q[2] * c / p.mc + Q[3] * s / (p.mc * gs.lp[k]) + Q[1] / p.mc,
                     Q[2] * (1.0 / p.mg + 1.0 / p.mc) + Q[0] * s / p.mc - Q[1] * c / p.mc,
-                    Q[3] * (p.mc + p.mg) / (p.mc * p.mg * gs.lp[k]**2)
+                    Q[3] * (p.mc + p.mg) / (p.mc * p.mg * gs.lp[k] ** 2)
                     + Q[0] * c / (p.mc * gs.lp[k]) + Q[1] * s / (p.mc * gs.lp[k])]
 
     return v_bounce, v_recoil
+
+
+def ball_hit_net(t, u):
+    # Unpack the state variables
+    xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
+
+    # Calculate the distance from the ball to the edge of the net
+    if yb >= p.net_height:
+        return norm([xb, yb - p.net_height]) - 0.5 * p.net_width - p.rb
+    elif xb <= 0:
+        return - xb - 0.5 * p.net_width - p.rb
+    else:
+        return xb - 0.5 * p.net_width - p.rb
+
+
+def ball_bounce_net(gs):
+    # Calculate the unit vector from the net to the ball
+    if gs.yb >= p.net_height:
+        r = [gs.xb, gs.yb - p.net_height]
+    else:
+        r = [gs.xb, 0]
+    nr = norm(r)    
+    u = [r[0] / nr, r[1] / nr]    
+    
+    # Calculate the ball speed projected onto the unit vector
+    s = norm([gs.dxb * u[0], gs.dyb * u[1]])
+    
+    # Return the ball velocity after recoil
+    return gs.dxb + 2.0 * p.COR_n * s * u[0], gs.dyb + 2.0 * p.COR_n * s * u[1]
+
+
+# Make the events terminal
+ball_hit_floor.terminal = True
+ball_hit_stool.terminal = True
+ball_hit_net.terminal = True        
 
 
 def norm(V):
@@ -1058,7 +1102,7 @@ def ThirdPoint(P0, P1, L, SGN):
 
 
 # Solve for the vertices that make up the stick man and stool
-def stickDude(inp, k):
+def stick_dude(inp, k):
     k8 = k*8
     # Get the state variables
     try:
@@ -1159,7 +1203,7 @@ class playerLines():
         
     def update(self, gs, w):
         # Get the player stick figure
-        self.xv, self.yv, self.sx, self.sy = stickDude(gs, self.pnum)
+        self.xv, self.yv, self.sx, self.sy = stick_dude(gs, self.pnum)
         
         # Get ranges for drawing the player and ball
         self.xrng, self.yrng, self.m2p, self.po = set_ranges(gs.u, w)
@@ -1258,8 +1302,8 @@ if defObsoleteDemoFuncs:
         Ls = np.zeros(N)
         Lf = np.zeros(N)
         for n in range(N):
-            Ls[n] = BallHitStool(T[n],Y[n,:])
-            Lf[n] = BallHitFloor(T[n],Y[n,:])
+            Ls[n] = ball_hit_stool(T[n],Y[n,:])
+            Lf[n] = ball_hit_floor(T[n],Y[n,:])
         plt.figure()
         plt.plot(T,Ls,'-bo')  
         plt.plot(T,Lf,'-rx')    
@@ -1282,8 +1326,8 @@ if defObsoleteDemoFuncs:
         return LN, HD, GD, ST, BL, BA,
            
     def animate(n):
-        # Get the plotting vectors using stickDude function
-        xv,yv,sx,sy = stickDude(Y[n,:])
+        # Get the plotting vectors using stick_dude function
+        xv,yv,sx,sy = stick_dude(Y[n,:])
     
         # Get state variables
         x  = Y[n,4] # sol.y[0,n]

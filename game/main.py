@@ -322,17 +322,14 @@ class MyFace(Widget):
 
 
 class VolleyNet(Widget):
-    line_points = ListProperty([0.0, 0.0, 0.0, 0.0])
-    line_width = NumericProperty(1.0)
-
     def __init__(self):
         super(VolleyNet, self).__init__()
         self.opacity = 0.0
 
-    def update(self, m2p, po, w=Window.width):
-        x = - po + w/2
-        self.line_points = [x, 0.0, x, p.net_height * m2p]
-        self.line_width = p.net_width * m2p
+    def update(self, m2p, po, w=Window.width, h=Window.height):
+        x = - po + w / 2
+        self.pos = (x - 0.5 * p.net_width * m2p, 0.05 * h)
+        self.size = (p.net_width * m2p, p.net_height * m2p)
 
     def anim_in(self, duration=1.0):
         anim = Animation(opacity=1.0, duration=duration)
@@ -1569,10 +1566,10 @@ class DrubbleGame(Widget):
                                      self.width, self.height, p2.player)
 
             # Make the bounce sounds
-            if gs.StoolBounce:
+            if gs.stool_bounce:
                 stool_sound.volume = min(0.1, norm([gs.dxb, gs.dyb]) / 50.0)
                 stool_sound.play()
-            elif gs.FloorBounce:
+            elif gs.floor_bounce:
                 floor_sound.volume = norm([gs.dxb, gs.dyb]) / 15.0
                 floor_sound.play()
 
