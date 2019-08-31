@@ -5,13 +5,12 @@ Created on Tue Mar  5 21:18:17 2019
 
 @author: radcli14
 """
-# Import the Kivy modules
+# Import modules
 from math import fmod, floor
 from random import randint
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
-# from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.properties import NumericProperty, ListProperty, ObjectProperty, StringProperty
 from kivy.core.window import Window
@@ -19,12 +18,8 @@ from kivy.clock import Clock
 from kivy.graphics import *
 from kivy.core.audio import SoundLoader
 from kivy.utils import platform
-from kivy.config import Config
 from kivy.animation import Animation
-from kivy.storage.jsonstore import JsonStore
-from kivy.core.text.markup import MarkupLabel
 from os.path import join
-import cProfile
 
 # Import drubbleFunc to get the supporting functions and classes
 import sys
@@ -322,14 +317,25 @@ class MyFace(Widget):
 
 
 class VolleyNet(Widget):
+    font_name = StringProperty('a/VeraMono.ttf')
+    score_left = StringProperty('0')
+    score_right = StringProperty('0')
+    score_size = NumericProperty(0.0)
+    score_pos = ListProperty([0.0, 0.0, 0.0, 0.0])
+    zero = NumericProperty(0.0)
+
     def __init__(self):
         super(VolleyNet, self).__init__()
         self.opacity = 0.0
 
     def update(self, m2p, po, w=Window.width, h=Window.height):
         x = - po + w / 2
+        self.zero = float(x)
         self.pos = (float(x - 0.5 * p.net_width * m2p), 0.05 * h)
-        self.size = (float(p.net_width * m2p), float(p.net_height * m2p))
+        self.size = (float(p.net_width * m2p), float((p.net_height + 0.5 * p.net_width) * m2p))
+        self.score_left = str(stats.volley_score[0])
+        self.score_right = str(stats.volley_score[1])
+        self.score_size = float(10.0 * m2p)
 
     def anim_in(self, duration=1.0):
         anim = Animation(opacity=1.0, duration=duration)
@@ -957,7 +963,7 @@ class DrubbleGame(Widget):
 
             # Initialize the high score labels
             j = p.difficult_level
-            k = p.nPlayer - 1
+            k = p.num_player - 1
             self.high_score_header = HighScoreLabel()
             self.high_dist_label = HighScoreLabel(outside_position='left', vertical_position=1,
                                                   label_text='Distance', this_run='%0.1f' % stats.stool_dist,
@@ -1010,7 +1016,7 @@ class DrubbleGame(Widget):
         self.add_widget(self.myFace)
         self.add_widget(self.LadyFace)
         self.myFace.anim_in(w=self.width, h=self.height, duration=0.75)
-        if p.nPlayer > 1:
+        if p.num_player > 1:
             self.LadyFace.anim_in(w=self.width, h=self.height, duration=0.75)
 
         # Sticks and buttons
@@ -1032,16 +1038,17 @@ class DrubbleGame(Widget):
             self.tiltStick.anim_in(w=self.width, h=self.height, duration=1.25)
 
         # Score labels
-        self.add_widget(self.time_label)
-        self.add_widget(self.dist_label)
-        self.add_widget(self.high_label)
-        self.add_widget(self.boing_label)
-        self.add_widget(self.score_label)
-        self.time_label.anim_in(w=self.width, h=self.height, duration=0.1)
-        self.dist_label.anim_in(w=self.width, h=self.height, duration=0.2)
-        self.high_label.anim_in(w=self.width, h=self.height, duration=0.3)
-        self.boing_label.anim_in(w=self.width, h=self.height, duration=0.4)
-        self.score_label.anim_in(w=self.width, h=self.height, duration=0.5)
+        if not p.volley_mode:
+            self.add_widget(self.time_label)
+            self.add_widget(self.dist_label)
+            self.add_widget(self.high_label)
+            self.add_widget(self.boing_label)
+            self.add_widget(self.score_label)
+            self.time_label.anim_in(w=self.width, h=self.height, duration=0.1)
+            self.dist_label.anim_in(w=self.width, h=self.height, duration=0.2)
+            self.high_label.anim_in(w=self.width, h=self.height, duration=0.3)
+            self.boing_label.anim_in(w=self.width, h=self.height, duration=0.4)
+            self.score_label.anim_in(w=self.width, h=self.height, duration=0.5)
 
         self.weHaveWidgets = True
         self.resize_canvas()
@@ -1058,11 +1065,12 @@ class DrubbleGame(Widget):
         self.tiltStick.anim_out(w=self.width, h=self.height)
         self.myFace.anim_out()
         self.LadyFace.anim_out()
-        self.time_label.anim_out(w=self.width, h=self.height, duration=0.15)
-        self.dist_label.anim_out(w=self.width, h=self.height, duration=0.30)
-        self.high_label.anim_out(w=self.width, h=self.height, duration=0.45)
-        self.boing_label.anim_out(w=self.width, h=self.height, duration=0.60)
-        self.score_label.anim_out(w=self.width, h=self.height, duration=0.75)
+        if not p.volley_mode:
+            self.time_label.anim_out(w=self.width, h=self.height, duration=0.15)
+            self.dist_label.anim_out(w=self.width, h=self.height, duration=0.30)
+            self.high_label.anim_out(w=self.width, h=self.height, duration=0.45)
+            self.boing_label.anim_out(w=self.width, h=self.height, duration=0.60)
+            self.score_label.anim_out(w=self.width, h=self.height, duration=0.75)
 
         self.option_butt.anim_out(w=self.width, h=self.height)
         self.action_butt.anim_out(w=self.width, h=self.height)
@@ -1086,11 +1094,12 @@ class DrubbleGame(Widget):
         self.remove_widget(self.tiltStick)
         self.remove_widget(self.option_butt)
         self.remove_widget(self.action_butt)
-        self.remove_widget(self.time_label)
-        self.remove_widget(self.dist_label)
-        self.remove_widget(self.high_label)
-        self.remove_widget(self.boing_label)
-        self.remove_widget(self.score_label)
+        if not p.volley_mode:
+            self.remove_widget(self.time_label)
+            self.remove_widget(self.dist_label)
+            self.remove_widget(self.high_label)
+            self.remove_widget(self.boing_label)
+            self.remove_widget(self.score_label)
         print('  --> Done!')
 
     def add_option_buttons(self, dt):
@@ -1131,7 +1140,7 @@ class DrubbleGame(Widget):
         print('Adding High Scores')
         # Indices for the high scores
         j = p.difficult_level
-        k = p.nPlayer - 1
+        k = p.num_player - 1
 
         # Update the strings for the current scores
         self.high_dist_label.this_run = '%0.1f' % stats.stool_dist
@@ -1161,10 +1170,10 @@ class DrubbleGame(Widget):
         # Bring the high scores onto the screen
         self.add_widget(self.difficult_butt)
         self.difficult_butt.anim_in_to_high_score(w=self.width, h=self.height, duration=0.5)
-        if p.nPlayer == 1:
+        if p.num_player == 1:
             self.add_widget(self.single_drubble_butt)
             self.single_drubble_butt.anim_in_to_high_score(w=self.width, h=self.height, duration=0.5)
-        elif p.nPlayer == 2:
+        elif p.num_player == 2:
             self.add_widget(self.double_drubble_butt)
             self.double_drubble_butt.anim_in_to_high_score(w=self.width, h=self.height, duration=0.5)
         self.add_widget(self.high_score_header)
@@ -1186,9 +1195,9 @@ class DrubbleGame(Widget):
         print('Removing High Scores')
         # Take the high scores off the screen
         self.difficult_butt.anim_out(w=self.width, h=self.height, duration=duration)
-        if p.nPlayer == 1:
+        if p.num_player == 1:
             self.single_drubble_butt.anim_out(w=self.width, h=self.height, duration=duration)
-        elif p.nPlayer == 2:
+        elif p.num_player == 2:
             self.double_drubble_butt.anim_out(w=self.width, h=self.height, duration=duration)
         self.high_score_header.anim_out(w=self.width, h=self.height, duration=duration)
         self.high_dist_label.anim_out(w=self.width, h=self.height, duration=duration)
@@ -1199,9 +1208,9 @@ class DrubbleGame(Widget):
 
     def remove_high_scores_callback(self, dt):
         self.remove_widget(self.difficult_butt)
-        if p.nPlayer == 1:
+        if p.num_player == 1:
             self.remove_widget(self.single_drubble_butt)
-        elif p.nPlayer == 2:
+        elif p.num_player == 2:
             self.remove_widget(self.double_drubble_butt)
         self.remove_widget(self.high_score_header)
         self.remove_widget(self.high_dist_label)
@@ -1328,7 +1337,7 @@ class DrubbleGame(Widget):
     # What to do when the single drubble button is pressed
     def single_drubble_button_press(self):
         # Specify that this will be the one player version, and start game
-        p.nPlayer = 1
+        p.num_player = 1
         cycle_modes(gs, stats, engine)
 
         # Add the in-game widgets
@@ -1342,7 +1351,7 @@ class DrubbleGame(Widget):
     # What to do when the double drubble button is pressed
     def double_drubble_button_press(self):
         # Specify this will be the two player version, and start game
-        p.nPlayer = 2
+        p.num_player = 2
         cycle_modes(gs, stats, engine)
 
         # Add the in-game widgets
@@ -1356,7 +1365,7 @@ class DrubbleGame(Widget):
     # What to do when the volley drubble button is pressed
     def volley_drubble_button_press(self):
         # Specify this will be the two player version, and start game
-        p.nPlayer = 2
+        p.num_player = 2
         p.volley_mode = True
         cycle_modes(gs, stats, engine)
 
@@ -1403,7 +1412,11 @@ class DrubbleGame(Widget):
         # If on restart of game, remove the high scores
         # Also move the sticks and option buttons out of the way
         if gs.game_mode == 7:
-            self.add_high_scores()
+            if p.volley_mode:
+                self.net.anim_out()
+            else:
+                self.add_high_scores()
+
             self.bg.anim_out()
             self.moveStick.anim_out(w=self.width, h=self.height)
             self.tiltStick.anim_out(w=self.width, h=self.height)
@@ -1414,6 +1427,8 @@ class DrubbleGame(Widget):
             self.bg.anim_in()
             self.moveStick.anim_in(w=self.width, h=self.height)
             self.tiltStick.anim_in(w=self.width, h=self.height)
+            if p.volley_mode:
+                self.net.anim_in()
 
         # Turn the button blue momentarily
         self.action_butt.background_touched()
@@ -1422,7 +1437,7 @@ class DrubbleGame(Widget):
     # What to do when the tutorial button is pressed
     def tutorial_button_press(self):
         # Specify that this will be the one player version, and start game
-        p.nPlayer = 1
+        p.num_player = 1
         cycle_modes(gs, stats, engine)
 
         # Turn on tutorial mode
@@ -1489,6 +1504,7 @@ class DrubbleGame(Widget):
         # Buttons
         self.single_drubble_butt.resize(w=self.width, h=self.height)
         self.double_drubble_butt.resize(w=self.width, h=self.height)
+        self.volley_drubble_butt.resize(w=self.width, h=self.height)
         self.tutorial_butt.resize(w=self.width, h=self.height)
         self.difficult_butt.resize(w=self.width, h=self.height)
         self.action_butt.resize(w=self.width, h=self.height)
@@ -1522,11 +1538,11 @@ class DrubbleGame(Widget):
         ddt = gs.sim_step(p, gs, stats)
 
         # Adjust pitch of the loop that is playing (TBR not working)
-        #print(ddt*fs)
-        #for k in range(num_loops):
-        #    loop[k].pitch = ddt * fs
+        # print(ddt*fs)
+        # for k in range(num_loops):
+        #     loop[k].pitch = ddt * fs
 
-        if gs.game_mode > 2:
+        if gs.game_mode > 2 and not p.volley_mode:
             stats.update(gs)
 
             # Update score line
@@ -1546,13 +1562,11 @@ class DrubbleGame(Widget):
         p2.update(gs, self.width)
         
         if gs.game_mode > 2:
-            xMean = (gs.xb+gs.xp[0])/2.0
-            self.bg.update(xMean, gs.yb, self.width, self.height, m2p)
+            x_mean = (gs.xb+gs.xp[0])/2.0
+            self.bg.update(x_mean, gs.yb, self.width, self.height, m2p)
             self.bg.make_markers(p1)
             self.moveStick.update_el(gs.ctrl[0], gs.ctrl[1])
             self.tiltStick.update_el(-gs.ctrl[3], gs.ctrl[2])
-            self.myFace.update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], m2p, po,
-                               self.width, self.height, p1.player)
 
             # Update the net
             if p.volley_mode:
@@ -1561,7 +1575,10 @@ class DrubbleGame(Widget):
             # Update the ball
             self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
 
-            if p.nPlayer > 1:
+            # Update the player(s)
+            self.myFace.update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], m2p, po,
+                               self.width, self.height, p1.player)
+            if p.num_player > 1:
                 self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], m2p, po,
                                      self.width, self.height, p2.player)
 

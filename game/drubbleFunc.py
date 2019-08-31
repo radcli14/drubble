@@ -9,7 +9,6 @@ except:
     print('Failed importing numpy')
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
 from kivy.storage.jsonstore import JsonStore
-from kivy.app import App
 
 import sys
 # Frame rate
@@ -99,7 +98,7 @@ class Parameters:
     # Gameplay settings
     userControlled = [[True,   True,  True, True],
                       [False, False, False,False]]
-    nPlayer = 1
+    num_player = 1
 
     # Stool parameters
     xs = [-0.25,  0.25,  0.15,
@@ -142,7 +141,7 @@ class Parameters:
     
     # Parameter settings I'm using to try to improve running speed
     linearMass = False
-    nEulerSteps = 2
+    nEulerSteps = 1
     timeRun = False
     
     # Font settings
@@ -179,7 +178,7 @@ class Parameters:
     volley_mode = False
     net_height = 7.0  # [m]
     net_width = 1.0   # [m]
-
+    serving_player = 0
 
 p = Parameters()
 
@@ -449,7 +448,7 @@ class GameState:
         self.n += 1
 
         # Active player
-        self.active_player = int(self.xb > 0) if p.volley_mode else stats.stool_count % p.nPlayer
+        self.active_player = int(self.xb > 0) if p.volley_mode else stats.stool_count % p.num_player
 
         # Initial assumption, there was no event
         self.stool_bounce = False
@@ -535,8 +534,17 @@ class GameState:
             self.u = [self.ue[i] + dudt[i]*(ddt-tBreak) for i in range(20)]
             
             # Stuck
-            if sqrt(self.u[2]**2+self.u[3]**2) < p.dybtol and self.u[1] < 1:
+            if sqrt(self.u[2]**2 + self.u[3]**2) < p.dybtol and self.u[1] < 1:
                 self.Stuck = True
+                if p.volley_mode and self.xb > 0:
+                    p.serving_player = 0
+                    stats.volley_score[0] += 1
+                    print('Player 1 wins point, score is ', stats.volley_score)
+                elif p.volley_mode and self.xb < 0:
+                    p.serving_player = 1
+                    stats.volley_score[1] += 1
+                    print('Player 2 wins point, score is ', stats.volley_score)
+
         else:   
             # Update states
             self.u = U[-1]
@@ -550,7 +558,7 @@ class GameState:
         self.u[9] = min(max(self.u[9], p.dyp_lim[0]), p.dyp_lim[1])
         self.u[10] = min(max(self.u[10], p.dlp_lim[0]), p.dlp_lim[1])
         self.u[11] = min(max(self.u[11], p.dtp_lim[0]), p.dtp_lim[1])
-        if p.nPlayer > 1:
+        if p.num_player > 1:
             self.u[13] = min(max(self.u[13], p.yp_lim[0]), p.yp_lim[1])
             self.u[14] = min(max(self.u[14], p.lp_lim[0]), p.lp_lim[1])
             self.u[15] = min(max(self.u[15], p.tp_lim[0]), p.tp_lim[1])
@@ -587,7 +595,7 @@ class GameState:
             self.start_speed = p.ss * (1 + 0.75*sin(self.phase))
         if self.game_mode == 4 or self.game_mode == 5:
             self.phase += 3 * dt * p.difficult_speed_scale[p.difficult_level]
-            start_direction = -1.0 if p.volley_mode else 1.0
+            start_direction = -1.0 if p.volley_mode and p.serving_player == 0 else 1.0
             self.u[2] = start_direction * self.start_speed * cos(self.start_angle)
             self.u[3] = self.start_speed * sin(self.start_angle)
 
@@ -603,7 +611,7 @@ def cycle_modes(gs, stats, engine):
         # Reset game
         stats.__init__()
         if p.volley_mode:
-            p.u0[0] = -1.0
+            p.u0[0] = -1.0 if p.serving_player == 0 else 1.0
             p.u0[4] = -10.0
         else:
             p.u0[0] = 0.0
@@ -630,7 +638,11 @@ def cycle_modes(gs, stats, engine):
 
     # Reset the game
     if gs.game_mode == 7:
-        stats.__init__()
+        if p.volley_mode:
+            p.u0[0] = -1.0 if p.serving_player == 0 else 1.0
+            p.u0[4] = -10.0
+        else:
+            stats.__init__()
         gs.__init__(p.u0, engine)
         gs.game_mode = 3
         return
@@ -640,6 +652,9 @@ class GameScore:
     # Set the high score file path and name
     high_score_file = 'score.json'
     store = None
+
+    # Initialize the volleyball game scores
+    all_volley_score = [[], [], []]
 
     # Initialize all scores as empty arrays
     all_stool_dist = [[[], []], [[], []], [[], []]]
@@ -661,23 +676,33 @@ class GameScore:
         # self.average_step_time = 0
 
         # Scores for the current game
-        self.stool_count = 0
-        self.stool_dist = 0
-        self.max_height = 0
-        self.floor_count = 0
-        self.score = 0
+        if p.volley_mode:
+            self.volley_score = [0, 0]
+        else:
+            self.stool_count = 0
+            self.stool_dist = 0
+            self.max_height = 0
+            self.floor_count = 0
+            self.score = 0
         
     # Update statistics for the current game state    
     def update(self, gs):
         self.t = gs.t
         self.n = gs.n
-        if gs.stool_bounce and self.stool_dist < gs.xb:
-            self.stool_dist = gs.xb
-        if self.max_height < gs.yb and self.stool_count > 0:
-            self.max_height = gs.yb
-        self.stool_count += gs.stool_bounce
-        self.floor_count += gs.floor_bounce
-        self.score = int(self.stool_dist * self.max_height * self.stool_count)
+        if p.volley_mode:
+            # Update the volleyball game score
+            if gs.xb < 0:
+                self.volley_score[0] += 1
+            else:
+                self.volley_score[1] += 1
+        else:
+            if gs.stool_bounce and self.stool_dist < gs.xb:
+                self.stool_dist = gs.xb
+            if self.max_height < gs.yb and self.stool_count > 0:
+                self.max_height = gs.yb
+            self.stool_count += gs.stool_bounce
+            self.floor_count += gs.floor_bounce
+            self.score = int(self.stool_dist * self.max_height * self.stool_count)
 
     # Initialize high scores from the user_data_dir
     def init_high(self, high_score_file='score.json'):
@@ -690,6 +715,7 @@ class GameScore:
         try:
             # Load from JsonStore
             p.difficult_level = self.store.get('difficult_level')['value']
+            self.all_volley_score = self.store.get('all_volley_score')['value']
             self.all_stool_dist = self.store.get('all_stool_dist')['value']
             self.all_height = self.store.get('all_height')['value']
             self.all_stool_count = self.store.get('all_stool_count')['value']
@@ -706,7 +732,7 @@ class GameScore:
     def update_high(self):
         # Indices for the high scores
         j = p.difficult_level
-        k = p.nPlayer - 1
+        k = p.num_player - 1
 
         # Append to the complete database
         self.all_stool_dist[j][k].append(self.stool_dist)
@@ -722,6 +748,7 @@ class GameScore:
 
         try:
             self.store.put('difficult_level', value=p.difficult_level)
+            self.store.put('all_volley_score', value=self.all_volley_score)
             self.store.put('all_stool_dist', value=self.all_stool_dist)
             self.store.put('all_height', value=self.all_height)
             self.store.put('all_stool_count', value=self.all_stool_count)
@@ -762,7 +789,7 @@ def player_and_stool(t, u, p, gs, stats):
     du[0:4] = [dxb, dyb, 0, -p.g]  # Ball velocities and accelerations
     
     # Loop over players
-    for k in range(p.nPlayer):
+    for k in range(p.num_player):
         # Sines and cosines of the stool angle
         s = sin(tp[k])
         c = cos(tp[k])
@@ -880,7 +907,7 @@ def control_logic(t, u, k, p, gs, stats):
     if p.volley_mode:
         player_run_ahead = 10.0 if gs.xI < 0 else 0.0
     else:
-        player_run_ahead = 10.0 * (p.nPlayer - 1 - gs.active_player)
+        player_run_ahead = 10.0 * (p.num_player - 1 - gs.active_player)
     diff_distance = 0.4 if p.volley_mode else -0.1
     pip = gs.xI + player_run_ahead + diff_distance
     if p.userControlled[k][0]:
