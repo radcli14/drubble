@@ -107,19 +107,11 @@
             size: self.size[0], self.size[0]
     Label:
         font_name: root.font_name
-        text: root.score_left
-        font_size: root.size[1]
-        pos: root.zero - root.size[1], root.pos[1]
-        size: root.size[1], root.size[1]
+        text: root.score
+        font_size: root.score_height
+        pos: root.zero - root.score_width, root.score_bottom
+        size: 2 * root.score_width, root.score_height
         opacity: root.opacity
-    Label:
-        font_name: root.font_name
-        text: root.score_right
-        font_size: root.size[1]
-        pos: root.zero, root.pos[1]
-        size: root.size[1], root.size[1]
-        opacity: root.opacity
-
 
 <OptionButtons>:
     canvas:

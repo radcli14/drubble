@@ -318,11 +318,11 @@ class MyFace(Widget):
 
 class VolleyNet(Widget):
     font_name = StringProperty('a/VeraMono.ttf')
-    score_left = StringProperty('0')
-    score_right = StringProperty('0')
-    score_size = NumericProperty(0.0)
-    score_pos = ListProperty([0.0, 0.0, 0.0, 0.0])
-    zero = NumericProperty(0.0)
+    score = StringProperty('0 - 0')
+    zero = NumericProperty(Window.width / 2.0)
+    score_width = NumericProperty(Window.width / 10.0)
+    score_height = NumericProperty(Window.height / 10.0)
+    score_bottom = NumericProperty(0.9 * Window.height)
 
     def __init__(self):
         super(VolleyNet, self).__init__()
@@ -330,11 +330,10 @@ class VolleyNet(Widget):
 
     def update(self, m2p, po, w=Window.width, h=Window.height):
         x = - po + w / 2
-        self.zero = float(x)
+        #self.zero = float(x)
         self.pos = (float(x - 0.5 * p.net_width * m2p), 0.05 * h)
         self.size = (float(p.net_width * m2p), float((p.net_height + 0.5 * p.net_width) * m2p))
-        self.score_left = str(stats.volley_score[0])
-        self.score_right = str(stats.volley_score[1])
+        self.score = str(stats.volley_score[0]) + ' - ' + str(stats.volley_score[1])
         self.score_size = float(10.0 * m2p)
 
     def anim_in(self, duration=1.0):
