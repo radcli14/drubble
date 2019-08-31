@@ -55,11 +55,11 @@ def xy2p(x, y, m2p, po, w, h):
 # Parameters
 class Parameters:
     # Game parameters
-    g = 9.81      # Gravitational acceleration [m/s^2]
-    COR_s = 0.90  # Coefficient of restitution (COR) when ball hits stool
-    COR_g = 0.70  # COR when ball hits ground
-    COR_n = 1.00  # Cor when ball hits net
-    rb = 0.2      # Radius of the ball
+    g = 9.81              # Gravitational acceleration [m/s^2]
+    COR_s = [0.70, 0.85]  # Coefficient of restitution (COR) when ball hits stool
+    COR_g = [0.50, 0.70]  # COR when ball hits ground
+    COR_n = [0.80, 1.00]  # Cor when ball hits net
+    rb = 0.2              # Radius of the ball
 
     # Player parameters
     mc = 50.0    # Mass of player [kg]
@@ -136,7 +136,7 @@ class Parameters:
     # Tolerance on last bounce speed before stopping motion
     dybtol = 2.0
     
-    # startAngle (sa) and startSpeed (ss) initially
+    # start_angle (sa) and start_speed (ss) initially
     sa = pi/4
     ss = 10.0
     
@@ -299,11 +299,11 @@ def zeros(ztup):
 
 
 # Predict motion of the ball
-def ball_predict(gs, pAct):
+def ball_predict(gs, active_player):
     if gs.dyb == 0 or gs.game_mode <= 2:
         # Ball is not moving, impact time is zero
         tI = 0
-    elif gs.game_mode > 2 and (gs.dyb > 0) and (gs.yb < gs.yp[pAct] + p.d + gs.lp[pAct]):
+    elif gs.game_mode > 2 and (gs.dyb > 0) and (gs.yb < gs.yp[active_player] + p.d + gs.lp[active_player]):
         # Ball is in play, moving upward and below the stool
         # Solve for time and height at apogee
         ta = gs.dyb / p.g
@@ -311,10 +311,10 @@ def ball_predict(gs, pAct):
 
         # Solve for time the ball would hit the ground
         tI = ta + sqrt(2.0 * ya / p.g)
-    elif gs.game_mode > 2 and (gs.yb > gs.yp[pAct] + p.d + gs.lp[pAct]):
+    elif gs.game_mode > 2 and (gs.yb > gs.yp[active_player] + p.d + gs.lp[active_player]):
         # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
-        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - gs.yp[pAct] - p.d - gs.lp[pAct]))) / p.g
+        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - gs.yp[active_player] - p.d - gs.lp[active_player]))) / p.g
     else:
         tI = 0
 
@@ -359,6 +359,7 @@ def ball_predict(gs, pAct):
 class GameState:
     floor_bounce = False
     stool_bounce = False
+    active_player = 0
 
     # Initiate the state variables as a list, and as individual variables
     def __init__(self, u0, engine):
@@ -378,12 +379,12 @@ class GameState:
         # Determine the control method, and initialize ctrl variable
         if engine == 'kivy':
             self.ctrlMode = 'keys'
-            self.ctrlFunc = 0
+            self.ctrl_func = 0
         elif engine == 'ista':
             #self.ctrlMode = 'motion'
-            #self.ctrlFunc = 1
+            #self.ctrl_func = 1
             self.ctrlMode = 'vStick'
-            self.ctrlFunc = 2
+            self.ctrl_func = 2
         self.ctrl = [0.0, 0.0, 0.0, 0.0]
         self.keyPush = [0, 0, 0, 0, 0, 0, 0, 0]
         
@@ -401,44 +402,44 @@ class GameState:
         self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = ball_predict(self, 0)
         
         # Angle and Speed Conditions
-        self.startAngle = p.sa
-        self.startSpeed = p.ss
+        self.start_angle = p.sa
+        self.start_speed = p.ss
         self.phase = 0
         
         # Stuck condition
         self.Stuck = False
          
     # Get control input from external source
-    def setControl(self, keyPush=[0, 0, 0, 0, 0, 0, 0, 0],
+    def set_control(self, keyPush=[0, 0, 0, 0, 0, 0, 0, 0],
                    moveStick=(0, 0), tiltStick=(0, 0),
                    g=(0, 0, 0), a=(0, 0, 0)):
         
-        if self.ctrlFunc == 0:
+        if self.ctrl_func == 0:
             # Key press control
             self.ctrl = [keyPush[1]-keyPush[0], keyPush[2]-keyPush[3],
                          keyPush[4]-keyPush[5], keyPush[6]-keyPush[7]]
             
-        elif self.ctrlFunc == 1:
+        elif self.ctrl_func == 1:
             # Motion control scale factors
-            gThreshold = 0.05
+            g_threshold = 0.05
             slope = 5.0
-            aScale = 2.0
+            a_scale = 2.0
 
             # Run left/right
-            if g[1]>gThreshold:
-                self.ctrl[0] = -min(slope*(g[1]-gThreshold), 1)
-            elif g[1]<-gThreshold:
-                self.ctrl[0] = -max(slope*(g[1]+gThreshold), -1)
+            if g[1]>g_threshold:
+                self.ctrl[0] = -min(slope*(g[1]-g_threshold), 1)
+            elif g[1]<-g_threshold:
+                self.ctrl[0] = -max(slope*(g[1]+g_threshold), -1)
             else:
                 self.ctrl[0]
                 
             # Push up/down    
             if a[1]>0:
-                self.ctrl[1] = min(aScale*a[1], 1)
+                self.ctrl[1] = min(a_scale*a[1], 1)
             else:
-                self.ctrl[1] = max(aScale*a[1], -1)
+                self.ctrl[1] = max(a_scale*a[1], -1)
                     
-        elif self.ctrlFunc == 2:
+        elif self.ctrl_func == 2:
             # Virtual stick control
             self.ctrl = [moveStick[0], moveStick[1], tiltStick[1], -tiltStick[0]]
         
@@ -448,7 +449,7 @@ class GameState:
         self.n += 1
 
         # Active player
-        pAct = stats.stool_count % p.nPlayer
+        self.active_player = int(self.xb > 0) if p.volley_mode else stats.stool_count % p.nPlayer
 
         # Initial assumption, there was no event
         self.stool_bounce = False
@@ -457,13 +458,13 @@ class GameState:
         
         # Prevent event detection if there was already one within 0.1 seconds, 
         # or if the ball is far from the stool or ground
-        L = ball_hit_stool(self.t, self.u, pAct)  # Distance to stool
-        vBall = (self.dxb, self.dyb)            # Velocity
-        sBall = norm(vBall)                     # Speed
+        L = ball_hit_stool(self.t, self.u, self.active_player)  # Distance to stool
+        v_ball = (self.dxb, self.dyb)                           # Velocity
+        s_ball = norm(v_ball)                                   # Speed
 
         # Set the timing
-        time_condition = (self.yb - self.yp[pAct] - self.lp[pAct] * cos(self.tp[pAct]) - p.d) / sBall if sBall >0.0 else -1.0
-        near_condition = abs(self.xb - self.xp[pAct]) < 1.0
+        time_condition = (self.yb - self.yp[self.active_player] - self.lp[self.active_player] * cos(self.tp[self.active_player]) - p.d) / s_ball if s_ball > 0.0 else -1.0
+        near_condition = abs(self.xb - self.xp[self.active_player]) < 1.0
         if 0.0 < time_condition < 0.5 and near_condition:
             # Slow speed
             ddt = dt / 1.5 * p.difficult_speed_scale[p.difficult_level]
@@ -490,7 +491,7 @@ class GameState:
 
             # Check for events
             if (self.t-self.te) > 0.1:
-                if ball_hit_stool(self.t, U[k], pAct) < 0.0:
+                if ball_hit_stool(self.t, U[k], self.active_player) < 0.0:
                     self.stool_bounce = True
                 if ball_hit_floor(self.t, U[k]) < 0.0:
                     self.floor_bounce = True
@@ -507,20 +508,20 @@ class GameState:
             # Change ball states depending on if it was a stool or floor bounce
             if self.stool_bounce:
                 # Obtain the bounce velocity
-                v_bounce, v_recoil = ball_bounce_stool(self, stats.stool_count % p.nPlayer)
+                v_bounce, v_recoil = ball_bounce_stool(self, self.active_player)
                 self.ue[2] = v_bounce[0]
                 self.ue[3] = v_bounce[1]
                 
                 # Add  the recoil to the player
-                self.ue[8 + pAct * 8] = self.ue[8 + pAct * 8] + v_recoil[0]
-                self.ue[9 + pAct * 8] = self.ue[9] + v_recoil[1]
-                self.ue[10 + pAct * 8] = self.ue[10] + v_recoil[2]
-                self.ue[11 + pAct * 8] = self.ue[11] + v_recoil[3]
+                self.ue[8 + self.active_player * 8] = self.ue[8 + self.active_player * 8] + v_recoil[0]
+                self.ue[9 + self.active_player * 8] = self.ue[9] + v_recoil[1]
+                self.ue[10 + self.active_player * 8] = self.ue[10] + v_recoil[2]
+                self.ue[11 + self.active_player * 8] = self.ue[11] + v_recoil[3]
                 
             elif self.floor_bounce:
                 # Reverse direction of the ball
-                self.ue[2] = +p.COR_g * self.ue[2]
-                self.ue[3] = -p.COR_g * self.ue[3]
+                self.ue[2] = +p.COR_g[0] * self.ue[2]
+                self.ue[3] = -p.COR_g[1] * self.ue[3]
 
             elif self.net_bounce:
                 # Obtain the bounce velocity
@@ -565,7 +566,7 @@ class GameState:
             self.u[3] = 0
 
         # Predict the future trajectory of the ball
-        self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = ball_predict(self, pAct)
+        self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = ball_predict(self, self.active_player)
 
         # Stop the ball from moving if the player hasn't hit space yet
         if self.game_mode < 6:
@@ -579,15 +580,16 @@ class GameState:
 
         return ddt
 
-    def setAngleSpeed(self):
+    def set_angle_and_speed(self):
         if self.game_mode == 4:
-            self.startAngle = 0.25 * pi * (1 + 0.75*sin(self.phase))
+            self.start_angle = 0.25 * pi * (1 + 0.75*sin(self.phase))
         if self.game_mode == 5:
-            self.startSpeed = p.ss * (1 + 0.75*sin(self.phase))
+            self.start_speed = p.ss * (1 + 0.75*sin(self.phase))
         if self.game_mode == 4 or self.game_mode == 5:
             self.phase += 3 * dt * p.difficult_speed_scale[p.difficult_level]
-            self.u[2] = self.startSpeed * cos(self.startAngle)
-            self.u[3] = self.startSpeed * sin(self.startAngle)
+            start_direction = -1.0 if p.volley_mode else 1.0
+            self.u[2] = start_direction * self.start_speed * cos(self.start_angle)
+            self.u[3] = self.start_speed * sin(self.start_angle)
 
 
 def cycle_modes(gs, stats, engine):
@@ -601,9 +603,11 @@ def cycle_modes(gs, stats, engine):
         # Reset game
         stats.__init__()
         if p.volley_mode:
-            p.u0[0] = -10.0
+            p.u0[0] = -1.0
+            p.u0[4] = -10.0
         else:
             p.u0[0] = 0.0
+            p.u0[4] = 5.0
         gs.__init__(p.u0, engine)
         gs.game_mode = 3
         return
@@ -873,8 +877,12 @@ def control_logic(t, u, k, p, gs, stats):
     # Run to the projected intercept point (pip). If the computer
     # Is the active player, this will be at gs.xI, otherwise will be at
     # gs.xI + 10
-    player_run_ahead = 10.0*(p.nPlayer-1-(stats.stool_count % 2))
-    pip = gs.xI + player_run_ahead
+    if p.volley_mode:
+        player_run_ahead = 10.0 if gs.xI < 0 else 0.0
+    else:
+        player_run_ahead = 10.0 * (p.nPlayer - 1 - gs.active_player)
+    diff_distance = 0.4 if p.volley_mode else -0.1
+    pip = gs.xI + player_run_ahead + diff_distance
     if p.userControlled[k][0]:
         if gs.ctrl[0] == 0:
             Bx = 0.0 if dxp[k] == 0.0 else -erf(dxp[k])  # Friction
@@ -989,8 +997,9 @@ def ball_bounce_stool(gs, k):
     vi = [gs.dxp[k] - gs.lp[k] * s - (ri[1] - gs.yp[k]) * gs.dtp[k],
           gs.dyp[k] + gs.lp[k] * c + (ri[0] - gs.xp[k]) * gs.dtp[k]]
 
-    # Velocity of the ball relative to impact point
+    # Velocity and speed of the ball relative to impact point
     vbrel = [gs.dxb - vi[0], gs.dyb - vi[1]]
+    srel = norm(vbrel)
 
     # Vector from the closest point of impact to the center of the ball    
     r2 = [gs.xb - ri[0], gs.yb - ri[1]]
@@ -998,11 +1007,11 @@ def ball_bounce_stool(gs, k):
     u2 = [r2[0] / nr2, r2[1] / nr2]
 
     # Delta ball velocity
-    delta_vb = [2.0 * p.COR_s * u2[0] * vbrel[0], 2.0 * p.COR_s * u2[1] * vbrel[1]]
+    delta_vb = [2.0 * p.COR_s[0] * u2[0] * srel, 2.0 * p.COR_s[1] * u2[1] * srel]
 
     if USE_NUMPY:
         # Velocity after bounce
-        v_bounce = -np.array(u2) * delta_vb + np.array([gs.dxb, gs.dyb])
+        v_bounce = np.array(delta_vb) + np.array([gs.dxb, gs.dyb])
 
         # Obtain the generalized impulse
         bounce_impulse = -p.mg * v_bounce
@@ -1016,7 +1025,7 @@ def ball_bounce_stool(gs, k):
         v_recoil = p.invM.dot(Qi)
     else:
         # Velocity after bounce
-        v_bounce = [-u2[0] * delta_vb[1] + gs.dxb, -u2[1] * delta_vb[1] + gs.dyb]
+        v_bounce = [delta_vb[0] + gs.dxb, delta_vb[1] + gs.dyb]
 
         # Obtain the generalized impulse
         bounce_impulse = [-p.mg * v_bounce[0], -p.mg * v_bounce[1]]
@@ -1060,7 +1069,7 @@ def ball_bounce_net(gs):
     s = norm([gs.dxb * u[0], gs.dyb * u[1]])
     
     # Return the ball velocity after recoil
-    return gs.dxb + 2.0 * p.COR_n * s * u[0], gs.dyb + 2.0 * p.COR_n * s * u[1]
+    return gs.dxb + 2.0 * s * u[0] * p.COR_n[0], gs.dyb + 2.0 * s * u[1] * p.COR_n[1]
 
 
 # Make the events terminal

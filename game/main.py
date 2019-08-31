@@ -328,8 +328,8 @@ class VolleyNet(Widget):
 
     def update(self, m2p, po, w=Window.width, h=Window.height):
         x = - po + w / 2
-        self.pos = (x - 0.5 * p.net_width * m2p, 0.05 * h)
-        self.size = (p.net_width * m2p, p.net_height * m2p)
+        self.pos = (float(x - 0.5 * p.net_width * m2p), 0.05 * h)
+        self.size = (float(p.net_width * m2p), float(p.net_height * m2p))
 
     def anim_in(self, duration=1.0):
         anim = Animation(opacity=1.0, duration=duration)
@@ -1217,7 +1217,7 @@ class DrubbleGame(Widget):
     
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         self.keyPush = ctrl2keyPush(gs)
-        gs.setControl(keyPush=kvUpdateKey(self.keyPush, keycode, 1))
+        gs.set_control(keyPush=kvUpdateKey(self.keyPush, keycode, 1))
         if gs.game_mode == 1 and gs.showedSplash:
             cycle_modes(gs, stats, engine)
         elif gs.game_mode == 2 and keycode[1] == 'spacebar':
@@ -1230,7 +1230,7 @@ class DrubbleGame(Widget):
     
     def _on_keyboard_up(self, keyboard, keycode):
         self.keyPush = ctrl2keyPush(gs)
-        gs.setControl(keyPush=kvUpdateKey(self.keyPush, keycode, 0))
+        gs.set_control(keyPush=kvUpdateKey(self.keyPush, keycode, 0))
         return True
     
     def on_touch_down(self, touch):
@@ -1516,7 +1516,7 @@ class DrubbleGame(Widget):
 
         # Angle and speed settings
         if 2 < gs.game_mode < 6:
-            gs.setAngleSpeed()
+            gs.set_angle_and_speed()
 
         # Call the simStep method
         ddt = gs.sim_step(p, gs, stats)
