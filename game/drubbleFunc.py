@@ -8,6 +8,7 @@ except:
     USE_NUMPY = False
     print('Failed importing numpy')
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
+from random import randint
 from kivy.storage.jsonstore import JsonStore
 
 import sys
@@ -179,6 +180,9 @@ class Parameters:
     net_height = 7.0  # [m]
     net_width = 1.0   # [m]
     serving_player = 0
+    serving_angle = 60
+    serving_speed = 10
+
 
 p = Parameters()
 
@@ -544,6 +548,9 @@ class GameState:
                     p.serving_player = 1
                     stats.volley_score[1] += 1
                     print('Player 2 wins point, score is ', stats.volley_score)
+                    p.serving_angle, p.serving_speed = randint(50, 80), randint(12, 17)
+                    print('  new serving angle = ', p.serving_angle, ' deg')
+                    print('  new serving speed = ', p.serving_speed, ' m/s')
 
         else:   
             # Update states
@@ -612,10 +619,12 @@ def cycle_modes(gs, stats, engine):
         stats.__init__()
         if p.volley_mode:
             p.u0[0] = -1.0 if p.serving_player == 0 else 1.0
-            p.u0[4] = -10.0
+            p.u0[4] = -20.0
+            p.u0[12] = 20.0
         else:
             p.u0[0] = 0.0
             p.u0[4] = 5.0
+            p.u0[12] = 0.0
         gs.__init__(p.u0, engine)
         gs.game_mode = 3
         return
@@ -633,16 +642,19 @@ def cycle_modes(gs, stats, engine):
 
     # Show the high scores
     if gs.game_mode == 6:
-        gs.game_mode = 7
+        if p.volley_mode:
+            p.u0[0] = -1.0 if p.serving_player == 0 else 1.0
+            p.u0[4] = -20.0
+            p.u0[12] = 20.0
+            gs.__init__(p.u0, engine)
+            gs.game_mode = 3
+        else:
+            gs.game_mode = 7
         return
 
     # Reset the game
     if gs.game_mode == 7:
-        if p.volley_mode:
-            p.u0[0] = -1.0 if p.serving_player == 0 else 1.0
-            p.u0[4] = -10.0
-        else:
-            stats.__init__()
+        stats.__init__()
         gs.__init__(p.u0, engine)
         gs.game_mode = 3
         return

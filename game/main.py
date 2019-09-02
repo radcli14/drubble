@@ -199,8 +199,8 @@ class MyBackground(Widget):
 
                 # Numbers
                 strxr = str(xr)  # String form of xr
-                fsize = min(24 * screen_scf, int(p.m2p))  # Font size
-                xypos = (int(start_x + 5), self.height / 20 - fsize)  # Position of text
+                fsize = int(min(0.9 * self.bottom_line_height, p.m2p))  # Font size
+                xypos = (int(start_x + 5), self.height / 20 - fsize)    # Position of text
                 lsize = (len(strxr) * fsize / 2.0, fsize)  # Label size
                 if k >= self.nMarks:
                     self.yardLine.append(Line(points=(start_x, start_y, end_x, end_y), width=1.5))
@@ -330,11 +330,9 @@ class VolleyNet(Widget):
 
     def update(self, m2p, po, w=Window.width, h=Window.height):
         x = - po + w / 2
-        #self.zero = float(x)
         self.pos = (float(x - 0.5 * p.net_width * m2p), 0.05 * h)
         self.size = (float(p.net_width * m2p), float((p.net_height + 0.5 * p.net_width) * m2p))
         self.score = str(stats.volley_score[0]) + ' - ' + str(stats.volley_score[1])
-        self.score_size = float(10.0 * m2p)
 
     def anim_in(self, duration=1.0):
         anim = Animation(opacity=1.0, duration=duration)
@@ -343,6 +341,12 @@ class VolleyNet(Widget):
     def anim_out(self, duration=1.0):
         anim = Animation(opacity=0.0, duration=duration)
         anim.start(self)
+
+    def resize(self, w=Window.width, h=Window.height):
+        self.zero = w / 2.0
+        self.score_width = w / 10.0
+        self.score_height = h / 10.0
+        self.score_bottom = 0.9 * h
 
 
 class Ball(Widget):
@@ -1376,13 +1380,13 @@ class DrubbleGame(Widget):
         self.volley_drubble_butt.background_touched()
         Clock.schedule_once(self.volley_drubble_butt.background_untouched, 0.1)
 
-
     # What to do when option button is pressed
     def option_button_press(self):
         # Return to the option screen, removing the in-game widgets
         gs.game_mode = 1
         self.remove_game_widgets()
-        self.remove_high_scores()
+        if not p.volley_mode:
+            self.remove_high_scores()
         Clock.schedule_once(self.add_option_buttons, 1.0)
 
         # Reset game states and scores
@@ -1422,8 +1426,9 @@ class DrubbleGame(Widget):
             self.option_butt.anim_out_then_in(w=self.width, h=self.height)
             self.action_butt.anim_out_then_in(w=self.width, h=self.height)
         elif gs.game_mode == 3:
-            self.remove_high_scores()
-            self.bg.anim_in()
+            if not p.volley_mode:
+                self.remove_high_scores()
+            self.bg.anim_in(w=self.width, h=self.height)
             self.moveStick.anim_in(w=self.width, h=self.height)
             self.tiltStick.anim_in(w=self.width, h=self.height)
             if p.volley_mode:
@@ -1512,6 +1517,9 @@ class DrubbleGame(Widget):
         # Tutorial
         self.tutorial.resize(w=self.width, h=self.height)
 
+        # Volley
+        self.net.resize(w=self.width, h=self.height)
+
     # Time step the game
     def update(self, dt):
         if self.needToResize:
@@ -1567,9 +1575,17 @@ class DrubbleGame(Widget):
             self.moveStick.update_el(gs.ctrl[0], gs.ctrl[1])
             self.tiltStick.update_el(-gs.ctrl[3], gs.ctrl[2])
 
-            # Update the net
             if p.volley_mode:
-                self.net.update(p1.m2p, p1.po)
+                # Update the net
+                self.net.update(p1.m2p, p1.po, w=self.width, h=self.height)
+
+                # Automatically cycle based on randomized start conditions for the serving computer
+                if gs.game_mode == 3 and p.serving_player == 1:
+                    cycle_modes(gs, stats, engine)
+                elif gs.game_mode == 4 and p.serving_player == 1 and 180.0 / pi * gs.start_angle >= p.serving_angle:
+                    cycle_modes(gs, stats, engine)
+                elif gs.game_mode == 5 and p.serving_player == 1 and gs.start_speed >= p.serving_speed:
+                    cycle_modes(gs, stats, engine)
 
             # Update the ball
             self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
