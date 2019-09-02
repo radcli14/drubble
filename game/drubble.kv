@@ -105,6 +105,12 @@
         Ellipse:
             pos: self.pos[0], self.pos[1] + self.size[1] - self.size[0]
             size: self.size[0], self.size[0]
+        Rectangle:
+            pos: self.back_line_pos[0]
+            size: self.back_line_size[0]
+        Rectangle:
+            pos: self.back_line_pos[1]
+            size: self.back_line_size[1]
     Label:
         font_name: root.font_name
         text: root.score

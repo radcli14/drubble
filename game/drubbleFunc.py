@@ -182,6 +182,7 @@ class Parameters:
     serving_player = 0
     serving_angle = 60
     serving_speed = 10
+    back_line = 25.0
 
 
 p = Parameters()
@@ -362,6 +363,7 @@ def ball_predict(gs, active_player):
 class GameState:
     floor_bounce = False
     stool_bounce = False
+    net_bounce = False
     active_player = 0
 
     # Initiate the state variables as a list, and as individual variables
@@ -549,8 +551,8 @@ class GameState:
                     stats.volley_score[1] += 1
                     print('Player 2 wins point, score is ', stats.volley_score)
                     p.serving_angle, p.serving_speed = randint(50, 80), randint(12, 17)
-                    print('  new serving angle = ', p.serving_angle, ' deg')
-                    print('  new serving speed = ', p.serving_speed, ' m/s')
+                    print('  -- New serving angle = ', p.serving_angle, ' deg')
+                    print('  -- New serving speed = ', p.serving_speed, ' m/s')
 
         else:   
             # Update states
@@ -573,11 +575,17 @@ class GameState:
             self.u[17] = min(max(self.u[17], p.dyp_lim[0]), p.dyp_lim[1])
             self.u[18] = min(max(self.u[18], p.dlp_lim[0]), p.dlp_lim[1])
             self.u[19] = min(max(self.u[19], p.dtp_lim[0]), p.dtp_lim[1])
+        if p.volley_mode:
+            self.u[4] = min(self.u[4], -0.5 * p.net_width)
+            self.u[12] = max(self.u[12], 0.5 * p.net_width)
+            if self.u[0] <= -p.back_line or self.u[0] >= p.back_line:
+                self.u[0] = -p.back_line + 0.001 if self.u[0] < 0 else p.back_line - 0.001
+                self.u[2] = - self.u[2] * p.COR_n[0]
 
         # If stuck, keep it rolling
         if self.Stuck:
             self.u[1] = p.rb
-            self.u[2] = (1-0.01*ddt)*self.u[2]
+            self.u[2] = (1 - 0.01 * ddt) * self.u[2]
             self.u[3] = 0
 
         # Predict the future trajectory of the ball
@@ -619,8 +627,8 @@ def cycle_modes(gs, stats, engine):
         stats.__init__()
         if p.volley_mode:
             p.u0[0] = -1.0 if p.serving_player == 0 else 1.0
-            p.u0[4] = -20.0
-            p.u0[12] = 20.0
+            p.u0[4] = -15.0
+            p.u0[12] = 15.0
         else:
             p.u0[0] = 0.0
             p.u0[4] = 5.0
@@ -644,8 +652,8 @@ def cycle_modes(gs, stats, engine):
     if gs.game_mode == 6:
         if p.volley_mode:
             p.u0[0] = -1.0 if p.serving_player == 0 else 1.0
-            p.u0[4] = -20.0
-            p.u0[12] = 20.0
+            p.u0[4] = -15.0
+            p.u0[12] = 15.0
             gs.__init__(p.u0, engine)
             gs.game_mode = 3
         else:

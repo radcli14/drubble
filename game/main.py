@@ -323,6 +323,8 @@ class VolleyNet(Widget):
     score_width = NumericProperty(Window.width / 10.0)
     score_height = NumericProperty(Window.height / 10.0)
     score_bottom = NumericProperty(0.9 * Window.height)
+    back_line_pos = ListProperty([[0.0, 0.0], [0.0, 0.0]])
+    back_line_size = ListProperty([[0.0, 0.0], [0.0, 0.0]])
 
     def __init__(self):
         super(VolleyNet, self).__init__()
@@ -331,6 +333,9 @@ class VolleyNet(Widget):
     def update(self, m2p, po, w=Window.width, h=Window.height):
         x = - po + w / 2
         self.pos = (float(x - 0.5 * p.net_width * m2p), 0.05 * h)
+        d = float(m2p * p.back_line)
+        self.back_line_pos = [[0.0, 0.05 * h], [x + d, 0.05 * h]]
+        self.back_line_size = [[x - d, 0.95 * h], [w - x - d, 0.95 * h]]
         self.size = (float(p.net_width * m2p), float((p.net_height + 0.5 * p.net_width) * m2p))
         self.score = str(stats.volley_score[0]) + ' - ' + str(stats.volley_score[1])
 
@@ -395,7 +400,7 @@ def get_stick_pos(ch):
     return ch.pos[0]+ch.size[0]/2.0, ch.pos[1]+ch.size[1]/2.0, ch.size[0]
 
 
-def touchStick(loc, stick):
+def touch_stick(loc, stick):
     tCnd = [loc[0] > stick.pos[0],
             loc[0] < stick.pos[0] + stick.size[0],
             loc[1] > stick.pos[1],
@@ -1267,13 +1272,13 @@ class DrubbleGame(Widget):
                 self.option_button_press()
 
             # Detect control inputs
-            xy = touchStick(loc, self.moveStick)
+            xy = touch_stick(loc, self.moveStick)
             if xy[0] != 0:
                 self.moveStick.id_code = touch.id
                 self.moveStick.update_el(xy[0], xy[1])
                 gs.ctrl[0:2] = xy
             
-            xy = touchStick(loc, self.tiltStick)
+            xy = touch_stick(loc, self.tiltStick)
             if xy[0] != 0:
                 self.tiltStick.id_code = touch.id
                 self.tiltStick.update_el(xy[0], xy[1])
@@ -1285,12 +1290,12 @@ class DrubbleGame(Widget):
     def on_touch_move(self, touch):
         if gs.game_mode > 2 and self.weHaveWidgets:
             # Detect control inputs
-            xy = touchStick((touch.x,touch.y), self.moveStick)
+            xy = touch_stick((touch.x,touch.y), self.moveStick)
             if touch.id == self.moveStick.id_code and xy[0] != 0:
                 self.moveStick.update_el(xy[0], xy[1])
                 gs.ctrl[0:2] = xy
 
-            xy = touchStick((touch.x,touch.y),self.tiltStick)
+            xy = touch_stick((touch.x,touch.y),self.tiltStick)
             if touch.id == self.tiltStick.id_code and xy[0] != 0:
                 self.tiltStick.update_el(xy[0], xy[1])
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
