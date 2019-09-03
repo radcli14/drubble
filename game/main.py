@@ -375,7 +375,7 @@ class Ball(Widget):
         self.img_left = int(x - p1.m2p * p.rb)
         self.img_bottom = int(y - p1.m2p * p.rb)
 
-        X, Y = xy2p(gs.xTraj, gs.yTraj, m2p, po, w, h)
+        X, Y = xy2p(gs.traj['x'], gs.traj['y'], m2p, po, w, h)
         self.now.pos = (self.img_left, self.img_bottom)
         self.now.size = (self.sz, self.sz)
         nf = float(p.num_future_points)

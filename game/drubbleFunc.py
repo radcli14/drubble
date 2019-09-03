@@ -339,13 +339,13 @@ def ball_predict(gs, active_player):
         t = time_offset + p.future_increment * n
         T[n] = t if t < tG else tG
 
-    xTraj = zeros(p.num_future_points)
-    yTraj = zeros(p.num_future_points)
+    traj = {'t': zeros(p.num_future_points), 'x': zeros(p.num_future_points), 'y': zeros(p.num_future_points)}
     n = -1
     for t in T:
         n += 1
-        xTraj[n] = gs.xb + gs.dxb * t
-        yTraj[n] = gs.yb + gs.dyb * t - 0.5 * p.g * t ** 2
+        traj['t'][n] = gs.t + T[n]
+        traj['x'][n] = gs.xb + gs.dxb * t
+        traj['y'][n] = gs.yb + gs.dyb * t - 0.5 * p.g * t ** 2
 
     # Time until event
     time_until_bounce = tI
@@ -355,9 +355,8 @@ def ball_predict(gs, active_player):
     # xI = Ball distance at impact [m]
     # yI = Ball height at impact [m]
     # tI = Time at impact [s]
-    # xTraj = Ball trajectory distances [m]
-    # yTraj = Ball trajectory heights [m]
-    return xI, yI, tI, xTraj, yTraj, time_until_bounce
+    # traj = Ball trajectory ['t' in seconds, 'x' in m, 'y' in m]
+    return xI, yI, tI, traj, time_until_bounce
 
 
 class GameState:
@@ -404,7 +403,7 @@ class GameState:
        
         # Event states
         self.ue = u0[:]
-        self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = ball_predict(self, 0)
+        self.xI, self.yI, self.tI, self.traj, self.timeUntilBounce = ball_predict(self, 0)
         
         # Angle and Speed Conditions
         self.start_angle = p.sa
@@ -469,8 +468,8 @@ class GameState:
 
         # Set the timing
         time_condition = (self.yb - self.yp[self.active_player] - self.lp[self.active_player] * cos(self.tp[self.active_player]) - p.d) / s_ball if s_ball > 0.0 else -1.0
-        near_condition = abs(self.xb - self.xp[self.active_player]) < 1.0
-        if 0.0 < time_condition < 0.5 and near_condition:
+        # near_condition = abs(self.xb - self.xp[self.active_player]) < 1.0
+        if 0.0 < time_condition < 0.5 and L < 1.0:
             # Slow speed
             ddt = dt / 1.5 * p.difficult_speed_scale[p.difficult_level]
             nStep = 4 * p.nEulerSteps
@@ -538,7 +537,11 @@ class GameState:
             self.t += ddt - tBreak
             dudt = player_and_stool(self.t, self.ue, p, gs, stats)
             self.u = [self.ue[i] + dudt[i]*(ddt-tBreak) for i in range(20)]
-            
+
+            # Predict the future trajectory of the ball
+            # self.xI, self.yI, self.tI, self.traj, self.timeUntilBounce = ball_predict(self, self.active_player)
+            # print(self.traj)
+
             # Stuck
             if sqrt(self.u[2]**2 + self.u[3]**2) < p.dybtol and self.u[1] < 1:
                 self.Stuck = True
@@ -589,16 +592,30 @@ class GameState:
             self.u[3] = 0
 
         # Predict the future trajectory of the ball
-        self.xI, self.yI, self.tI, self.xTraj, self.yTraj, self.timeUntilBounce = ball_predict(self, self.active_player)
+        if 3 < gs.game_mode < 6 or (gs.game_mode == 6 and self.traj['t'][0] - dt < gs.t):
+            self.xI, self.yI, self.tI, self.traj, self.timeUntilBounce = ball_predict(self, self.active_player)
+        '''
+        elif self.traj['t'][0] <= gs.t:
+            # Remove the stale data point
+            self.traj['t'].pop(0)
+            self.traj['x'].pop(0)
+            self.traj['y'].pop(0)
 
-        # Stop the ball from moving if the player hasn't hit space yet
+            # Add a new data point
+            DT = p.num_future_points * p.future_increment
+            self.traj['t'].append(self.t + DT)
+            self.traj['x'].append(self.xb + self.dxb * DT)
+            self.traj['y'].append(self.yb + self.dyb * DT - 0.5 * p.g * DT ** 2)
+        '''
+
+        # Stop the ball from moving if it hasn't been launched yet
         if self.game_mode < 6:
             self.t = 0
             self.n = 0
             self.u[0] = p.u0[0]
             self.u[1] = p.u0[1]
 
-        # Named states    
+        # Named states
         self = varStates(self)
 
         return ddt
