@@ -538,10 +538,6 @@ class GameState:
             dudt = player_and_stool(self.t, self.ue, p, gs, stats)
             self.u = [self.ue[i] + dudt[i]*(ddt-tBreak) for i in range(20)]
 
-            # Predict the future trajectory of the ball
-            # self.xI, self.yI, self.tI, self.traj, self.timeUntilBounce = ball_predict(self, self.active_player)
-            # print(self.traj)
-
             # Stuck
             if sqrt(self.u[2]**2 + self.u[3]**2) < p.dybtol and self.u[1] < 1:
                 self.Stuck = True
@@ -553,7 +549,7 @@ class GameState:
                     p.serving_player = 1
                     stats.volley_score[1] += 1
                     print('Player 2 wins point, score is ', stats.volley_score)
-                    p.serving_angle, p.serving_speed = randint(50, 80), randint(12, 17)
+                    p.serving_angle, p.serving_speed = randint(50, 78), randint(12, 17)
                     print('  -- New serving angle = ', p.serving_angle, ' deg')
                     print('  -- New serving speed = ', p.serving_speed, ' m/s')
 
