@@ -122,9 +122,15 @@
 <OptionButtons>:
     canvas:
         Color:
-            rgba: self.background_color
-        Rectangle:
-            source: self.background_normal
+            rgba: self.shadow_color
+        RoundedRectangle:
+            radius: [self.corner_radius]
+            pos: self.pos[0] - self.shadow_width, self.pos[1] - self.shadow_width
+            size: self.size
+        Color:
+            rgba: self.button_color
+        RoundedRectangle:
+            radius: [self.corner_radius]
             pos: self.pos
             size: self.size
     Label:
@@ -134,6 +140,8 @@
         pos: root.pos
         size: root.size
         color: root.label_color
+        halign: 'center'
+        valign: 'center'
 
 
 <ScoreLabel>:

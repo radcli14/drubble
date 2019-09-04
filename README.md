@@ -26,13 +26,13 @@ Throw it up, bounce it on the stool, try to keep it bouncing.
 ### Double dRuBbLe
 First person throws it, second person tries to bounce it as far as they can on the stool.
 
-### Triple dRuBbLe (Planned)
-First person throws it, second person bounces it to the third person, who bounces it to the first person who has run behind them.
-
-### Volley dRuBbLe (Planned)
+### Volley dRuBbLe
 First person bounces it over the center barrier, second person attempts to return it.
 The round ends when either player can no longer return the ball, at which time the last player to hit the ball over the barrier earns a point.
 Bounces are unlimited, and bounces of the ground are allowed.
+
+### Triple dRuBbLe (Planned)
+First person throws it, second person bounces it to the third person, who bounces it to the first person who has run behind them.
 
 ## The History of dRuBbLe
 A game we used to play while drinking in college.

@@ -56,7 +56,7 @@ def xy2p(x, y, m2p, po, w, h):
 class Parameters:
     # Game parameters
     g = 9.81              # Gravitational acceleration [m/s^2]
-    COR_s = [0.70, 0.85]  # Coefficient of restitution (COR) when ball hits stool
+    COR_s = [0.70, 0.90]  # Coefficient of restitution (COR) when ball hits stool
     COR_g = [0.50, 0.70]  # COR when ball hits ground
     COR_n = [0.80, 1.00]  # Cor when ball hits net
     rb = 0.2              # Radius of the ball
@@ -170,6 +170,10 @@ class Parameters:
     # Time increment between future trajectory points
     future_increment = 0.12
 
+    # Sound effects and music settings
+    fx_is_on = True
+    music_is_on = True
+
     # Difficulty levels
     difficult_text = ['Easy', 'Hard', 'Silly']
     difficult_speed_scale = [0.75, 1.0, 1.3]
@@ -186,67 +190,6 @@ class Parameters:
 
 
 p = Parameters()
-
-
-class DrumBeat:
-    def __init__(self):
-        self.n = 0
-        self.bpm = 105.0  # Beats per minute
-        self.npb = round(fs*60.0/4.0/self.bpm) # frames per beat
-        self.nps = 16.0*self.npb # frames per sequence
-        #self.sequence = [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
-        #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-        #                 [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
-        #                 [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]]
-        #self.sequence = [[1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0],
-        #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-        #                 [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
-        #                [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]]
-        try:
-            self.drum = ['a/01_kick.wav',
-                         'a/04_snare2.wav',
-                         'a/06_openHat6.wav',
-                         'a/09_hiConga2.wav']
-            self.loop = ['a/00-DC-Base.mp3', 'a/01-DC-Base.mp3']
-        except:
-            self.drum = []
-            self.loop = []
-            self.drum.append(SoundLoader.load('a/01_kick.wav'))
-            self.drum.append(SoundLoader.load('a/04_snare2.wav'))
-            self.drum.append(SoundLoader.load('a/06_openHat6.wav'))
-            self.drum.append(SoundLoader.load('a/09_hiConga2.wav'))
-            self.loop.append(SoundLoader.load('a/00-DC-Base.mp3'))
-            self.loop.append(SoundLoader.load('a/01-DC-Base.mp3'))
-            self.loop[0].play()
-
-        self.m = 4
-        self.randFactor = 1.0
-        self.nloops = 2
-        
-
-    def play_ista(self):    
-        whichSequence = np.floor(self.n/self.nps)
-        whereInSequence = self.n-whichSequence*self.nps
-        beat = whereInSequence/self.npb
-        numDrums = max(1,gs.game_mode-2)
-        if not np.mod(beat,1):
-            b = int(beat)
-            for k in range(numDrums):
-                if self.sequence[k][b] or np.random.uniform()>self.randFactor:
-                    sound.play_effect(self.drum[k])
-        self.n += 1
-                    
-    def play_kivy(self):
-        for k in range(self.m):
-            if self.sequence[k][self.n] or np.random.uniform()>self.randFactor:
-                self.drum[k].play() 
-                
-        self.n += 1
-        if self.n >= 16:
-            self.n = 0            
-
-    def check_kivy(self):
-        pass
 
 
 def varStates(obj):
@@ -1059,12 +1002,17 @@ def ball_bounce_stool(gs, k):
 
     # Velocity and speed of the ball relative to impact point
     vbrel = [gs.dxb - vi[0], gs.dyb - vi[1]]
-    srel = norm(vbrel)
 
     # Vector from the closest point of impact to the center of the ball    
     r2 = [gs.xb - ri[0], gs.yb - ri[1]]
     nr2 = norm(r2)
     u2 = [r2[0] / nr2, r2[1] / nr2]
+
+    # Relative velocity of the ball projected into the vector u2
+    vbrel_proj = [vbrel[0] * u2[0], vbrel[1] * u2[1]]
+
+    # Relative speed of the ball, projected into the vector u2
+    srel = norm(vbrel_proj)
 
     # Delta ball velocity
     delta_vb = [2.0 * p.COR_s[0] * u2[0] * srel, 2.0 * p.COR_s[1] * u2[1] * srel]
@@ -1292,6 +1240,65 @@ class playerLines():
 # these are basically obsolete, eventually will be deleted
 defObsoleteDemoFuncs = False
 if defObsoleteDemoFuncs:
+
+    class DrumBeat:
+        def __init__(self):
+            self.n = 0
+            self.bpm = 105.0  # Beats per minute
+            self.npb = round(fs * 60.0 / 4.0 / self.bpm)  # frames per beat
+            self.nps = 16.0 * self.npb  # frames per sequence
+            # self.sequence = [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
+            #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+            #                 [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+            #                 [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]]
+            # self.sequence = [[1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0],
+            #                 [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+            #                 [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
+            #                [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]]
+            try:
+                self.drum = ['a/01_kick.wav',
+                             'a/04_snare2.wav',
+                             'a/06_openHat6.wav',
+                             'a/09_hiConga2.wav']
+                self.loop = ['a/00-DC-Base.mp3', 'a/01-DC-Base.mp3']
+            except:
+                self.drum = []
+                self.loop = []
+                self.drum.append(SoundLoader.load('a/01_kick.wav'))
+                self.drum.append(SoundLoader.load('a/04_snare2.wav'))
+                self.drum.append(SoundLoader.load('a/06_openHat6.wav'))
+                self.drum.append(SoundLoader.load('a/09_hiConga2.wav'))
+                self.loop.append(SoundLoader.load('a/00-DC-Base.mp3'))
+                self.loop.append(SoundLoader.load('a/01-DC-Base.mp3'))
+                self.loop[0].play()
+
+            self.m = 4
+            self.randFactor = 1.0
+            self.nloops = 2
+
+        def play_ista(self):
+            whichSequence = np.floor(self.n / self.nps)
+            whereInSequence = self.n - whichSequence * self.nps
+            beat = whereInSequence / self.npb
+            numDrums = max(1, gs.game_mode - 2)
+            if not np.mod(beat, 1):
+                b = int(beat)
+                for k in range(numDrums):
+                    if self.sequence[k][b] or np.random.uniform() > self.randFactor:
+                        sound.play_effect(self.drum[k])
+            self.n += 1
+
+        def play_kivy(self):
+            for k in range(self.m):
+                if self.sequence[k][self.n] or np.random.uniform() > self.randFactor:
+                    self.drum[k].play()
+
+            self.n += 1
+            if self.n >= 16:
+                self.n = 0
+
+        def check_kivy(self):
+            pass
 
     # Define the bunch class
     class Bunch:

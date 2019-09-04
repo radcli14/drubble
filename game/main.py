@@ -10,6 +10,7 @@ from math import fmod, floor
 from random import randint
 from kivy.app import App
 from kivy.uix.widget import Widget
+from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.image import Image
 from kivy.properties import NumericProperty, ListProperty, ObjectProperty, StringProperty
@@ -19,6 +20,7 @@ from kivy.graphics import *
 from kivy.core.audio import SoundLoader
 from kivy.utils import platform
 from kivy.animation import Animation
+# import kivymd as kmd
 from os.path import join
 
 # Import drubbleFunc to get the supporting functions and classes
@@ -479,31 +481,45 @@ class Stick(Widget):
 
 
 # Create OptionButtons class
-class OptionButtons(Widget):
-    background_color = ListProperty([1, 1, 1, 0.75])
-    background_normal = 'a/button.png'
-    text = StringProperty('')
+class OptionButtons(Button):
+    def_button_color = (1, 1, 1, 0.9)
+    touched_button_color = (1, 1, 1, 0.5)
+    button_color = ListProperty(def_button_color)
+    shadow_color = ListProperty([0, 0, 1, 0.2])
+
     label_font = StringProperty('a/airstrea.ttf')
     label_font_size = NumericProperty(0.0)
     label_color = ListProperty([0.0, 0.0, 0.0, 1.0])
     out_position = StringProperty('')
+    corner_radius = NumericProperty(0.0)
+    shadow_width = NumericProperty(0.0)
     is_on_screen = False
     is_high_score = False
 
     def __init__(self, norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
                  w=width*screen_scf, h=height*screen_scf, out_position='top', **kwargs):
         super(OptionButtons, self).__init__()
-        self.pos = [norm_pos[0] * w, norm_pos[1] * h]
-        self.size = [norm_size[0] * w, norm_size[1] * h]
-        self.text = kwargs['text']
+        # Eliminate default backgrounds
+        self.background_color = 1, 1, 1, 0
+        self.background_normal = ''
+        self.background_disabled_down = ''
+        self.background_disabled_normal = ''
+        self.background_down = ''
+
+        # Position and size of the buttons
         self.norm_pos = norm_pos
         self.norm_size = norm_size
+        self.pos = [norm_pos[0] * w, norm_pos[1] * h]
+        self.size = [norm_size[0] * w, norm_size[1] * h]
+
+        # Label properties
+        self.text = kwargs['text']
         self.norm_font_size = norm_font_size
         self.label_font_size = norm_font_size * h
         self.label_color = [kwargs['color'][0], kwargs['color'][1], kwargs['color'][2], 1]
-        self.out_position = out_position
 
         # Initialize with the button positioned outside
+        self.out_position = out_position
         if self.out_position == 'top':
             self.pos[1] = h
         elif self.out_position == 'bottom':
@@ -512,6 +528,10 @@ class OptionButtons(Widget):
             self.pos[0] = -self.size[0]
         elif self.out_position == 'right':
             self.pos[0] = w
+
+        # Set up visual properties of the rounded rectangles
+        self.corner_radius = 0.015 * w
+        self.shadow_width = 0.003 * w
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
         if self.is_high_score:
@@ -533,6 +553,9 @@ class OptionButtons(Widget):
         elif self.out_position == 'right':
             self.pos = [w, self.norm_pos[1] * h]
 
+        self.corner_radius = 0.015 * w
+        self.shadow_width = 0.003 * w
+
     def detect_touch(self, loc):
         touch_conditions = [loc[0] > self.pos[0],
                             loc[0] < self.pos[0] + self.size[0],
@@ -541,10 +564,10 @@ class OptionButtons(Widget):
         return all(touch_conditions)
 
     def background_touched(self, dt=0):
-        self.background_color = (0, 0, 1, 0.5)
+        self.button_color = self.touched_button_color
 
     def background_untouched(self, dt=0):
-        self.background_color = (1, 1, 1, 0.75)
+        self.button_color = self.def_button_color
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
         anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=duration, t='out_back')
@@ -998,19 +1021,27 @@ class DrubbleGame(Widget):
 
             # Initialize the option and action buttons
             self.single_drubble_butt = OptionButtons(text='Single dRuBbLe', norm_size=(0.5, 0.2), out_position='left',
-                                                     norm_pos=(0.1, 0.7),  norm_font_size=0.14,  color=red)
+                                                     norm_pos=(0.1, 0.7), norm_font_size=0.12, color=red)
             self.double_drubble_butt = OptionButtons(text='Double dRuBbLe', norm_size=(0.5, 0.2), out_position='right',
-                                                     norm_pos=(0.1, 0.4),  norm_font_size=0.14,  color=red)
+                                                     norm_pos=(0.1, 0.4), norm_font_size=0.12, color=red)
             self.volley_drubble_butt = OptionButtons(text='Volley dRuBbLe', norm_size=(0.5, 0.2), out_position='left',
-                                                     norm_pos=(0.1, 0.1), norm_font_size=0.14, color=red)
-            self.tutorial_butt = OptionButtons(text='How2', norm_size=(0.25, 0.2), out_position='left',
-                                               norm_pos=(0.65, 0.7),  norm_font_size=0.14,  color=red)
-            self.difficult_butt = OptionButtons(text=p.difficult_text[p.difficult_level], norm_size=(0.25, 0.2),
-                                                out_position='right', norm_pos=(0.65, 0.4),  norm_font_size=0.14,  color=red)
+                                                     norm_pos=(0.1, 0.1), norm_font_size=0.12, color=red)
+            self.tutorial_butt = OptionButtons(text='How 2\nPlay', norm_size=(0.25, 0.2), out_position='left',
+                                               norm_pos=(0.65, 0.7),  norm_font_size=0.08,  color=red)
+            difficult_text = 'Difficulty\n-- ' + p.difficult_text[p.difficult_level] + ' --'
+            self.difficult_butt = OptionButtons(text=difficult_text, norm_size=(0.25, 0.2), out_position='right',
+                                                norm_pos=(0.65, 0.4), norm_font_size=0.08, color=red)
+            self.fx_butt = OptionButtons(text='FX\nOn', norm_size=(0.12, 0.2), norm_pos=(0.65, 0.1), out_position='left',
+                                         norm_font_size=0.08, color=red)
+            self.music_butt = OptionButtons(text='Music\nOn', norm_size=(0.12, 0.2), norm_pos=(0.78, 0.1), out_position='left',
+                                            norm_font_size=0.08, color=red)
             self.option_butt = OptionButtons(text='Options', norm_size=(0.18, 0.09), out_position='left',
                                              norm_pos=(0.01, 0.85), norm_font_size=0.07, color=red)
             self.action_butt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.09), out_position='right',
                                              norm_pos=(0.81, 0.85),  norm_font_size=0.07, color=red)
+
+            # Create the button bindings
+            # self.fx_butt.bind(on_press=self.fx_button_press)
 
     def remove_splash(self, dt):
         self.remove_widget(self.splash)
@@ -1128,12 +1159,15 @@ class DrubbleGame(Widget):
         self.add_widget(self.volley_drubble_butt)
         self.add_widget(self.tutorial_butt)
         self.add_widget(self.difficult_butt)
-        self.difficult_butt.text = p.difficult_text[p.difficult_level]
+        self.add_widget(self.fx_butt)
+        self.add_widget(self.music_butt)
         self.single_drubble_butt.anim_in(w=self.width, h=self.height)
         self.double_drubble_butt.anim_in(w=self.width, h=self.height)
         self.volley_drubble_butt.anim_in(w=self.width, h=self.height)
         self.tutorial_butt.anim_in(w=self.width, h=self.height)
         self.difficult_butt.anim_in(w=self.width, h=self.height)
+        self.fx_butt.anim_in(w=self.width, h=self.height)
+        self.music_butt.anim_in(w=self.width, h=self.height)
         print('  --> Done!')
 
     def remove_option_buttons(self):
@@ -1144,6 +1178,8 @@ class DrubbleGame(Widget):
         self.volley_drubble_butt.anim_out(w=self.width, h=self.height)
         self.tutorial_butt.anim_out(w=self.width, h=self.height)
         self.difficult_butt.anim_out(w=self.width, h=self.height)
+        self.fx_butt.anim_out(w=self.width, h=self.height)
+        self.music_butt.anim_out(w=self.width, h=self.height)
         Clock.schedule_once(self.remove_option_buttons_callback, 1.0)
 
     def remove_option_buttons_callback(self, dt):
@@ -1152,6 +1188,8 @@ class DrubbleGame(Widget):
         self.remove_widget(self.volley_drubble_butt)
         self.remove_widget(self.tutorial_butt)
         self.remove_widget(self.difficult_butt)
+        self.remove_widget(self.fx_butt)
+        self.remove_widget(self.music_butt)
         print('  --> Done!')
 
     def add_high_scores(self):
@@ -1274,6 +1312,10 @@ class DrubbleGame(Widget):
             self.tutorial_button_press()
         elif gs.game_mode == 2 and self.difficult_butt.detect_touch(loc):
             self.difficult_button_press()
+        elif gs.game_mode == 2 and self.fx_butt.detect_touch(loc):
+            self.fx_button_press()
+        elif gs.game_mode == 2 and self.music_butt.detect_touch(loc):
+            self.music_button_press()
         elif gs.game_mode > 2:
             # Cycle through modes if touched the action or option_butt
             if self.action_butt.detect_touch(loc) and not self.tutorial.is_paused:
@@ -1427,7 +1469,7 @@ class DrubbleGame(Widget):
             self.action_butt.text = ''
         else:
             self.action_butt.text = p.actionMSG[gs.game_mode]
-        self.action_butt.background_color = (0, 0.5, 1, 0.5)
+        #self.action_butt.background_color = (0, 0.5, 1, 0.5)
 
         # If on completion of the game, add the high scores
         # If on restart of game, remove the high scores
@@ -1485,11 +1527,41 @@ class DrubbleGame(Widget):
             p.difficult_level = 0
 
         # Channge the button text
-        self.difficult_butt.text = p.difficult_text[p.difficult_level]
+        self.difficult_butt.text = 'Difficulty\n-- ' + p.difficult_text[p.difficult_level] + ' --'
 
         # Turn the button blue momentarily
         self.difficult_butt.background_touched()
         Clock.schedule_once(self.difficult_butt.background_untouched, 0.1)
+
+    def fx_button_press(self):
+        if p.fx_is_on:
+            p.fx_is_on = False
+            self.fx_butt.text = 'FX\nOff'
+        else:
+            p.fx_is_on = True
+            self.fx_butt.text = 'FX\nOn'
+
+        # Turn the button blue momentarily
+        self.fx_butt.background_touched()
+        Clock.schedule_once(self.fx_butt.background_untouched, 0.1)
+
+    def music_button_press(self):
+        if p.music_is_on:
+            p.music_is_on = False
+            anim = Animation(volume=0.0, duration=1.0)
+            for k in range(num_loops):
+                anim.start(loop[k])
+            self.music_butt.text = 'Music\nOff'
+        else:
+            p.music_is_on = True
+            anim = Animation(volume=0.4, duration=1.0)
+            for k in range(num_loops):
+                anim.start(loop[k])
+            self.music_butt.text = 'Music\nOn'
+
+        # Turn the button blue momentarily
+        self.music_butt.background_touched()
+        Clock.schedule_once(self.music_butt.background_untouched, 0.1)
 
     def remove_tutorial_callback(self, dt):
         self.tutorial.label_text = ''
@@ -1621,12 +1693,13 @@ class DrubbleGame(Widget):
                                      self.width, self.height, p2.player)
 
             # Make the bounce sounds
-            if gs.stool_bounce:
-                stool_sound.volume = min(0.1, norm([gs.dxb, gs.dyb]) / 50.0)
-                stool_sound.play()
-            elif gs.floor_bounce:
-                floor_sound.volume = norm([gs.dxb, gs.dyb]) / 15.0
-                floor_sound.play()
+            if p.fx_is_on:
+                if gs.stool_bounce:
+                    stool_sound.volume = min(0.1, norm([gs.dxb, gs.dyb]) / 50.0)
+                    stool_sound.play()
+                elif gs.floor_bounce:
+                    floor_sound.volume = norm([gs.dxb, gs.dyb]) / 15.0
+                    floor_sound.play()
 
 
 class DrubbleApp(App):
