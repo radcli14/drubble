@@ -491,8 +491,8 @@ class OptionButtons(Button):
     label_font_size = NumericProperty(0.0)
     label_color = ListProperty([0.0, 0.0, 0.0, 1.0])
     out_position = StringProperty('')
-    corner_radius = NumericProperty(0.0)
-    shadow_width = NumericProperty(0.0)
+    corner_radius = NumericProperty(0.015 * Window.width)
+    shadow_width = NumericProperty(0.003 * Window.width)
     is_on_screen = False
     is_high_score = False
 
@@ -523,9 +523,9 @@ class OptionButtons(Button):
         if self.out_position == 'top':
             self.pos[1] = h
         elif self.out_position == 'bottom':
-            self.pos[1] = -self.size[1]
+            self.pos[1] = - self.size[1] - self.shadow_width
         elif self.out_position == 'left':
-            self.pos[0] = -self.size[0]
+            self.pos[0] = - self.size[0] - self.shadow_width
         elif self.out_position == 'right':
             self.pos[0] = w
 
@@ -533,7 +533,7 @@ class OptionButtons(Button):
         self.corner_radius = 0.015 * w
         self.shadow_width = 0.003 * w
 
-    def resize(self, w=width*screen_scf, h=height*screen_scf):
+    def resize(self, w=Window.width, h=Window.height):
         if self.is_high_score:
             self.size = [0.5 * self.norm_size[0] * w, 0.5 * self.norm_size[1] * h]
             self.label_font_size = 0.5 * self.norm_font_size * h
@@ -547,9 +547,9 @@ class OptionButtons(Button):
         elif self.out_position == 'top':
             self.pos = [self.norm_pos[0] * w, h]
         elif self.out_position == 'bottom':
-            self.pos = [self.norm_pos[0] * w, -self.size[1]]
+            self.pos = [self.norm_pos[0] * w, - self.size[1] - self.shadow_width]
         elif self.out_position == 'left':
-            self.pos = [-self.size[0],  self.norm_pos[1] * h]
+            self.pos = [- self.size[0] - self.shadow_width, self.norm_pos[1] * h]
         elif self.out_position == 'right':
             self.pos = [w, self.norm_pos[1] * h]
 
@@ -568,13 +568,13 @@ class OptionButtons(Button):
                Animation(shadow_width=0.003 * Window.width, button_color=self.def_button_color, duration=0.1)
         anim.start(self)
 
-    def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
+    def anim_in(self, w=Window.width, h=Window.height, duration=0.5):
         anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=duration, t='out_back')
         anim.start(self)
         self.is_high_score = False
         self.is_on_screen = True
 
-    def anim_in_to_high_score(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
+    def anim_in_to_high_score(self, w=Window.width, h=Window.height, duration=0.5):
         anim = Animation(x=0.2*w+0.6*self.norm_pos[0]*w, y=0.82*h,
                          size=(0.6*self.norm_size[0]*w, 0.5*self.norm_size[1]*h),
                          label_font_size=0.6*self.norm_font_size*h, duration=duration, t='out_back')
@@ -582,15 +582,15 @@ class OptionButtons(Button):
         self.is_high_score = True
         self.is_on_screen = True
 
-    def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
+    def anim_out(self, w=Window.width, h=Window.height, duration=0.5):
         out_x = self.pos[0]
         out_y = self.pos[1]
         if self.out_position == 'left':
-            out_x = -self.norm_size[0] * w
+            out_x = - self.norm_size[0] * w - self.shadow_width
         elif self.out_position == 'right':
             out_x = w
         if self.out_position == 'bottom':
-            out_y = -self.norm_size[0] * h
+            out_y = - self.norm_size[0] * h - self.shadow_width
         elif self.out_position == 'top':
             out_y = h
         anim = Animation(x=out_x, y=out_y, size=(self.norm_size[0]*w, self.norm_size[1]*h),
@@ -599,7 +599,7 @@ class OptionButtons(Button):
         self.is_high_score = False
         self.is_on_screen = False
 
-    def anim_out_then_in(self, w=width*screen_scf, h=height*screen_scf, duration=10):
+    def anim_out_then_in(self, w=Window.width, h=Window.height, duration=10):
         out_x = self.pos[0]
         out_y = self.pos[1]
         if self.out_position == 'left':
@@ -1019,25 +1019,25 @@ class DrubbleGame(Widget):
                                                    best_run='%0.0f' % stats.high_score[j][k])
 
             # Initialize the option and action buttons
-            self.single_drubble_butt = OptionButtons(text='Single dRuBbLe', norm_size=(0.5, 0.2), out_position='left',
-                                                     norm_pos=(0.1, 0.7), norm_font_size=0.12, color=red)
-            self.double_drubble_butt = OptionButtons(text='Double dRuBbLe', norm_size=(0.5, 0.2), out_position='right',
-                                                     norm_pos=(0.1, 0.4), norm_font_size=0.12, color=red)
-            self.volley_drubble_butt = OptionButtons(text='Volley dRuBbLe', norm_size=(0.5, 0.2), out_position='left',
-                                                     norm_pos=(0.1, 0.1), norm_font_size=0.12, color=red)
-            self.tutorial_butt = OptionButtons(text='How 2\nPlay', norm_size=(0.25, 0.2), out_position='left',
+            self.single_drubble_butt = OptionButtons(text='Single dRuBbLe', norm_size=(0.55, 0.2), out_position='left',
+                                                     norm_pos=(0.05, 0.7), norm_font_size=0.12, color=red)
+            self.double_drubble_butt = OptionButtons(text='Double dRuBbLe', norm_size=(0.55, 0.2), out_position='right',
+                                                     norm_pos=(0.05, 0.4), norm_font_size=0.12, color=red)
+            self.volley_drubble_butt = OptionButtons(text='Volley dRuBbLe', norm_size=(0.55, 0.2), out_position='left',
+                                                     norm_pos=(0.05, 0.1), norm_font_size=0.12, color=red)
+            self.tutorial_butt = OptionButtons(text='How 2\nPlay', norm_size=(0.3, 0.2), out_position='left',
                                                norm_pos=(0.65, 0.7),  norm_font_size=0.08,  color=red)
             difficult_text = 'Difficulty\n-- ' + p.difficult_text[p.difficult_level] + ' --'
-            self.difficult_butt = OptionButtons(text=difficult_text, norm_size=(0.25, 0.2), out_position='right',
+            self.difficult_butt = OptionButtons(text=difficult_text, norm_size=(0.3, 0.2), out_position='right',
                                                 norm_pos=(0.65, 0.4), norm_font_size=0.08, color=red)
-            self.fx_butt = OptionButtons(text='FX\nOn', norm_size=(0.12, 0.2), norm_pos=(0.65, 0.1), out_position='left',
+            self.fx_butt = OptionButtons(text='FX\nOn', norm_size=(0.14, 0.2), norm_pos=(0.65, 0.1), out_position='left',
                                          norm_font_size=0.08, color=red)
-            self.music_butt = OptionButtons(text='Music\nOn', norm_size=(0.12, 0.2), norm_pos=(0.78, 0.1), out_position='left',
+            self.music_butt = OptionButtons(text='Music\nOn', norm_size=(0.14, 0.2), norm_pos=(0.81, 0.1), out_position='left',
                                             norm_font_size=0.08, color=red)
-            self.option_butt = OptionButtons(text='Options', norm_size=(0.18, 0.09), out_position='left',
-                                             norm_pos=(0.01, 0.85), norm_font_size=0.07, color=red)
-            self.action_butt = OptionButtons(text=p.actionMSG[3], norm_size=(0.18, 0.09), out_position='right',
-                                             norm_pos=(0.81, 0.85),  norm_font_size=0.07, color=red)
+            self.option_butt = OptionButtons(text='Options', norm_size=(0.19, 0.09), out_position='left',
+                                             norm_pos=(0.01, 0.85), norm_font_size=0.06, color=red)
+            self.action_butt = OptionButtons(text=p.actionMSG[3], norm_size=(0.19, 0.09), out_position='right',
+                                             norm_pos=(0.8, 0.85), norm_font_size=0.06, color=red)
 
             # Create the button bindings
             # self.fx_butt.bind(on_press=self.fx_button_press)
@@ -1595,6 +1595,8 @@ class DrubbleGame(Widget):
         self.difficult_butt.resize(w=self.width, h=self.height)
         self.action_butt.resize(w=self.width, h=self.height)
         self.option_butt.resize(w=self.width, h=self.height)
+        self.fx_butt.resize(w=self.width, h=self.height)
+        self.music_butt.resize(w=self.width, h=self.height)
 
         # Tutorial
         self.tutorial.resize(w=self.width, h=self.height)
