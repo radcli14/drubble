@@ -483,7 +483,7 @@ class Stick(Widget):
 # Create OptionButtons class
 class OptionButtons(Button):
     def_button_color = (1, 1, 1, 0.9)
-    touched_button_color = (1, 1, 1, 0.5)
+    touched_button_color = (1, 1, 1, 0.6)
     button_color = ListProperty(def_button_color)
     shadow_color = ListProperty([0, 0, 1, 0.2])
 
@@ -497,7 +497,7 @@ class OptionButtons(Button):
     is_high_score = False
 
     def __init__(self, norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
-                 w=width*screen_scf, h=height*screen_scf, out_position='top', **kwargs):
+                 w=Window.width, h=Window.height, out_position='top', **kwargs):
         super(OptionButtons, self).__init__()
         # Eliminate default backgrounds
         self.background_color = 1, 1, 1, 0
@@ -564,10 +564,9 @@ class OptionButtons(Button):
         return all(touch_conditions)
 
     def background_touched(self, dt=0):
-        self.button_color = self.touched_button_color
-
-    def background_untouched(self, dt=0):
-        self.button_color = self.def_button_color
+        anim = Animation(shadow_width=0.0, button_color=self.touched_button_color, duration=0.1) + \
+               Animation(shadow_width=0.003 * Window.width, button_color=self.def_button_color, duration=0.1)
+        anim.start(self)
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.5):
         anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=duration, t='out_back')
@@ -1406,7 +1405,6 @@ class DrubbleGame(Widget):
 
         # Turn the button blue momentarily
         self.single_drubble_butt.background_touched()
-        Clock.schedule_once(self.single_drubble_butt.background_untouched, 0.1)
 
     # What to do when the double drubble button is pressed
     def double_drubble_button_press(self):
@@ -1420,7 +1418,6 @@ class DrubbleGame(Widget):
 
         # Turn the button blue momentarily
         self.double_drubble_butt.background_touched()
-        Clock.schedule_once(self.double_drubble_butt.background_untouched, 0.1)
 
     # What to do when the volley drubble button is pressed
     def volley_drubble_button_press(self):
@@ -1435,7 +1432,6 @@ class DrubbleGame(Widget):
 
         # Turn the button blue momentarily
         self.volley_drubble_butt.background_touched()
-        Clock.schedule_once(self.volley_drubble_butt.background_untouched, 0.1)
 
     # What to do when option button is pressed
     def option_button_press(self):
@@ -1451,7 +1447,6 @@ class DrubbleGame(Widget):
 
         # Turn the button blue momentarily
         self.option_butt.background_touched()
-        Clock.schedule_once(self.option_butt.background_untouched, 0.1)
 
         if self.tutorial_mode:
             print('Removing the tutorial')
@@ -1462,14 +1457,16 @@ class DrubbleGame(Widget):
     # What to do when action button is pressed
     def action_button_press(self):
         # Progress through the speed/angle setting, game, then high score
-        cycle_modes(gs, stats, engine)
+        if p.volley_mode and gs.game_mode == 6 and not gs.Stuck:
+            return
+        else:
+            cycle_modes(gs, stats, engine)
 
         # Update the button text and color
         if p.volley_mode and gs.game_mode == 6:
             self.action_butt.text = ''
         else:
             self.action_butt.text = p.actionMSG[gs.game_mode]
-        #self.action_butt.background_color = (0, 0.5, 1, 0.5)
 
         # If on completion of the game, add the high scores
         # If on restart of game, remove the high scores
@@ -1496,7 +1493,6 @@ class DrubbleGame(Widget):
 
         # Turn the button blue momentarily
         self.action_butt.background_touched()
-        Clock.schedule_once(self.action_butt.background_untouched, 0.1)
 
     # What to do when the tutorial button is pressed
     def tutorial_button_press(self):
@@ -1517,7 +1513,6 @@ class DrubbleGame(Widget):
 
         # Turn the button blue momentarily
         self.tutorial_butt.background_touched()
-        Clock.schedule_once(self.tutorial_butt.background_untouched, 0.1)
 
     def difficult_button_press(self):
         # Increment the difficulty level
@@ -1531,7 +1526,6 @@ class DrubbleGame(Widget):
 
         # Turn the button blue momentarily
         self.difficult_butt.background_touched()
-        Clock.schedule_once(self.difficult_butt.background_untouched, 0.1)
 
     def fx_button_press(self):
         if p.fx_is_on:
@@ -1543,7 +1537,6 @@ class DrubbleGame(Widget):
 
         # Turn the button blue momentarily
         self.fx_butt.background_touched()
-        Clock.schedule_once(self.fx_butt.background_untouched, 0.1)
 
     def music_button_press(self):
         if p.music_is_on:
@@ -1561,7 +1554,6 @@ class DrubbleGame(Widget):
 
         # Turn the button blue momentarily
         self.music_butt.background_touched()
-        Clock.schedule_once(self.music_butt.background_untouched, 0.1)
 
     def remove_tutorial_callback(self, dt):
         self.tutorial.label_text = ''

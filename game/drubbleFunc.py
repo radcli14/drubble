@@ -111,6 +111,9 @@ class Parameters:
           -0.60, -0.60, -0.60,
           -0.90,  0.00,  0.00, -0.90]
 
+    stool_radius = 0.25
+    stool_hand_pos = (0.25, -0.6)
+
     if USE_NUMPY:
         # q0 in numpy array form
         q0_array = np.array([[q0[0]], [q0[1]], [q0[2]], [q0[3]]])

@@ -125,13 +125,13 @@
             rgba: self.shadow_color
         RoundedRectangle:
             radius: [self.corner_radius]
-            pos: self.pos[0] - self.shadow_width, self.pos[1] - self.shadow_width
+            pos: self.pos
             size: self.size
         Color:
             rgba: self.button_color
         RoundedRectangle:
             radius: [self.corner_radius]
-            pos: self.pos
+            pos: self.pos[0] + self.shadow_width, self.pos[1] + self.shadow_width
             size: self.size
     Label:
         font_name: root.label_font
