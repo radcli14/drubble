@@ -293,7 +293,7 @@ class MyFace(Widget):
         self.jersey_left = int(xp - self.sz * 0.3)
         self.jersey_bottom = int(yp - 1.0 * self.sz)
         self.jersey_right = int(xp + self.sz * 0.3)
-        self.stool_width = int(0.7 * m2p)
+        self.stool_width = int(2.8 * p.stool_radius[p.difficult_level] * m2p)
         self.stool_height = int(m2p)
         self.stool_left = int(xp - 0.5 * self.stool_width)
         self.stool_bottom = int(yp + (l - 0.9 - 0.5 * p.d) * m2p)

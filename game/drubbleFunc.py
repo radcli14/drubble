@@ -102,17 +102,8 @@ class Parameters:
     num_player = 1
 
     # Stool parameters
-    xs = [-0.25,  0.25,  0.15,
-           0.20, -0.20,  0.20,
-           0.25, -0.25,  0.25,
-           0.30,  0.25, -0.25, -0.30]
-    ys = [0.00,  0.00,  0.00,
-          -0.30, -0.30, -0.30,
-          -0.60, -0.60, -0.60,
-          -0.90,  0.00,  0.00, -0.90]
-
-    stool_radius = 0.25
-    stool_hand_pos = (0.25, -0.6)
+    stool_radius = [0.35, 0.3, 0.25]
+    stool_hand_pos = -0.6
 
     if USE_NUMPY:
         # q0 in numpy array form
@@ -126,12 +117,10 @@ class Parameters:
         invM = np.linalg.inv(M)
 
         # Damping Matrix
-        C = np.diag([Cx,Cy,Cl,Ct])
+        C = np.diag([Cx, Cy, Cl, Ct])
 
         # Stiffness Matrix
-        K = np.diag([0.0,Ky,Kl,Kt])
-    else:
-        numpy_str = 'Do not have numpy'
+        K = np.diag([0.0, Ky, Kl, Kt])
 
     # Touch Stick Sensitivity
     tsens = 1.5
@@ -145,7 +134,7 @@ class Parameters:
     
     # Parameter settings I'm using to try to improve running speed
     linearMass = False
-    nEulerSteps = 1
+    num_euler_steps = 1
     timeRun = False
     
     # Font settings
@@ -177,9 +166,9 @@ class Parameters:
     fx_is_on = True
     music_is_on = True
 
-    # Difficulty levels
+    # Difficulty levels (note, p.stool_radius is a vector, which is indexed by p.difficult_level)
     difficult_text = ['Easy', 'Hard', 'Silly']
-    difficult_speed_scale = [0.75, 1.0, 1.3]
+    difficult_speed_scale = [0.85, 1.0, 1.2]
     difficult_level = 0
 
     # VolleyDrubble Mode Settings
@@ -408,49 +397,55 @@ class GameState:
         
         # Prevent event detection if there was already one within 0.1 seconds, 
         # or if the ball is far from the stool or ground
-        L = ball_hit_stool(self.t, self.u, self.active_player)  # Distance to stool
+        # L = ball_hit_stool(self.t, self.u, self.active_player)  # Distance to stool
         v_ball = (self.dxb, self.dyb)                           # Velocity
         s_ball = norm(v_ball)                                   # Speed
 
         # Set the timing
         time_condition = (self.yb - self.yp[self.active_player] - self.lp[self.active_player] * cos(self.tp[self.active_player]) - p.d) / s_ball if s_ball > 0.0 else -1.0
-        # near_condition = abs(self.xb - self.xp[self.active_player]) < 1.0
-        if 0.0 < time_condition < 0.5 and L < 1.0:
+        near_condition = abs(self.xb - self.xp[self.active_player]) < 1.0
+        net_condition = p.volley_mode and abs(self.xb) - p.net_width < 1.0 and self.yb - p.net_height - p.net_width < 1.0
+        if gs.n > 1 and ((0.0 < time_condition < 0.5 and near_condition) or net_condition):
             # Slow speed
             ddt = dt / 1.5 * p.difficult_speed_scale[p.difficult_level]
-            nStep = 4 * p.nEulerSteps
+            num_step = 4 * p.num_euler_steps
         else:
             # Regular speed
             ddt = dt * p.difficult_speed_scale[p.difficult_level]
-            nStep = p.nEulerSteps
+            num_step = p.num_euler_steps
 
         # Integrate using Euler method
         # Initialize state variables
-        U = zeros((nStep+1, 20))
+        U = zeros((num_step+1, 20))
         U[0] = self.u
-        for k in range(1, nStep+1):
+        for k in range(1, num_step+1):
             # Increment time
-            self.t += ddt / nStep
+            self.t += ddt / num_step
             
             # Calculate the derivatives of states w.r.t. time
             dudt = player_and_stool(self.t, U[k-1], p, gs, stats)
 
             # Calculate the states at the next step
-            # U[k] = U[k-1] + np.array(dudt)*dt/p.nEulerSteps
-            U[k] = [U[k-1][i] + dudt[i] * ddt / nStep for i in range(20)]
+            if USE_NUMPY:
+                U[k] = U[k-1] + np.array(dudt) * ddt / num_step
+            else:
+                U[k] = [U[k-1][i] + dudt[i] * ddt / num_step for i in range(20)]
 
             # Check for events
-            if (self.t-self.te) > 0.1:
+            if (self.t - self.te) > 0.1:
                 if ball_hit_stool(self.t, U[k], self.active_player) < 0.0:
                     self.stool_bounce = True
-                if ball_hit_floor(self.t, U[k]) < 0.0:
+                elif (U[k][1] - p.rb) < 0.0:
+                    # elif ball_hit_floor(self.t, U[k]) < 0.0:
+                    #print(U[k][1] - p.rb)
+                    #print(ball_hit_floor(self.t, U[k]))
                     self.floor_bounce = True
                 if p.volley_mode and ball_hit_net(self.t, U[k]) < 0.0:
                     self.net_bounce = True
                 if self.stool_bounce or self.floor_bounce or self.net_bounce:
                     self.te = self.t
                     self.ue = U[k]
-                    tBreak = k * ddt / nStep
+                    tBreak = k * ddt / num_step
                     break 
         
         # If an event occurred, update the states, otherwise continue
@@ -954,8 +949,9 @@ def ball_hit_stool(t, u, k):
     # Calculate the stool locations
     s = sin(tp[k])
     c = cos(tp[k])
-    sx = xp[k] - p.stool_radius * c - lp[k] * s, xp[k] + p.stool_radius * c - lp[k] * s
-    sy = yp[k] + p.d - p.stool_radius * s + lp[k] * c, yp[k] + p.d + p.stool_radius * s + lp[k] * c
+    r = p.stool_radius[p.difficult_level]
+    sx = xp[k] - r * c - lp[k] * s, xp[k] + r * c - lp[k] * s
+    sy = yp[k] + p.d - r * s + lp[k] * c, yp[k] + p.d + r * s + lp[k] * c
 
     # Vectors from the left edge of the stool to the right, and to the ball
     r1 = sx[1] - sx[0], sy[1] - sy[0]
@@ -986,8 +982,9 @@ def ball_bounce_stool(gs, k):
     s = sin(gs.tp[k])
 
     # Calculate the stool locations
-    sx = gs.xp[k] - p.stool_radius * c - gs.lp[k] * s, gs.xp[k] + p.stool_radius * c - gs.lp[k] * s
-    sy = gs.yp[k] + p.d - p.stool_radius * s + gs.lp[k] * c, gs.yp[k] + p.d + p.stool_radius * s + gs.lp[k] * c
+    r = p.stool_radius[p.difficult_level]
+    sx = gs.xp[k] - r * c - gs.lp[k] * s, gs.xp[k] + r * c - gs.lp[k] * s
+    sy = gs.yp[k] + p.d - r * s + gs.lp[k] * c, gs.yp[k] + p.d + r * s + gs.lp[k] * c
 
     # Vectors from the left edge of the stool to the right, and to the ball
     r1 = sx[1] - sx[0], sy[1] - sy[0]
@@ -1164,11 +1161,10 @@ def stick_dude(inp, k):
     shl = x - 0.18, y + p.d + 0.05
     shr = x + 0.18, y + p.d + 0.05
     
-    # Right Hand [rh] Left Hand [lh] Position 
-    rh = (x - p.stool_hand_pos[0] * c - (l + p.stool_hand_pos[1]) * s,
-          y + p.d - p.stool_hand_pos[0] * s + (l + p.stool_hand_pos[1]) * c)
-    lh = (x + p.stool_hand_pos[0] * c - (l + p.stool_hand_pos[1]) * s,
-          y + p.d + p.stool_hand_pos[0] * s + (l + p.stool_hand_pos[1]) * c)
+    # Right Hand [rh] Left Hand [lh] Position
+    r = p.stool_radius[p.difficult_level]
+    rh = x - r * c - (l + p.stool_hand_pos) * s, y + p.d - r * s + (l + p.stool_hand_pos) * c
+    lh = x + r * c - (l + p.stool_hand_pos) * s, y + p.d + r * s + (l + p.stool_hand_pos) * c
     
     # Right Elbow [re] Left Elbow [le] Position
     re = third_point(shl, rh, 1, 1)
