@@ -944,32 +944,35 @@ def control_logic(t, u, k, p, gs, stats):
 def ball_hit_floor(t, u):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u) 
-    return yb-p.rb
+    return yb - p.rb
 
 
 def ball_hit_stool(t, u, k):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
-        
-    # Get the stool locations using stick_dude function
-    xv, yv, sx, sy = stick_dude(u, k)
-    
+
+    # Calculate the stool locations
+    s = sin(tp[k])
+    c = cos(tp[k])
+    sx = xp[k] - p.stool_radius * c - lp[k] * s, xp[k] + p.stool_radius * c - lp[k] * s
+    sy = yp[k] + p.d - p.stool_radius * s + lp[k] * c, yp[k] + p.d + p.stool_radius * s + lp[k] * c
+
     # Vectors from the left edge of the stool to the right, and to the ball
-    r1 = [sx[1]-sx[0], sy[1]-sy[0]]
+    r1 = sx[1] - sx[0], sy[1] - sy[0]
     
     # Calculate z that minimizes the distance
-    z = ((xb - sx[0]) * r1[0] + (yb - sy[0]) * r1[1])/(r1[0]**2 + r1[1]**2)
+    z = ((xb - sx[0]) * r1[0] + (yb - sy[0]) * r1[1]) / (r1[0]**2 + r1[1]**2)
     
     # Find the closest point of impact on the stool
     if z < 0:
-        ri = [sx[0], sy[0]]
+        ri = sx[0], sy[0]
     elif z > 1:
-        ri = [sx[1], sy[1]]
+        ri = sx[1], sy[1]
     else:
-        ri = [sx[0] + z * r1[0], sy[0] + z * r1[1]]
+        ri = sx[0] + z * r1[0], sy[0] + z * r1[1]
 
     # Vector from the closest point of impact to the center of the ball    
-    r2 = [xb-ri[0], yb - ri[1]]
+    r2 = xb - ri[0], yb - ri[1]
 
     # Calculate the distance to the outer radius of the ball t
     L = norm(r2) - p.rb
@@ -978,47 +981,48 @@ def ball_hit_stool(t, u, k):
 
 
 def ball_bounce_stool(gs, k):
-    # Get the stool locations using stick_dude function
-    xv, yv, sx, sy = stick_dude(gs.u, k)
-
     # Calculate sines and cosines of the tilt angle
     c = cos(gs.tp[k])
     s = sin(gs.tp[k])
 
+    # Calculate the stool locations
+    sx = gs.xp[k] - p.stool_radius * c - gs.lp[k] * s, gs.xp[k] + p.stool_radius * c - gs.lp[k] * s
+    sy = gs.yp[k] + p.d - p.stool_radius * s + gs.lp[k] * c, gs.yp[k] + p.d + p.stool_radius * s + gs.lp[k] * c
+
     # Vectors from the left edge of the stool to the right, and to the ball
-    r1 = [sx[1] - sx[0], sy[1] - sy[0]]
+    r1 = sx[1] - sx[0], sy[1] - sy[0]
 
     # Calculate z that minimizes the distance
     z = ((gs.xb - sx[0]) * r1[0] + (gs.yb - sy[0]) * r1[1]) / (r1[0] ** 2 + r1[1] ** 2)
 
     # Find the closest point of impact on the stool
     if z < 0:
-        ri = [sx[0], sy[0]]
+        ri = sx[0], sy[0]
     elif z > 1:
-        ri = [sx[1], sy[1]]
+        ri = sx[1], sy[1]
     else:
-        ri = [sx[0] + z * r1[0], sy[0] + z * r1[1]]
+        ri = sx[0] + z * r1[0], sy[0] + z * r1[1]
 
     # Velocity of the stool at the impact point 
-    vi = [gs.dxp[k] - gs.lp[k] * s - (ri[1] - gs.yp[k]) * gs.dtp[k],
-          gs.dyp[k] + gs.lp[k] * c + (ri[0] - gs.xp[k]) * gs.dtp[k]]
+    vi = (gs.dxp[k] - gs.lp[k] * s - (ri[1] - gs.yp[k]) * gs.dtp[k],
+          gs.dyp[k] + gs.lp[k] * c + (ri[0] - gs.xp[k]) * gs.dtp[k])
 
     # Velocity and speed of the ball relative to impact point
-    vbrel = [gs.dxb - vi[0], gs.dyb - vi[1]]
+    vbrel = gs.dxb - vi[0], gs.dyb - vi[1]
 
     # Vector from the closest point of impact to the center of the ball    
-    r2 = [gs.xb - ri[0], gs.yb - ri[1]]
+    r2 = gs.xb - ri[0], gs.yb - ri[1]
     nr2 = norm(r2)
-    u2 = [r2[0] / nr2, r2[1] / nr2]
+    u2 = r2[0] / nr2, r2[1] / nr2
 
     # Relative velocity of the ball projected into the vector u2
-    vbrel_proj = [vbrel[0] * u2[0], vbrel[1] * u2[1]]
+    vbrel_proj = vbrel[0] * u2[0], vbrel[1] * u2[1]
 
     # Relative speed of the ball, projected into the vector u2
     srel = norm(vbrel_proj)
 
     # Delta ball velocity
-    delta_vb = [2.0 * p.COR_s[0] * u2[0] * srel, 2.0 * p.COR_s[1] * u2[1] * srel]
+    delta_vb = 2.0 * p.COR_s[0] * u2[0] * srel, 2.0 * p.COR_s[1] * u2[1] * srel
 
     if USE_NUMPY:
         # Velocity after bounce
@@ -1036,20 +1040,20 @@ def ball_bounce_stool(gs, k):
         v_recoil = p.invM.dot(Qi)
     else:
         # Velocity after bounce
-        v_bounce = [delta_vb[0] + gs.dxb, delta_vb[1] + gs.dyb]
+        v_bounce = delta_vb[0] + gs.dxb, delta_vb[1] + gs.dyb
 
         # Obtain the generalized impulse
-        bounce_impulse = [-p.mg * v_bounce[0], -p.mg * v_bounce[1]]
-        Q = [bounce_impulse[0], bounce_impulse[1],
+        bounce_impulse = -p.mg * v_bounce[0], -p.mg * v_bounce[1]
+        Q = (bounce_impulse[0], bounce_impulse[1],
              -s * bounce_impulse[0] + c * bounce_impulse[1],
-             -c * gs.lp[k] * bounce_impulse[0] - s * gs.lp[k] * bounce_impulse[1]]
+             -c * gs.lp[k] * bounce_impulse[0] - s * gs.lp[k] * bounce_impulse[1])
 
         # Obtain the player recoil states
-        v_recoil = [Q[2] * s / p.mc + Q[3] * c / (p.mc * gs.lp[k]) + Q[0] / p.mc,
+        v_recoil = (Q[2] * s / p.mc + Q[3] * c / (p.mc * gs.lp[k]) + Q[0] / p.mc,
                     - Q[2] * c / p.mc + Q[3] * s / (p.mc * gs.lp[k]) + Q[1] / p.mc,
                     Q[2] * (1.0 / p.mg + 1.0 / p.mc) + Q[0] * s / p.mc - Q[1] * c / p.mc,
                     Q[3] * (p.mc + p.mg) / (p.mc * p.mg * gs.lp[k] ** 2)
-                    + Q[0] * c / (p.mc * gs.lp[k]) + Q[1] * s / (p.mc * gs.lp[k])]
+                    + Q[0] * c / (p.mc * gs.lp[k]) + Q[1] * s / (p.mc * gs.lp[k]))
 
     return v_bounce, v_recoil
 
@@ -1098,7 +1102,7 @@ def norm(V):
 
 # Solves for the location of the knee or elbow based upon the two other 
 # end-points of the triangle 
-def ThirdPoint(P0, P1, L, SGN):
+def third_point(P0, P1, L, SGN):
     # Subtract then add the two points
     Psub = [P0[0]-P1[0], P0[1]-P1[1]]
     Padd = [P0[0]+P1[0], P0[1]+P1[1]]
@@ -1123,15 +1127,15 @@ def ThirdPoint(P0, P1, L, SGN):
 
 # Solve for the vertices that make up the stick man and stool
 def stick_dude(inp, k):
-    k8 = k*8
+    k8 = k * 8
     # Get the state variables
     try:
         # States from u
-        x = inp[4+k8]
-        y = inp[5+k8]
-        l = inp[6+k8]
-        th = inp[7+k8]
-        v = inp[8+k8]
+        x = inp[4 + k8]
+        y = inp[5 + k8]
+        l = inp[6 + k8]
+        th = inp[7 + k8]
+        v = inp[8 + k8]
     except:
         # States from gs
         x = inp.xp[k]
@@ -1144,43 +1148,37 @@ def stick_dude(inp, k):
     c = cos(th)
         
     # Right Foot [rf] Left Foot [lf] Positions
-    rf = [x - 0.25 + (v / p.vx) * sin(1.5 * x + 3.0 * pi / 2.0),
-          0.2 * (v / p.vx) * (1 + sin(1.5 * x + 3.0 * pi / 2.0))]
-    lf = [x + 0.25 + (v / p.vx) * cos(1.5 * x),
-          0.2 * (v / p.vx) * (1 + cos(1.5 * x))]
+    vn = v / p.vx
+    rf = x - 0.25 + vn * sin(1.5 * x + 3.0 * pi / 2.0), 0.2 * vn * (1.0 + sin(1.5 * x + 3.0 * pi / 2.0))
+    lf = x + 0.25 + vn * cos(1.5 * x), 0.2 * vn * (1.0 + cos(1.5 * x))
     
     # Waist Position
-    w = [x, y-p.d]
+    w = (x, y - p.d)
     
     # Right Knee [rk] Left Knee [lk] Positions
-    rk = ThirdPoint(w, rf, p.y0-p.d, -1)
-    lk = ThirdPoint(w, lf, p.y0-p.d, 1)
+    rk = third_point(w, rf, p.y0 - p.d, -1)
+    lk = third_point(w, lf, p.y0 - p.d, 1)
     
     # Shoulder Position
-    sh = [x, y+p.d]
-    shl = [x-0.18, y+p.d+0.05]
-    shr = [x+0.18, y+p.d+0.05]
-    
-    # Stool Position
-    sx = []
-    sy = []
-    for n in range(13):
-        sx.append(x + p.xs[n] * c - (l + p.ys[n]) * s)
-        sy.append(y + p.d + (l + p.ys[n]) * c + p.xs[n] * s)
+    sh = x, y + p.d
+    shl = x - 0.18, y + p.d + 0.05
+    shr = x + 0.18, y + p.d + 0.05
     
     # Right Hand [rh] Left Hand [lh] Position 
-    rh = [sx[7], sy[7]] 
-    lh = [sx[6], sy[6]] 
+    rh = (x - p.stool_hand_pos[0] * c - (l + p.stool_hand_pos[1]) * s,
+          y + p.d - p.stool_hand_pos[0] * s + (l + p.stool_hand_pos[1]) * c)
+    lh = (x + p.stool_hand_pos[0] * c - (l + p.stool_hand_pos[1]) * s,
+          y + p.d + p.stool_hand_pos[0] * s + (l + p.stool_hand_pos[1]) * c)
     
     # Right Elbow [re] Left Elbow [le] Position
-    re = ThirdPoint(shl, rh, 1, 1)
-    le = ThirdPoint(shr, lh, 1, -1)
+    re = third_point(shl, rh, 1, 1)
+    le = third_point(shr, lh, 1, -1)
     
     # Plotting vectors
-    xv = [rf[0], rk[0], w[0], lk[0], lf[0], lk[0], w[0], sh[0], shl[0], re[0], rh[0], re[0], shl[0], shr[0], le[0], lh[0]]
-    yv = [rf[1], rk[1], w[1], lk[1], lf[1], lk[1], w[1], sh[1], shl[1], re[1], rh[1], re[1], shl[1], shr[1], le[1], lh[1]]
+    xv = rf[0], rk[0], w[0], lk[0], lf[0], lk[0], w[0], sh[0], shl[0], re[0], rh[0], re[0], shl[0], shr[0], le[0], lh[0]
+    yv = rf[1], rk[1], w[1], lk[1], lf[1], lk[1], w[1], sh[1], shl[1], re[1], rh[1], re[1], shl[1], shr[1], le[1], lh[1]
     
-    return xv, yv, sx, sy
+    return xv, yv
 
 
 # Solve for the x and y ranges to include in the plot, scale factors to 
@@ -1223,7 +1221,7 @@ class playerLines():
         
     def update(self, gs, w):
         # Get the player stick figure
-        self.xv, self.yv, self.sx, self.sy = stick_dude(gs, self.pnum)
+        self.xv, self.yv = stick_dude(gs, self.pnum)
         
         # Get ranges for drawing the player and ball
         self.xrng, self.yrng, self.m2p, self.po = set_ranges(gs.u, w)
@@ -1231,12 +1229,12 @@ class playerLines():
         # Convert to pixels
         self.player_x, self.player_y = xy2p(self.xv, self.yv, self.m2p, self.po,
                                            self.width, self.height)
-        self.stool_x, self.stool_y = xy2p(self.sx, self.sy, self.m2p, self.po,
-                                         self.width, self.height)
+        #self.stool_x, self.stool_y = xy2p(self.sx, self.sy, self.m2p, self.po,
+        #                                 self.width, self.height)
         
         # Convert to format used for Kivy line
         self.player = intersperse(self.player_x, self.player_y)
-        self.stool = intersperse(self.stool_x, self.stool_y)
+        #self.stool = intersperse(self.stool_x, self.stool_y)
 
 
 # Below this line are the functions I created when I started demoDrubble,
