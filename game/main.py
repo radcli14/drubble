@@ -4,6 +4,9 @@
 Created on Tue Mar  5 21:18:17 2019
 
 @author: radcli14
+
+AdMob App ID: ca-app-pub-4007502882739240~9117326010
+Banner Ad ID: ca-app-pub-4007502882739240/5795838735
 """
 # Import modules
 from math import fmod, floor
@@ -28,6 +31,12 @@ import sys
 sys.path.append("_applibs")
 sys.path.append(".")
 from drubbleFunc import *
+
+# Import Ads
+if platform == 'android':
+    from kivmob import KivMob, TestIds
+elif platform == 'ios':
+    from pyobjus import autoclass
 
 # Initialize Game State
 gs = GameState(p.u0, engine)
@@ -69,12 +78,9 @@ except:
 Window.clearcolor = (cyan[0], cyan[1], cyan[2], 1)
 print('dRuBbLe game launched from the ', platform, ' platform')
 if platform in ('linux', 'windows', 'win', 'macosx'):
-    """Config.set('graphics', 'width', '1200')
-    Config.set('graphics', 'height', '675')
-    Config.set('graphics', 'window_state', 'minimized')
-    Config.write() """
-    width = 1200
-    height = 675
+    # iPhone 8 Resolution
+    width = 1334
+    height = 750
     Window.size = (width, height)
 else:
     width, height = Window.size
@@ -950,6 +956,7 @@ class Tutorial(Widget):
 
 class DrubbleGame(Widget):
     tutorial_mode = False
+    adSwitchSuccessful = False
 
     def __init__(self, **kwargs):
         super(DrubbleGame, self).__init__(**kwargs)
@@ -1041,6 +1048,14 @@ class DrubbleGame(Widget):
 
             # Create the button bindings
             # self.fx_butt.bind(on_press=self.fx_button_press)
+
+        # Prepare the ads
+        if platform == 'ios':
+            try:
+                self.banner_ad = autoclass('adSwitch').alloc().init()
+                self.adSwitchSuccessful = True
+            except:
+                print('adSwitch did not load')
 
     def remove_splash(self, dt):
         self.remove_widget(self.splash)
@@ -1603,6 +1618,16 @@ class DrubbleGame(Widget):
 
         # Volley
         self.net.resize(w=self.width, h=self.height)
+
+    def show_banner(self):
+        if self.adSwitchSuccessful:
+            # Show ads
+            self.banner_ad.show_ads()
+
+    def hide_banner(self):
+        if self.adSwitchSuccessful:
+            # Hide ads
+            self.banner_ad.hide_ads()
 
     # Time step the game
     def update(self, dt):

@@ -3,10 +3,12 @@ from kivy.uix.button import Button
 from kivy.utils import platform
 if platform == 'android':
     from kivmob import KivMob, TestIds
+elif platform == 'ios':
+    from pyobjus import autoclass
 
 
 class KivMobTest(App):
-    banner_ad = None
+    adSwitchSuccessful = False
 
     def build(self):
         if platform == 'android':
@@ -19,24 +21,30 @@ class KivMobTest(App):
             self.ads.show_banner()
             return Button(text='Show Interstitial',
                           on_release=lambda a: self.ads.show_interstitial())
-        else:
-            return Button(text='Show Banner', on_release=self.show_banner)
+        elif platform == 'ios':
+            return Button(text='Show Banner', on_release=lambda a: self.show_banner())
 
     def on_start(self):
         if platform == 'ios':
-            from pyobjus import autoClass
-            self.banner_ad = autoClass('adSwitch').alloc().init()
+            try:
+                self.banner_ad = autoclass('adSwitch').alloc().init()
+                self.adSwitchSuccessful = True
+            except:
+                print('adSwitch did not load')
 
     def show_banner(self):
-        # Show ads
-        self.banner_ad.show_ads()
+        if self.adSwitchSuccessful:
+            # Show ads
+            self.banner_ad.show_ads()
 
     def hide_banner(self):
-        # Hide ads
-        self.banner_ad.hide_ads()
+        if self.adSwitchSuccessful:
+            # Hide ads
+            self.banner_ad.hide_ads()
 
     def on_resume(self):
-        self.ads.request_interstitial()
+        if platform == 'android':
+            self.ads.request_interstitial()
 
 
 KivMobTest().run()

@@ -1,0 +1,150 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1671\cocoasubrtf600
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 UIView *gView;\
+UIViewController *gViewColtroller;\
+\
+\
+@interface myBanner : NSObject <GADBannerViewDelegate>\
+@property (nonatomic) BOOL show_ads;\
+@property (strong, nonatomic) GADBannerView *gbanner;\
+@property (strong, nonatomic) GADRequest *request;\
+@end\
+\
+static myBanner *vbanner = nil;\
+\
+@implementation myBanner\
+\
+-(id)init \{\
+    // admob allocation\
+    NSLog(@"Creating google banner object");\
+    self.request = [GADRequest request];\
+    // I'm not sure this is even necessary\
+    self.request.testDevices = @[@"Simulator"];\
+    //SDLUIKitDelegate *sdldelegate = [SDLUIKitDelegate sharedAppDelegate];\
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;\
+    UIViewController *rootViewController = window.rootViewController;\
+    \
+    gViewColtroller = rootViewController;//[[SDLLaunchScreenController alloc] init];\
+    gView = rootViewController.view; ///gViewColtroller.view;\
+    \
+    \
+    // Create a view of the standard size at the top of the screen.\
+    // Available AdSize constants are explained in GADAdSize.h.\
+    self.gbanner = [[GADBannerView alloc] initWithAdSize:kGADAdSizeBanner];\
+\
+    [self.gbanner setDelegate:self];\
+    \
+    // Specify the ad's "unit identifier." The default ID is for Google\'92s test banner ad. If everything works and you see a google test ad, you have implemented everything correctly.\
+    self.gbanner.adUnitID = @"ca-app-pub-3940256099942544/6300978111"; // google's test id for banner ads\
+\
+\
+    \
+    //  ------------- Height and position of the banner ad\
+    //CGRect screenBounds = [[UIScreen mainScreen] bounds];\
+    //[self.gbanner setFrame:CGRectMake(0, 0, screenBounds.size.width, 1.5*self.gbanner.bounds.size.height)];\
+    //self.gbanner.center = CGPointMake(screenBounds.size.width / 2, screenBounds.size.height - (self.gbanner.bounds.size.height / 2));\
+    \
+    self.gbanner.hidden = TRUE;\
+    // Let the runtime know which UIViewController to restore after taking\
+    // the user wherever the ad goes and add it to the view hierarchy.\
+    self.gbanner.rootViewController = gViewColtroller;\
+    [gView addSubview:self.gbanner];\
+    \
+    [self.gbanner loadRequest:self.request];\
+    \
+    self.show_ads = TRUE;\
+    \
+    return self;\
+\}\
+\
+// Called before ad is shown, good time to show the add\
+- (void)adViewDidReceiveAd:(GADBannerView *)view\
+\{\
+    NSLog(@"Admob load");\
+    self.gbanner.hidden = !self.show_ads;\
+\}\
+\
+// An error occurred\
+- (void)adView:(GADBannerView *)view didFailToReceiveAdWithError:(GADRequestError *)error\
+\{\
+    NSLog(@"Admob error: %@", error);\
+    self.gbanner.hidden = TRUE;\
+\}\
+\
+\
+-(void)dealloc \{\
+    NSLog(@"Freeing ads");\
+    if (self.gbanner) \{\
+        \
+        [self.gbanner removeFromSuperview];\
+        \
+        [self.gbanner release];\
+        self.gbanner.delegate = nil;\
+        self.gbanner = nil;\
+    \}\
+    \
+    [super dealloc];\
+\}\
+\
+\
+- (void)showAds:(int)ontop \{\
+    self.show_ads = TRUE;\
+    \
+    NSLog(@"Displaying banner object ontop:%d.", ontop);\
+    \
+    CGSize AdSize = kGADAdSizeBanner.size;\
+    \
+    \
+    CGRect frame = self.gbanner.frame;\
+    frame.origin.x = (gViewColtroller.view.bounds.size.width - AdSize.width) / 2 ;\
+    \
+    if (ontop)\
+        frame.origin.y = 0.0f;\
+    else\
+        frame.origin.y = gViewColtroller.view.bounds.size.height - AdSize.height;\
+    \
+    self.gbanner.frame = frame;\
+    \
+\}\
+@end\
+\
+\
+@interface adSwitch : NSObject\
+@end\
+@implementation adSwitch\
+\
+-(id)init \{\
+    if (!vbanner)\
+    \{\
+        vbanner = [[myBanner alloc] init];\
+        \
+        [vbanner showAds:0];\
+    \}\
+    return self;\
+\}\
+\
+-(void) show_ads \{\
+    if (!vbanner)\
+        vbanner = [[myBanner alloc] init];\
+    \
+    [vbanner showAds:0];\
+\}\
+\
+-(void) hide_ads \{\
+    if (vbanner)\
+    \{\
+        \
+        \
+        [vbanner release];\
+        vbanner = nil;\
+    \}\
+\}\
+@end\
+\
+\
+}
