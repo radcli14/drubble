@@ -1,12 +1,13 @@
 '''
 
 iOS
-ca-app-pub-4007502882739240~2034286184
-ca-app-pub-4007502882739240/2908384159
+   App: ca-app-pub-4007502882739240~2034286184
+Banner: ca-app-pub-4007502882739240/2908384159
 
 Android
-ca-app-pub-4007502882739240~4132005919
-ca-app-pub-4007502882739240/2563579851
+   App: ca-app-pub-4007502882739240~4132005919
+Banner: ca-app-pub-4007502882739240/2563579851
+Interstitial: ca-app-pub-4007502882739240/4890360299
 '''
 
 from kivy.app import App
@@ -23,11 +24,15 @@ class KivMobTest(App):
 
     def build(self):
         if platform == 'android':
-            self.ads = KivMob(TestIds.APP)
-            self.ads.new_interstitial(TestIds.INTERSTITIAL)
+            # self.ads = KivMob(TestIds.APP)
+            # self.ads.new_interstitial(TestIds.INTERSTITIAL)
+            self.ads = KivMob('ca-app-pub-4007502882739240~4132005919')
+            self.ads.new_interstitial('ca-app-pub-4007502882739240/4890360299')
+
             self.ads.request_interstitial()
 
-            self.ads.new_banner(TestIds.BANNER, top_pos=True)
+            # self.ads.new_banner(TestIds.BANNER, top_pos=True)
+            self.ads.new_banner('ca-app-pub-4007502882739240/2563579851', top_pos=True)
             self.ads.request_banner()
             self.ads.show_banner()
             return Button(text='Show Interstitial',
