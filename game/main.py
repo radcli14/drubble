@@ -5,8 +5,13 @@ Created on Tue Mar  5 21:18:17 2019
 
 @author: radcli14
 
+iOS
 AdMob App ID: ca-app-pub-4007502882739240~9117326010
 Banner Ad ID: ca-app-pub-4007502882739240/5795838735
+
+Android
+AdMob App ID: ca-app-pub-4007502882739240~4287725061
+Banner Ad ID: ca-app-pub-4007502882739240/2325289594
 """
 # Import modules
 from math import fmod, floor

@@ -1,3 +1,14 @@
+'''
+
+iOS
+ca-app-pub-4007502882739240~2034286184
+ca-app-pub-4007502882739240/2908384159
+
+Android
+ca-app-pub-4007502882739240~4132005919
+ca-app-pub-4007502882739240/2563579851
+'''
+
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.utils import platform
