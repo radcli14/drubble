@@ -1049,14 +1049,6 @@ class DrubbleGame(Widget):
             # Create the button bindings
             # self.fx_butt.bind(on_press=self.fx_button_press)
 
-        # Prepare the ads
-        if platform == 'ios':
-            try:
-                self.banner_ad = autoclass('adSwitch').alloc().init()
-                self.adSwitchSuccessful = True
-            except:
-                print('adSwitch did not load')
-
     def remove_splash(self, dt):
         self.remove_widget(self.splash)
 
@@ -1259,6 +1251,11 @@ class DrubbleGame(Widget):
 
         # Update the high scores
         stats.update_high()
+
+        # Add a banner ad
+        if platform == 'ios':
+            self.show_banner()
+
         print('  --> Done!')
 
     def remove_high_scores(self, duration=1):
@@ -1275,6 +1272,10 @@ class DrubbleGame(Widget):
         self.high_boing_label.anim_out(w=self.width, h=self.height, duration=duration)
         self.high_score_label.anim_out(w=self.width, h=self.height, duration=duration)
         Clock.schedule_once(self.remove_high_scores_callback, 1.0)
+
+        # Remove the banner ad
+        if platform == 'ios' and self.adSwitchSuccessful:
+            self.hide_banner()
 
     def remove_high_scores_callback(self, dt):
         self.remove_widget(self.difficult_butt)
@@ -1459,6 +1460,7 @@ class DrubbleGame(Widget):
 
         # Reset game states and scores
         cycle_modes(gs, stats, engine)
+        self.action_butt.text = p.actionMSG[3]
 
         # Turn the button blue momentarily
         self.option_butt.background_touched()
@@ -1495,6 +1497,10 @@ class DrubbleGame(Widget):
             self.bg.anim_out()
             self.move_stick.anim_out(w=self.width, h=self.height)
             self.tilt_stick.anim_out(w=self.width, h=self.height)
+            self.ball.anim_out()
+            self.myFace.anim_out()
+            if p.num_player > 1:
+                self.LadyFace.anim_out()
             self.option_butt.anim_out_then_in(w=self.width, h=self.height)
             self.action_butt.anim_out_then_in(w=self.width, h=self.height)
         elif gs.game_mode == 3:
@@ -1503,6 +1509,10 @@ class DrubbleGame(Widget):
             self.bg.anim_in(w=self.width, h=self.height)
             self.move_stick.anim_in(w=self.width, h=self.height)
             self.tilt_stick.anim_in(w=self.width, h=self.height)
+            self.ball.anim_in(w=self.width, h=self.height)
+            self.myFace.anim_in(w=self.width, h=self.height)
+            if p.num_player > 1:
+                self.LadyFace.anim_in(w=self.width, h=self.height)
             if p.volley_mode:
                 self.net.anim_in()
 
@@ -1620,6 +1630,15 @@ class DrubbleGame(Widget):
         self.net.resize(w=self.width, h=self.height)
 
     def show_banner(self):
+        # Prepare the ads
+        if platform == 'ios' and not self.adSwitchSuccessful:
+            try:
+                self.banner_ad = autoclass('adSwitch').alloc().init()
+                self.adSwitchSuccessful = True
+                print('loaded adSwitch')
+            except:
+                print('adSwitch did not load')
+
         if self.adSwitchSuccessful:
             # Show ads
             self.banner_ad.show_ads()
@@ -1635,9 +1654,6 @@ class DrubbleGame(Widget):
             self.resize_canvas()
             self.needToResize = False
 
-        #if self.weHaveWidgets:
-            #self.action_butt.text = p.actionMSG[gs.game_mode]
-
         # Remove the splash and add the option buttons
         if gs.game_mode == 2 and not self.weHaveButtons:
             self.splash.anim_out(w=self.width)
@@ -1651,7 +1667,7 @@ class DrubbleGame(Widget):
             gs.set_angle_and_speed()
 
         # Call the simStep method
-        if gs.game_mode > 2:
+        if 2 < gs.game_mode < 7:
             ddt = gs.sim_step(p, gs, stats)
 
         # Adjust pitch of the loop that is playing (TBR not working)

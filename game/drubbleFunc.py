@@ -78,9 +78,9 @@ class Parameters:
     fl = 2.2     # Stool extension frequency
     Kl = mg * (fl*2*pi)**2  # Arm stiffness [N/m]
     Ql = Kl*0.3  # Arm strength [N]
-    ft = 1.5     # Stool tilt frequency [Hz]
+    ft = 1.25     # Stool tilt frequency [Hz]
     Kt = (mg*l0*l0) * (ft*2*pi)**2  # Tilt stiffness [N-m/rad]
-    Qt = 0.6*Kt  # Tilt strength [N-m]
+    Qt = 0.8*Kt  # Tilt strength [N-m]
     Gt = 0.8     # Control gain on Qt
     vx = 10.0    # Horizontal top speed [m/s]
     Cx = Qx/vx   # Horizontal damping [N-s/m]
@@ -298,6 +298,7 @@ class GameState:
     floor_bounce = False
     stool_bounce = False
     net_bounce = False
+    volley_game_is_active = False
     active_player = 0
 
     # Initiate the state variables as a list, and as individual variables
@@ -347,6 +348,10 @@ class GameState:
         
         # Stuck condition
         self.Stuck = False
+
+        # Initiate Volley Drubble
+        if p.volley_mode:
+            self.volley_game_is_active = True
          
     # Get control input from external source
     def set_control(self, keyPush=[0, 0, 0, 0, 0, 0, 0, 0],
@@ -355,8 +360,7 @@ class GameState:
         
         if self.ctrl_func == 0:
             # Key press control
-            self.ctrl = [keyPush[1]-keyPush[0], keyPush[2]-keyPush[3],
-                         keyPush[4]-keyPush[5], keyPush[6]-keyPush[7]]
+            self.ctrl = [keyPush[1]-keyPush[0], keyPush[2]-keyPush[3], keyPush[4]-keyPush[5], keyPush[6]-keyPush[7]]
             
         elif self.ctrl_func == 1:
             # Motion control scale factors
@@ -365,9 +369,9 @@ class GameState:
             a_scale = 2.0
 
             # Run left/right
-            if g[1]>g_threshold:
+            if g[1] > g_threshold:
                 self.ctrl[0] = -min(slope*(g[1]-g_threshold), 1)
-            elif g[1]<-g_threshold:
+            elif g[1] < -g_threshold:
                 self.ctrl[0] = -max(slope*(g[1]+g_threshold), -1)
             else:
                 self.ctrl[0]
@@ -482,17 +486,19 @@ class GameState:
             # Stuck
             if sqrt(self.u[2]**2 + self.u[3]**2) < p.dybtol and self.u[1] < 1:
                 self.Stuck = True
-                if p.volley_mode and self.xb > 0:
-                    p.serving_player = 0
-                    stats.volley_score[0] += 1
-                    print('Player 1 wins point, score is ', stats.volley_score)
-                elif p.volley_mode and self.xb < 0:
-                    p.serving_player = 1
-                    stats.volley_score[1] += 1
-                    print('Player 2 wins point, score is ', stats.volley_score)
-                    p.serving_angle, p.serving_speed = randint(50, 78), randint(12, 17)
-                    print('  -- New serving angle = ', p.serving_angle, ' deg')
-                    print('  -- New serving speed = ', p.serving_speed, ' m/s')
+                if self.volley_game_is_active:
+                    self.volley_game_is_active = False
+                    if p.volley_mode and self.xb > 0:
+                        p.serving_player = 0
+                        stats.volley_score[0] += 1
+                        print('Player 1 wins point, score is ', stats.volley_score)
+                    elif p.volley_mode and self.xb < 0:
+                        p.serving_player = 1
+                        stats.volley_score[1] += 1
+                        print('Player 2 wins point, score is ', stats.volley_score)
+                        p.serving_angle, p.serving_speed = randint(55, 78), randint(12, 17)
+                        print('  -- New serving angle = ', p.serving_angle, ' deg')
+                        print('  -- New serving speed = ', p.serving_speed, ' m/s')
 
         else:   
             # Update states
@@ -564,7 +570,7 @@ class GameState:
             self.start_speed = p.ss * (1 + 0.75*sin(self.phase))
         if self.game_mode == 4 or self.game_mode == 5:
             self.phase += 3 * dt * p.difficult_speed_scale[p.difficult_level]
-            start_direction = -1.0 if p.volley_mode and p.serving_player == 0 else 1.0
+            start_direction = 1.0 if not p.volley_mode or (p.volley_mode and p.serving_player == 0) else -1.0
             self.u[2] = start_direction * self.start_speed * cos(self.start_angle)
             self.u[3] = self.start_speed * sin(self.start_angle)
 
@@ -580,7 +586,7 @@ def cycle_modes(gs, stats, engine):
         # Reset game
         stats.__init__()
         if p.volley_mode:
-            p.u0[0] = -1.0 if p.serving_player == 0 else 1.0
+            p.u0[0] = -24.0 if p.serving_player == 0 else 24.0
             p.u0[4] = -15.0
             p.u0[12] = 15.0
         else:
@@ -605,7 +611,7 @@ def cycle_modes(gs, stats, engine):
     # Show the high scores
     if gs.game_mode == 6:
         if p.volley_mode:
-            p.u0[0] = -1.0 if p.serving_player == 0 else 1.0
+            p.u0[0] = -24.0 if p.serving_player == 0 else 24.0
             p.u0[4] = -15.0
             p.u0[12] = 15.0
             gs.__init__(p.u0, engine)
