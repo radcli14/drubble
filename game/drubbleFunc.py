@@ -21,7 +21,7 @@ else:
     engine = 'kivy'
 dt = 1.0/fs
 
-# Color definition    
+# Color definition
 red = (1, 0, 0)
 green = (0, 1, 0)
 blue = (0, 0, 1)
@@ -55,11 +55,11 @@ def xy2p(x, y, m2p, po, w, h):
 # Parameters
 class Parameters:
     # Game parameters
-    g = 9.81              # Gravitational acceleration [m/s^2]
-    COR_s = [0.70, 0.90]  # Coefficient of restitution (COR) when ball hits stool
-    COR_g = [0.50, 0.70]  # COR when ball hits ground
-    COR_n = [0.80, 1.00]  # Cor when ball hits net
-    rb = 0.2              # Radius of the ball
+    g = 9.81            # Gravitational acceleration [m/s^2]
+    COR_s = 0.70, 0.90  # Coefficient of restitution (COR) when ball hits stool
+    COR_g = 0.50, 0.70  # COR when ball hits ground
+    COR_n = 0.80, 1.00  # COR when ball hits net
+    rb = 0.2            # Radius of the ball
 
     # Player parameters
     mc = 50.0    # Mass of player [kg]
@@ -102,7 +102,7 @@ class Parameters:
     num_player = 1
 
     # Stool parameters
-    stool_radius = [0.35, 0.3, 0.25]
+    stool_radius = 0.35, 0.3, 0.25
     stool_hand_pos = -0.6
 
     if USE_NUMPY:
@@ -129,7 +129,7 @@ class Parameters:
     dybtol = 2.0
     
     # start_angle (sa) and start_speed (ss) initially
-    sa = pi/4
+    sa = pi / 4
     ss = 10.0
     
     # Parameter settings I'm using to try to improve running speed
@@ -141,20 +141,20 @@ class Parameters:
     MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Color settings
-    playerColor = (darkGreen, red)
-    stoolColor = (white, black)
+    playerColor = darkGreen, red
+    stoolColor = white, black
 
     # This is the text used in the upper right button
-    actionMSG = ['', '', '', 'Begin', 'Set Angle', 'Set Speed', 'High Scores', 'Restart']
+    actionMSG = '', '', '', 'Begin', 'Set Angle', 'Set Speed', 'High Scores', 'Restart'
 
     # Put in limits for the states to prevent crashing
-    dxp_lim = [-20, 20]
-    yp_lim = [-1, 4]
-    dyp_lim = [-20, 20]
-    lp_lim = [-1, 3]
-    dlp_lim = [-20, 20]
-    tp_lim = [-3.14, 3.14]
-    dtp_lim = [-20, 20]
+    dxp_lim = -20, 20
+    yp_lim = -1, 4
+    dyp_lim = -20, 20
+    lp_lim = -1, 3
+    dlp_lim = -20, 20
+    tp_lim = -3.14, 3.14
+    dtp_lim = -20, 20
 
     # Number of points to include in the future trajectory predictions (ball_predict() function)
     num_future_points = 16
@@ -168,17 +168,18 @@ class Parameters:
 
     # Difficulty levels (note, p.stool_radius is a vector, which is indexed by p.difficult_level)
     difficult_text = ['Easy', 'Hard', 'Silly']
-    difficult_speed_scale = [0.85, 1.0, 1.2]
+    difficult_speed_scale = 0.85, 1.0, 1.2
     difficult_level = 0
 
     # VolleyDrubble Mode Settings
     volley_mode = False
-    net_height = 7.0  # [m]
+    net_height = 5.0  # [m]
     net_width = 1.0   # [m]
     serving_player = 0
     serving_angle = 60
     serving_speed = 10
     back_line = 25.0
+    winning_score = 5
 
 
 p = Parameters()
@@ -586,9 +587,9 @@ def cycle_modes(gs, stats, engine):
         # Reset game
         stats.__init__()
         if p.volley_mode:
-            p.u0[0] = -24.0 if p.serving_player == 0 else 24.0
-            p.u0[4] = -15.0
-            p.u0[12] = 15.0
+            p.u0[0] = - (p.back_line - 1) if p.serving_player == 0 else p.back_line - 1
+            p.u0[4] = - p.back_line / 2.0
+            p.u0[12] = p.back_line / 2.0
         else:
             p.u0[0] = 0.0
             p.u0[4] = 5.0
@@ -610,10 +611,10 @@ def cycle_modes(gs, stats, engine):
 
     # Show the high scores
     if gs.game_mode == 6:
-        if p.volley_mode:
-            p.u0[0] = -24.0 if p.serving_player == 0 else 24.0
-            p.u0[4] = -15.0
-            p.u0[12] = 15.0
+        if p.volley_mode and stats.volley_score[0] < p.winning_score and stats.volley_score[1] < p.winning_score:
+            p.u0[0] = - (p.back_line - 1) if p.serving_player == 0 else p.back_line - 1
+            p.u0[4] = - p.back_line / 2.0
+            p.u0[12] = p.back_line / 2.0
             gs.__init__(p.u0, engine)
             gs.game_mode = 3
         else:
@@ -621,7 +622,14 @@ def cycle_modes(gs, stats, engine):
         return
 
     # Reset the game
-    if gs.game_mode == 7:
+    if gs.game_mode == 7 and p.volley_mode:
+        p.u0[0] = - (p.back_line - 1) if p.serving_player == 0 else p.back_line - 1
+        p.u0[4] = - p.back_line / 2.0
+        p.u0[12] = p.back_line / 2.0
+        stats.__init__()
+        gs.__init__(p.u0, engine)
+        gs.game_mode = 3
+    else:
         stats.__init__()
         gs.__init__(p.u0, engine)
         gs.game_mode = 3
@@ -635,6 +643,8 @@ class GameScore:
 
     # Initialize the volleyball game scores
     all_volley_score = [[], [], []]
+    streak = [0, 0, 0]
+    volley_record = [[0, 0], [0, 0], [0, 0]]
 
     # Initialize all scores as empty arrays
     all_stool_dist = [[[], []], [[], []], [[], []]]
@@ -696,6 +706,8 @@ class GameScore:
             # Load from JsonStore
             p.difficult_level = self.store.get('difficult_level')['value']
             self.all_volley_score = self.store.get('all_volley_score')['value']
+            self.volley_record = self.store.get('volley_record')['value']
+            self.streak = self.store.get('streak')['value']
             self.all_stool_dist = self.store.get('all_stool_dist')['value']
             self.all_height = self.store.get('all_height')['value']
             self.all_stool_count = self.store.get('all_stool_count')['value']
@@ -714,21 +726,38 @@ class GameScore:
         j = p.difficult_level
         k = p.num_player - 1
 
-        # Append to the complete database
-        self.all_stool_dist[j][k].append(self.stool_dist)
-        self.all_height[j][k].append(self.max_height)
-        self.all_stool_count[j][k].append(self.stool_count)
-        self.all_score[j][k].append(self.score)
+        if p.volley_mode:
+            # Append to the complete database
+            self.all_volley_score[j].append(self.volley_score)
 
-        # Determine if this is a new high in any category
-        self.high_stool_dist[j][k] = max(self.high_stool_dist[j][k], self.stool_dist)
-        self.high_height[j][k] = max(self.high_height[j][k], self.max_height)
-        self.high_stool_count[j][k] = max(self.high_stool_count[j][k], self.stool_count)
-        self.high_score[j][k] = max(self.high_score[j][k], self.score)
+            # Increment the all time record and winning/losing streak
+            if self.volley_score[0] > self.volley_score[1]:
+                # Player won
+                self.volley_record[j][0] += 1
+                self.streak[j] = self.streak[j] + 1 if self.streak[j] > 0 else 1
+            elif self.volley_score[0] < self.volley_score[1]:
+                # Opponent won
+                self.volley_record[j][1] += 1
+                self.streak[j] = self.streak[j] - 1 if self.streak[j] < 0 else -1
+        else:
+            # Append to the complete database
+            self.all_stool_dist[j][k].append(self.stool_dist)
+            self.all_height[j][k].append(self.max_height)
+            self.all_stool_count[j][k].append(self.stool_count)
+            self.all_score[j][k].append(self.score)
 
+            # Determine if this is a new high in any category
+            self.high_stool_dist[j][k] = max(self.high_stool_dist[j][k], self.stool_dist)
+            self.high_height[j][k] = max(self.high_height[j][k], self.max_height)
+            self.high_stool_count[j][k] = max(self.high_stool_count[j][k], self.stool_count)
+            self.high_score[j][k] = max(self.high_score[j][k], self.score)
+
+        # Write to file
         try:
             self.store.put('difficult_level', value=p.difficult_level)
             self.store.put('all_volley_score', value=self.all_volley_score)
+            self.store.put('volley_record', value=self.volley_record)
+            self.store.put('streak', value=self.streak)
             self.store.put('all_stool_dist', value=self.all_stool_dist)
             self.store.put('all_height', value=self.all_height)
             self.store.put('all_stool_count', value=self.all_stool_count)

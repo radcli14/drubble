@@ -676,9 +676,9 @@ class HighScoreLabel(Widget):
     best_run = StringProperty('')
     is_high = StringProperty('')
     font_size = NumericProperty(0)
-    label_color = ListProperty([1, 0, 0, 1])
+    label_color = ListProperty([red[0], red[1], red[2], 1])
     outline_width = NumericProperty(2 * screen_scf)
-    outline_color = ListProperty([1, 1, 1])
+    outline_color = ListProperty([white[0], white[1], white[2]])
     ratio_from_top = 0.7
     is_on_screen = False
 
@@ -962,6 +962,7 @@ class Tutorial(Widget):
 class DrubbleGame(Widget):
     tutorial_mode = False
     adSwitchSuccessful = False
+    volley_score_on_screen = False
 
     def __init__(self, **kwargs):
         super(DrubbleGame, self).__init__(**kwargs)
@@ -1029,6 +1030,10 @@ class DrubbleGame(Widget):
             self.high_score_label = HighScoreLabel(outside_position='right', vertical_position=4,
                                                    label_text='Score', this_run='%0.0f' % stats.score,
                                                    best_run='%0.0f' % stats.high_score[j][k])
+
+            self.volley_win_label = Label(font_name='a/Airstream.ttf', color=(red[0], red[1], red[2], 1),
+                                          outline_color=(white[0], white[1], white[2]), outline_width=0.0,
+                                          halign='center', valign='center')
 
             # Initialize the option and action buttons
             self.single_drubble_butt = OptionButtons(text='Single dRuBbLe', norm_size=(0.55, 0.2), out_position='left',
@@ -1209,53 +1214,87 @@ class DrubbleGame(Widget):
         j = p.difficult_level
         k = p.num_player - 1
 
-        # Update the strings for the current scores
-        self.high_dist_label.this_run = '%0.1f' % stats.stool_dist
-        self.high_height_label.this_run = '%0.2f' % stats.max_height
-        self.high_boing_label.this_run = '%0.0f' % stats.stool_count
-        self.high_score_label.this_run = '%0.0f' % stats.score
-
-        # Calculate percentiles
-        pct_dist_str = return_percentile(stats.all_stool_dist[j][k], stats.stool_dist)
-        pct_height_str = return_percentile(stats.all_height[j][k], stats.max_height)
-        pct_boing_str = return_percentile(stats.all_stool_count[j][k], stats.stool_count)
-        pct_score_str = return_percentile(stats.all_score[j][k], stats.score)
-
-        # Include either a percentile, or new high string
-        hstr = 'New High!'
-        self.high_dist_label.is_high = hstr if stats.stool_dist > stats.high_stool_dist[j][k] else pct_dist_str
-        self.high_height_label.is_high = hstr if stats.max_height > stats.high_height[j][k] else pct_height_str
-        self.high_boing_label.is_high = hstr if stats.stool_count>stats.high_stool_count[j][k] else pct_boing_str
-        self.high_score_label.is_high = hstr if stats.score > stats.high_score[j][k] else pct_score_str
-
-        # Update the strings for the high scores
-        self.high_dist_label.best_run = '%0.1f' % stats.high_stool_dist[j][k]
-        self.high_height_label.best_run = '%0.2f' % stats.high_height[j][k]
-        self.high_boing_label.best_run = '%0.0f' % stats.high_stool_count[j][k]
-        self.high_score_label.best_run = '%0.0f' % stats.high_score[j][k]
-
-        # Bring the high scores onto the screen
+        # Bring the difficulty widget on screen
         self.add_widget(self.difficult_butt)
         self.difficult_butt.anim_in_to_high_score(w=self.width, h=self.height, duration=0.5)
-        if p.num_player == 1:
-            self.add_widget(self.single_drubble_butt)
-            self.single_drubble_butt.anim_in_to_high_score(w=self.width, h=self.height, duration=0.5)
-        elif p.num_player == 2:
-            self.add_widget(self.double_drubble_butt)
-            self.double_drubble_butt.anim_in_to_high_score(w=self.width, h=self.height, duration=0.5)
-        self.add_widget(self.high_score_header)
-        self.add_widget(self.high_dist_label)
-        self.add_widget(self.high_height_label)
-        self.add_widget(self.high_boing_label)
-        self.add_widget(self.high_score_label)
-        self.high_score_header.anim_in(h=self.height, duration=1.0)
-        self.high_dist_label.anim_in(h=self.height, duration=1.5)
-        self.high_height_label.anim_in(h=self.height, duration=2.0)
-        self.high_boing_label.anim_in(h=self.height, duration=2.5)
-        self.high_score_label.anim_in(h=self.height, duration=3.0)
 
-        # Update the high scores
-        stats.update_high()
+        if p.volley_mode:
+            # Bring the volley drubble widget on screen
+            self.add_widget(self.volley_drubble_butt)
+            self.volley_drubble_butt.anim_in_to_high_score(w=self.width, h=self.height, duration=0.5)
+
+            # Update the high scores
+            stats.update_high()
+
+            # Write a win or lose message dependent on whether the player or opponent score is higher
+            if stats.volley_score[0] > stats.volley_score[1]:
+                msg = 'You win  ' + str(stats.volley_score[0]) + ' - ' + str(stats.volley_score[1])
+                msg += '\nWinning streak is  ' + str(stats.streak[j])
+            elif stats.volley_score[1] > stats.volley_score[0]:
+                msg = 'You lose  ' + str(stats.volley_score[1]) + ' - ' + str(stats.volley_score[0])
+                msg += '\nLosing streak is ' + str(-stats.streak[j])
+            msg += '\nAll time record is  ' + str(stats.volley_record[j][0]) + ' - ' + str(stats.volley_record[j][1])
+            print(msg)
+
+            # Update the parameters of the text that displays
+            self.volley_win_label.text = msg
+            self.volley_win_label.pos = 0.5 * self.width, 0.5 * self.height
+            self.volley_win_label.size = 0.0, 0.0
+            self.volley_win_label.font_size = 0
+
+            # Add the widget, and animate it onto the screen
+            self.add_widget(self.volley_win_label)
+            anim = Animation(pos=(0.2*self.width, 0.3*self.height), size=(0.6*self.width, 0.5*self.height),
+                             font_size=0.13*self.height, duration=0.5, outline_width=0.01*self.height, t='out_back')
+            anim.start(self.volley_win_label)
+
+            self.volley_score_on_screen = True
+        else:
+            # Update the strings for the current scores
+            self.high_dist_label.this_run = '%0.1f' % stats.stool_dist
+            self.high_height_label.this_run = '%0.2f' % stats.max_height
+            self.high_boing_label.this_run = '%0.0f' % stats.stool_count
+            self.high_score_label.this_run = '%0.0f' % stats.score
+
+            # Calculate percentiles
+            pct_dist_str = return_percentile(stats.all_stool_dist[j][k], stats.stool_dist)
+            pct_height_str = return_percentile(stats.all_height[j][k], stats.max_height)
+            pct_boing_str = return_percentile(stats.all_stool_count[j][k], stats.stool_count)
+            pct_score_str = return_percentile(stats.all_score[j][k], stats.score)
+
+            # Include either a percentile, or new high string
+            hstr = 'New High!'
+            self.high_dist_label.is_high = hstr if stats.stool_dist > stats.high_stool_dist[j][k] else pct_dist_str
+            self.high_height_label.is_high = hstr if stats.max_height > stats.high_height[j][k] else pct_height_str
+            self.high_boing_label.is_high = hstr if stats.stool_count>stats.high_stool_count[j][k] else pct_boing_str
+            self.high_score_label.is_high = hstr if stats.score > stats.high_score[j][k] else pct_score_str
+
+            # Update the strings for the high scores
+            self.high_dist_label.best_run = '%0.1f' % stats.high_stool_dist[j][k]
+            self.high_height_label.best_run = '%0.2f' % stats.high_height[j][k]
+            self.high_boing_label.best_run = '%0.0f' % stats.high_stool_count[j][k]
+            self.high_score_label.best_run = '%0.0f' % stats.high_score[j][k]
+
+            # Bring the high scores onto the screen
+            if p.num_player == 1:
+                self.add_widget(self.single_drubble_butt)
+                self.single_drubble_butt.anim_in_to_high_score(w=self.width, h=self.height, duration=0.5)
+            elif p.num_player == 2:
+                self.add_widget(self.double_drubble_butt)
+                self.double_drubble_butt.anim_in_to_high_score(w=self.width, h=self.height, duration=0.5)
+            self.add_widget(self.high_score_header)
+            self.add_widget(self.high_dist_label)
+            self.add_widget(self.high_height_label)
+            self.add_widget(self.high_boing_label)
+            self.add_widget(self.high_score_label)
+            self.high_score_header.anim_in(h=self.height, duration=1.0)
+            self.high_dist_label.anim_in(h=self.height, duration=1.5)
+            self.high_height_label.anim_in(h=self.height, duration=2.0)
+            self.high_boing_label.anim_in(h=self.height, duration=2.5)
+            self.high_score_label.anim_in(h=self.height, duration=3.0)
+
+            # Update the high scores
+            stats.update_high()
 
         # Add a banner ad
         if platform == 'ios':
@@ -1265,17 +1304,26 @@ class DrubbleGame(Widget):
 
     def remove_high_scores(self, duration=1):
         print('Removing High Scores')
-        # Take the high scores off the screen
+
+        # Remove the difficulty button
         self.difficult_butt.anim_out(w=self.width, h=self.height, duration=duration)
-        if p.num_player == 1:
-            self.single_drubble_butt.anim_out(w=self.width, h=self.height, duration=duration)
-        elif p.num_player == 2:
-            self.double_drubble_butt.anim_out(w=self.width, h=self.height, duration=duration)
-        self.high_score_header.anim_out(w=self.width, h=self.height, duration=duration)
-        self.high_dist_label.anim_out(w=self.width, h=self.height, duration=duration)
-        self.high_height_label.anim_out(w=self.width, h=self.height, duration=duration)
-        self.high_boing_label.anim_out(w=self.width, h=self.height, duration=duration)
-        self.high_score_label.anim_out(w=self.width, h=self.height, duration=duration)
+
+        if self.volley_score_on_screen:
+            anim = Animation(x=0.5*self.width, size=(0, 0), font_size=0, outline_width=0, t='in_back', duration=0.5)
+            anim.start(self.volley_win_label)
+            self.volley_drubble_butt.anim_out(w=self.width, h=self.height, duration=duration)
+        else:
+            # Take the high scores off the screen
+            if p.num_player == 1:
+                self.single_drubble_butt.anim_out(w=self.width, h=self.height, duration=duration)
+            elif p.num_player == 2:
+                self.double_drubble_butt.anim_out(w=self.width, h=self.height, duration=duration)
+            self.high_score_header.anim_out(w=self.width, h=self.height, duration=duration)
+            self.high_dist_label.anim_out(w=self.width, h=self.height, duration=duration)
+            self.high_height_label.anim_out(w=self.width, h=self.height, duration=duration)
+            self.high_boing_label.anim_out(w=self.width, h=self.height, duration=duration)
+            self.high_score_label.anim_out(w=self.width, h=self.height, duration=duration)
+
         Clock.schedule_once(self.remove_high_scores_callback, 1.0)
 
         # Remove the banner ad
@@ -1284,15 +1332,22 @@ class DrubbleGame(Widget):
 
     def remove_high_scores_callback(self, dt):
         self.remove_widget(self.difficult_butt)
-        if p.num_player == 1:
-            self.remove_widget(self.single_drubble_butt)
-        elif p.num_player == 2:
-            self.remove_widget(self.double_drubble_butt)
-        self.remove_widget(self.high_score_header)
-        self.remove_widget(self.high_dist_label)
-        self.remove_widget(self.high_height_label)
-        self.remove_widget(self.high_boing_label)
-        self.remove_widget(self.high_score_label)
+        if self.volley_score_on_screen:
+            print('Removing volley score widget')
+            self.volley_win_label.text = ''
+            self.remove_widget(self.volley_win_label)
+            self.remove_widget(self.volley_drubble_butt)
+            self.volley_score_on_screen = False
+        else:
+            if p.num_player == 1:
+                self.remove_widget(self.single_drubble_butt)
+            elif p.num_player == 2:
+                self.remove_widget(self.double_drubble_butt)
+            self.remove_widget(self.high_score_header)
+            self.remove_widget(self.high_dist_label)
+            self.remove_widget(self.high_height_label)
+            self.remove_widget(self.high_boing_label)
+            self.remove_widget(self.high_score_label)
         print('  --> Done!')
 
     # Controls
@@ -1459,8 +1514,7 @@ class DrubbleGame(Widget):
         # Return to the option screen, removing the in-game widgets
         gs.game_mode = 1
         self.remove_game_widgets()
-        if not p.volley_mode:
-            self.remove_high_scores()
+        self.remove_high_scores()
         Clock.schedule_once(self.add_option_buttons, 1.0)
 
         # Reset game states and scores
@@ -1496,8 +1550,8 @@ class DrubbleGame(Widget):
         if gs.game_mode == 7:
             if p.volley_mode:
                 self.net.anim_out()
-            else:
-                self.add_high_scores()
+
+            self.add_high_scores()
 
             self.bg.anim_out()
             self.move_stick.anim_out(w=self.width, h=self.height)
@@ -1509,8 +1563,7 @@ class DrubbleGame(Widget):
             self.option_butt.anim_out_then_in(w=self.width, h=self.height)
             self.action_butt.anim_out_then_in(w=self.width, h=self.height)
         elif gs.game_mode == 3:
-            if not p.volley_mode:
-                self.remove_high_scores()
+            self.remove_high_scores()
             self.bg.anim_in(w=self.width, h=self.height)
             self.move_stick.anim_in(w=self.width, h=self.height)
             self.tilt_stick.anim_in(w=self.width, h=self.height)
@@ -1601,6 +1654,8 @@ class DrubbleGame(Widget):
         self.high_height_label.resize(w=self.width, h=self.height)
         self.high_boing_label.resize(w=self.width, h=self.height)
         self.high_score_label.resize(w=self.width, h=self.height)
+        self.volley_win_label.pos = (0.2 * self.width, 0.3 * self.height)
+        self.volley_win_label.size = (0.6 * self.width, 0.5 * self.height)
 
         # Score labels
         self.time_label.resize(w=self.width, h=self.height)
@@ -1720,7 +1775,10 @@ class DrubbleGame(Widget):
 
                 # Bring the action button back if the ball is stuck
                 if gs.Stuck and self.action_butt.text is '':
-                    self.action_butt.text = 'Restart'
+                    if stats.volley_score[0] >= p.winning_score or stats.volley_score[1] >= p.winning_score:
+                        self.action_butt.text = 'Results'
+                    else:
+                        self.action_butt.text = 'Restart'
 
             # Update the ball
             self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
