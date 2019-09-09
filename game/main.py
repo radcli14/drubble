@@ -12,6 +12,7 @@ Banner Ad ID: ca-app-pub-4007502882739240/5795838735
 Android
 AdMob App ID: ca-app-pub-4007502882739240~4287725061
 Banner Ad ID: ca-app-pub-4007502882739240/2325289594
+Interstitial Ad ID: ca-app-pub-4007502882739240/3261013033
 """
 # Import modules
 from math import fmod, floor
@@ -40,6 +41,7 @@ from drubbleFunc import *
 # Import Ads
 if platform == 'android':
     from kivmob import KivMob, TestIds
+    USE_TEST_IDS = True
 elif platform == 'ios':
     from pyobjus import autoclass
 
@@ -1059,6 +1061,18 @@ class DrubbleGame(Widget):
             # Create the button bindings
             # self.fx_butt.bind(on_press=self.fx_button_press)
 
+            # Initialize android ads
+            if platform == 'android':
+                if USE_TEST_IDS:
+                    self.ads = KivMob(TestIds.APP)
+                    self.ads.new_interstitial(TestIds.INTERSTITIAL)
+                    self.ads.new_banner(TestIds.BANNER, top_pos=True)
+                else:
+                    self.ads = KivMob('ca-app-pub-4007502882739240~4287725061')
+                    self.ads.new_interstitial('ca-app-pub-4007502882739240/3261013033')
+                    self.ads.new_banner('ca-app-pub-4007502882739240/2325289594', top_pos=True)
+
+
     def remove_splash(self, dt):
         self.remove_widget(self.splash)
 
@@ -1299,6 +1313,8 @@ class DrubbleGame(Widget):
         # Add a banner ad
         if platform == 'ios':
             self.show_banner()
+        elif platform == 'android'
+            self.ads.show_banner()
 
         print('  --> Done!')
 
@@ -1329,6 +1345,8 @@ class DrubbleGame(Widget):
         # Remove the banner ad
         if platform == 'ios' and self.adSwitchSuccessful:
             self.hide_banner()
+        elif platform == 'android':
+            self.ads.hide_banner()
 
     def remove_high_scores_callback(self, dt):
         self.remove_widget(self.difficult_butt)
@@ -1656,6 +1674,8 @@ class DrubbleGame(Widget):
         self.high_score_label.resize(w=self.width, h=self.height)
         self.volley_win_label.pos = (0.2 * self.width, 0.3 * self.height)
         self.volley_win_label.size = (0.6 * self.width, 0.5 * self.height)
+        self.volley_win_label.font_size = 0.13 * self.height
+        self.volley_win_label.outline_width = 0.01 * self.height
 
         # Score labels
         self.time_label.resize(w=self.width, h=self.height)
@@ -1699,8 +1719,8 @@ class DrubbleGame(Widget):
             except:
                 print('adSwitch did not load')
 
+        # Show ads
         if self.adSwitchSuccessful:
-            # Show ads
             self.banner_ad.show_ads()
 
     def hide_banner(self):
