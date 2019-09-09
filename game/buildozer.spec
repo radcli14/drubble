@@ -186,8 +186,8 @@ p4a.branch = master
 #android.wakelock = False
 
 # (list) Android application meta-data to set (key=value format)
-android.meta_data = com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
-#android.meta_data = com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-4007502882739240~4287725061
+#android.meta_data = com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
+android.meta_data = com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-4007502882739240~4287725061
 
 # (list) Android library project to add (will be added in the
 # project.properties automatically.)

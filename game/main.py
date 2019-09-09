@@ -41,7 +41,7 @@ from drubbleFunc import *
 # Import Ads
 if platform == 'android':
     from kivmob import KivMob, TestIds
-    USE_TEST_IDS = True
+    USE_TEST_IDS = False
 elif platform == 'ios':
     from pyobjus import autoclass
 
@@ -1066,11 +1066,11 @@ class DrubbleGame(Widget):
                 if USE_TEST_IDS:
                     self.ads = KivMob(TestIds.APP)
                     self.ads.new_interstitial(TestIds.INTERSTITIAL)
-                    self.ads.new_banner(TestIds.BANNER, top_pos=True)
+                    self.ads.new_banner(TestIds.BANNER, top_pos=False)
                 else:
                     self.ads = KivMob('ca-app-pub-4007502882739240~4287725061')
                     self.ads.new_interstitial('ca-app-pub-4007502882739240/3261013033')
-                    self.ads.new_banner('ca-app-pub-4007502882739240/2325289594', top_pos=True)
+                    self.ads.new_banner('ca-app-pub-4007502882739240/2325289594', top_pos=False)
                 self.ads.request_banner()
 
     def remove_splash(self, dt):
@@ -1347,6 +1347,7 @@ class DrubbleGame(Widget):
             self.hide_banner()
         elif platform == 'android':
             self.ads.hide_banner()
+            self.ads.request_banner()
 
     def remove_high_scores_callback(self, dt):
         self.remove_widget(self.difficult_butt)
