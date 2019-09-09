@@ -1071,7 +1071,7 @@ class DrubbleGame(Widget):
                     self.ads = KivMob('ca-app-pub-4007502882739240~4287725061')
                     self.ads.new_interstitial('ca-app-pub-4007502882739240/3261013033')
                     self.ads.new_banner('ca-app-pub-4007502882739240/2325289594', top_pos=True)
-
+                self.ads.request_banner()
 
     def remove_splash(self, dt):
         self.remove_widget(self.splash)
