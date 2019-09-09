@@ -1313,7 +1313,7 @@ class DrubbleGame(Widget):
         # Add a banner ad
         if platform == 'ios':
             self.show_banner()
-        elif platform == 'android'
+        elif platform == 'android':
             self.ads.show_banner()
 
         print('  --> Done!')
