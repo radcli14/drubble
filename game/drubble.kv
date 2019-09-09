@@ -83,14 +83,22 @@
 <Stick>:
     canvas:
         Color:
-            rgba: 1, 1, 1, 0.25
-        Rectangle:
-            source: 'a/crossHair.png'
-            pos: self.pos
-            size: self.size
-        Ellipse:
-            pos: self.pos[0] + self.size[0]*(1+self.ctrl[0])/4.0, self.pos[1] + self.size[1]*(1+self.ctrl[1])/4.0
-            size: self.size[0]/2.0, self.size[1]/2.0
+            rgba: 1, 0, 0, 0.2
+        Line:
+            points: self.pos[0] + 0.4 * self.size[0], self.pos[1] + 0.5 * self.size[1], self.pos[0] + 0.6 * self.size[0], self.pos[1] + 0.5 * self.size[1], self.pos[0] + 0.5 * self.size[0], self.pos[1] + 0.5 * self.size[1], self.pos[0] + 0.5 * self.size[0], self.pos[1] + 0.6 * self.size[1], self.pos[0] + 0.5 * self.size[0], self.pos[1] + 0.4 * self.size[1]
+            width: 0.01 * self.size[1]
+        Line:
+            ellipse: self.pos[0] + 0.35 * self.size[0]*(1+self.ctrl[0]), self.pos[1] + 0.35 * self.size[1]*(1+self.ctrl[1]), 0.3 * self.size[0], 0.3 * self.size[1]
+            width: 0.01 * self.size[1]
+        #Color:
+        #    rgba: 1, 1, 1, 0.1
+        #Rectangle:
+        #    source: 'a/crossHair.png'
+        #    pos: self.pos
+        #    size: self.size
+        #Ellipse:
+        #    pos: self.pos[0] + self.size[0]*(1+self.ctrl[0])/4.0, self.pos[1] + self.size[1]*(1+self.ctrl[1])/4.0
+        #    size: self.size[0]/2.0, self.size[1]/2.0
 
 
 <VolleyNet>:

@@ -63,6 +63,6 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 ### Future
 - [x] Add a Volley Drubble sub-game
 - [ ] Add a Triple Drubble sub-game
-- [ ] Include a banner ad
+- [x] Include a banner ad
 - [ ] Add networked multiplayer mode
 - [ ] Create a ball cannon

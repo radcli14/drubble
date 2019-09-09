@@ -445,7 +445,7 @@ class Stick(Widget):
         super(Stick, self).__init__(**kwargs)
         self.norm_size = norm_size
         self.norm_pos = norm_pos
-        self.size = self.norm_size[0] * w, self.norm_size[1] * w
+        self.size = self.norm_size[0] * w, self.norm_size[1] * h
         self.pos = self.norm_pos[0] * w, self.norm_pos[1] * h
 
         self.ctrl = [0, 0]
@@ -469,7 +469,7 @@ class Stick(Widget):
             self.pos[0] = -self.norm_size[0] * w
         else:
             self.pos[0] = w
-        self.size = self.norm_size[0] * w, self.norm_size[1] * w
+        self.size = self.norm_size[0] * w, self.norm_size[1] * h
         self.pos[1] = self.norm_pos[1] * h
         print('Resized a stick to size =', self.size, 'and pos =', self.pos)
 
@@ -1000,8 +1000,8 @@ class DrubbleGame(Widget):
             self.ball = Ball()
 
             # Initialize the sticks
-            self.move_stick = Stick(norm_size=(0.2, 0.2), norm_pos=(0.8, 0.49), out_position='right')
-            self.tilt_stick = Stick(norm_size=(0.2, 0.2), norm_pos=(0.0, 0.49), out_position='left')
+            self.move_stick = Stick(norm_size=(0.4, 0.6), norm_pos=(0.6, 0.25), out_position='right')
+            self.tilt_stick = Stick(norm_size=(0.4, 0.6), norm_pos=(0.0, 0.25), out_position='left')
 
             # Initialize the score line
             self.time_label = ScoreLabel(text='Time', norm_left=0.0)
@@ -1061,7 +1061,7 @@ class DrubbleGame(Widget):
             # Create the button bindings
             # self.fx_butt.bind(on_press=self.fx_button_press)
 
-            # Initialize android ads
+            # Initialize  ads
             if platform == 'android':
                 if USE_TEST_IDS:
                     self.ads = KivMob(TestIds.APP)
@@ -1072,6 +1072,13 @@ class DrubbleGame(Widget):
                     self.ads.new_interstitial('ca-app-pub-4007502882739240/3261013033')
                     self.ads.new_banner('ca-app-pub-4007502882739240/2325289594', top_pos=False)
                 self.ads.request_banner()
+            elif platform == 'ios' and not self.adSwitchSuccessful:
+                try:
+                    self.banner_ad = autoclass('adSwitch').alloc()  # .init()
+                    self.adSwitchSuccessful = True
+                    print('loaded adSwitch')
+                except:
+                    print('adSwitch did not load')
 
     def remove_splash(self, dt):
         self.remove_widget(self.splash)
@@ -1711,15 +1718,6 @@ class DrubbleGame(Widget):
         self.net.resize(w=self.width, h=self.height)
 
     def show_banner(self):
-        # Prepare the ads
-        if platform == 'ios' and not self.adSwitchSuccessful:
-            try:
-                self.banner_ad = autoclass('adSwitch').alloc().init()
-                self.adSwitchSuccessful = True
-                print('loaded adSwitch')
-            except:
-                print('adSwitch did not load')
-
         # Show ads
         if self.adSwitchSuccessful:
             self.banner_ad.show_ads()
