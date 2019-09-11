@@ -75,9 +75,16 @@ try:
     # Start the intro loop playing
     loop[0].play()
 
-    # Load the sounds that play on bounces
+    # Load the sounds that play on events
     stool_sound = SoundLoader.load('a/GoGo_crank_hit_Stool.wav')
     floor_sound = SoundLoader.load('a/GoGo_guitar_hit_slide_Floor.wav')
+    stuck_sound = SoundLoader.load('a/GoGo_flam_woo.wav')
+    stuck_sound.volume = 0.5
+    button_sound = SoundLoader.load('a/GoGo_flam_woo.wav')
+    button_sound.volume = 0.5
+    start_loop = SoundLoader.load('a/GoGo_hitta_conga_loop.wav')
+    start_loop.volume = 0.5
+
 except:
     print('failed loading wav')
 
@@ -580,6 +587,7 @@ class OptionButtons(Button):
         anim = Animation(shadow_width=0.0, button_color=self.touched_button_color, duration=0.1) + \
                Animation(shadow_width=0.003 * Window.width, button_color=self.def_button_color, duration=0.1)
         anim.start(self)
+        button_sound.play()
 
     def anim_in(self, w=Window.width, h=Window.height, duration=0.5):
         anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=duration, t='out_back')
@@ -1564,6 +1572,13 @@ class DrubbleGame(Widget):
         else:
             cycle_modes(gs, stats, engine)
 
+        # Start or stop playing the angle and speed setting sound
+        if gs.game_mode == 4:
+            start_loop.play()
+            start_loop.loop = True
+        elif gs.game_mode == 6:
+            start_loop.stop()
+
         # Update the button text and color
         if p.volley_mode and gs.game_mode == 6:
             self.action_butt.text = ''
@@ -1744,6 +1759,9 @@ class DrubbleGame(Widget):
         # Angle and speed settings
         if 2 < gs.game_mode < 6:
             gs.set_angle_and_speed()
+            #start_loop.pitch = gs.start_angle / p.sa
+            if gs.game_mode == 5:
+                start_loop.volume = gs.start_speed / p.ss
 
         # Call the simStep method
         if 2 < gs.game_mode < 7:
@@ -1814,9 +1832,11 @@ class DrubbleGame(Widget):
                 if gs.stool_bounce:
                     stool_sound.volume = min(0.1, norm([gs.dxb, gs.dyb]) / 50.0)
                     stool_sound.play()
-                elif gs.floor_bounce:
+                elif gs.floor_bounce and not gs.Stuck:
                     floor_sound.volume = norm([gs.dxb, gs.dyb]) / 15.0
                     floor_sound.play()
+                elif gs.floor_bounce and gs.Stuck:
+                    stuck_sound.play()
 
 
 class DrubbleApp(App):
