@@ -84,6 +84,7 @@ try:
     button_sound.volume = 0.5
     start_loop = SoundLoader.load('a/GoGo_hitta_conga_loop.wav')
     start_loop.volume = 0.5
+    start_loop.pitch = 1.3
 
 except:
     print('failed loading wav')
@@ -104,10 +105,6 @@ screen_scf = Window.size[0] / width
 
 # Set the icon
 Window.icon = 'a/icon.png'
-
-# Initialize the players
-p1 = playerLines(0, gs, width, height)
-p2 = playerLines(1, gs, width, height)
 
 
 class MyBackground(Widget):
@@ -139,7 +136,7 @@ class MyBackground(Widget):
     nMarks = 0
 
     # Randomize the start location in the backgroun
-    xpos = randint(0, 100*num_bg)
+    xpos = randint(0, 100.0 * num_bg)
 
     def __init__(self, w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(MyBackground, self).__init__(**kwargs)
@@ -151,11 +148,11 @@ class MyBackground(Widget):
         self.width = w
         self.height = h
 
-    def update(self, x, y, w, h, m2p):
+    def update(self, x, y, w, h):
         # xmod is normalized position of the player between 0 and num_bg
         while x + self.xpos < 0:
             x += 100.0 * self.num_bg
-        xmod = fmod(x+self.xpos, 100.0 * self.num_bg) / 100.0
+        xmod = fmod(x + self.xpos, 100.0 * self.num_bg) / 100.0
         xrem = fmod(xmod, 1)
         xflr = int(floor(xmod))
 
@@ -166,7 +163,7 @@ class MyBackground(Widget):
             xsel = xflr
 
         # scf is the scale factor to apply to the background
-        scf = (m2p / 70.0)**0.5
+        scf = (gs.m2p / 70.0)**0.5
         self.img_w = int(round(self.w_orig * scf))
         self.img_h = int(round(self.h_orig * scf))
 
@@ -200,12 +197,11 @@ class MyBackground(Widget):
         anim = Animation(opacity=0, duration=duration)
         anim.start(self)
 
-    def make_markers(self, p):
+    def make_markers(self):
         with self.canvas:
-            # xrng_r is the first and last markers on the screen, xrng_n is the
-            # number of markers
-            xrng_r = [round(p.xrng[i], -1) for i in range(2)]
-            xrng_n = int((xrng_r[1] - xrng_r[0]) / 10.0) + 1
+            # xrng_r is the first and last markers on the screen, xrng_n is the number of markers
+            xrng_r = [round(gs.xr[i], -1) for i in range(2)]
+            xrng_n = int(0.1 * (gs.xr[1] - gs.xr[0])) + 1
 
             for k in range(self.nMarks):
                 self.yardMark[k].text = ''
@@ -215,14 +211,14 @@ class MyBackground(Widget):
                 xr = int(xrng_r[0] + 10 * k)
 
                 # Lines
-                [start_x, start_y] = xy2p(xr, 0, p.m2p, p.po, self.width, self.height)
-                [end_x, end_y] = xy2p(xr, -1, p.m2p, p.po, self.width, self.height)
+                [start_x, start_y] = xy2p(xr, 0, gs.m2p, gs.po, self.width, self.height)
+                [end_x, end_y] = xy2p(xr, -1, gs.m2p, gs.po, self.width, self.height)
                 Color(white[0], white[1], white[2], 1)
 
                 # Numbers
                 strxr = str(xr)  # String form of xr
-                fsize = int(min(0.9 * self.bottom_line_height, p.m2p))  # Font size
-                xypos = (int(start_x + 5), self.height / 20 - fsize)    # Position of text
+                fsize = int(min(0.9 * self.bottom_line_height, gs.m2p))  # Font size
+                xypos = (int(start_x + 5), 0.05 * self.height - fsize)   # Position of text
                 lsize = (len(strxr) * fsize / 2.0, fsize)  # Label size
                 if k >= self.nMarks:
                     self.yardLine.append(Line(points=(start_x, start_y, end_x, end_y), width=1.5))
@@ -318,8 +314,8 @@ class MyFace(Widget):
         self.stool_left = int(xp - 0.5 * self.stool_width)
         self.stool_bottom = int(yp + (l - 0.9 - 0.5 * p.d) * m2p)
         self.stool_angle = float(th * 180.0 / pi)
-        self.rotate_center = [self.img_left + self.sz * 0.5, yp - 0.5 * p.d * m2p]
-        self.line_width = float(0.075 * m2p)
+        self.rotate_center = self.img_left + self.sz * 0.5, yp - 0.5 * p.d * m2p
+        self.line_width = float(0.075 * m2p + 0.001)
         self.line_list = player
         self.shorts_angle0 = -atan2(player[4] - player[6], player[5] - player[7]) * 180.0 / pi
         self.shorts_angle1 = -atan2(player[4] - player[2], player[5] - player[3]) * 180.0 / pi
@@ -393,9 +389,9 @@ class Ball(Widget):
 
     def update(self, xb, yb, m2p, po, w, h):
         x, y = xy2p(xb, yb, m2p, po, w, h)
-        self.sz = int(2.0 * p1.m2p * p.rb)
-        self.img_left = int(x - p1.m2p * p.rb)
-        self.img_bottom = int(y - p1.m2p * p.rb)
+        self.sz = int(2.0 * m2p * p.rb)
+        self.img_left = int(x - m2p * p.rb)
+        self.img_bottom = int(y - m2p * p.rb)
 
         X, Y = xy2p(gs.traj['x'], gs.traj['y'], m2p, po, w, h)
         self.now.pos = (self.img_left, self.img_bottom)
@@ -1685,6 +1681,10 @@ class DrubbleGame(Widget):
         print('  --> Done!')
 
     def resize_canvas(self, *args):
+        # GameState object
+        gs.screen_width = self.width
+        gs.screen_height = self.height
+
         # Splash screen
         if gs.game_mode == 1:
             self.splash.resize(w=self.width, h=self.height)
@@ -1782,25 +1782,16 @@ class DrubbleGame(Widget):
             self.boing_label.update('Boing! %7.0f' % stats.stool_count)
             self.score_label.update('Score %8.0f' % stats.score)
 
-        # Player drawing settings        
-        xrng, yrng, m2p, po = set_ranges(gs.u, self.width)
-            
-        p1.width = p2.width = self.width
-        p1.height = p2.height = self.height
-        
-        p1.update(gs, self.width)
-        p2.update(gs, self.width)
-        
         if gs.game_mode > 2:
             x_mean = (gs.xb+gs.xp[0])/2.0
-            self.bg.update(x_mean, gs.yb, self.width, self.height, m2p)
-            self.bg.make_markers(p1)
+            self.bg.update(x_mean, gs.yb, self.width, self.height)
+            self.bg.make_markers()
             self.move_stick.update_el(gs.ctrl[0], gs.ctrl[1])
             self.tilt_stick.update_el(-gs.ctrl[3], gs.ctrl[2])
 
             if p.volley_mode:
                 # Update the net
-                self.net.update(p1.m2p, p1.po, w=self.width, h=self.height)
+                self.net.update(gs.m2p, gs.po, w=self.width, h=self.height)
 
                 # Automatically cycle based on randomized start conditions for the serving computer
                 if gs.game_mode == 3 and p.serving_player == 1:
@@ -1818,14 +1809,14 @@ class DrubbleGame(Widget):
                         self.action_butt.text = 'Restart'
 
             # Update the ball
-            self.ball.update(gs.xb, gs.yb, p1.m2p, p1.po, self.width, self.height)
+            self.ball.update(gs.xb, gs.yb, gs.m2p, gs.po, self.width, self.height)
 
             # Update the player(s)
-            self.myFace.update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], m2p, po,
-                               self.width, self.height, p1.player)
+            self.myFace.update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], gs.m2p, gs.po,
+                               self.width, self.height, gs.player[0])
             if p.num_player > 1:
-                self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], m2p, po,
-                                     self.width, self.height, p2.player)
+                self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], gs.m2p, gs.po,
+                                     self.width, self.height, gs.player[1])
 
             # Make the bounce sounds
             if p.fx_is_on:

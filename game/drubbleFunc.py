@@ -316,7 +316,9 @@ class GameState:
         # 8 = Game over, high scores
         self.game_mode = 1
         self.showedSplash = False
-        
+        self.screen_width = 0
+        self.screen_height = 0
+
         # Determine the control method, and initialize ctrl variable
         if engine == 'kivy':
             self.ctrlMode = 'keys'
@@ -353,6 +355,15 @@ class GameState:
         # Initiate Volley Drubble
         if p.volley_mode:
             self.volley_game_is_active = True
+
+        # Plotting ranges and sticks
+        self.xr = 0.0, 1.0
+        self.yr = 0.0, 1.0
+        self.m2p = 1.0
+        self.po = 0.0
+        self.player_x = [[], []]
+        self.player_y = [[], []]
+        self.player = [[], []]
          
     # Get control input from external source
     def set_control(self, keyPush=[0, 0, 0, 0, 0, 0, 0, 0],
@@ -441,9 +452,6 @@ class GameState:
                 if ball_hit_stool(self.t, U[k], self.active_player) < 0.0:
                     self.stool_bounce = True
                 elif (U[k][1] - p.rb) < 0.0:
-                    # elif ball_hit_floor(self.t, U[k]) < 0.0:
-                    #print(U[k][1] - p.rb)
-                    #print(ball_hit_floor(self.t, U[k]))
                     self.floor_bounce = True
                 if p.volley_mode and ball_hit_net(self.t, U[k]) < 0.0:
                     self.net_bounce = True
@@ -562,6 +570,17 @@ class GameState:
         # Named states
         self = varStates(self)
 
+        # Plotting ranges and stick figures
+        self.xr, self.yr, self.m2p, self.po = set_ranges(self.u, self.screen_width)
+        for k in range(p.num_player):
+            # Position of the stick man in physical units
+            self.player_x[k], self.player_y[k] = stick_dude(self.u, k)
+
+            # Position of the stick man in piexls, and interspersed for kivy line rendering
+            x, y = xy2p(self.player_x[k], self.player_y[k], self.m2p, self.po, self.screen_width, self.screen_height)
+            self.player[k] = intersperse(x, y)
+
+        print('gs.update, m2p=', self.m2p, ' w=', self.screen_width)
         return ddt
 
     def set_angle_and_speed(self):
@@ -1243,31 +1262,6 @@ def intersperse(list1, list2):
     return result
 
 
-class playerLines():
-    def __init__(self, pnum, gs, w, h):
-        self.pnum = pnum
-        self.width = w
-        self.height = h
-        self.update(gs, w)
-        
-    def update(self, gs, w):
-        # Get the player stick figure
-        self.xv, self.yv = stick_dude(gs, self.pnum)
-        
-        # Get ranges for drawing the player and ball
-        self.xrng, self.yrng, self.m2p, self.po = set_ranges(gs.u, w)
-        
-        # Convert to pixels
-        self.player_x, self.player_y = xy2p(self.xv, self.yv, self.m2p, self.po,
-                                           self.width, self.height)
-        #self.stool_x, self.stool_y = xy2p(self.sx, self.sy, self.m2p, self.po,
-        #                                 self.width, self.height)
-        
-        # Convert to format used for Kivy line
-        self.player = intersperse(self.player_x, self.player_y)
-        #self.stool = intersperse(self.stool_x, self.stool_y)
-
-
 # Below this line are the functions I created when I started demoDrubble,
 # these are basically obsolete, eventually will be deleted
 defObsoleteDemoFuncs = False
@@ -1435,13 +1429,13 @@ if defObsoleteDemoFuncs:
            
     def animate(n):
         # Get the plotting vectors using stick_dude function
-        xv,yv,sx,sy = stick_dude(Y[n,:])
+        xv, yv, sx, sy = stick_dude(Y[n,:])
     
         # Get state variables
-        x  = Y[n,4] # sol.y[0,n]
-        y  = Y[n,5] # sol.y[1,n]
-        l  = Y[n,6] # sol.y[2,n]
-        th = Y[n,7] # sol.y[3,n]
+        x = Y[n, 4]  # sol.y[0,n]
+        y = Y[n, 5]  # sol.y[1,n]
+        l = Y[n, 6]  # sol.y[2,n]
+        th = Y[n, 7]  # sol.y[3,n]
     
         # Update the plot
         LN.set_data(xv, yv)
@@ -1457,3 +1451,34 @@ if defObsoleteDemoFuncs:
         ax.set_ylim(yrng)
         
         return LN, HD, GD, ST, BL, BA,
+
+
+    class playerLines():
+        def __init__(self, pnum, gs, w, h):
+            self.pnum = pnum
+            self.width = w
+            self.height = h
+            self.update(gs, w)
+            self.sv = []
+            self.yv = []
+            self.xrng = []
+            self.yrng = []
+            self.m2p = []
+            self.po = []
+
+        def update(self, gs, w):
+            # Get the player stick figure
+            self.xv, self.yv = stick_dude(gs, self.pnum)
+
+            # Get ranges for drawing the player and ball
+            self.xrng, self.yrng, self.m2p, self.po = set_ranges(gs.u, w)
+
+            # Convert to pixels
+            self.player_x, self.player_y = xy2p(self.xv, self.yv, self.m2p, self.po,
+                                                self.width, self.height)
+            # self.stool_x, self.stool_y = xy2p(self.sx, self.sy, self.m2p, self.po,
+            #                                 self.width, self.height)
+
+            # Convert to format used for Kivy line
+            self.player = intersperse(self.player_x, self.player_y)
+            # self.stool = intersperse(self.stool_x, self.stool_y)

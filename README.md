@@ -55,7 +55,7 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 - [x] Fix the computer player control
 - [x] Put in limits for the states to prevent crashing
 - [x] Add a tutorial
-- [ ] Add audio for setting ball speed, button presses
+- [x] Add audio for setting ball speed, button presses
 - [ ] Add a background screen connecting the last screen to the first, geographically
 - [ ] Add one more base audio file
 
@@ -66,3 +66,4 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 - [x] Include a banner ad
 - [ ] Add networked multiplayer mode
 - [ ] Create a ball cannon
+- [ ] Add statistical plots to the high scores
