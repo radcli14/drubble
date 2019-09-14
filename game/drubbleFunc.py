@@ -301,6 +301,8 @@ class GameState:
     net_bounce = False
     volley_game_is_active = False
     active_player = 0
+    screen_width = 0
+    screen_height = 0
 
     # Initiate the state variables as a list, and as individual variables
     def __init__(self, u0=p.u0, engine='kivy'):
@@ -316,8 +318,6 @@ class GameState:
         # 8 = Game over, high scores
         self.game_mode = 1
         self.showedSplash = False
-        self.screen_width = 0
-        self.screen_height = 0
 
         # Determine the control method, and initialize ctrl variable
         if engine == 'kivy':

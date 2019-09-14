@@ -1562,11 +1562,13 @@ class DrubbleGame(Widget):
 
     # What to do when action button is pressed
     def action_button_press(self):
+        print('Action button, p.volley_mode=', p.volley_mode, ', gs.game_mode=', gs.game_mode)
         # Progress through the speed/angle setting, game, then high score
         if p.volley_mode and gs.game_mode == 6 and not gs.Stuck:
             return
         else:
             cycle_modes(gs, stats, engine)
+            print('  cycle_modes, gs.game_mode=', gs.game_mode)
 
         # Start or stop playing the angle and speed setting sound
         if gs.game_mode == 4:
@@ -1585,6 +1587,7 @@ class DrubbleGame(Widget):
         # If on restart of game, remove the high scores
         # Also move the sticks and option buttons out of the way
         if gs.game_mode == 7:
+            print('  Animating out, w=', self.width, ' h=', self.height)
             if p.volley_mode:
                 self.net.anim_out()
 
@@ -1600,6 +1603,7 @@ class DrubbleGame(Widget):
             self.option_butt.anim_out_then_in(w=self.width, h=self.height)
             self.action_butt.anim_out_then_in(w=self.width, h=self.height)
         elif gs.game_mode == 3:
+            print('  Animating in, w=', self.width, ' h=', self.height)
             self.remove_high_scores()
             self.bg.anim_in(w=self.width, h=self.height)
             self.move_stick.anim_in(w=self.width, h=self.height)
