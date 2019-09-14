@@ -303,7 +303,7 @@ class GameState:
     active_player = 0
 
     # Initiate the state variables as a list, and as individual variables
-    def __init__(self, u0, engine):
+    def __init__(self, u0=p.u0, engine='kivy'):
         # Define Game Mode
         # 0 = Quit
         # 1 = Splash screen
@@ -338,8 +338,20 @@ class GameState:
         
         # State variables
         self.u = u0[:]
-        self = varStates(self)
-       
+        # self = varStates(self)
+        self.xb = self.u[0]  # Ball distance [m]
+        self.yb = self.u[1]  # Ball height [m]
+        self.dxb = self.u[2]  # Ball horizontal speed [m]
+        self.dyb = self.u[3]  # Ball vertical speed [m]
+        self.xp = self.u[4:13:8]  # Player distance [m]
+        self.yp = self.u[5:14:8]  # Player height [m]
+        self.lp = self.u[6:15:8]  # Stool extension [m]
+        self.tp = self.u[7:16:8]  # Stool tilt [rad]
+        self.dxp = self.u[8:17:8]  # Player horizontal speed [m/s]
+        self.dyp = self.u[9:18:8]  # Player vertical speed [m/s]
+        self.dlp = self.u[10:19:8]  # Stool extension rate [m/s]
+        self.dtp = self.u[11:20:8]  # Stool tilt rate [rad/s]
+
         # Event states
         self.ue = u0[:]
         self.xI, self.yI, self.tI, self.traj, self.timeUntilBounce = ball_predict(self, 0)
@@ -361,8 +373,8 @@ class GameState:
         self.yr = 0.0, 1.0
         self.m2p = 1.0
         self.po = 0.0
-        self.player_x = [[], []]
-        self.player_y = [[], []]
+        # self.player_x = [[], []]
+        # self.player_y = [[], []]
         self.player = [[], []]
          
     # Get control input from external source
@@ -568,20 +580,31 @@ class GameState:
             self.u[1] = p.u0[1]
 
         # Named states
-        self = varStates(self)
+        # self = varStates(self)
+        self.xb = self.u[0]  # Ball distance [m]
+        self.yb = self.u[1]  # Ball height [m]
+        self.dxb = self.u[2]  # Ball horizontal speed [m]
+        self.dyb = self.u[3]  # Ball vertical speed [m]
+        self.xp = self.u[4:13:8]  # Player distance [m]
+        self.yp = self.u[5:14:8]  # Player height [m]
+        self.lp = self.u[6:15:8]  # Stool extension [m]
+        self.tp = self.u[7:16:8]  # Stool tilt [rad]
+        self.dxp = self.u[8:17:8]  # Player horizontal speed [m/s]
+        self.dyp = self.u[9:18:8]  # Player vertical speed [m/s]
+        self.dlp = self.u[10:19:8]  # Stool extension rate [m/s]
+        self.dtp = self.u[11:20:8]  # Stool tilt rate [rad/s]
 
-        # Plotting ranges and stick figures
+        # Plotting ranges
         self.xr, self.yr, self.m2p, self.po = set_ranges(self.u, self.screen_width)
+
+        # Stick figures
         for k in range(p.num_player):
             # Position of the stick man in physical units
-            self.player_x[k], self.player_y[k] = stick_dude(self.u, k)
+            x, y = stick_dude(self.u, k)
 
             # Position of the stick man in piexls, and interspersed for kivy line rendering
-            x, y = xy2p(self.player_x[k], self.player_y[k], self.m2p, self.po, self.screen_width, self.screen_height)
-            self.player[k] = intersperse(x, y)
-
-        print('gs.update, m2p=', self.m2p, ' w=', self.screen_width)
-        return ddt
+            px, py = xy2p(x, y, self.m2p, self.po, self.screen_width, self.screen_height)
+            self.player[k] = intersperse(px, py)
 
     def set_angle_and_speed(self):
         if self.game_mode == 4:
@@ -595,64 +618,7 @@ class GameState:
             self.u[3] = self.start_speed * sin(self.start_angle)
 
 
-def cycle_modes(gs, stats, engine):
-    # Exit splash screen
-    if gs.game_mode == 1:
-        gs.game_mode += 1
-        return
-    
-    # Exit options screen 
-    if gs.game_mode == 2:
-        # Reset game
-        stats.__init__()
-        if p.volley_mode:
-            p.u0[0] = - (p.back_line - 1) if p.serving_player == 0 else p.back_line - 1
-            p.u0[4] = - p.back_line / 2.0
-            p.u0[12] = p.back_line / 2.0
-        else:
-            p.u0[0] = 0.0
-            p.u0[4] = 5.0
-            p.u0[12] = 0.0
-        gs.__init__(p.u0, engine)
-        gs.game_mode = 3
-        return
-        
-    # Progress through angle and speed selection
-    if gs.game_mode == 3 or gs.game_mode == 4:
-        gs.game_mode += 1
-        gs.phase = 0
-        return
-        
-    # Start the ball moving!
-    if gs.game_mode == 5:
-        gs.game_mode = 6
-        return
-
-    # Show the high scores
-    if gs.game_mode == 6:
-        if p.volley_mode and stats.volley_score[0] < p.winning_score and stats.volley_score[1] < p.winning_score:
-            p.u0[0] = - (p.back_line - 1) if p.serving_player == 0 else p.back_line - 1
-            p.u0[4] = - p.back_line / 2.0
-            p.u0[12] = p.back_line / 2.0
-            gs.__init__(p.u0, engine)
-            gs.game_mode = 3
-        else:
-            gs.game_mode = 7
-        return
-
-    # Reset the game
-    if gs.game_mode == 7 and p.volley_mode:
-        p.u0[0] = - (p.back_line - 1) if p.serving_player == 0 else p.back_line - 1
-        p.u0[4] = - p.back_line / 2.0
-        p.u0[12] = p.back_line / 2.0
-        stats.__init__()
-        gs.__init__(p.u0, engine)
-        gs.game_mode = 3
-    else:
-        stats.__init__()
-        gs.__init__(p.u0, engine)
-        gs.game_mode = 3
-        return
+gs = GameState()
 
 
 class GameScore:
@@ -695,7 +661,7 @@ class GameScore:
             self.score = 0
         
     # Update statistics for the current game state    
-    def update(self, gs):
+    def update(self):
         self.t = gs.t
         self.n = gs.n
         if p.volley_mode:
@@ -805,6 +771,66 @@ def return_percentile(all_stats, this_stat):
         else:
             percent_str = 'Top %0.0f%%' % percent
         return percent_str
+
+
+def cycle_modes(gs, stats, engine):
+    # Exit splash screen
+    if gs.game_mode == 1:
+        gs.game_mode += 1
+        return
+
+    # Exit options screen
+    if gs.game_mode == 2:
+        # Reset game
+        stats.__init__()
+        if p.volley_mode:
+            p.u0[0] = - (p.back_line - 1) if p.serving_player == 0 else p.back_line - 1
+            p.u0[4] = - p.back_line / 2.0
+            p.u0[12] = p.back_line / 2.0
+        else:
+            p.u0[0] = 0.0
+            p.u0[4] = 5.0
+            p.u0[12] = 0.0
+        gs.__init__(p.u0, engine)
+        gs.game_mode = 3
+        return
+
+    # Progress through angle and speed selection
+    if gs.game_mode == 3 or gs.game_mode == 4:
+        gs.game_mode += 1
+        gs.phase = 0
+        return
+
+    # Start the ball moving!
+    if gs.game_mode == 5:
+        gs.game_mode = 6
+        return
+
+    # Show the high scores
+    if gs.game_mode == 6:
+        if p.volley_mode and stats.volley_score[0] < p.winning_score and stats.volley_score[1] < p.winning_score:
+            p.u0[0] = - (p.back_line - 1) if p.serving_player == 0 else p.back_line - 1
+            p.u0[4] = - p.back_line / 2.0
+            p.u0[12] = p.back_line / 2.0
+            gs.__init__(p.u0, engine)
+            gs.game_mode = 3
+        else:
+            gs.game_mode = 7
+        return
+
+    # Reset the game
+    if gs.game_mode == 7 and p.volley_mode:
+        p.u0[0] = - (p.back_line - 1) if p.serving_player == 0 else p.back_line - 1
+        p.u0[4] = - p.back_line / 2.0
+        p.u0[12] = p.back_line / 2.0
+        stats.__init__()
+        gs.__init__(p.u0, engine)
+        gs.game_mode = 3
+    else:
+        stats.__init__()
+        gs.__init__(p.u0, engine)
+        gs.game_mode = 3
+        return
 
 
 # Equation of Motion

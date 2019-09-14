@@ -46,7 +46,7 @@ elif platform == 'ios':
     from pyobjus import autoclass
 
 # Initialize Game State
-gs = GameState(p.u0, engine)
+# gs = GameState(p.u0, engine)
 
 # Initialize stats
 stats = GameScore()
@@ -78,13 +78,13 @@ try:
     # Load the sounds that play on events
     stool_sound = SoundLoader.load('a/GoGo_crank_hit_Stool.wav')
     floor_sound = SoundLoader.load('a/GoGo_guitar_hit_slide_Floor.wav')
-    stuck_sound = SoundLoader.load('a/GoGo_flam_woo.wav')
+    stuck_sound = SoundLoader.load('a/GoGo_flam_drm_fill.wav')
     stuck_sound.volume = 0.5
     button_sound = SoundLoader.load('a/GoGo_flam_woo.wav')
     button_sound.volume = 0.5
     start_loop = SoundLoader.load('a/GoGo_hitta_conga_loop.wav')
-    start_loop.volume = 0.5
-    start_loop.pitch = 1.3
+    start_loop.volume = 0.25
+    start_loop.pitch = 1.4
 
 except:
     print('failed loading wav')
@@ -539,9 +539,9 @@ class OptionButtons(Button):
         if self.out_position == 'top':
             self.pos[1] = h
         elif self.out_position == 'bottom':
-            self.pos[1] = - self.size[1] - self.shadow_width
+            self.pos[1] = - self.size[1] - 2.0 * self.shadow_width
         elif self.out_position == 'left':
-            self.pos[0] = - self.size[0] - self.shadow_width
+            self.pos[0] = - self.size[0] - 2.0 * self.shadow_width
         elif self.out_position == 'right':
             self.pos[0] = w
 
@@ -603,11 +603,11 @@ class OptionButtons(Button):
         out_x = self.pos[0]
         out_y = self.pos[1]
         if self.out_position == 'left':
-            out_x = - self.norm_size[0] * w - self.shadow_width
+            out_x = - self.norm_size[0] * w - 2.0 * self.shadow_width
         elif self.out_position == 'right':
             out_x = w
         if self.out_position == 'bottom':
-            out_y = - self.norm_size[0] * h - self.shadow_width
+            out_y = - self.norm_size[1] * h - 2.0 * self.shadow_width
         elif self.out_position == 'top':
             out_y = h
         anim = Animation(x=out_x, y=out_y, size=(self.norm_size[0]*w, self.norm_size[1]*h),
@@ -620,11 +620,11 @@ class OptionButtons(Button):
         out_x = self.pos[0]
         out_y = self.pos[1]
         if self.out_position == 'left':
-            out_x = -self.width
+            out_x = - self.norm_size[0] * w - 2.0 * self.shadow_width
         elif self.out_position == 'right':
             out_x = w
         if self.out_position == 'bottom':
-            out_y = -self.size[1]
+            out_y = - self.norm_size[1] * h - 2.0 * self.shadow_width
         elif self.out_position == 'top':
             out_y = h
         anim_out = Animation(x=out_x, y=out_y, duration=0.5, t='in_back')
@@ -1004,8 +1004,8 @@ class DrubbleGame(Widget):
             self.ball = Ball()
 
             # Initialize the sticks
-            self.move_stick = Stick(norm_size=(0.4, 0.6), norm_pos=(0.6, 0.25), out_position='right')
-            self.tilt_stick = Stick(norm_size=(0.4, 0.6), norm_pos=(0.0, 0.25), out_position='left')
+            self.move_stick = Stick(norm_size=(0.3, 0.5), norm_pos=(0.7, 0.35), out_position='right')
+            self.tilt_stick = Stick(norm_size=(0.3, 0.5), norm_pos=(0.0, 0.35), out_position='left')
 
             # Initialize the score line
             self.time_label = ScoreLabel(text='Time', norm_left=0.0)
@@ -1447,12 +1447,12 @@ class DrubbleGame(Widget):
     def on_touch_move(self, touch):
         if gs.game_mode > 2 and self.weHaveWidgets:
             # Detect control inputs
-            xy = touch_stick((touch.x,touch.y), self.move_stick)
+            xy = touch_stick((touch.x, touch.y), self.move_stick)
             if touch.id == self.move_stick.id_code and xy[0] != 0:
                 self.move_stick.update_el(xy[0], xy[1])
                 gs.ctrl[0:2] = xy
 
-            xy = touch_stick((touch.x,touch.y),self.tilt_stick)
+            xy = touch_stick((touch.x, touch.y),self.tilt_stick)
             if touch.id == self.tilt_stick.id_code and xy[0] != 0:
                 self.tilt_stick.update_el(xy[0], xy[1])
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
@@ -1713,7 +1713,7 @@ class DrubbleGame(Widget):
 
         # Background image
         self.bg.resize(self.width, self.height)
-        self.bg.bottom_line_height = self.height/20.0
+        self.bg.bottom_line_height = self.height / 20.0
 
         # Buttons
         self.single_drubble_butt.resize(w=self.width, h=self.height)
@@ -1759,21 +1759,16 @@ class DrubbleGame(Widget):
         # Angle and speed settings
         if 2 < gs.game_mode < 6:
             gs.set_angle_and_speed()
-            #start_loop.pitch = gs.start_angle / p.sa
+            # start_loop.pitch = gs.start_angle / p.sa
             if gs.game_mode == 5:
-                start_loop.volume = gs.start_speed / p.ss
+                start_loop.volume = 0.5 * gs.start_speed / p.ss
 
         # Call the simStep method
         if 2 < gs.game_mode < 7:
-            ddt = gs.sim_step(p, gs, stats)
-
-        # Adjust pitch of the loop that is playing (TBR not working)
-        # print(ddt*fs)
-        # for k in range(num_loops):
-        #     loop[k].pitch = ddt * fs
+            gs.sim_step(p, gs, stats)
 
         if gs.game_mode > 2 and not p.volley_mode:
-            stats.update(gs)
+            stats.update()
 
             # Update score line
             self.time_label.update('Time %9.1f' % gs.t)
@@ -1783,7 +1778,7 @@ class DrubbleGame(Widget):
             self.score_label.update('Score %8.0f' % stats.score)
 
         if gs.game_mode > 2:
-            x_mean = (gs.xb+gs.xp[0])/2.0
+            x_mean = 0.5 * (gs.xb + gs.xp[0])
             self.bg.update(x_mean, gs.yb, self.width, self.height)
             self.bg.make_markers()
             self.move_stick.update_el(gs.ctrl[0], gs.ctrl[1])
