@@ -10,6 +10,7 @@ except:
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
 from random import randint
 from kivy.storage.jsonstore import JsonStore
+from kivy.core.audio import SoundLoader
 
 import sys
 # Frame rate
@@ -126,7 +127,7 @@ class Parameters:
     tsens = 1.5
     
     # Tolerance on last bounce speed before stopping motion
-    dybtol = 2.0
+    dybtol = 4.0
     
     # start_angle (sa) and start_speed (ss) initially
     sa = pi / 4
@@ -156,7 +157,12 @@ class Parameters:
     tp_lim = -3.14, 3.14
     dtp_lim = -20, 20
 
+    # Parameters used in creating the stick dude
     stance_width = 0.3
+    foot_step_length = 1.25
+    foot_step_rate = 3.0
+    foot_recovery_rate = 12.0
+    leg_length = 0.9 * (y0 - d)
 
     # Number of points to include in the future trajectory predictions (ball_predict() function)
     num_future_points = 16
@@ -185,6 +191,49 @@ class Parameters:
 
 
 p = Parameters()
+
+
+# Initialize sounds
+try:
+    # Initialize drums
+    num_loops = 2
+    loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.wav') for k in range(num_loops)]
+    for k in range(num_loops):
+        loop[k].volume = 0.4
+
+    def sound_stopped(self):
+        # Randomize which loop to play, but prevent repeats of the intro
+        if self.id_number == 0:
+            current_loop = randint(1, num_loops-1)
+        else:
+            current_loop = randint(0, num_loops-1)
+
+        # Restart playing a new drum loop
+        loop[current_loop].play()
+
+    for k in range(num_loops):
+        loop[k].bind(on_stop=sound_stopped)
+        loop[k].id_number = k
+
+    # Start the intro loop playing
+    loop[0].play()
+
+    # Load the sounds that play on events
+    stool_sound = SoundLoader.load('a/GoGo_crank_hit_Stool.wav')
+    floor_sound = SoundLoader.load('a/GoGo_guitar_hit_slide_Floor.wav')
+    floor_sound.pitch = 0.92
+    stuck_sound = SoundLoader.load('a/GoGo_flam_drm_fill.wav')
+    stuck_sound.volume = 0.7
+    button_sound = SoundLoader.load('a/GoGo_flam_woo.wav')
+    button_sound.volume = 0.5
+    start_loop = SoundLoader.load('a/GoGo_hitta_conga_loop.wav')
+    start_loop.volume = 0.4
+    start_loop.pitch = 1.54
+
+    SOUND_LOADED = True
+except:
+    print('failed loading wav')
+    SOUND_LOADED = False
 
 
 def varStates(obj):
@@ -466,7 +515,7 @@ class GameState:
                 U[k] = [U[k-1][i] + dudt[i] * ddt / num_step for i in range(20)]
 
             # Check for events
-            if (self.t - self.te) > 0.1:
+            if (self.t - self.te) > 0.1 and not self.Stuck:
                 if ball_hit_stool(self.t, U[k], self.active_player) < 0.0:
                     self.stool_bounce = True
                 elif (U[k][1] - p.rb) < 0.0:
@@ -483,6 +532,12 @@ class GameState:
         if self.stool_bounce or self.floor_bounce or self.net_bounce:
             # Change ball states depending on if it was a stool or floor bounce
             if self.stool_bounce:
+                # Play the sound
+                if SOUND_LOADED and p.fx_is_on:
+                    stool_sound.volume = max(0.02, min(norm([self.dxb, self.dyb]) / 130.0, 0.8))
+                    print('  stool_sound.volume = ', stool_sound.volume)
+                    stool_sound.play()
+
                 # Obtain the bounce velocity
                 v_bounce, v_recoil = ball_bounce_stool(self, self.active_player)
                 self.ue[2] = v_bounce[0]
@@ -495,11 +550,23 @@ class GameState:
                 self.ue[11 + self.active_player * 8] = self.ue[11] + v_recoil[3]
                 
             elif self.floor_bounce:
+                # Play the sound
+                if SOUND_LOADED and p.fx_is_on:
+                    floor_sound.volume = min(norm([self.dxb, self.dyb]) / 13.0, 1.0)
+                    print('  floor_sound.volume = ', floor_sound.volume)
+                    floor_sound.play()
+
                 # Reverse direction of the ball
                 self.ue[2] = +p.COR_g[0] * self.ue[2]
                 self.ue[3] = -p.COR_g[1] * self.ue[3]
 
             elif self.net_bounce:
+                # Play the sound
+                if SOUND_LOADED and p.fx_is_on:
+                    floor_sound.volume = min(norm([self.dxb, self.dyb]) / 13.0, 1.0)
+                    print('  floor_sound.volume = ', floor_sound.volume)
+                    floor_sound.play()
+
                 # Obtain the bounce velocity
                 v_bounce = ball_bounce_net(self)
                 self.ue[2] = v_bounce[0]
@@ -510,9 +577,16 @@ class GameState:
             dudt = player_and_stool(self.t, self.ue, p, gs, stats)
             self.u = [self.ue[i] + dudt[i]*(ddt-tBreak) for i in range(20)]
 
-            # Stuck
+            # The speed of the ball dropped too much, it is now stuck
             if sqrt(self.u[2]**2 + self.u[3]**2) < p.dybtol and self.u[1] < 1:
+                # Play the sound
+                if SOUND_LOADED and p.fx_is_on:
+                    stuck_sound.play()
+
+                # Switch the stuck flag
                 self.Stuck = True
+
+                # If playing volley drubble, increment the score and restart the game
                 if self.volley_game_is_active:
                     self.volley_game_is_active = False
                     if p.volley_mode and self.xb > 0:
@@ -619,22 +693,27 @@ class GameState:
         rf = self.foot_position[k][0]
         lf = self.foot_position[k][1]
         vn = self.dxp[k] / p.vx
-        rf[2] += 3.5 * dt * pi if rf[2] < pi else - pi
+
+        ddt = dt * p.difficult_speed_scale[p.difficult_level]
+
+        rf[2] += p.foot_step_rate * ddt * pi if rf[2] < pi else - pi
         if 0.0 < rf[2] > pi / 2.0:
-            rf[0] += 2.0 * self.dxp[k] * dt + 4.0 * (self.xp[k] - rf[0] - p.stance_width) * dt
+            desired_foot_position = self.xp[k] + p.foot_step_length * vn - p.stance_width
+            rf[0] += p.foot_recovery_rate * ddt * (desired_foot_position - rf[0])
             rf[1] = abs(vn * sin(rf[2]))
 
-        lf[2] += 3.5 * dt * pi if lf[2] < pi else - pi
+        lf[2] += p.foot_step_rate * ddt * pi if lf[2] < pi else - pi
         if 0.0 < lf[2] > pi / 2.0:
-            lf[0] += 2.0 * self.dxp[k] * dt + 4.0 * (self.xp[k] - lf[0] + p.stance_width) * dt
+            desired_foot_position = self.xp[k] + p.foot_step_length * vn + p.stance_width
+            lf[0] += p.foot_recovery_rate * ddt * (desired_foot_position - lf[0])
             lf[1] = abs(vn * sin(lf[2]))
 
         # Waist Position
         w = self.xp[k], self.yp[k] - p.d
 
         # Right Knee [rk] Left Knee [lk] Positions
-        rk = third_point(w, rf, p.y0 - p.d, -1)
-        lk = third_point(w, lf, p.y0 - p.d, 1)
+        rk = third_point(w, rf, p.leg_length, -1)
+        lk = third_point(w, lf, p.leg_length, 1)
 
         # Shoulder Position
         sh = self.xp[k], self.yp[k] + p.d

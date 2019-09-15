@@ -2,7 +2,21 @@
 
 ![Icon](game/a/icon.png)
 
-A Silly Game With Silly Stools!
+![Splash](game/a/splash.png | width=400)
+
+## Summary
+
+Bounce a kick ball off the top of a bar stool, with the sights of Washington, D. C. in the background
+
+Three game modes
+* Single dRuBbLe - Bounce as far and high as possible
+* Double dRuBbLe - Alternate bounces with a computer player
+* Volley dRuBbLe - Don't let the ball stop on your side
+
+Three difficulty settings
+* Easy - Pace is slower, and stool is wider
+* Hard - Pace and stool width are realistic
+* Silly - Pace is silly fast, stool is silly skinny
 
 ## How to play:
 
@@ -10,21 +24,19 @@ There are two virtual sticks which appear as crosshairs on the screen.
 Touch the stick on the lower left to move the stool. 
 Touch the stick on the lower right to move the player.
 Use the action button in the upper right to start the game.
-The "Options" button in the upper left will return to the game selection screen.
+Tap once to set the launch angle.
+Tap again to set the speed and launch the ball.
+The options button in the upper left will return to the game selection screen.
 Your goal is to bounce the ball off the top of your stool, as far and as high as possible. 
-There are sub-variations on the game, "Single dRuBbLe," and "Double dRuBbLe."
 
-When you start the game, you will do the following:
-0. The ball starts on the ground. Press the "Begin" button in the upper right.
-1. A line will appear showing a trajectory the ball may take depending on its initial angle and speed. Press the "Set Angle" button to select the initial angle (higher is usually better). After the angle is set, press the "Set Speed" button (faster!).
-2. The ball will be launched. Your new goal is to bounce the ball off of the top of your stool, as many times, as far, and as high as possible.
-
-There are two game modes, with a third and fourth planned:
+There are three game modes, with a fourth planned:
 ### Single dRuBbLe
-Throw it up, bounce it on the stool, try to keep it bouncing.
+Throw it up, bounce it on the stool, try to keep it bouncing. 
+Your score is the product of your distance, max height, and number of bounces.
 
 ### Double dRuBbLe
 First person throws it, second person tries to bounce it as far as they can on the stool.
+The two players alternate shots.
 
 ### Volley dRuBbLe
 First person bounces it over the center barrier, second person attempts to return it.
@@ -58,7 +70,7 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 - [x] Add audio for setting ball speed, button presses
 - [x] Add a background screen connecting the last screen to the first, geographically
 - [ ] Add one more base audio file
-- [ ] Cancel animations before any new animation to ensure that widgets get removed when they are supposed to
+- [x] Cancel animations before any new animation to ensure that widgets get removed when they are supposed to
 
 ### Future
 - [x] Add a Volley Drubble sub-game

@@ -26,7 +26,6 @@ from kivy.properties import NumericProperty, ListProperty, ObjectProperty, Strin
 from kivy.core.window import Window
 from kivy.clock import Clock
 from kivy.graphics import *
-from kivy.core.audio import SoundLoader
 from kivy.utils import platform
 from kivy.animation import Animation
 # import kivymd as kmd
@@ -50,46 +49,6 @@ elif platform == 'ios':
 
 # Initialize stats
 stats = GameScore()
-
-try:
-    # Initialize drums
-    num_loops = 2
-    loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.wav') for k in range(num_loops)]
-    for k in range(num_loops):
-        loop[k].volume = 0.4
-
-    def sound_stopped(self):
-        # Randomize which loop to play, but prevent repeats of the intro
-        if self.id_number == 0:
-            current_loop = randint(1, num_loops-1)
-        else:
-            current_loop = randint(0, num_loops-1)
-
-        # Restart playing a new drum loop
-        loop[current_loop].play()
-
-    for k in range(num_loops):
-        loop[k].bind(on_stop=sound_stopped)
-        loop[k].id_number = k
-
-    # Start the intro loop playing
-    loop[0].play()
-
-    # Load the sounds that play on events
-    stool_sound = SoundLoader.load('a/GoGo_crank_hit_Stool.wav')
-    floor_sound = SoundLoader.load('a/GoGo_guitar_hit_slide_Floor.wav')
-    stuck_sound = SoundLoader.load('a/GoGo_flam_drm_fill.wav')
-    stuck_sound.volume = 0.5
-    button_sound = SoundLoader.load('a/GoGo_flam_woo.wav')
-    button_sound.volume = 0.5
-    start_loop = SoundLoader.load('a/GoGo_hitta_conga_loop.wav')
-    start_loop.volume = 0.25
-    start_loop.pitch = 1.4
-
-    SOUND_LOADED = True
-except:
-    print('failed loading wav')
-    SOUND_LOADED = False
 
 # Set the sky blue background color
 Window.clearcolor = (cyan[0], cyan[1], cyan[2], 1)
@@ -192,10 +151,12 @@ class MyBackground(Widget):
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1):
         self.width = w
         self.height = h
+        Animation.cancel_all(self)
         anim = Animation(opacity=1, duration=duration)
         anim.start(self)
 
     def anim_out(self, duration=1):
+        Animation.cancel_all(self)
         anim = Animation(opacity=0, duration=duration)
         anim.start(self)
 
@@ -325,10 +286,12 @@ class MyFace(Widget):
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1.0):
         self.width = w
         self.height = h
+        Animation.cancel_all(self)
         anim = Animation(opacity=1.0, duration=duration)
         anim.start(self)
 
     def anim_out(self, duration=1.0):
+        Animation.cancel_all(self)
         anim = Animation(opacity=0.0, duration=duration)
         anim.start(self)
 
@@ -360,10 +323,12 @@ class VolleyNet(Widget):
         self.score = str(stats.volley_score[0]) + ' - ' + str(stats.volley_score[1])
 
     def anim_in(self, duration=1.0):
+        Animation.cancel_all(self)
         anim = Animation(opacity=1.0, duration=duration)
         anim.start(self)
 
     def anim_out(self, duration=1.0):
+        Animation.cancel_all(self)
         anim = Animation(opacity=0.0, duration=duration)
         anim.start(self)
 
@@ -407,10 +372,12 @@ class Ball(Widget):
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1.0):
         self.width = w
         self.height = h
+        Animation.cancel_all(self)
         anim = Animation(opacity=1.0, duration=duration)
         anim.start(self)
 
     def anim_out(self):
+        Animation.cancel_all(self)
         anim = Animation(opacity=0.0, duration=1)
         anim.start(self)
 
@@ -481,6 +448,7 @@ class Stick(Widget):
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.25):
         in_x = self.norm_pos[0] * w
         in_y = self.norm_pos[1] * h
+        Animation.cancel_all(self)
         anim = Animation(x=in_x, y=in_y, duration=duration, t='out_back')
         anim.start(self)
         self.is_on_screen = True
@@ -492,6 +460,7 @@ class Stick(Widget):
         else:
             out_x = w
         out_y = self.norm_pos[1] * h
+        Animation.cancel_all(self)
         anim = Animation(x=out_x, y=out_y, duration=0.25, t='in_back')
         anim.start(self)
         self.is_on_screen = False
@@ -585,15 +554,18 @@ class OptionButtons(Button):
         anim = Animation(shadow_width=0.0, button_color=self.touched_button_color, duration=0.1) + \
                Animation(shadow_width=0.003 * Window.width, button_color=self.def_button_color, duration=0.1)
         anim.start(self)
-        button_sound.play()
+        if SOUND_LOADED and p.fx_is_on:
+            button_sound.play()
 
     def anim_in(self, w=Window.width, h=Window.height, duration=0.5):
+        Animation.cancel_all(self)
         anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=duration, t='out_back')
         anim.start(self)
         self.is_high_score = False
         self.is_on_screen = True
 
     def anim_in_to_high_score(self, w=Window.width, h=Window.height, duration=0.5):
+        Animation.cancel_all(self)
         anim = Animation(x=0.2*w+0.6*self.norm_pos[0]*w, y=0.82*h,
                          size=(0.6*self.norm_size[0]*w, 0.5*self.norm_size[1]*h),
                          label_font_size=0.6*self.norm_font_size*h, duration=duration, t='out_back')
@@ -612,6 +584,7 @@ class OptionButtons(Button):
             out_y = - self.norm_size[1] * h - 2.0 * self.shadow_width
         elif self.out_position == 'top':
             out_y = h
+        Animation.cancel_all(self)
         anim = Animation(x=out_x, y=out_y, size=(self.norm_size[0]*w, self.norm_size[1]*h),
                          label_font_size=self.norm_font_size*h, duration=duration, t='in_back')
         anim.start(self)
@@ -629,6 +602,7 @@ class OptionButtons(Button):
             out_y = - self.norm_size[1] * h - 2.0 * self.shadow_width
         elif self.out_position == 'top':
             out_y = h
+        Animation.cancel_all(self)
         anim_out = Animation(x=out_x, y=out_y, duration=0.5, t='in_back')
         anim_pause = Animation(x=out_x, y=out_y, duration=(duration-1), t='in_back')
         anim_in = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=0.5, t='out_back')
@@ -664,6 +638,7 @@ class ScoreLabel(Widget):
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.1):
         in_x = self.norm_left * w
         in_y = h - self.label_size - 4
+        Animation.cancel_all(self)
         anim = Animation(x=in_x, y=in_y, duration=duration)
         anim.start(self)
         self.is_on_screen = True
@@ -671,6 +646,7 @@ class ScoreLabel(Widget):
     def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=0.1):
         out_x = self.norm_left * w
         out_y = h
+        Animation.cancel_all(self)
         anim = Animation(x=out_x, y=out_y, duration=duration, t='in_elastic')
         anim.start(self)
         self.is_on_screen = False
@@ -731,6 +707,7 @@ class HighScoreLabel(Widget):
     def anim_in(self, h=height*screen_scf, duration=1):
         in_x = self.label_left
         in_y = (self.ratio_from_top - 0.1 * self.vertical_position) * h
+        Animation.cancel_all(self)
         anim = Animation(x=in_x, y=in_y, duration=duration, t='out_elastic')
         anim.start(self)
         print(self.label_text, ' ', self.this_run, ' ', self.best_run, ' ', self.is_high)
@@ -746,6 +723,7 @@ class HighScoreLabel(Widget):
             out_y = -self.size[1]
         elif self.outside_position == 'top':
             out_y = h
+        Animation.cancel_all(self)
         anim = Animation(x=out_x, y=out_y, duration=duration, t='in_elastic')
         anim.start(self)
 
@@ -948,16 +926,19 @@ class Tutorial(Widget):
         return
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1):
+        Animation.cancel_all(self)
         anim = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.4*h), opacity=1.0, label_opacity=1.0,
                          label_font_size=0.1*h, duration=duration, t='out_elastic')
         anim.start(self)
 
     def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=1):
+        Animation.cancel_all(self)
         anim = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.4*h), opacity=0.0, label_opacity=0.0,
                          label_font_size=0.07*self.height, duration=0.33*duration, t='out_elastic')
         anim.start(self)
 
     def switch(self, w=width*screen_scf, h=height*screen_scf, duration=1):
+        Animation.cancel_all(self)
         anim_out = Animation(label_size=(0, 0), label_pos=(0.5*w, 0.5*h), label_opacity=0.0,
                              label_font_size=0.0, duration=0.25*duration, t='in_elastic')
         anim_pause = Animation(duration=0.5*duration)
@@ -979,10 +960,10 @@ class DrubbleGame(Widget):
             self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
             self._keyboard.bind(on_key_down=self._on_keyboard_down)
             self._keyboard.bind(on_key_up=self._on_keyboard_up)
-        #Window.bind(on_joy_hat=self.on_joy_hat)
-        #Window.bind(on_joy_ball=self.on_joy_ball)
+        # Window.bind(on_joy_hat=self.on_joy_hat)
+        # Window.bind(on_joy_ball=self.on_joy_ball)
         Window.bind(on_joy_axis=self.on_joy_axis)
-        #Window.bind(on_joy_button_up=self.on_joy_button_up)
+        # Window.bind(on_joy_button_up=self.on_joy_button_up)
         Window.bind(on_joy_button_down=self.on_joy_button_down)
         self.nMarks = 0
         self.weHaveWidgets = False
@@ -1039,7 +1020,7 @@ class DrubbleGame(Widget):
                                                    label_text='Score', this_run='%0.0f' % stats.score,
                                                    best_run='%0.0f' % stats.high_score[j][k])
 
-            self.volley_win_label = Label(font_name='a/Airstream.ttf', color=(red[0], red[1], red[2], 1),
+            self.volley_win_label = Label(color=(red[0], red[1], red[2], 1),
                                           outline_color=(white[0], white[1], white[2]), outline_width=0.0,
                                           halign='center', valign='center')
 
@@ -1573,10 +1554,10 @@ class DrubbleGame(Widget):
             print('  cycle_modes, gs.game_mode=', gs.game_mode)
 
         # Start or stop playing the angle and speed setting sound
-        if gs.game_mode == 4:
+        if gs.game_mode == 4 and SOUND_LOADED and p.fx_is_on:
             start_loop.play()
             start_loop.loop = True
-        elif gs.game_mode == 6:
+        elif gs.game_mode == 6 and SOUND_LOADED and p.fx_is_on:
             start_loop.stop()
 
         # Update the button text and color
@@ -1818,17 +1799,6 @@ class DrubbleGame(Widget):
             if p.num_player > 1:
                 self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], gs.m2p, gs.po,
                                      self.width, self.height, gs.player[1])
-
-            # Make the bounce sounds
-            if p.fx_is_on:
-                if gs.stool_bounce:
-                    stool_sound.volume = min(0.1, norm([gs.dxb, gs.dyb]) / 50.0)
-                    stool_sound.play()
-                elif gs.floor_bounce and not gs.Stuck:
-                    floor_sound.volume = norm([gs.dxb, gs.dyb]) / 15.0
-                    floor_sound.play()
-                elif gs.floor_bounce and gs.Stuck:
-                    stuck_sound.play()
 
 
 class DrubbleApp(App):
