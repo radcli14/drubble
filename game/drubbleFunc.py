@@ -156,6 +156,8 @@ class Parameters:
     tp_lim = -3.14, 3.14
     dtp_lim = -20, 20
 
+    stance_width = 0.3
+
     # Number of points to include in the future trajectory predictions (ball_predict() function)
     num_future_points = 16
 
@@ -352,6 +354,10 @@ class GameState:
         self.dlp = self.u[10:19:8]  # Stool extension rate [m/s]
         self.dtp = self.u[11:20:8]  # Stool tilt rate [rad/s]
 
+        # Foot positions for drawing the stick figure [x, y, phase]
+        self.foot_position = [[[self.xp[0] - p.stance_width, 0.0, 0.0], [self.xp[0] + p.stance_width, 0.0, 0.5 * pi]],
+                              [[self.xp[1] - p.stance_width, 0.0, 0.0], [self.xp[1] + p.stance_width, 0.0, 0.5 * pi]]]
+
         # Event states
         self.ue = u0[:]
         self.xI, self.yI, self.tI, self.traj, self.timeUntilBounce = ball_predict(self, 0)
@@ -543,8 +549,12 @@ class GameState:
             self.u[18] = min(max(self.u[18], p.dlp_lim[0]), p.dlp_lim[1])
             self.u[19] = min(max(self.u[19], p.dtp_lim[0]), p.dtp_lim[1])
         if p.volley_mode:
-            self.u[4] = min(self.u[4], -0.5 * p.net_width)
-            self.u[12] = max(self.u[12], 0.5 * p.net_width)
+            if self.u[4] > -0.5 * p.net_width:
+                self.u[4] = -0.501 * p.net_width
+                self.u[8] = 0.0
+            if self.u[12] < 0.5 * p.net_width:
+                self.u[12] = 0.501 * p.net_width
+                self.u[16] = 0.0
             if self.u[0] <= -p.back_line or self.u[0] >= p.back_line:
                 self.u[0] = -p.back_line + 0.001 if self.u[0] < 0 else p.back_line - 0.001
                 self.u[2] = - self.u[2] * p.COR_n[0]
@@ -558,19 +568,6 @@ class GameState:
         # Predict the future trajectory of the ball
         if 3 < gs.game_mode < 6 or (gs.game_mode == 6 and self.traj['t'][0] - dt < gs.t):
             self.xI, self.yI, self.tI, self.traj, self.timeUntilBounce = ball_predict(self, self.active_player)
-        '''
-        elif self.traj['t'][0] <= gs.t:
-            # Remove the stale data point
-            self.traj['t'].pop(0)
-            self.traj['x'].pop(0)
-            self.traj['y'].pop(0)
-
-            # Add a new data point
-            DT = p.num_future_points * p.future_increment
-            self.traj['t'].append(self.t + DT)
-            self.traj['x'].append(self.xb + self.dxb * DT)
-            self.traj['y'].append(self.yb + self.dyb * DT - 0.5 * p.g * DT ** 2)
-        '''
 
         # Stop the ball from moving if it hasn't been launched yet
         if self.game_mode < 6:
@@ -599,12 +596,7 @@ class GameState:
 
         # Stick figures
         for k in range(p.num_player):
-            # Position of the stick man in physical units
-            x, y = stick_dude(self.u, k)
-
-            # Position of the stick man in piexls, and interspersed for kivy line rendering
-            px, py = xy2p(x, y, self.m2p, self.po, self.screen_width, self.screen_height)
-            self.player[k] = intersperse(px, py)
+            self.stick_dude(k)
 
     def set_angle_and_speed(self):
         if self.game_mode == 4:
@@ -616,6 +608,57 @@ class GameState:
             start_direction = 1.0 if not p.volley_mode or (p.volley_mode and p.serving_player == 0) else -1.0
             self.u[2] = start_direction * self.start_speed * cos(self.start_angle)
             self.u[3] = self.start_speed * sin(self.start_angle)
+
+    # Solve for the vertices that make up the stick man and stool
+    def stick_dude(self, k):
+        # Sine and cosine of the tilt angle
+        s = sin(self.tp[k])
+        c = cos(self.tp[k])
+
+        # Right Foot [rf] Left Foot [lf] Positions
+        rf = self.foot_position[k][0]
+        lf = self.foot_position[k][1]
+        vn = self.dxp[k] / p.vx
+        rf[2] += 3.5 * dt * pi if rf[2] < pi else - pi
+        if 0.0 < rf[2] > pi / 2.0:
+            rf[0] += 2.0 * self.dxp[k] * dt + 4.0 * (self.xp[k] - rf[0] - p.stance_width) * dt
+            rf[1] = abs(vn * sin(rf[2]))
+
+        lf[2] += 3.5 * dt * pi if lf[2] < pi else - pi
+        if 0.0 < lf[2] > pi / 2.0:
+            lf[0] += 2.0 * self.dxp[k] * dt + 4.0 * (self.xp[k] - lf[0] + p.stance_width) * dt
+            lf[1] = abs(vn * sin(lf[2]))
+
+        # Waist Position
+        w = self.xp[k], self.yp[k] - p.d
+
+        # Right Knee [rk] Left Knee [lk] Positions
+        rk = third_point(w, rf, p.y0 - p.d, -1)
+        lk = third_point(w, lf, p.y0 - p.d, 1)
+
+        # Shoulder Position
+        sh = self.xp[k], self.yp[k] + p.d
+        shl = self.xp[k] - 0.18, self.yp[k] + p.d + 0.05
+        shr = self.xp[k] + 0.18, self.yp[k] + p.d + 0.05
+
+        # Right Hand [rh] Left Hand [lh] Position
+        r = p.stool_radius[p.difficult_level]
+        rh = (self.xp[k] - r * c - (self.lp[k] + p.stool_hand_pos) * s,
+              self.yp[k] + p.d - r * s + (self.lp[k] + p.stool_hand_pos) * c)
+        lh = (self.xp[k] + r * c - (self.lp[k] + p.stool_hand_pos) * s,
+              self.yp[k] + p.d + r * s + (self.lp[k] + p.stool_hand_pos) * c)
+
+        # Right Elbow [re] Left Elbow [le] Position
+        re = third_point(shl, rh, 1, 1)
+        le = third_point(shr, lh, 1, -1)
+
+        # Stick man vectors in physical units
+        xv = rf[0], rk[0], w[0], lk[0], lf[0], lk[0], w[0], sh[0], shl[0], re[0], rh[0], re[0], shl[0], shr[0], le[0], lh[0]
+        yv = rf[1], rk[1], w[1], lk[1], lf[1], lk[1], w[1], sh[1], shl[1], re[1], rh[1], re[1], shl[1], shr[1], le[1], lh[1]
+
+        # Plotting vectors
+        px, py = xy2p(xv, yv, self.m2p, self.po, self.screen_width, self.screen_height)
+        self.player[k] = intersperse(px, py)
 
 
 gs = GameState()
@@ -1202,61 +1245,6 @@ def third_point(P0, P1, L, SGN):
     return P3
 
 
-# Solve for the vertices that make up the stick man and stool
-def stick_dude(inp, k):
-    k8 = k * 8
-    # Get the state variables
-    try:
-        # States from u
-        x = inp[4 + k8]
-        y = inp[5 + k8]
-        l = inp[6 + k8]
-        th = inp[7 + k8]
-        v = inp[8 + k8]
-    except:
-        # States from gs
-        x = inp.xp[k]
-        y = inp.yp[k]
-        l = inp.lp[k]
-        th = inp.tp[k]
-        v = inp.dxp[k]
-
-    s = sin(th)
-    c = cos(th)
-        
-    # Right Foot [rf] Left Foot [lf] Positions
-    vn = v / p.vx
-    rf = x - 0.25 + vn * sin(1.5 * x + 3.0 * pi / 2.0), 0.2 * vn * (1.0 + sin(1.5 * x + 3.0 * pi / 2.0))
-    lf = x + 0.25 + vn * cos(1.5 * x), 0.2 * vn * (1.0 + cos(1.5 * x))
-    
-    # Waist Position
-    w = (x, y - p.d)
-    
-    # Right Knee [rk] Left Knee [lk] Positions
-    rk = third_point(w, rf, p.y0 - p.d, -1)
-    lk = third_point(w, lf, p.y0 - p.d, 1)
-    
-    # Shoulder Position
-    sh = x, y + p.d
-    shl = x - 0.18, y + p.d + 0.05
-    shr = x + 0.18, y + p.d + 0.05
-    
-    # Right Hand [rh] Left Hand [lh] Position
-    r = p.stool_radius[p.difficult_level]
-    rh = x - r * c - (l + p.stool_hand_pos) * s, y + p.d - r * s + (l + p.stool_hand_pos) * c
-    lh = x + r * c - (l + p.stool_hand_pos) * s, y + p.d + r * s + (l + p.stool_hand_pos) * c
-    
-    # Right Elbow [re] Left Elbow [le] Position
-    re = third_point(shl, rh, 1, 1)
-    le = third_point(shr, lh, 1, -1)
-    
-    # Plotting vectors
-    xv = rf[0], rk[0], w[0], lk[0], lf[0], lk[0], w[0], sh[0], shl[0], re[0], rh[0], re[0], shl[0], shr[0], le[0], lh[0]
-    yv = rf[1], rk[1], w[1], lk[1], lf[1], lk[1], w[1], sh[1], shl[1], re[1], rh[1], re[1], shl[1], shr[1], le[1], lh[1]
-    
-    return xv, yv
-
-
 # Solve for the x and y ranges to include in the plot, scale factors to 
 # convert from meters to pixels, and pixel offset to the center line
 # Ratio refers to normalized positions in the window on the scale [0 0 1 1]
@@ -1292,6 +1280,63 @@ def intersperse(list1, list2):
 # these are basically obsolete, eventually will be deleted
 defObsoleteDemoFuncs = False
 if defObsoleteDemoFuncs:
+
+    # Solve for the vertices that make up the stick man and stool
+    def stick_dude(inp, k):
+        k8 = k * 8
+        # Get the state variables
+        try:
+            # States from u
+            x = inp[4 + k8]
+            y = inp[5 + k8]
+            l = inp[6 + k8]
+            th = inp[7 + k8]
+            v = inp[8 + k8]
+        except:
+            # States from gs
+            x = inp.xp[k]
+            y = inp.yp[k]
+            l = inp.lp[k]
+            th = inp.tp[k]
+            v = inp.dxp[k]
+
+        s = sin(th)
+        c = cos(th)
+
+        # Right Foot [rf] Left Foot [lf] Positions
+        vn = v / p.vx
+        rf = x - 0.25 + vn * sin(1.5 * x + 3.0 * pi / 2.0), 0.2 * vn * (1.0 + sin(1.5 * x + 3.0 * pi / 2.0))
+        lf = x + 0.25 + vn * cos(1.5 * x), 0.2 * vn * (1.0 + cos(1.5 * x))
+
+        # Waist Position
+        w = (x, y - p.d)
+
+        # Right Knee [rk] Left Knee [lk] Positions
+        rk = third_point(w, rf, p.y0 - p.d, -1)
+        lk = third_point(w, lf, p.y0 - p.d, 1)
+
+        # Shoulder Position
+        sh = x, y + p.d
+        shl = x - 0.18, y + p.d + 0.05
+        shr = x + 0.18, y + p.d + 0.05
+
+        # Right Hand [rh] Left Hand [lh] Position
+        r = p.stool_radius[p.difficult_level]
+        rh = x - r * c - (l + p.stool_hand_pos) * s, y + p.d - r * s + (l + p.stool_hand_pos) * c
+        lh = x + r * c - (l + p.stool_hand_pos) * s, y + p.d + r * s + (l + p.stool_hand_pos) * c
+
+        # Right Elbow [re] Left Elbow [le] Position
+        re = third_point(shl, rh, 1, 1)
+        le = third_point(shr, lh, 1, -1)
+
+        # Plotting vectors
+        xv = rf[0], rk[0], w[0], lk[0], lf[0], lk[0], w[0], sh[0], shl[0], re[0], rh[0], re[0], shl[0], shr[0], le[0], \
+             lh[0]
+        yv = rf[1], rk[1], w[1], lk[1], lf[1], lk[1], w[1], sh[1], shl[1], re[1], rh[1], re[1], shl[1], shr[1], le[1], \
+             lh[1]
+
+        return xv, yv
+
 
     class DrumBeat:
         def __init__(self):

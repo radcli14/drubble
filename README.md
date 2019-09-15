@@ -56,9 +56,9 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 - [x] Put in limits for the states to prevent crashing
 - [x] Add a tutorial
 - [x] Add audio for setting ball speed, button presses
-- [ ] Add a background screen connecting the last screen to the first, geographically
+- [x] Add a background screen connecting the last screen to the first, geographically
 - [ ] Add one more base audio file
-
+- [ ] Cancel animations before any new animation to ensure that widgets get removed when they are supposed to
 
 ### Future
 - [x] Add a Volley Drubble sub-game
