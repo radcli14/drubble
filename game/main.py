@@ -86,8 +86,10 @@ try:
     start_loop.volume = 0.25
     start_loop.pitch = 1.4
 
+    SOUND_LOADED = True
 except:
     print('failed loading wav')
+    SOUND_LOADED = False
 
 # Set the sky blue background color
 Window.clearcolor = (cyan[0], cyan[1], cyan[2], 1)
@@ -117,7 +119,7 @@ class MyBackground(Widget):
     img_h = NumericProperty(h_orig)
 
     # Number of background images
-    num_bg = 5
+    num_bg = 6
 
     # Create the properties for the left edges of the bg images
     bg_left0 = NumericProperty(0.0)
@@ -1004,8 +1006,8 @@ class DrubbleGame(Widget):
             self.ball = Ball()
 
             # Initialize the sticks
-            self.move_stick = Stick(norm_size=(0.3, 0.5), norm_pos=(0.7, 0.35), out_position='right')
-            self.tilt_stick = Stick(norm_size=(0.3, 0.5), norm_pos=(0.0, 0.35), out_position='left')
+            self.move_stick = Stick(norm_size=(0.3, 0.5), norm_pos=(0.69, 0.34), out_position='right')
+            self.tilt_stick = Stick(norm_size=(0.3, 0.5), norm_pos=(0.01, 0.34), out_position='left')
 
             # Initialize the score line
             self.time_label = ScoreLabel(text='Time', norm_left=0.0)
