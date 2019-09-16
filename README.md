@@ -6,7 +6,7 @@
 
 ## Summary
 
-Bounce a kick ball off the top of a bar stool, with the sights of Washington, D. C. in the background
+Bounce a kick ball off the top of a bar stool, with views of Washington, D.C. in the background
 
 Three game modes
 * Single dRuBbLe - Bounce as far and high as possible

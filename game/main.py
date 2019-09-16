@@ -8,6 +8,9 @@ Created on Tue Mar  5 21:18:17 2019
 iOS
 AdMob App ID: ca-app-pub-4007502882739240~9117326010
 Banner Ad ID: ca-app-pub-4007502882739240/5795838735
+iPhone 6/7/8 (4.7 Inch): 750 x 1334 (16 x 9)
+iPhone 6/7/8 Plus (5.5 Inch): 1242 x 2208 (16 x 9)
+iPhone X (5.8-Inch): 1125 x 2436 (19.5 x 9)
 
 Android
 AdMob App ID: ca-app-pub-4007502882739240~4287725061
@@ -210,8 +213,9 @@ class MyBackground(Widget):
 class SplashScreen(Widget):
     def __init__(self, w=width*screen_scf, h=height*screen_scf, splash_duration=4.0, **kwargs):
         super(SplashScreen, self).__init__(**kwargs)
-        self.width = w
         self.height = h
+        self.width = self.height * 2.17
+        self.pos = - 0.5 * (self.width - w), 0.0
         self.opacity = 0.0
         anim = Animation(opacity=1.0, duration=splash_duration)
         anim.start(self)
@@ -221,8 +225,9 @@ class SplashScreen(Widget):
         gs.showedSplash = True
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
-        self.width = w
         self.height = h
+        self.width = self.height * 2.17
+        self.pos = - 0.5 * (self.width - w), 0.0
 
     def anim_out(self, w=width*screen_scf):
         anim = Animation(x=w/2.0, y=0, size=(0, 0), opacity=0, duration=0.5, t='in_back')

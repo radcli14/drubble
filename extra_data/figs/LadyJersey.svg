@@ -14,9 +14,9 @@
    viewBox="0 0 210 297"
    version="1.1"
    id="svg1618"
-   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   inkscape:version="0.92.2 5c3e80d, 2017-08-06"
    sodipodi:docname="LadyJersey.svg"
-   inkscape:export-filename="/home/radcli14/drubble/a/LadyJersey.png"
+   inkscape:export-filename="/Users/radcli14/Desktop/drubble/game/a/LadyJersey.png"
    inkscape:export-xdpi="22.26"
    inkscape:export-ydpi="22.26">
   <defs
@@ -29,15 +29,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.38"
-     inkscape:cx="99.576719"
+     inkscape:cx="-351.73907"
      inkscape:cy="634.07407"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1280"
-     inkscape:window-height="745"
+     inkscape:window-width="1440"
+     inkscape:window-height="799"
      inkscape:window-x="0"
-     inkscape:window-y="27"
+     inkscape:window-y="1"
      inkscape:window-maximized="1" />
   <metadata
      id="metadata1615">
@@ -47,7 +47,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -93,24 +93,13 @@
     <text
        id="text825"
        y="218.43668"
-       x="50.537407"
+       x="52.654076"
        style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'DejaVu Math TeX Gyre';-inkscape-font-specification:'DejaVu Math TeX Gyre Italic';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        xml:space="preserve"><tspan
-         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:88.19445038px;font-family:'Bookman Uralic';-inkscape-font-specification:'Bookman Uralic Italic';fill:#ffcc00;stroke-width:0.26458332"
+         style="font-style:italic;font-variant:normal;font-weight:800;font-stretch:normal;font-size:88.19445038px;font-family:'System Font';-inkscape-font-specification:'System Font Ultra-Bold Italic';fill:#ffcc00;stroke-width:0.26458332"
          y="218.43668"
-         x="50.537407"
+         x="52.654076"
          id="tspan823"
          sodipodi:role="line">11</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:35.27777863px;line-height:1.25;font-family:'Bookman Uralic';-inkscape-font-specification:'Bookman Uralic Italic';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="39.007133"
-       y="130.69044"
-       id="text5879"><tspan
-         sodipodi:role="line"
-         id="tspan5877"
-         x="39.007133"
-         y="130.69044"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:35.27777863px;font-family:'Bookman Uralic';-inkscape-font-specification:'Bookman Uralic Bold';fill:#ffcc00;stroke-width:0.26458332">STATE</tspan></text>
   </g>
 </svg>
