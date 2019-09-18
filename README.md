@@ -73,9 +73,11 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 - [x] Cancel animations before any new animation to ensure that widgets get removed when they are supposed to
 
 ### Future
-- [x] Add a Volley Drubble sub-game
-- [ ] Add a Triple Drubble sub-game
+- [x] Add a Volley dRuBbLe sub-game
+- [ ] Add a Triple dRuBbLe sub-game
 - [x] Include a banner ad
 - [ ] Add networked multiplayer mode
 - [ ] Create a ball cannon
 - [ ] Add statistical plots to the high scores
+- [ ] Add additional players, and a selection screen
+- [ ] Create a real-time multiplayer mode
