@@ -89,28 +89,13 @@
             pos: self.pos
             size: self.size
         Color:
-            rgba: 1, 0, 0, 0.2
+            rgba: 1, 1, 1, 0.5
         Line:
             points: self.pos[0] + 0.4 * self.size[0], self.pos[1] + 0.5 * self.size[1], self.pos[0] + 0.6 * self.size[0], self.pos[1] + 0.5 * self.size[1], self.pos[0] + 0.5 * self.size[0], self.pos[1] + 0.5 * self.size[1], self.pos[0] + 0.5 * self.size[0], self.pos[1] + 0.6 * self.size[1], self.pos[0] + 0.5 * self.size[0], self.pos[1] + 0.4 * self.size[1]
             width: 0.01 * self.size[1]
         Line:
             ellipse: self.pos[0] + 0.35 * self.size[0]*(1+self.ctrl[0]), self.pos[1] + 0.35 * self.size[1]*(1+self.ctrl[1]), 0.3 * self.size[0], 0.3 * self.size[1]
             width: 0.01 * self.size[1]
-        #Line:
-        #    points: self.pos[0], self.pos[1] + 0.1 * self.size[1], self.pos[0], self.pos[1], self.pos[0] + 0.1 * self.size[0], self.pos[1]
-        #    width: 0.01 * self.size[1]
-        #Line:
-        #    points: self.pos[0] + 0.9 * self.size[0], self.pos[1], self.pos[0] + self.size[0], self.pos[1], self.pos[0] + self.size[0], self.pos[1] + 0.1 * self.size[1]
-        #    width: 0.01 * self.size[1]
-        #Color:
-        #    rgba: 1, 1, 1, 0.1
-        #Rectangle:
-        #    source: 'a/crossHair.png'
-        #    pos: self.pos
-        #    size: self.size
-        #Ellipse:
-        #    pos: self.pos[0] + self.size[0]*(1+self.ctrl[0])/4.0, self.pos[1] + self.size[1]*(1+self.ctrl[1])/4.0
-        #    size: self.size[0]/2.0, self.size[1]/2.0
 
 
 <VolleyNet>:
@@ -155,7 +140,7 @@
             size: self.size
     Label:
         font_name: root.label_font
-        text: root.text
+        text: root.label_text
         font_size: root.label_font_size
         pos: root.pos
         size: root.size
@@ -187,11 +172,18 @@
 
 
 <HighScoreLabel>:
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 0.2
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [0.25 * self.size[1]]
     Label:
         text: root.label_text
         font_size: root.font_size
-        font_name: root.label_font
-        pos: root.pos
+        # font_name: root.label_font
+        pos: root.pos[0] + 0.03 * root.size[0], root.pos[1]
         size: (0.2 * root.width, root.height)
         color: root.label_color
         outline_width: root.outline_width
@@ -199,8 +191,8 @@
     Label:
         text: root.this_run
         font_size: root.font_size
-        font_name: root.label_font
-        pos: root.pos[0] + 0.26*root.size[0], root.pos[1]
+        # font_name: root.label_font
+        pos: root.pos[0] + 0.29 * root.size[0], root.pos[1]
         size: 0.2 * root.width, root.height
         color: root.label_color
         outline_width: root.outline_width
@@ -208,8 +200,8 @@
     Label:
         text: root.best_run
         font_size: root.font_size
-        font_name: root.label_font
-        pos: root.pos[0] + 0.47*root.size[0], root.pos[1]
+        # font_name: root.label_font
+        pos: root.pos[0] + 0.51 * root.size[0], root.pos[1]
         size: 0.2 * root.width, root.height
         color: root.label_color
         outline_width: root.outline_width
@@ -217,8 +209,8 @@
     Label:
         text: root.is_high
         font_size: root.font_size
-        font_name: root.label_font
-        pos: root.pos[0] + 0.72*root.size[0], root.pos[1]
+        # font_name: root.label_font
+        pos: root.pos[0] + 0.76 * root.size[0], root.pos[1]
         size: 0.2 * root.width, root.height
         color: root.label_color
         outline_width: root.outline_width

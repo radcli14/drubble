@@ -479,6 +479,7 @@ class OptionButtons(Button):
     button_color = ListProperty(def_button_color)
     shadow_color = ListProperty([0, 0, 1, 0.2])
 
+    label_text = StringProperty('')
     label_font = StringProperty('a/airstrea.ttf')
     label_font_size = NumericProperty(0.0)
     label_color = ListProperty([0.0, 0.0, 0.0, 1.0])
@@ -486,10 +487,11 @@ class OptionButtons(Button):
     corner_radius = NumericProperty(0.015 * Window.width)
     shadow_width = NumericProperty(0.003 * Window.width)
     is_on_screen = False
+    is_blinking = False
     is_high_score = False
 
-    def __init__(self, norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
-                 w=Window.width, h=Window.height, out_position='top', **kwargs):
+    def __init__(self, label_text = '', norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
+                 w=Window.width, h=Window.height, out_position='top', color=red, **kwargs):
         super(OptionButtons, self).__init__()
         # Eliminate default backgrounds
         self.background_color = 1, 1, 1, 0
@@ -505,10 +507,10 @@ class OptionButtons(Button):
         self.size = [norm_size[0] * w, norm_size[1] * h]
 
         # Label properties
-        self.text = kwargs['text']
+        self.label_text = label_text
         self.norm_font_size = norm_font_size
         self.label_font_size = norm_font_size * h
-        self.label_color = [kwargs['color'][0], kwargs['color'][1], kwargs['color'][2], 1]
+        self.label_color = [color[0], color[1], color[2], 1]
 
         # Initialize with the button positioned outside
         self.out_position = out_position
@@ -615,6 +617,17 @@ class OptionButtons(Button):
         anim.start(self)
         self.is_on_screen = True
 
+    def blink(self, duration=1):
+        anim_red = Animation(button_color=(1, 0, 0, 0.4), duration=duration)
+        anim_mid = Animation(button_color=self.def_button_color, duration=duration)
+        anim_blue = Animation(button_color=(0, 0, 1, 0.6), duration=duration)
+        anim_def = Animation(button_color=self.def_button_color, duration=duration)
+        anim = anim_red + anim_mid + anim_blue + anim_def
+        anim.repeat = True
+        anim.start(self)
+        self.is_blinking = True
+        print('  Blinking button')
+
 
 class ScoreLabel(Widget):
     label_text = StringProperty('')
@@ -664,15 +677,16 @@ class HighScoreLabel(Widget):
     this_run = StringProperty('')
     best_run = StringProperty('')
     is_high = StringProperty('')
+    font_size_ratio = 0.0
     font_size = NumericProperty(0)
     label_color = ListProperty([red[0], red[1], red[2], 1])
     outline_width = NumericProperty(2 * screen_scf)
     outline_color = ListProperty([white[0], white[1], white[2]])
-    ratio_from_top = 0.7
+    ratio_from_top = 0.68
     is_on_screen = False
 
-    def __init__(self, outside_position='top', vertical_position=0,
-                 label_text='', this_run='This Run', best_run='Best',
+    def __init__(self, outside_position='top', vertical_position=0, label_color=red, font_size_ratio=0.04,
+                 label_text='Category', this_run='This Run', best_run='Best', is_high='Rank',
                  w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(HighScoreLabel, self).__init__()
         # Outside position is a string, determining where the button goes when off-screen
@@ -685,33 +699,37 @@ class HighScoreLabel(Widget):
         self.label_text = label_text
 
         # Left position of the widget when on-screen
-        self.label_left = 0.08 * w
+        self.label_left = 0.01 * w
 
         # Current scores and the saved best score
+        self.label_text = label_text
         self.this_run = this_run
         self.best_run = best_run
+        self.is_high = is_high
 
         # Sizing
-        self.width = 0.9 * w
+        self.width = 0.98 * w
         self.height = 0.1 * h
-        self.font_size = 0.09 * h
+        self.font_size_ratio = font_size_ratio
+        self.font_size = self.font_size_ratio * w
+        self.label_color = label_color[0], label_color[1], label_color[2], 1
 
         # Start with the widget off-screen
         if self.is_on_screen:
-            self.pos = [self.label_left, (self.ratio_from_top - 0.1 * self.vertical_position) * h]
+            self.pos = [self.label_left, (self.ratio_from_top - 0.12 * self.vertical_position) * h]
         else:
             if self.outside_position == 'left':
                 self.pos[0] = -self.width
             elif self.outside_position == 'right':
                 self.pos[0] = w
             if self.outside_position == 'bottom':
-                self.pos[1] = -self.size[1]
+                self.pos[1] = -self.size[1] - self.font_size
             elif self.outside_position == 'top':
-                self.pos[1] = h
+                self.pos[1] = h + self.font_size
 
     def anim_in(self, h=height*screen_scf, duration=1):
         in_x = self.label_left
-        in_y = (self.ratio_from_top - 0.1 * self.vertical_position) * h
+        in_y = (self.ratio_from_top - 0.12 * self.vertical_position) * h
         Animation.cancel_all(self)
         anim = Animation(x=in_x, y=in_y, duration=duration, t='out_elastic')
         anim.start(self)
@@ -725,30 +743,30 @@ class HighScoreLabel(Widget):
         elif self.outside_position == 'right':
             out_x = w
         if self.outside_position == 'bottom':
-            out_y = -self.size[1]
+            out_y = - self.size[1] - self.font_size
         elif self.outside_position == 'top':
-            out_y = h
+            out_y = h + self.font_size
         Animation.cancel_all(self)
         anim = Animation(x=out_x, y=out_y, duration=duration, t='in_elastic')
         anim.start(self)
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
-        self.label_left = 0.08 * w
-        self.width = 0.9 * w
+        self.label_left = 0.01 * w
+        self.width = 0.98 * w
         self.height = 0.1 * h
-        self.font_size = 0.09 * h
+        self.font_size = self.font_size_ratio * w
 
         if self.is_on_screen:
-            self.pos = [self.label_left, (self.ratio_from_top - 0.1 * self.vertical_position) * h]
+            self.pos = [self.label_left, (self.ratio_from_top - 0.12 * self.vertical_position) * h]
         else:
             if self.outside_position == 'left':
-                self.pos[0] = -self.width
+                self.pos[0] = - self.width
             elif self.outside_position == 'right':
                 self.pos[0] = w
             if self.outside_position == 'bottom':
-                self.pos[1] = -self.size[1]
+                self.pos[1] = - self.size[1] - self.font_size
             elif self.outside_position == 'top':
-                self.pos[1] = h
+                self.pos[1] = h + self.font_size
 
 
 class RotatingRing(Image):
@@ -1011,7 +1029,7 @@ class DrubbleGame(Widget):
             # Initialize the high score labels
             j = p.difficult_level
             k = p.num_player - 1
-            self.high_score_header = HighScoreLabel()
+            self.high_score_header = HighScoreLabel(label_color=blue, font_size_ratio=0.05)
             self.high_dist_label = HighScoreLabel(outside_position='left', vertical_position=1,
                                                   label_text='Distance', this_run='%0.1f' % stats.stool_dist,
                                                   best_run='%0.1f' % stats.high_stool_dist[j][k])
@@ -1025,30 +1043,33 @@ class DrubbleGame(Widget):
                                                    label_text='Score', this_run='%0.0f' % stats.score,
                                                    best_run='%0.0f' % stats.high_score[j][k])
 
-            self.volley_win_label = Label(color=(red[0], red[1], red[2], 1),
+            self.volley_win_label = Label(color=(blue[0], blue[1], blue[2], 1),
+                                          outline_color=(white[0], white[1], white[2]), outline_width=0.0,
+                                          halign='center', valign='center')
+            self.volley_record_label = Label(color=(red[0], red[1], red[2], 1),
                                           outline_color=(white[0], white[1], white[2]), outline_width=0.0,
                                           halign='center', valign='center')
 
             # Initialize the option and action buttons
-            self.single_drubble_butt = OptionButtons(text='Single dRuBbLe', norm_size=(0.55, 0.2), out_position='left',
-                                                     norm_pos=(0.05, 0.7), norm_font_size=0.12, color=red)
-            self.double_drubble_butt = OptionButtons(text='Double dRuBbLe', norm_size=(0.55, 0.2), out_position='right',
-                                                     norm_pos=(0.05, 0.4), norm_font_size=0.12, color=red)
-            self.volley_drubble_butt = OptionButtons(text='Volley dRuBbLe', norm_size=(0.55, 0.2), out_position='left',
-                                                     norm_pos=(0.05, 0.1), norm_font_size=0.12, color=red)
-            self.tutorial_butt = OptionButtons(text='How 2\nPlay', norm_size=(0.3, 0.2), out_position='left',
-                                               norm_pos=(0.65, 0.7),  norm_font_size=0.08,  color=red)
+            self.single_drubble_butt = OptionButtons(label_text='Single dRuBbLe', norm_size=(0.55, 0.2),
+                                                     out_position='left', norm_pos=(0.05, 0.7), norm_font_size=0.12)
+            self.double_drubble_butt = OptionButtons(label_text='Double dRuBbLe', norm_size=(0.55, 0.2),
+                                                     out_position='right', norm_pos=(0.05, 0.4), norm_font_size=0.12)
+            self.volley_drubble_butt = OptionButtons(label_text='Volley dRuBbLe', norm_size=(0.55, 0.2),
+                                                     out_position='left', norm_pos=(0.05, 0.1), norm_font_size=0.12)
+            self.tutorial_butt = OptionButtons(label_text='How 2\nPlay', norm_size=(0.3, 0.2), out_position='left',
+                                               norm_pos=(0.65, 0.7),  norm_font_size=0.08)
             difficult_text = 'Difficulty\n-- ' + p.difficult_text[p.difficult_level] + ' --'
-            self.difficult_butt = OptionButtons(text=difficult_text, norm_size=(0.3, 0.2), out_position='right',
-                                                norm_pos=(0.65, 0.4), norm_font_size=0.08, color=red)
-            self.fx_butt = OptionButtons(text='FX\nOn', norm_size=(0.14, 0.2), norm_pos=(0.65, 0.1), out_position='left',
-                                         norm_font_size=0.08, color=red)
-            self.music_butt = OptionButtons(text='Music\nOn', norm_size=(0.14, 0.2), norm_pos=(0.81, 0.1), out_position='left',
-                                            norm_font_size=0.08, color=red)
-            self.option_butt = OptionButtons(text='Options', norm_size=(0.19, 0.09), out_position='left',
-                                             norm_pos=(0.01, 0.85), norm_font_size=0.06, color=red)
-            self.action_butt = OptionButtons(text=p.actionMSG[3], norm_size=(0.19, 0.09), out_position='right',
-                                             norm_pos=(0.8, 0.85), norm_font_size=0.06, color=red)
+            self.difficult_butt = OptionButtons(label_text=difficult_text, norm_size=(0.3, 0.2), out_position='right',
+                                                norm_pos=(0.65, 0.4), norm_font_size=0.08)
+            self.fx_butt = OptionButtons(label_text='FX\nOn', norm_size=(0.14, 0.2), norm_pos=(0.65, 0.1),
+                                         out_position='left', norm_font_size=0.08)
+            self.music_butt = OptionButtons(label_text='Music\nOn', norm_size=(0.14, 0.2), norm_pos=(0.81, 0.1),
+                                            out_position='left', norm_font_size=0.08)
+            self.option_butt = OptionButtons(label_text='Options', norm_size=(0.19, 0.09), out_position='left',
+                                             norm_pos=(0.01, 0.85), norm_font_size=0.06)
+            self.action_butt = OptionButtons(label_text=p.actionMSG[3], norm_size=(0.19, 0.09), out_position='right',
+                                             norm_pos=(0.8, 0.85), norm_font_size=0.06)
 
             # Create the button bindings
             # self.fx_butt.bind(on_press=self.fx_button_press)
@@ -1241,25 +1262,35 @@ class DrubbleGame(Widget):
 
             # Write a win or lose message dependent on whether the player or opponent score is higher
             if stats.volley_score[0] > stats.volley_score[1]:
-                msg = 'You win  ' + str(stats.volley_score[0]) + ' - ' + str(stats.volley_score[1])
-                msg += '\nWinning streak is  ' + str(stats.streak[j])
+                win_msg = 'You win  ' + str(stats.volley_score[0]) + ' - ' + str(stats.volley_score[1])
+                record_msg = 'Winning streak is  ' + str(stats.streak[j])
             elif stats.volley_score[1] > stats.volley_score[0]:
-                msg = 'You lose  ' + str(stats.volley_score[1]) + ' - ' + str(stats.volley_score[0])
-                msg += '\nLosing streak is ' + str(-stats.streak[j])
-            msg += '\nAll time record is  ' + str(stats.volley_record[j][0]) + ' - ' + str(stats.volley_record[j][1])
-            print(msg)
+                win_msg = 'You lose  ' + str(stats.volley_score[1]) + ' - ' + str(stats.volley_score[0])
+                record_msg = 'Losing streak is ' + str(-stats.streak[j])
+            record = stats.volley_record[j]
+            record_msg += '\nAll time record is  ' + str(record[0]) + ' - ' + str(record[1])
+            print(win_msg)
+            print(record_msg)
 
             # Update the parameters of the text that displays
-            self.volley_win_label.text = msg
+            self.volley_win_label.text = win_msg
             self.volley_win_label.pos = 0.5 * self.width, 0.5 * self.height
             self.volley_win_label.size = 0.0, 0.0
             self.volley_win_label.font_size = 0
+            self.volley_record_label.text = record_msg
+            self.volley_record_label.pos = 0.5 * self.width, 0.5 * self.height
+            self.volley_record_label.size = 0.0, 0.0
+            self.volley_record_label.font_size = 0
 
             # Add the widget, and animate it onto the screen
             self.add_widget(self.volley_win_label)
-            anim = Animation(pos=(0.2*self.width, 0.3*self.height), size=(0.6*self.width, 0.5*self.height),
-                             font_size=0.13*self.height, duration=0.5, outline_width=0.01*self.height, t='out_back')
+            anim = Animation(pos=(0.2*self.width, 0.55*self.height), size=(0.6*self.width, 0.2*self.height),
+                             font_size=0.13*self.height, duration=0.5, outline_width=0.005*self.height, t='out_back')
             anim.start(self.volley_win_label)
+            self.add_widget(self.volley_record_label)
+            anim = Animation(pos=(0.2 * self.width, 0.3 * self.height), size=(0.6 * self.width, 0.3 * self.height),
+                             font_size=0.1 * self.height, duration=0.5, outline_width=0.005*self.height, t='out_back')
+            anim.start(self.volley_record_label)
 
             self.volley_score_on_screen = True
         else:
@@ -1326,6 +1357,7 @@ class DrubbleGame(Widget):
         if self.volley_score_on_screen:
             anim = Animation(x=0.5*self.width, size=(0, 0), font_size=0, outline_width=0, t='in_back', duration=0.5)
             anim.start(self.volley_win_label)
+            anim.start(self.volley_record_label)
             self.volley_drubble_butt.anim_out(w=self.width, h=self.height, duration=duration)
         else:
             # Take the high scores off the screen
@@ -1354,6 +1386,8 @@ class DrubbleGame(Widget):
             print('Removing volley score widget')
             self.volley_win_label.text = ''
             self.remove_widget(self.volley_win_label)
+            self.volley_record_label.text = ''
+            self.remove_widget(self.volley_record_label)
             self.remove_widget(self.volley_drubble_butt)
             self.volley_score_on_screen = False
         else:
@@ -1537,7 +1571,7 @@ class DrubbleGame(Widget):
 
         # Reset game states and scores
         cycle_modes(gs, stats, engine)
-        self.action_butt.text = p.actionMSG[3]
+        self.action_butt.label_text = p.actionMSG[3]
 
         # Turn the button blue momentarily
         self.option_butt.background_touched()
@@ -1565,11 +1599,16 @@ class DrubbleGame(Widget):
         elif gs.game_mode == 6 and SOUND_LOADED and p.fx_is_on:
             start_loop.stop()
 
+        # If its blinking, stop it
+        if self.action_butt.is_blinking:
+            Animation.cancel_all(self.action_butt)
+            self.action_butt.is_blinking = False
+
         # Update the button text and color
         if p.volley_mode and gs.game_mode == 6:
-            self.action_butt.text = ''
+            self.action_butt.label_text = ''
         else:
-            self.action_butt.text = p.actionMSG[gs.game_mode]
+            self.action_butt.label_text = p.actionMSG[gs.game_mode]
 
         # If on completion of the game, add the high scores
         # If on restart of game, remove the high scores
@@ -1634,7 +1673,7 @@ class DrubbleGame(Widget):
             p.difficult_level = 0
 
         # Channge the button text
-        self.difficult_butt.text = 'Difficulty\n-- ' + p.difficult_text[p.difficult_level] + ' --'
+        self.difficult_butt.label_text = 'Difficulty\n-- ' + p.difficult_text[p.difficult_level] + ' --'
 
         # Turn the button blue momentarily
         self.difficult_butt.background_touched()
@@ -1642,10 +1681,10 @@ class DrubbleGame(Widget):
     def fx_button_press(self):
         if p.fx_is_on:
             p.fx_is_on = False
-            self.fx_butt.text = 'FX\nOff'
+            self.fx_butt.label_text = 'FX\nOff'
         else:
             p.fx_is_on = True
-            self.fx_butt.text = 'FX\nOn'
+            self.fx_butt.label_text = 'FX\nOn'
 
         # Turn the button blue momentarily
         self.fx_butt.background_touched()
@@ -1656,13 +1695,13 @@ class DrubbleGame(Widget):
             anim = Animation(volume=0.0, duration=1.0)
             for k in range(num_loops):
                 anim.start(loop[k])
-            self.music_butt.text = 'Music\nOff'
+            self.music_butt.label_text = 'Music\nOff'
         else:
             p.music_is_on = True
             anim = Animation(volume=0.4, duration=1.0)
             for k in range(num_loops):
                 anim.start(loop[k])
-            self.music_butt.text = 'Music\nOn'
+            self.music_butt.label_text = 'Music\nOn'
 
         # Turn the button blue momentarily
         self.music_butt.background_touched()
@@ -1789,11 +1828,15 @@ class DrubbleGame(Widget):
                     self.action_button_press()
 
                 # Bring the action button back if the ball is stuck
-                if gs.Stuck and self.action_butt.text is '':
+                if gs.Stuck and self.action_butt.label_text is '':
                     if stats.volley_score[0] >= p.winning_score or stats.volley_score[1] >= p.winning_score:
-                        self.action_butt.text = 'Results'
+                        self.action_butt.label_text = 'Results'
                     else:
-                        self.action_butt.text = 'Restart'
+                        self.action_butt.label_text = 'Restart'
+
+            # Start blinking the action button if the ball is stuck
+            if gs.game_mode == 6 and gs.Stuck and not self.action_butt.is_blinking:
+                self.action_butt.blink(duration=0.5)
 
             # Update the ball
             self.ball.update(gs.xb, gs.yb, gs.m2p, gs.po, self.width, self.height)
