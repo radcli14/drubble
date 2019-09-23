@@ -490,7 +490,7 @@ class OptionButtons(Button):
     is_blinking = False
     is_high_score = False
 
-    def __init__(self, label_text = '', norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
+    def __init__(self, label_text='', norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
                  w=Window.width, h=Window.height, out_position='top', color=red, **kwargs):
         super(OptionButtons, self).__init__()
         # Eliminate default backgrounds
