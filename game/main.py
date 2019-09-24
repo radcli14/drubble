@@ -5,6 +5,17 @@ Created on Tue Mar  5 21:18:17 2019
 
 @author: radcli14
 
+Errors
+
+Possible fix for the XCode error "Command PhaseScriptExecution failed with a nonzero exit code"
+HareshGediya commented on May 24
+Just had the same problem.
+I did it by remove file in Pods -> Targets Support Files -> Pods-AppName -> Pods-AppName-frameworks.sh.
+And install pod again using pod install.
+
+
+Google AdMob IDs
+
 iOS
 AdMob App ID: ca-app-pub-4007502882739240~9117326010
 Banner Ad ID: ca-app-pub-4007502882739240/5795838735
