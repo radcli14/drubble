@@ -8,6 +8,7 @@
             size: self.width, self.height
             pos: self.pos
 
+
 <MyBackground>:
     canvas:
         Color:
@@ -72,7 +73,7 @@
             angle: self.stool_angle
             origin: self.rotate_center
         Color:
-            rgba: self.stool_color[0], self.stool_color[1], self.stool_color[2], 1
+            rgba: self.stool_color
         Rectangle:
             source: 'a/stool.png'
             pos: self.stool_left, self.stool_bottom
@@ -234,10 +235,10 @@
         font_size: root.label_font_size
         pos: root.label_pos
         size: root.label_size
-        color: 0, 0, 1, 1
+        color: root.label_color
         opacity: root.label_opacity
         outline_width: 0.05 * root.label_font_size
-        outline_color: 1, 1, 1, 1
+        outline_color: root.label_outline_color
         #font_name: root.label_font_name
         halign: 'center'
         valign: 'center'

@@ -47,6 +47,9 @@ if platform == 'android':
 elif platform == 'ios':
     from pyobjus import autoclass
 
+# Dark mode toggle, for future implementation
+isDark = 0
+
 # Initialize Game State
 # gs = GameState(p.u0, engine)
 
@@ -54,7 +57,9 @@ elif platform == 'ios':
 stats = GameScore()
 
 # Set the sky blue background color
-Window.clearcolor = (cyan[0], cyan[1], cyan[2], 1)
+Window.clearcolor = teal[isDark]
+
+# Set window size based on platform, if on a desktop then use the iPhone 8 resolution, 16 x 9
 print('dRuBbLe game launched from the ', platform, ' platform')
 if platform in ('linux', 'windows', 'win', 'macosx'):
     # iPhone 8 Resolution
@@ -249,7 +254,7 @@ class MyFace(Widget):
     stool_angle = NumericProperty(0.0)
     rotate_center = ListProperty([0, 0])
     image_source = StringProperty(None)
-    stool_color = ListProperty([0, 0, 0])
+    stool_color = ListProperty([1, 1, 1, 1])
     line_list = ListProperty([0, 0])
     line_color = ListProperty([0, 0, 0])
     line_width = NumericProperty(1)
@@ -259,7 +264,7 @@ class MyFace(Widget):
     shorts_angle1 = NumericProperty(0.0)
 
     def __init__(self, image_source='a/myFace.png', jersey_source='a/MyJersey.png', shorts_source='a/MyShorts.png',
-                 stool_color=white, line_color=darkGreen, **kwargs):
+                 stool_color=black_white[isDark], line_color=green[isDark], **kwargs):
         super(MyFace, self).__init__(**kwargs)
         self.image_source = image_source
         self.jersey_source = jersey_source
@@ -353,8 +358,9 @@ class Ball(Widget):
         super(Ball, self).__init__(**kwargs)
         self.opacity = 0.0
         self.future = []
+
         with self.canvas:
-            Color(rgba=(1.0, 0.4, 0.8, 0.35))
+            Color(rgba=(purple[isDark][0], purple[isDark][1], purple[isDark][2], 0.5))
             self.future = [Ellipse(size=(0, 0)) for _ in range(p.num_future_points)]
             Color(rgba=(1, 1, 1, 1))
             self.now = Ellipse(size=(self.sz, self.sz), source=image_source, pos=self.pos)
@@ -477,12 +483,12 @@ class OptionButtons(Button):
     def_button_color = (1, 1, 1, 0.9)
     touched_button_color = (1, 1, 1, 0.6)
     button_color = ListProperty(def_button_color)
-    shadow_color = ListProperty([0, 0, 1, 0.2])
+    shadow_color = ListProperty(blue[isDark])
 
     label_text = StringProperty('')
     label_font = StringProperty('a/airstrea.ttf')
     label_font_size = NumericProperty(0.0)
-    label_color = ListProperty([0.0, 0.0, 0.0, 1.0])
+    label_color = ListProperty(red[isDark])
     out_position = StringProperty('')
     corner_radius = NumericProperty(0.015 * Window.width)
     shadow_width = NumericProperty(0.003 * Window.width)
@@ -491,7 +497,7 @@ class OptionButtons(Button):
     is_high_score = False
 
     def __init__(self, label_text='', norm_pos=(0.0, 0.0), norm_size=(0.5, 0.1), norm_font_size=0.05,
-                 w=Window.width, h=Window.height, out_position='top', color=red, **kwargs):
+                 w=Window.width, h=Window.height, out_position='top', color=red[isDark], **kwargs):
         super(OptionButtons, self).__init__()
         # Eliminate default backgrounds
         self.background_color = 1, 1, 1, 0
@@ -510,7 +516,7 @@ class OptionButtons(Button):
         self.label_text = label_text
         self.norm_font_size = norm_font_size
         self.label_font_size = norm_font_size * h
-        self.label_color = [color[0], color[1], color[2], 1]
+        self.label_color = color
 
         # Initialize with the button positioned outside
         self.out_position = out_position
@@ -618,9 +624,9 @@ class OptionButtons(Button):
         self.is_on_screen = True
 
     def blink(self, duration=1):
-        anim_red = Animation(button_color=(1, 0, 0, 0.4), duration=duration)
+        anim_red = Animation(button_color=(red[isDark][0], red[isDark][1], red[isDark][2], 0.4), duration=duration)
         anim_mid = Animation(button_color=self.def_button_color, duration=duration)
-        anim_blue = Animation(button_color=(0, 0, 1, 0.6), duration=duration)
+        anim_blue = Animation(button_color=(blue[isDark][0], blue[isDark][1], blue[isDark][2],  0.6), duration=duration)
         anim_def = Animation(button_color=self.def_button_color, duration=duration)
         anim = anim_red + anim_mid + anim_blue + anim_def
         anim.repeat = True
@@ -679,13 +685,13 @@ class HighScoreLabel(Widget):
     is_high = StringProperty('')
     font_size_ratio = 0.0
     font_size = NumericProperty(0)
-    label_color = ListProperty([red[0], red[1], red[2], 1])
+    label_color = ListProperty(red[isDark])
     outline_width = NumericProperty(2 * screen_scf)
-    outline_color = ListProperty([white[0], white[1], white[2]])
+    outline_color = ListProperty(gray_6[0][0:3])
     ratio_from_top = 0.68
     is_on_screen = False
 
-    def __init__(self, outside_position='top', vertical_position=0, label_color=red, font_size_ratio=0.04,
+    def __init__(self, outside_position='top', vertical_position=0, label_color=red[isDark], font_size_ratio=0.04,
                  label_text='Category', this_run='This Run', best_run='Best', is_high='Rank',
                  w=width*screen_scf, h=height*screen_scf, **kwargs):
         super(HighScoreLabel, self).__init__()
@@ -712,7 +718,7 @@ class HighScoreLabel(Widget):
         self.height = 0.1 * h
         self.font_size_ratio = font_size_ratio
         self.font_size = self.font_size_ratio * w
-        self.label_color = label_color[0], label_color[1], label_color[2], 1
+        self.label_color = label_color
 
         # Start with the widget off-screen
         if self.is_on_screen:
@@ -809,6 +815,8 @@ class Tutorial(Widget):
     label_font_size = NumericProperty(0.0)
     label_pos = ListProperty([0.5 * Window.width, 0.4 * Window.height])
     label_size = ListProperty([0.0, 0.0])
+    label_color = ListProperty(blue[isDark])
+    label_outline_color = ListProperty(gray_6[isDark])
     label_outline_width = 3.0 * screen_scf
     label_opacity = NumericProperty(0.0)
     label_font_name = StringProperty('a/Airstream.ttf')
@@ -1022,14 +1030,16 @@ class DrubbleGame(Widget):
 
             # Initialize the player faces
             self.myFace = MyFace(image_source='a/myFace2.png', jersey_source='a/MyJersey.png',
-                                 shorts_source='a/MyShorts.png', line_color=green, stool_color=white)
+                                 shorts_source='a/MyShorts.png', line_color=green[isDark],
+                                 stool_color=gray[isDark])
             self.LadyFace = MyFace(image_source='a/LadyFace.png', jersey_source='a/LadyJersey.png',
-                                   shorts_source='a/LadyShorts.png', line_color=olive, stool_color=gray)
+                                   shorts_source='a/LadyShorts.png', line_color=olive[isDark],
+                                   stool_color=gray_6[isDark])
 
             # Initialize the high score labels
             j = p.difficult_level
             k = p.num_player - 1
-            self.high_score_header = HighScoreLabel(label_color=blue, font_size_ratio=0.05)
+            self.high_score_header = HighScoreLabel(label_color=blue[isDark], font_size_ratio=0.05)
             self.high_dist_label = HighScoreLabel(outside_position='left', vertical_position=1,
                                                   label_text='Distance', this_run='%0.1f' % stats.stool_dist,
                                                   best_run='%0.1f' % stats.high_stool_dist[j][k])
@@ -1043,12 +1053,10 @@ class DrubbleGame(Widget):
                                                    label_text='Score', this_run='%0.0f' % stats.score,
                                                    best_run='%0.0f' % stats.high_score[j][k])
 
-            self.volley_win_label = Label(color=(blue[0], blue[1], blue[2], 1),
-                                          outline_color=(white[0], white[1], white[2]), outline_width=0.0,
-                                          halign='center', valign='center')
-            self.volley_record_label = Label(color=(red[0], red[1], red[2], 1),
-                                          outline_color=(white[0], white[1], white[2]), outline_width=0.0,
-                                          halign='center', valign='center')
+            self.volley_win_label = Label(color=blue[isDark], outline_color=(white[0], white[1], white[2]),
+                                          outline_width=0.0, halign='center', valign='center')
+            self.volley_record_label = Label(color=red[isDark], outline_color=(white[0], white[1], white[2]),
+                                             outline_width=0.0, halign='center', valign='center')
 
             # Initialize the option and action buttons
             self.single_drubble_butt = OptionButtons(label_text='Single dRuBbLe', norm_size=(0.55, 0.2),
