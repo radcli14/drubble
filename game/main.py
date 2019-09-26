@@ -13,6 +13,12 @@ Just had the same problem.
 I did it by remove file in Pods -> Targets Support Files -> Pods-AppName -> Pods-AppName-frameworks.sh.
 And install pod again using pod install.
 
+DSPerson commented on Jun 14
+Xcode -> File -> Workspace Setting... -> cut Build System to Legacy Build System. Have Fun
+
+
+:-1: Undefined symbol: _OBJC_CLASS_$_WKWebView
+Go to your Project, click on General, scroll down to Linked Frameworks and Libraries, and add WebKit.framework as Optional. See here: Xcode 6 + iOS 8 SDK but deploy on iOS 7 (UIWebKit & WKWebKit)
 
 Google AdMob IDs
 
@@ -1044,7 +1050,7 @@ class DrubbleGame(Widget):
                                  shorts_source='a/MyShorts.png', line_color=green[isDark],
                                  stool_color=gray[isDark])
             self.LadyFace = MyFace(image_source='a/LadyFace.png', jersey_source='a/LadyJersey.png',
-                                   shorts_source='a/LadyShorts.png', line_color=olive[isDark],
+                                   shorts_source='a/LadyShorts.png', line_color=orange[isDark],
                                    stool_color=gray_6[isDark])
 
             # Initialize the high score labels
