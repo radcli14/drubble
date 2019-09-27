@@ -188,8 +188,9 @@ class MyBackground(Widget):
     def make_markers(self):
         with self.canvas:
             # xrng_r is the first and last markers on the screen, xrng_n is the number of markers
-            xrng_r = [round(gs.xr[i], -1) for i in range(2)]
-            xrng_n = int(0.1 * (gs.xr[1] - gs.xr[0])) + 1
+            pm = [-10, 10]
+            xrng_r = [round(gs.xr[i]+pm[i], -1) for i in range(2)]
+            xrng_n = int(0.1 * (xrng_r[1] - xrng_r[0])) + 1
 
             for k in range(self.nMarks):
                 self.yardMark[k].text = ''
@@ -280,15 +281,14 @@ class MyFace(Widget):
     shorts_angle0 = NumericProperty(0.0)
     shorts_angle1 = NumericProperty(0.0)
 
-    def __init__(self, image_source='a/myFace.png', jersey_source='a/MyJersey.png', shorts_source='a/MyShorts.png',
-                 stool_color=black_white[isDark], line_color=green[isDark], **kwargs):
-        super(MyFace, self).__init__(**kwargs)
-        self.image_source = image_source
-        self.jersey_source = jersey_source
-        self.shorts_source0 = shorts_source
-        self.shorts_source1 = shorts_source.replace('.', '1.')
-        self.stool_color = stool_color
-        self.line_color = line_color
+    def __init__(self, **kwargs):
+        super(MyFace, self).__init__()
+        self.image_source = kwargs['image_source']
+        self.jersey_source = kwargs['jersey_source']
+        self.shorts_source0 = kwargs['shorts_source']
+        self.shorts_source1 = self.shorts_source0.replace('.', '1.')
+        self.stool_color = kwargs['stool_color']
+        self.line_color = kwargs['line_color']
         self.opacity = 0.0
 
     def update(self, x, y, l, th, m2p, po, w, h, player):
@@ -1046,12 +1046,8 @@ class DrubbleGame(Widget):
             self.score_label = ScoreLabel(text='Score', norm_left=0.8)
 
             # Initialize the player faces
-            self.myFace = MyFace(image_source='a/myFace2.png', jersey_source='a/MyJersey.png',
-                                 shorts_source='a/MyShorts.png', line_color=green[isDark],
-                                 stool_color=gray[isDark])
-            self.LadyFace = MyFace(image_source='a/LadyFace.png', jersey_source='a/LadyJersey.png',
-                                   shorts_source='a/LadyShorts.png', line_color=orange[isDark],
-                                   stool_color=gray_6[isDark])
+            self.myFace = MyFace(**p.college_me)
+            self.LadyFace = MyFace(**p.isu_gal)
 
             # Initialize the high score labels
             j = p.difficult_level

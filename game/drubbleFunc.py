@@ -58,18 +58,20 @@ gray_6 = [[242.0 / 255.0, 242.0 / 255.0, 247.0 / 255.0, 1.0], [28.0 / 255.0, 28.
 # Black if darkMode is true, otherwise white
 black_white = [[0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]
 
-# Convert physical coordinates to pixels
+
 def xy2p(x, y, m2p, po, w, h):
-    try:
-        xp = x * m2p - po + w/2
-        yp = y * m2p + h/20
-    except:
-        xp = []
-        for xi in x:
-            xp.append(xi * m2p - po + w/2)
-        yp = []
-        for yi in y:
-            yp.append(yi * m2p + h/20)
+    """
+    Convert physical coordinates to pixels
+    :param x: Horizontal position [m]
+    :param y: Vertical position [m]
+    :param m2p: Meter to Pixel conversion factor
+    :param po: Number of pixels offset
+    :param w: Screen width in pixels
+    :param h: Screen height in pixels
+    :return: (x in pixels, y in pixels)
+    """
+    xp = x * m2p - po + 0.5 * w if type(x) in (int, float) else [xi * m2p - po + 0.5 * w for xi in x]
+    yp = y * m2p + 0.05 * h if type(y) in (int, float) else [yi * m2p + 0.05 * h for yi in y]
     return xp, yp
 
 
@@ -161,9 +163,11 @@ class Parameters:
     # Font settings
     MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
-    # Color settings
-    playerColor = darkGreen, red
-    stoolColor = white, black
+    # Player visual settings
+    college_me = {'image_source': 'a/myFace2.png', 'jersey_source': 'a/MyJersey.png',
+                  'shorts_source': 'a/MyShorts.png', 'line_color': green[0], 'stool_color': gray[0]}
+    isu_gal = {'image_source': 'a/LadyFace.png', 'jersey_source': 'a/LadyJersey.png',
+               'shorts_source': 'a/LadyShorts.png', 'line_color': orange[0], 'stool_color': gray_6[0]}
 
     # This is the text used in the upper right button
     actionMSG = '', '', '', 'Begin', 'Set Angle', 'Set Speed', 'High Scores', 'Restart'
