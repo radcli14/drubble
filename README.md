@@ -69,7 +69,7 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 - [x] Add a tutorial
 - [x] Add audio for setting ball speed, button presses
 - [x] Add a background screen connecting the last screen to the first, geographically
-- [ ] Add one more base audio file
+- [x] Add one more base audio file
 - [x] Cancel animations before any new animation to ensure that widgets get removed when they are supposed to
 
 ### Future
@@ -80,4 +80,3 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 - [ ] Create a ball cannon
 - [ ] Add statistical plots to the high scores
 - [ ] Add additional players, and a selection screen
-- [ ] Create a real-time multiplayer mode

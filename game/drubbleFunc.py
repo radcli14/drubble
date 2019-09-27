@@ -220,7 +220,7 @@ p = Parameters()
 # Initialize sounds
 try:
     # Initialize drums
-    num_loops = 2
+    num_loops = 3
     loop = [SoundLoader.load('a/0'+str(k)+'-DC-Base.wav') for k in range(num_loops)]
     for k in range(num_loops):
         loop[k].volume = 0.4

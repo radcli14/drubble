@@ -188,8 +188,8 @@ class MyBackground(Widget):
     def make_markers(self):
         with self.canvas:
             # xrng_r is the first and last markers on the screen, xrng_n is the number of markers
-            pm = [-10, 10]
-            xrng_r = [round(gs.xr[i]+pm[i], -1) for i in range(2)]
+            pm = [-10, 10]  # plus minus, prevents flickering of markers on the edges
+            xrng_r = [round(gs.xr[i] + pm[i], -1) for i in range(2)]
             xrng_n = int(0.1 * (xrng_r[1] - xrng_r[0])) + 1
 
             for k in range(self.nMarks):
