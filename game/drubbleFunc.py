@@ -92,7 +92,7 @@ class Parameters:
     y0 = 1.5     # Equilibrium position of player CG [m]
     d = 0.3      # Relative position from player CG to stool rotation axis [m]
     l0 = 1.5     # Equilibrium position of stool
-    ax = 1.0     # Horizontal acceleration [g]
+    ax = 2.0     # Horizontal acceleration [g]
     Qx = ax*m*g  # Max horizontal force [N]
     Gx = 1.5     # Control gain on Qx
     fy = 0.8     # vertical frequency [Hz]
@@ -121,7 +121,7 @@ class Parameters:
 
     # Gameplay settings
     userControlled = [[True,   True,  True, True],
-                      [False, False, False,False]]
+                      [False, False, False, False]]
     num_player = 1
 
     # Stool parameters
@@ -146,7 +146,7 @@ class Parameters:
         K = np.diag([0.0, Ky, Kl, Kt])
 
     # Touch Stick Sensitivity
-    tsens = 1.5
+    tsens = 1.2
     
     # Tolerance on last bounce speed before stopping motion
     dybtol = 4.0
@@ -297,19 +297,17 @@ def linspace(start, stop, n):
     if n == 1:
         return stop
     h = (stop - start) / (n - 1)
-    v = []
-    for i in range(n):
-        v.append(start + h * i)
+    v = [start + h * i for i in range(n)]
     return v
 
 
 def zeros(ztup):
     try:
-        z = [0 for i in range(ztup[1])]
-        Z = [z for i in range(ztup[0])]
+        z = [0 for _ in range(ztup[1])]
+        Z = [z for _ in range(ztup[0])]
         return Z
     except:
-        z = [0 for i in range(ztup)]
+        z = [0 for _ in range(ztup)]
         return z
 
 
@@ -1107,8 +1105,8 @@ def control_logic(t, u, k, p, gs, stats):
     if p.volley_mode:
         player_run_ahead = 10.0 if gs.xI < 0 else 0.0
     else:
-        player_run_ahead = 10.0 * (p.num_player - 1 - gs.active_player)
-    diff_distance = 0.4 if p.volley_mode else -0.1
+        player_run_ahead = 0.0 if k == gs.active_player else 10.0
+    diff_distance = 0.4 if p.volley_mode else -0.25
     pip = gs.xI + player_run_ahead + diff_distance
     if p.userControlled[k][0]:
         if gs.ctrl[0] == 0:
@@ -1146,11 +1144,11 @@ def control_logic(t, u, k, p, gs, stats):
     # Control stool angle by pointing at the ball
     xdiff = xb-xp[k]  # Ball distance - player distance
     ydiff = yb-yp[k]-p.d
-    wantAngle = atan2(-xdiff, ydiff)
+    want_angle = atan2(-xdiff, ydiff)
     if p.userControlled[k][3]:
         Bth = gs.ctrl[3]
     else:
-        Bth = p.Gt*(wantAngle-tp[k])
+        Bth = p.Gt*(want_angle-tp[k])
         if Bth > 1.0:
             Bth = 1.0
         elif Bth < -1.0 or (0 < gs.timeUntilBounce < 0.017):

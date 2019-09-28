@@ -589,7 +589,8 @@ class OptionButtons(Button):
 
     def anim_in(self, w=Window.width, h=Window.height, duration=0.5):
         Animation.cancel_all(self)
-        anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, duration=duration, t='out_back')
+        anim = Animation(x=self.norm_pos[0]*w, y=self.norm_pos[1]*h, size=(self.norm_size[0]*w, self.norm_size[1]*h),
+                         duration=duration, t='out_back')
         anim.start(self)
         self.is_high_score = False
         self.is_on_screen = True
