@@ -36,7 +36,7 @@ Interstitial Ad ID: ca-app-pub-4007502882739240/3261013033
 """
 # Import modules
 from math import fmod, floor
-from random import randint
+from random import randint, random
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
@@ -110,9 +110,7 @@ class MyBackground(Widget):
     bg_left1 = NumericProperty(0.0)
 
     # Create the textures
-    textures = []
-    for n in range(num_bg):
-        textures.append(Image(source='a/bg'+str(n)+'.png').texture)
+    textures = [Image(source='a/bg'+str(n)+'.png').texture for n in range(num_bg)]
     bg_text0 = ObjectProperty(None)
     bg_text1 = ObjectProperty(None)
 
@@ -370,6 +368,8 @@ class Ball(Widget):
     img_left = NumericProperty(0.0)
     img_bottom = NumericProperty(0.0)
     sz = NumericProperty(0)
+    random_add = [[random()-0.5 for _ in range(2)] for _ in range(p.num_future_points)]
+    random_scale = NumericProperty(0.0)
 
     def __init__(self, image_source='a/ball.png', **kwargs):
         super(Ball, self).__init__(**kwargs)
@@ -394,12 +394,15 @@ class Ball(Widget):
         nf = float(p.num_future_points)
         for n in range(X.__len__()):
             sz = self.sz * (1.0 - n / nf)
-            self.future[n].pos = (X[n] - 0.5 * sz, Y[n] - 0.5 * sz)
+            self.future[n].pos = (X[n] - 0.5 * sz + self.random_add[n][0] * self.random_scale * m2p,
+                                  Y[n] - 0.5 * sz + self.random_add[n][1] * self.random_scale * m2p)
             self.future[n].size = (sz, sz)
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1.0):
         self.width = w
         self.height = h
+        self.random_add = [[random() - 0.5 for _ in range(2)] for _ in range(p.num_future_points)]
+        self.random_scale = 0.0
         Animation.cancel_all(self)
         anim = Animation(opacity=1.0, duration=duration)
         anim.start(self)
@@ -1856,9 +1859,11 @@ class DrubbleGame(Widget):
                     else:
                         self.action_butt.label_text = 'Restart'
 
-            # Start blinking the action button if the ball is stuck
+            # Start blinking the action button if the ball is stuck, and make the ball "explode"
             if gs.game_mode == 6 and gs.Stuck and not self.action_butt.is_blinking:
                 self.action_butt.blink(duration=0.5)
+                animation = Animation(random_scale=4.0, opacity=0.0, duration=4.0)
+                animation.start(self.ball)
 
             # Update the ball
             self.ball.update(gs.xb, gs.yb, gs.m2p, gs.po, self.width, self.height)

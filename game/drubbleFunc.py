@@ -70,8 +70,10 @@ def xy2p(x, y, m2p, po, w, h):
     :param h: Screen height in pixels
     :return: (x in pixels, y in pixels)
     """
-    xp = x * m2p - po + 0.5 * w if type(x) in (int, float) else [xi * m2p - po + 0.5 * w for xi in x]
-    yp = y * m2p + 0.05 * h if type(y) in (int, float) else [yi * m2p + 0.05 * h for yi in y]
+    # xp = x * m2p - po + 0.5 * w if type(x) in (int, float) else [xi * m2p - po + 0.5 * w for xi in x]
+    # yp = y * m2p + 0.05 * h if type(y) in (int, float) else [yi * m2p + 0.05 * h for yi in y]
+    xp = [xi * m2p - po + 0.5 * w for xi in x] if type(x) in (list, tuple) else x * m2p - po + 0.5 * w
+    yp = [yi * m2p + 0.05 * h for yi in y] if type(y) in (list, tuple) else y * m2p + 0.05 * h
     return xp, yp
 
 
@@ -92,7 +94,7 @@ class Parameters:
     y0 = 1.5     # Equilibrium position of player CG [m]
     d = 0.3      # Relative position from player CG to stool rotation axis [m]
     l0 = 1.5     # Equilibrium position of stool
-    ax = 2.0     # Horizontal acceleration [g]
+    ax = 1.5     # Horizontal acceleration [g]
     Qx = ax*m*g  # Max horizontal force [N]
     Gx = 1.5     # Control gain on Qx
     fy = 0.8     # vertical frequency [Hz]
@@ -1005,10 +1007,10 @@ def player_and_stool(t, u, p, gs, stats):
                               [-p.mg * lp[k]*c, -p.mg * lp[k] * s,   0,       p.mg * lp[k]**2]])
 
             # Centripetal [0,1] and Coriolis [3] Force Vector
-            D = np.array([[- p.mg * dlp[k] * dtp[k] * c + p.mg * lp[k] * dtp[k] * dtp[k] * s],
-                          [- p.mg * dlp[k] * dtp[k] * s + p.mg * lp[k] * dtp[k] * dtp[k] * c],
-                          [0.0],
-                          [2.0 * p.mg * dtp[k]]])
+            D = np.array([[- 2.0 * p.mg * dlp[k] * dtp[k] * c + p.mg * lp[k] * s * dtp[k]**2],
+                          [- 2.0 * p.mg * dlp[k] * dtp[k] * s - p.mg * lp[k] * c * dtp[k]**2],
+                          [- p.mg * lp[k] * dtp[k]**2],
+                          [2.0 * p.mg * lp[k] * dlp[k] * dtp[k]]])
 
             # Gravitational Force Vector
             G = np.array([[0.0],
@@ -1021,7 +1023,7 @@ def player_and_stool(t, u, p, gs, stats):
                 t = t[0]
         
         # Control inputs form the generalized forces
-        Qx, Qy, Ql, Qth = control_logic(t, u, k, p, gs, stats)
+        Qx, Qy, Ql, Qth = control_logic(u, k)
 
         # Equation of Motion
         if USE_NUMPY:
@@ -1095,7 +1097,11 @@ def kvUpdateKey(keyPush, keycode, val):
     return keyPush
 
 
-def control_logic(t, u, k, p, gs, stats):
+def control_logic(u, k):
+    # If the ball is stuck, then stop making the computer move
+    if k is 1 and gs.Stuck:
+        return 0.0, 0.0, 0.0, 0.0
+
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
@@ -1109,10 +1115,13 @@ def control_logic(t, u, k, p, gs, stats):
     diff_distance = 0.4 if p.volley_mode else -0.25
     pip = gs.xI + player_run_ahead + diff_distance
     if p.userControlled[k][0]:
+        """
         if gs.ctrl[0] == 0:
             Bx = 0.0 if dxp[k] == 0.0 else -erf(dxp[k])  # Friction
         else:
             Bx = gs.ctrl[0]
+        """
+        Bx = 1.5 * gs.ctrl[0] - 0.5 * erf(dxp[k])
     else:
         if gs.timeUntilBounce > 0:
             if pip - xp[k] > 3:
@@ -1142,9 +1151,9 @@ def control_logic(t, u, k, p, gs, stats):
         Bl = abs(gs.timeUntilBounce) < 0.2
     
     # Control stool angle by pointing at the ball
-    xdiff = xb-xp[k]  # Ball distance - player distance
-    ydiff = yb-yp[k]-p.d
-    want_angle = atan2(-xdiff, ydiff)
+    dx = xb - xp[k]  # Ball distance - player distance
+    dy = yb - yp[k] - p.d
+    want_angle = atan2(-dx, dy)
     if p.userControlled[k][3]:
         Bth = gs.ctrl[3]
     else:
