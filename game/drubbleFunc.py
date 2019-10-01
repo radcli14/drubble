@@ -329,7 +329,7 @@ def ball_predict(gs, active_player):
     elif gs.game_mode > 2 and (gs.yb > gs.yp[active_player] + p.d + gs.lp[active_player]):
         # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
-        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - gs.yp[active_player] - p.d - gs.lp[active_player]))) / p.g
+        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - 1.7 * p.rb - gs.yp[active_player] - p.d - gs.lp[active_player]))) / p.g
     else:
         tI = 0
 
@@ -1098,10 +1098,12 @@ def kvUpdateKey(keyPush, keycode, val):
 
 
 def control_logic(u, k):
+    # Initialize the list of generalized forces
+    Q = [0.0, 0.0, 0.0, 0.0]
+
     # If the ball is stuck, then stop making the computer move
     if k is 1 and gs.Stuck:
-        return 0.0, 0.0, 0.0, 0.0
-
+        return Q
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
@@ -1115,58 +1117,50 @@ def control_logic(u, k):
     diff_distance = 0.4 if p.volley_mode else -0.25
     pip = gs.xI + player_run_ahead + diff_distance
     if p.userControlled[k][0]:
-        """
-        if gs.ctrl[0] == 0:
-            Bx = 0.0 if dxp[k] == 0.0 else -erf(dxp[k])  # Friction
-        else:
-            Bx = gs.ctrl[0]
-        """
-        Bx = 1.5 * gs.ctrl[0] - 0.5 * erf(dxp[k])
+        Q[0] = p.Qx * (1.5 * gs.ctrl[0] - 0.5 * erf(dxp[k]))
     else:
         if gs.timeUntilBounce > 0:
             if pip - xp[k] > 3:
-                Bx = 1.0
+                Q[0] = p.Qx
             elif pip - xp[k] < -3:
-                Bx = -1.0
+                Q[0] = - p.Qx
             else:
-                Bx = min(max(p.Gx * (pip - xp[k]) - 0.4*dxp[k], -1), 1)
+                Q[0] = p.Qx * min(max(p.Gx * (pip - xp[k]) - 0.4*dxp[k], -1), 1)
         else:
-            Bx = min(max(p.Gx * (xb - xp[k] + player_run_ahead), -1), 1)
+            Q[0] = p.Qx * min(max(p.Gx * (xb - xp[k] + player_run_ahead), -1), 1)
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
     if p.userControlled[k][1]:
-        By = gs.ctrl[1]
+        Q[1] = p.Qy * gs.ctrl[1]
     else:
         if (gs.timeUntilBounce < 0.6) and (gs.timeUntilBounce > 0.4):
-            By = -1.0
+            Q[1] = - p.Qy
         elif abs(gs.timeUntilBounce) < 0.2:
-            By = 1.0
-        else:
-            By = 0.0
-    
+            Q[1] = p.Qy
+
     # Control arm extension based on timing, turn on when impact in <0.2 sec
     if p.userControlled[k][2]:
-        Bl = gs.ctrl[2]
+        Q[2] = p.Ql * gs.ctrl[2]
     else:
-        Bl = abs(gs.timeUntilBounce) < 0.2
+        Q[2] = p.Ql * (abs(gs.timeUntilBounce) < 0.2)
     
     # Control stool angle by pointing at the ball
     dx = xb - xp[k]  # Ball distance - player distance
     dy = yb - yp[k] - p.d
     want_angle = atan2(-dx, dy)
     if p.userControlled[k][3]:
-        Bth = gs.ctrl[3]
+        Q[3] = p.Qt * gs.ctrl[3]
     else:
-        Bth = p.Gt*(want_angle-tp[k])
-        if Bth > 1.0:
-            Bth = 1.0
-        elif Bth < -1.0 or (0 < gs.timeUntilBounce < 0.017):
-            Bth = -1.0
+        Q[3] = p.Qt * p.Gt * (want_angle-tp[k])
+        if Q[3] > p.Qt:
+            Q[3] = p.Qt
+        elif Q[3] < -p.Qt or (0 < gs.timeUntilBounce < 0.017):
+            Q[3] = - p.Qt
 
     if USE_NUMPY:
-        return np.array([Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt])
+        return np.array(Q)
     else:
-        return Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt
+        return Q
 
 
 def ball_hit_floor(t, u):
@@ -1204,9 +1198,7 @@ def ball_hit_stool(t, u, k):
     r2 = xb - ri[0], yb - ri[1]
 
     # Calculate the distance to the outer radius of the ball t
-    L = norm(r2) - p.rb
-    
-    return L 
+    return norm(r2) - p.rb
 
 
 def ball_bounce_stool(gs, k):

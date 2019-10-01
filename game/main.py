@@ -379,6 +379,8 @@ class Ball(Widget):
         with self.canvas:
             Color(rgba=(purple[isDark][0], purple[isDark][1], purple[isDark][2], 0.5))
             self.future = [Ellipse(size=(0, 0)) for _ in range(p.num_future_points)]
+            Color(rgba=(pink[isDark][0], pink[isDark][1], pink[isDark][2], 0.75))
+            self.impact = Ellipse()
             Color(rgba=(1, 1, 1, 1))
             self.now = Ellipse(size=(self.sz, self.sz), source=image_source, pos=self.pos)
 
@@ -387,10 +389,15 @@ class Ball(Widget):
         self.sz = int(2.0 * m2p * p.rb)
         self.img_left = int(x - m2p * p.rb)
         self.img_bottom = int(y - m2p * p.rb)
-
-        X, Y = xy2p(gs.traj['x'], gs.traj['y'], m2p, po, w, h)
         self.now.pos = (self.img_left, self.img_bottom)
         self.now.size = (self.sz, self.sz)
+
+        x, y = xy2p(gs.xI-p.rb, gs.yI-p.rb, m2p, po, w, h)
+        self.impact.pos = int(x), int(y)
+        self.impact.size = self.sz, self.sz
+
+        X, Y = xy2p(gs.traj['x'], gs.traj['y'], m2p, po, w, h)
+
         nf = float(p.num_future_points)
         for n in range(X.__len__()):
             sz = self.sz * (1.0 - n / nf)

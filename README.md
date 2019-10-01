@@ -21,8 +21,8 @@ Three difficulty settings
 ## How to play:
 
 There are two virtual sticks which appear as crosshairs on the screen. 
-Touch the stick on the lower left to move the stool. 
-Touch the stick on the lower right to move the player.
+Touch the stick on the left to move the stool. 
+Touch the stick on the right to move the player.
 Use the action button in the upper right to start the game.
 Tap once to set the launch angle.
 Tap again to set the speed and launch the ball.
