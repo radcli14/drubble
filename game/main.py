@@ -67,17 +67,11 @@ elif platform == 'ios':
 # Dark mode toggle, for future implementation
 isDark = 0
 
-# Initialize Game State
-# gs = GameState(p.u0, engine)
-
-# Initialize stats
-stats = GameScore()
-
 # Set the sky blue background color
 Window.clearcolor = teal[isDark]
 
 # Set window size based on platform, if on a desktop then use the iPhone 8 resolution, 16 x 9
-print('dRuBbLe game launched from the ', platform, ' platform')
+print('dRuBbLe game launched from the ' + platform + ' platform')
 if platform in ('linux', 'windows', 'win', 'macosx'):
     # iPhone 8 Resolution
     width = 1334
@@ -364,12 +358,18 @@ class VolleyNet(Widget):
         self.score_bottom = 0.9 * h
 
 
+class ColorEllipse(Widget):
+    color = ListProperty([1.0, 1.0, 1.0, 1.0])
+
+
 class Ball(Widget):
     img_left = NumericProperty(0.0)
     img_bottom = NumericProperty(0.0)
     sz = NumericProperty(0)
     random_add = [[random()-0.5 for _ in range(2)] for _ in range(p.num_future_points)]
     random_scale = NumericProperty(0.0)
+    impact_x = NumericProperty(0.0)
+    impact_y = NumericProperty(0.0)
 
     def __init__(self, image_source='a/ball.png', **kwargs):
         super(Ball, self).__init__(**kwargs)
@@ -379,8 +379,7 @@ class Ball(Widget):
         with self.canvas:
             Color(rgba=(purple[isDark][0], purple[isDark][1], purple[isDark][2], 0.5))
             self.future = [Ellipse(size=(0, 0)) for _ in range(p.num_future_points)]
-            Color(rgba=(pink[isDark][0], pink[isDark][1], pink[isDark][2], 0.75))
-            self.impact = Ellipse()
+            self.impact = ColorEllipse(color=(pink[isDark][0], pink[isDark][1], pink[isDark][2], 0.75))
             Color(rgba=(1, 1, 1, 1))
             self.now = Ellipse(size=(self.sz, self.sz), source=image_source, pos=self.pos)
 
@@ -392,9 +391,16 @@ class Ball(Widget):
         self.now.pos = (self.img_left, self.img_bottom)
         self.now.size = (self.sz, self.sz)
 
-        x, y = xy2p(gs.xI-p.rb, gs.yI-p.rb, m2p, po, w, h)
-        self.impact.pos = int(x), int(y)
-        self.impact.size = self.sz, self.sz
+        c = 0.15
+        self.impact_x = float((1 - c) * self.impact_x + c * (gs.xI - p.rb))
+        self.impact_y = float((1 - c) * self.impact_y + c * (gs.yI - p.rb))
+        if gs.yp[gs.active_player] + p.d + 0.7 * gs.lp[gs.active_player] > gs.yI:
+            self.impact.opacity = 0.0
+        else:
+            self.impact.opacity = 0.7
+            x, y = xy2p(self.impact_x, self.impact_y, m2p, po, w, h)
+            self.impact.pos = int(x), int(y)
+            self.impact.size = self.sz, self.sz
 
         X, Y = xy2p(gs.traj['x'], gs.traj['y'], m2p, po, w, h)
 
@@ -455,54 +461,54 @@ class Stick(Widget):
         super(Stick, self).__init__(**kwargs)
         self.norm_size = norm_size
         self.norm_pos = norm_pos
-        self.size = self.norm_size[0] * w, self.norm_size[1] * h
-        self.pos = self.norm_pos[0] * w, self.norm_pos[1] * h
+        self.size = int(self.norm_size[0] * w), int(self.norm_size[1] * h)
+        self.pos = int(self.norm_pos[0] * w), int(self.norm_pos[1] * h)
 
         self.ctrl = [0, 0]
 
         # Start with it off screen
         self.out_position = out_position
         if self.out_position == 'left':
-            self.pos[0] = -self.norm_size[0] * w
+            self.pos[0] = -int(self.norm_size[0] * w)
         else:
-            self.pos[0] = w
+            self.pos[0] = int(w)
 
-        print('Instantiated a stick at pos =', self.pos, 'and size =', self.size)
+        print('Instantiated a stick at pos = ' + str(self.pos) + ' and size = ' + str(self.size))
 
     def update_el(self, x, y):
         self.ctrl = [x, y]
 
     def resize(self, w=width*screen_scf, h=height*screen_scf):
         if self.is_on_screen:
-            self.pos[0] = self.norm_pos[0] * w
+            self.pos[0] = int(self.norm_pos[0] * w)
         elif self.out_position == 'left':
-            self.pos[0] = -self.norm_size[0] * w
+            self.pos[0] = -int(self.norm_size[0] * w)
         else:
             self.pos[0] = w
-        self.size = self.norm_size[0] * w, self.norm_size[1] * h
-        self.pos[1] = self.norm_pos[1] * h
-        print('Resized a stick to size =', self.size, 'and pos =', self.pos)
+        self.size = int(self.norm_size[0] * w), int(self.norm_size[1] * h)
+        self.pos[1] = int(self.norm_pos[1] * h)
+        print('Resized a stick to size = ' + str(self.size) + ' and pos = ' + str(self.pos))
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=0.25):
-        in_x = self.norm_pos[0] * w
-        in_y = self.norm_pos[1] * h
+        in_x = int(self.norm_pos[0] * w)
+        in_y = int(self.norm_pos[1] * h)
         Animation.cancel_all(self)
         anim = Animation(x=in_x, y=in_y, duration=duration, t='out_back')
         anim.start(self)
         self.is_on_screen = True
-        print('Moved a stick (anim_in) to size =', self.size, 'and pos =', (in_x, in_y))
+        print('Moved a stick (anim_in) to size = ' + str(self.size) + ' and pos = ' + str([in_x, in_y]))
 
     def anim_out(self, w=width*screen_scf, h=height*screen_scf):
         if self.out_position == 'left':
-            out_x = -self.norm_size[0] * w
+            out_x = -int(self.norm_size[0] * w)
         else:
-            out_x = w
-        out_y = self.norm_pos[1] * h
+            out_x = int(w)
+        out_y = int(self.norm_pos[1] * h)
         Animation.cancel_all(self)
         anim = Animation(x=out_x, y=out_y, duration=0.25, t='in_back')
         anim.start(self)
         self.is_on_screen = False
-        print('Moved a stick (anim_out) to size =', self.size, 'and pos =', (out_x, out_y))
+        print('Moved a stick (anim_out) to size = ' + str(self.size) + ' and pos = ' + str([out_x, out_y]))
 
 
 # Create OptionButtons class
@@ -1057,8 +1063,7 @@ class DrubbleGame(Widget):
             self.score_label = ScoreLabel(text='Score', norm_left=0.8)
 
             # Initialize the player faces
-            self.myFace = MyFace(**p.college_me)
-            self.LadyFace = MyFace(**p.isu_gal)
+            self.player = [MyFace(**p.college_me), MyFace(**p.isu_gal)]
 
             # Initialize the high score labels
             j = p.difficult_level
@@ -1142,13 +1147,17 @@ class DrubbleGame(Widget):
         # Ball
         self.add_widget(self.ball)
         self.ball.anim_in(w=self.width, h=self.height, duration=0.5)
+        if p.volley_mode:
+            self.ball.impact.color = pink[isDark]
+        else:
+            self.ball.impact.color = self.player[gs.active_player].line_color
 
         # Players
-        self.add_widget(self.myFace)
-        self.add_widget(self.LadyFace)
-        self.myFace.anim_in(w=self.width, h=self.height, duration=0.75)
+        self.add_widget(self.player[0])
+        self.add_widget(self.player[1])
+        self.player[0].anim_in(w=self.width, h=self.height, duration=0.75)
         if p.num_player > 1:
-            self.LadyFace.anim_in(w=self.width, h=self.height, duration=0.75)
+            self.player[1].anim_in(w=self.width, h=self.height, duration=0.75)
 
         # Sticks and buttons
         self.add_widget(self.move_stick)
@@ -1194,8 +1203,8 @@ class DrubbleGame(Widget):
         self.ball.anim_out()
         self.move_stick.anim_out(w=self.width, h=self.height)
         self.tilt_stick.anim_out(w=self.width, h=self.height)
-        self.myFace.anim_out()
-        self.LadyFace.anim_out()
+        self.player[0].anim_out()
+        self.player[1].anim_out()
         if not p.volley_mode:
             self.time_label.anim_out(w=self.width, h=self.height, duration=0.15)
             self.dist_label.anim_out(w=self.width, h=self.height, duration=0.30)
@@ -1219,8 +1228,8 @@ class DrubbleGame(Widget):
             self.remove_widget(self.net)
             p.volley_mode = False
 
-        self.remove_widget(self.myFace)
-        self.remove_widget(self.LadyFace)
+        self.remove_widget(self.player[0])
+        self.remove_widget(self.player[1])
         self.remove_widget(self.move_stick)
         self.remove_widget(self.tilt_stick)
         self.remove_widget(self.option_butt)
@@ -1656,9 +1665,9 @@ class DrubbleGame(Widget):
             self.move_stick.anim_out(w=self.width, h=self.height)
             self.tilt_stick.anim_out(w=self.width, h=self.height)
             self.ball.anim_out()
-            self.myFace.anim_out()
+            self.player[0].anim_out()
             if p.num_player > 1:
-                self.LadyFace.anim_out()
+                self.player[1].anim_out()
             self.option_butt.anim_out_then_in(w=self.width, h=self.height)
             self.action_butt.anim_out_then_in(w=self.width, h=self.height)
         elif gs.game_mode == 3:
@@ -1668,9 +1677,9 @@ class DrubbleGame(Widget):
             self.move_stick.anim_in(w=self.width, h=self.height)
             self.tilt_stick.anim_in(w=self.width, h=self.height)
             self.ball.anim_in(w=self.width, h=self.height)
-            self.myFace.anim_in(w=self.width, h=self.height)
+            self.player[0].anim_in(w=self.width, h=self.height)
             if p.num_player > 1:
-                self.LadyFace.anim_in(w=self.width, h=self.height)
+                self.player[1].anim_in(w=self.width, h=self.height)
             if p.volley_mode:
                 self.net.anim_in()
 
@@ -1828,7 +1837,7 @@ class DrubbleGame(Widget):
 
         # Call the simStep method
         if 2 < gs.game_mode < 7:
-            gs.sim_step(p, gs, stats)
+            gs.sim_step()
 
         if gs.game_mode > 2 and not p.volley_mode:
             stats.update()
@@ -1869,17 +1878,19 @@ class DrubbleGame(Widget):
             # Start blinking the action button if the ball is stuck, and make the ball "explode"
             if gs.game_mode == 6 and gs.Stuck and not self.action_butt.is_blinking:
                 self.action_butt.blink(duration=0.5)
-                animation = Animation(random_scale=4.0, opacity=0.0, duration=4.0)
+                animation = Animation(random_scale=4.0, opacity=0.0, duration=3.0)
                 animation.start(self.ball)
 
             # Update the ball
             self.ball.update(gs.xb, gs.yb, gs.m2p, gs.po, self.width, self.height)
+            if gs.stool_bounce and p.num_player > 1 and not p.volley_mode:
+                self.ball.impact.color = self.player[1 - gs.active_player % 2].line_color
 
             # Update the player(s)
-            self.myFace.update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], gs.m2p, gs.po,
+            self.player[0].update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], gs.m2p, gs.po,
                                self.width, self.height, gs.player[0])
             if p.num_player > 1:
-                self.LadyFace.update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], gs.m2p, gs.po,
+                self.player[1].update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], gs.m2p, gs.po,
                                      self.width, self.height, gs.player[1])
 
 

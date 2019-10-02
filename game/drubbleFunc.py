@@ -7,6 +7,9 @@ try:
 except:
     USE_NUMPY = False
     print('Failed importing numpy')
+print('')
+print('  USE_NUMPY = ' + str(USE_NUMPY))
+print('')
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
 from random import randint
 from kivy.storage.jsonstore import JsonStore
@@ -326,7 +329,7 @@ def ball_predict(gs, active_player):
 
         # Solve for time the ball would hit the ground
         tI = ta + sqrt(2.0 * ya / p.g)
-    elif gs.game_mode > 2 and (gs.yb > gs.yp[active_player] + p.d + gs.lp[active_player]):
+    elif gs.game_mode > 2 and (gs.yb > 1.7 * p.rb + gs.yp[active_player] + p.d + gs.lp[active_player]):
         # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
         tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - 1.7 * p.rb - gs.yp[active_player] - p.d - gs.lp[active_player]))) / p.g
@@ -434,7 +437,8 @@ class GameState:
         # Event states
         self.ue = u0[:]
         self.xI, self.yI, self.tI, self.traj, self.timeUntilBounce = ball_predict(self, 0)
-        
+        self.stool_count = 0
+
         # Angle and Speed Conditions
         self.start_angle = p.sa
         self.start_speed = p.ss
@@ -490,12 +494,12 @@ class GameState:
             self.ctrl = [moveStick[0], moveStick[1], tiltStick[1], -tiltStick[0]]
         
     # Execute a simulation step of duration dt    
-    def sim_step(self, p, gs, stats):
+    def sim_step(self):
         # Increment n 
         self.n += 1
 
         # Active player
-        self.active_player = int(self.xb > 0) if p.volley_mode else stats.stool_count % p.num_player
+        self.active_player = int(self.xb > 0) if p.volley_mode else self.stool_count % p.num_player
 
         # Initial assumption, there was no event
         self.stool_bounce = False
@@ -523,14 +527,19 @@ class GameState:
 
         # Integrate using Euler method
         # Initialize state variables
-        U = zeros((num_step+1, 20))
-        U[0] = self.u
+        if USE_NUMPY:
+            U = np.zeros((num_step+1, 20))
+            U[0, :] = self.u
+        else:
+            U = zeros((num_step+1, 20))
+            U[0] = self.u
+
         for k in range(1, num_step+1):
             # Increment time
             self.t += ddt / num_step
             
             # Calculate the derivatives of states w.r.t. time
-            dudt = player_and_stool(self.t, U[k-1], p, gs, stats)
+            dudt = player_and_stool(self.t, U[k-1])
 
             # Calculate the states at the next step
             if USE_NUMPY:
@@ -556,10 +565,11 @@ class GameState:
         if self.stool_bounce or self.floor_bounce or self.net_bounce:
             # Change ball states depending on if it was a stool or floor bounce
             if self.stool_bounce:
+                self.stool_count += 1
+
                 # Play the sound
                 if SOUND_LOADED and p.fx_is_on:
                     stool_sound.volume = max(0.02, min(norm([self.dxb, self.dyb]) / 130.0, 0.8))
-                    print('  stool_sound.volume = ', stool_sound.volume)
                     stool_sound.play()
 
                 # Obtain the bounce velocity
@@ -577,7 +587,6 @@ class GameState:
                 # Play the sound
                 if SOUND_LOADED and p.fx_is_on:
                     floor_sound.volume = min(norm([self.dxb, self.dyb]) / 13.0, 1.0)
-                    print('  floor_sound.volume = ', floor_sound.volume)
                     floor_sound.play()
 
                 # Reverse direction of the ball
@@ -588,7 +597,6 @@ class GameState:
                 # Play the sound
                 if SOUND_LOADED and p.fx_is_on:
                     floor_sound.volume = min(norm([self.dxb, self.dyb]) / 13.0, 1.0)
-                    print('  floor_sound.volume = ', floor_sound.volume)
                     floor_sound.play()
 
                 # Obtain the bounce velocity
@@ -598,7 +606,7 @@ class GameState:
 
             # Re-initialize from the event states
             self.t += ddt - tBreak
-            dudt = player_and_stool(self.t, self.ue, p, gs, stats)
+            dudt = player_and_stool(self.t, self.ue)
             self.u = [self.ue[i] + dudt[i]*(ddt-tBreak) for i in range(20)]
 
             # The speed of the ball dropped too much, it is now stuck
@@ -829,7 +837,7 @@ class GameScore:
     def init_high(self, high_score_file='score.json'):
         # Initialize the JsonStore
         self.high_score_file = high_score_file
-        print('Attempting to initialize high scores at ', self.high_score_file)
+        print('Attempting to initialize high scores at ' + self.high_score_file)
         self.store = JsonStore(high_score_file)
 
         # Import high scores, or set to zero
@@ -847,9 +855,9 @@ class GameScore:
             self.high_height = self.store.get('high_height')['value']
             self.high_stool_count = self.store.get('high_stool_count')['value']
             self.high_score = self.store.get('high_score')['value']
-            print('imported high scores')
+            print('  Successfully imported high scores')
         except:
-            print('Failed importing high scores, creating store')
+            print('  Failed importing high scores, creating store')
 
     # Update high scores
     def update_high(self):
@@ -899,6 +907,9 @@ class GameScore:
             self.store.put('high_score', value=self.high_score)
         except:
             print('failed exporting high scores to ', self.high_score_file)
+
+
+stats = GameScore()
 
 
 # Determine from the stats what percentile the current game is, return string forms
@@ -980,7 +991,7 @@ def cycle_modes(gs, stats, engine):
 
 
 # Equation of Motion
-def player_and_stool(t, u, p, gs, stats):
+def player_and_stool(t, u):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
@@ -1104,6 +1115,7 @@ def control_logic(u, k):
     # If the ball is stuck, then stop making the computer move
     if k is 1 and gs.Stuck:
         return Q
+
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     

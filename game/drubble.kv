@@ -125,6 +125,19 @@
         opacity: root.opacity
 
 
+<ColorEllipse>:
+    canvas:
+        Color:
+            rgba: self.color
+        Ellipse:
+            size: self.size
+            pos: self.pos
+        Color:
+            rgba: 255.0 / 255.0, 204.0 / 255.0, 0.0 / 255.0, 1.0
+        Line:
+            ellipse: self.pos[0], self.pos[1], self.size[0], self.size[1]
+
+
 <OptionButtons>:
     canvas:
         Color:
