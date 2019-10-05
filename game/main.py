@@ -50,12 +50,18 @@ from kivy.utils import platform
 from kivy.animation import Animation
 # import kivymd as kmd
 from os.path import join
+import gc as gc
+import tracemalloc
 
 # Import drubbleFunc to get the supporting functions and classes
 import sys
 sys.path.append("_applibs")
 sys.path.append(".")
 from drubbleFunc import *
+
+if p.profile_mode:
+    import cProfile as cProfile
+    tracemalloc.start()
 
 # Import Ads
 if platform == 'android':
@@ -92,6 +98,16 @@ screen_scf = Window.size[0] / width
 Window.icon = 'a/icon.png'
 
 
+class Yard(Widget):
+    text = StringProperty('')
+
+    def __init__(self, size=(100, 100), pos=(0, 0), text='', **kwargs):
+        super(Yard, self).__init__(**kwargs)
+        self.size = size
+        self.pos = pos
+        self.text = text
+
+
 class MyBackground(Widget):
     # Size of the black bar on the bottom of the screen
     bottom_line_height = NumericProperty(height * screen_scf / 20.0)
@@ -114,8 +130,11 @@ class MyBackground(Widget):
     bg_text1 = ObjectProperty(None)
 
     # Markers
+    yard = []
+    """
     yardLine = []
     yardMark = []
+    """
     nMarks = 0
 
     # Randomize the start location in the backgroun
@@ -190,12 +209,14 @@ class MyBackground(Widget):
             xrng_n = int(0.1 * (xrng_r[1] - xrng_r[0])) + 1
 
             for k in range(self.nMarks):
-                self.yardMark[k].text = ''
+                # self.yardMark[k].text = ''
+                self.yard[k].text = ''
 
             for k in range(xrng_n):
                 # Current yardage
                 xr = int(xrng_r[0] + 10 * k)
-
+                [mid_x, top_y] = xy2p(xr, 0, gs.m2p, gs.po, self.width, self.height)
+                """
                 # Lines
                 [start_x, start_y] = xy2p(xr, 0, gs.m2p, gs.po, self.width, self.height)
                 [end_x, end_y] = xy2p(xr, -1, gs.m2p, gs.po, self.width, self.height)
@@ -205,28 +226,41 @@ class MyBackground(Widget):
                 strxr = str(xr)  # String form of xr
                 fsize = int(min(0.9 * self.bottom_line_height, gs.m2p))  # Font size
                 xypos = (int(start_x + 5), 0.05 * self.height - fsize)   # Position of text
-                lsize = (len(strxr) * fsize / 2.0, fsize)  # Label size
+                lsize = (len(strxr) * fsize / 2.0, fsize)  # Label size                
+                """
                 if k >= self.nMarks:
+                    """
                     self.yardLine.append(Line(points=(start_x, start_y, end_x, end_y), width=1.5))
                     self.yardMark.append(Label(font_size=fsize,
                                                size=lsize, pos=xypos,
                                                text=strxr, color=(1, 1, 1, 1),
                                                halign='left', valign='top'))
                     self.add_widget(self.yardMark[k])
+                    """
+                    self.yard.append(Yard(pos=(int(mid_x-gs.m2p), 0), size=(int(2.0*gs.m2p), int(top_y)), text=str(xr)))
+                    self.add_widget(self.yard[k])
                     self.nMarks += 1
                 else:
+                    self.yard[k].pos = (int(mid_x - gs.m2p), 0)
+                    self.yard[k].size = (int(2.0*gs.m2p), int(top_y))
+                    """
                     self.yardLine[k].points = (start_x, start_y, end_x, end_y)
                     self.yardMark[k].font_size = fsize
                     self.yardMark[k].size = lsize
                     self.yardMark[k].pos = xypos
                     self.yardMark[k].text = strxr
+                    """
 
             # Cleanup
             if self.nMarks > xrng_n:
                 for k in range(self.nMarks - xrng_n):
+                    """
                     self.yardMark.pop(xrng_n)
                     self.yardLine[xrng_n].points = (0, 0)
                     self.yardLine.pop(xrng_n)
+                    """
+                    self.remove_widget(self.yard[xrng_n])
+                    self.yard.pop(xrng_n)
                     self.nMarks = xrng_n
 
 
@@ -385,7 +419,7 @@ class Ball(Widget):
         self.future = []
 
         with self.canvas:
-            Color(rgba=(purple[isDark][0], purple[isDark][1], purple[isDark][2], 0.3))
+            Color(rgba=(red[isDark][0], red[isDark][1], red[isDark][2], 0.8))
             self.future = [Ellipse(size=(0, 0)) for _ in range(p.num_future_points)]
             self.impact = ColorEllipse(color=(pink[isDark][0], pink[isDark][1], pink[isDark][2], 0.75))
             Color(rgba=(1, 1, 1, 1))
@@ -423,7 +457,7 @@ class Ball(Widget):
         X, Y = xy2p(gs.traj['x'], gs.traj['y'], m2p, po, w, h)
         nf = float(p.num_future_points)
         for n in range(X.__len__()):
-            sz = self.sz * (1.0 - n / nf)
+            sz = 0.5 * self.sz * (1.0 - n / nf)
             self.future[n].pos = (X[n] - 0.5 * sz + self.random_add[n][0] * self.random_scale * m2p,
                                   Y[n] - 0.5 * sz + self.random_add[n][1] * self.random_scale * m2p)
             self.future[n].size = (sz, sz)
@@ -1834,6 +1868,17 @@ class DrubbleGame(Widget):
 
     # Time step the game
     def update(self, dt):
+        # Garbage collection
+        if gs.n > 0 and not gs.n % 100:
+            gc.collect()
+            print(p.profile_mode)
+            snapshot = tracemalloc.take_snapshot()
+            top_stats = snapshot.statistics('lineno')
+
+            print("[ Top 10 ]")
+            for stat in top_stats[:10]:
+                print(stat)
+
         if self.needToResize:
             self.resize_canvas()
             self.needToResize = False
@@ -1915,15 +1960,15 @@ class DrubbleGame(Widget):
 class DrubbleApp(App):
     icon = 'a/icon.png'
 
-    '''
     def on_start(self):
-        self.profile = cProfile.Profile()
-        self.profile.enable()
+        if p.profile_mode:
+            self.profile = cProfile.Profile()
+            self.profile.enable()
 
     def on_stop(self):
-        self.profile.disable()
-        self.profile.dump_stats('drubble.profile')
-    '''
+        if p.profile_mode:
+            self.profile.disable()
+            self.profile.dump_stats('drubble.profile')
 
     def build(self):
         data_dir = getattr(self, 'user_data_dir')

@@ -9,6 +9,22 @@
             pos: self.pos
 
 
+<Yard>:
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 1
+        Line:
+            points: self.pos[0] + 0.5 * self.size[0], 0.5 * self.size[1], self.pos[0] + 0.5 * self.size[0], self.size[1]
+            width: 0.05 * self.size[1]
+    Label:
+        text: root.text
+        font_size: 0.4 * root.size[1]
+        color: 1, 1, 1, 1
+        pos: root.pos
+        size: root.size[0], 0.5 * root.size[1]
+
+
+
 <MyBackground>:
     canvas:
         Color:

@@ -164,6 +164,7 @@ class Parameters:
     linearMass = False
     num_euler_steps = 1
     timeRun = False
+    profile_mode = True
     
     # Font settings
     MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
