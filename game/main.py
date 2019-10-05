@@ -76,10 +76,15 @@ if platform in ('linux', 'windows', 'win', 'macosx'):
     # iPhone 8 Resolution
     width = 1334
     height = 750
+
+    # iPad Resolution
+    width = 1044
+    height = 800
     Window.size = (width, height)
 else:
     width, height = Window.size
 
+Window.left = 50
 # On the retina screen, Window.size gets doubled, this is the correction factor
 screen_scf = Window.size[0] / width
 
