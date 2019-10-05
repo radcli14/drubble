@@ -370,11 +370,14 @@ class ColorEllipse(Widget):
 class Ball(Widget):
     img_left = NumericProperty(0.0)
     img_bottom = NumericProperty(0.0)
-    sz = NumericProperty(0)
+    sz = NumericProperty(1.0)
     random_add = [[random()-0.5 for _ in range(2)] for _ in range(p.num_future_points)]
     random_scale = NumericProperty(0.0)
     impact_x = NumericProperty(0.0)
     impact_y = NumericProperty(0.0)
+    past_x = zeros(32)
+    past_y = zeros(32)
+    past_points = ListProperty(zeros(64))
 
     def __init__(self, image_source='a/ball.png', **kwargs):
         super(Ball, self).__init__(**kwargs)
@@ -382,13 +385,20 @@ class Ball(Widget):
         self.future = []
 
         with self.canvas:
-            Color(rgba=(purple[isDark][0], purple[isDark][1], purple[isDark][2], 0.5))
+            Color(rgba=(purple[isDark][0], purple[isDark][1], purple[isDark][2], 0.3))
             self.future = [Ellipse(size=(0, 0)) for _ in range(p.num_future_points)]
             self.impact = ColorEllipse(color=(pink[isDark][0], pink[isDark][1], pink[isDark][2], 0.75))
             Color(rgba=(1, 1, 1, 1))
             self.now = Ellipse(size=(self.sz, self.sz), source=image_source, pos=self.pos)
 
     def update(self, xb, yb, m2p, po, w, h):
+        # Update the past position of the ball
+        self.past_x = [xb] + self.past_x[:-1]
+        self.past_y = [yb] + self.past_y[:-1]
+        x, y = xy2p(self.past_x, self.past_y, m2p, po, w, h)
+        self.past_points = intersperse(x, y)
+
+        # Generate the current position of the ball
         x, y = xy2p(xb, yb, m2p, po, w, h)
         self.sz = int(2.0 * m2p * p.rb)
         self.img_left = int(x - m2p * p.rb)
@@ -396,6 +406,7 @@ class Ball(Widget):
         self.now.pos = (self.img_left, self.img_bottom)
         self.now.size = (self.sz, self.sz)
 
+        # Generate the impact position of the ball
         c = 0.15
         self.impact_x = float((1 - c) * self.impact_x + c * (gs.xI - p.rb))
         self.impact_y = float((1 - c) * self.impact_y + c * (gs.yI - p.rb))
@@ -407,14 +418,16 @@ class Ball(Widget):
             self.impact.pos = int(x), int(y)
             self.impact.size = self.sz, self.sz
 
+        # Generate the future positions of the ball
+        # """
         X, Y = xy2p(gs.traj['x'], gs.traj['y'], m2p, po, w, h)
-
         nf = float(p.num_future_points)
         for n in range(X.__len__()):
             sz = self.sz * (1.0 - n / nf)
             self.future[n].pos = (X[n] - 0.5 * sz + self.random_add[n][0] * self.random_scale * m2p,
                                   Y[n] - 0.5 * sz + self.random_add[n][1] * self.random_scale * m2p)
             self.future[n].size = (sz, sz)
+        # """
 
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1.0):
         self.width = w

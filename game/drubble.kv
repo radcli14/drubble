@@ -138,6 +138,29 @@
             ellipse: self.pos[0], self.pos[1], self.size[0], self.size[1]
 
 
+<Ball>:
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 0.35
+        Line:
+            points: self.past_points
+            width: 0.1 * self.sz
+        Color:
+            rgba: 1, 0.8, 0, 0.35
+        Line:
+            points: self.past_points[:32]
+            width: 0.2 * self.sz
+        Color:
+            rgba: 1, 0.58, 0, 0.35
+        Line:
+            points: self.past_points[:16]
+            width: 0.3 * self.sz
+        Color:
+            rgba: 1, 0.23, 0.19, 0.35
+        Line:
+            points: self.past_points[:8]
+            width: 0.4 * self.sz
+
 <OptionButtons>:
     canvas:
         Color:

@@ -194,7 +194,7 @@ class Parameters:
     leg_length = 0.9 * (y0 - d)
 
     # Number of points to include in the future trajectory predictions (ball_predict() function)
-    num_future_points = 16
+    num_future_points = 4
 
     # Time increment between future trajectory points
     future_increment = 0.12
