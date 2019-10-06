@@ -164,7 +164,8 @@ class Parameters:
     linearMass = False
     num_euler_steps = 1
     timeRun = False
-    profile_mode = True
+    gc = False
+    profile_mode = False
     
     # Font settings
     MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
@@ -195,10 +196,10 @@ class Parameters:
     leg_length = 0.9 * (y0 - d)
 
     # Number of points to include in the future trajectory predictions (ball_predict() function)
-    num_future_points = 4
+    num_future_points = 7
 
     # Time increment between future trajectory points
-    future_increment = 0.12
+    future_increment = 0.1
 
     # Sound effects and music settings
     fx_is_on = True
@@ -330,10 +331,10 @@ def ball_predict(gs, active_player):
 
         # Solve for time the ball would hit the ground
         tI = ta + sqrt(2.0 * ya / p.g)
-    elif gs.game_mode > 2 and (gs.yb > 1.7 * p.rb + gs.yp[active_player] + p.d + gs.lp[active_player]):
+    elif gs.game_mode > 2 and gs.yb > 3.0:
         # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
-        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - 1.7 * p.rb - gs.yp[active_player] - p.d - gs.lp[active_player]))) / p.g
+        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - 3.2))) / p.g
     else:
         tI = 0
 
