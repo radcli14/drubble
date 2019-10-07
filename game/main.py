@@ -20,6 +20,9 @@ Xcode -> File -> Workspace Setting... -> cut Build System to Legacy Build System
 :-1: Undefined symbol: _OBJC_CLASS_$_WKWebView
 Go to your Project, click on General, scroll down to Linked Frameworks and Libraries, and add WebKit.framework as Optional. See here: Xcode 6 + iOS 8 SDK but deploy on iOS 7 (UIWebKit & WKWebKit)
 
+-- When validating for app store on 7 October 2019
+Invalid Bundle Structure - The binary file 'drubble.app/lib/python3.7/site-packages/numpy/core/lib/libnpymath.a' is not permitted. Your app can’t contain standalone executables or libraries, other than a valid CFBundleExecutable of supported bundles. Refer to the Bundle Programming Guide at https://developer.apple.com/go/?id=bundle-structure for information on the iOS app bundle structure.
+
 Google AdMob IDs
 
 iOS
@@ -409,10 +412,11 @@ class Ball(Widget):
             Color(rgba=(1, 1, 1, 1))
             self.now = Ellipse(size=(self.sz, self.sz), source=image_source, pos=self.pos)
 
-    def update(self, xb, yb, m2p, po, w, h):
+    def update(self, xb, yb, m2p, po, w, h, pause_flag):
         # Update the past position of the ball
-        self.past_x = [xb] + self.past_x[:-1]
-        self.past_y = [yb] + self.past_y[:-1]
+        if not pause_flag:
+            self.past_x = [xb] + self.past_x[:-1]
+            self.past_y = [yb] + self.past_y[:-1]
         x, y = xy2p(self.past_x, self.past_y, m2p, po, w, h)
         self.past_points = intersperse(x, y)
 
@@ -863,17 +867,20 @@ class RotatingRing(Image):
 
 class Tutorial(Widget):
     n = 0
-    msg = ['Welcome to dRuBbLe!!!\nTap to Begin',
+    msg = ['Welcome to dRuBbLe!!!\nLets learn how 2 play',
            'Touch the stick\non the left to\nmove the stool',
            'Touch the stick\non the right to\nmove the player',
-           'Use the action button\nto start the game',
+           'Use the action\nbutton to start\nthe game',
            'Tap once to set\nthe launch angle',
            'Tap again to set\nthe speed and\nlaunch the ball',
+           'Run under the\nspinning ball',
            'Try to bounce\nthe ball off the\ntop of your stool',
            'Bounce as far\nand as high\nas possible',
            'Good Luck!!!',
            '']
     is_paused = False
+    ball_is_paused = False
+    pause_state = gs.u
 
     # Text label properties
     label_text = StringProperty('')
@@ -886,7 +893,7 @@ class Tutorial(Widget):
     label_opacity = NumericProperty(0.0)
     label_font_name = StringProperty('a/Airstream.ttf')
 
-    def __init__(self, w=width*screen_scf, h=height*screen_scf, **kwargs):
+    def __init__(self, w=Window.width, h=Window.height, **kwargs):
         super(Tutorial, self).__init__()
         self.n = 0
         self.width = w
@@ -912,6 +919,7 @@ class Tutorial(Widget):
             item.angle = 0
 
     def change_message(self, dt):
+        print('Tutorial Change Message to : \n' + self.msg[self.n] + '\n')
         self.label_text = self.msg[self.n]
 
     def set_pause_false(self, dt):
@@ -966,6 +974,7 @@ class Tutorial(Widget):
         h = self.height
 
         if self.n == 0:
+            # Welcome
             was_touched = True
             app_object.tilt_stick.anim_in(w=self.width, h=self.height, duration=1)
             ring_size = (1.5 * app_object.tilt_stick.size[0], 1.5 * app_object.tilt_stick.size[1])
@@ -973,7 +982,8 @@ class Tutorial(Widget):
                         app_object.tilt_stick.norm_pos[1] * h - 0.167 * ring_size[1])
             print('Surrounded the move stick with a rotating ring_size = ', ring_size, '  ring_pos = ', ring_pos)
             self.new_ring_position(ring_size=ring_size, ring_pos=ring_pos, in_duration=2.0, out_duration=0.0)
-        elif self.n == 1 and abs(gs.ctrl[2]) + abs(gs.ctrl[3]) != 0.0:
+        elif self.n == 1 and abs(gs.ctrl[2]) + abs(gs.ctrl[3]) > 0.5:
+            # Touch left
             was_touched = True
             app_object.move_stick.anim_in(w=self.width, h=self.height, duration=1)
             ring_size = (1.5 * app_object.move_stick.size[0], 1.5 * app_object.move_stick.size[1])
@@ -981,7 +991,8 @@ class Tutorial(Widget):
                         app_object.move_stick.norm_pos[1] * h - 0.167 * ring_size[1])
             print('Surrounded the tilt stick with a rotating ring_size = ', ring_size, '  ring_pos = ', ring_pos)
             self.new_ring_position(ring_size=ring_size, ring_pos=ring_pos, in_duration=2.0, out_duration=2.0)
-        elif self.n == 2 and abs(gs.ctrl[1]) + abs(gs.ctrl[2]) != 0.0:
+        elif self.n == 2 and abs(gs.ctrl[1]) + abs(gs.ctrl[2]) > 0.5:
+            # Touch right
             was_touched = True
             app_object.action_butt.anim_in(w=self.width, h=self.height)
             ring_size = (1.5 * app_object.action_butt.size[0], 1.5 * app_object.action_butt.size[0])
@@ -991,30 +1002,42 @@ class Tutorial(Widget):
             print('Surrounded the action button with a rotating ring_size = ', ring_size, '  ring_pos = ', ring_pos)
             self.new_ring_position(ring_size=ring_size, ring_pos=ring_pos, in_duration=2.0, out_duration=2.0)
         elif self.n == 3 and gs.game_mode >= 4:
+            # Touch action
             was_touched = True
         elif self.n == 4 and gs.game_mode >= 5:
+            # Touch angle
             was_touched = True
         elif self.n == 5 and gs.game_mode >= 6:
-            was_touched = True
-        elif self.n == 6:
+            # Touch speed
             was_touched = True
             self.clear_ring(out_duration=1.0)
-            app_object.option_butt.anim_in(w=self.width, h=self.height)
+        elif self.n == 6:
+            # Run to ball
+            if abs(gs.xp[0] - gs.xI) < 0.1:
+                was_touched = True
         elif self.n == 7:
-            was_touched = True
+            # Try to bounce
+            if abs(gs.xp[0] - gs.xI) < 0.1:
+                was_touched = True
+                self.ball_is_paused = False
         elif self.n == 8:
+            # Bounce as far
+            was_touched = True
+            app_object.option_butt.anim_in(w=self.width, h=self.height)
+        elif self.n == 9:
+            # Good luck
             was_touched = True
 
         # Switch to the next message if there was a touch
-        next_pause_duration = 3.0 if self.n < 6 else 5.0
+        next_pause_duration = 3.0 if self.n < 8 else 5.0
         if was_touched:
             self.pause(next_pause_duration)
             self.n += 1
             Clock.schedule_once(self.change_message, 2)
-            self.switch(w=app_object.width, h=app_object.height, duration=4.0)
+            self.switch(w=app_object.width, h=app_object.height, duration=next_pause_duration)
 
         # Remove widgets if reached end of tutorial
-        if self.n >= self.msg.__len__():
+        if self.n >= len(self.msg):
             self.clear_ring()
             self.anim_out()
             Clock.schedule_once(app_object.remove_tutorial_callback, 1.0)
@@ -1024,13 +1047,13 @@ class Tutorial(Widget):
     def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1):
         Animation.cancel_all(self)
         anim = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.4*h), opacity=1.0, label_opacity=1.0,
-                         label_font_size=0.1*h, duration=duration, t='out_elastic')
+                         label_font_size=0.05*w, duration=duration, t='out_elastic')
         anim.start(self)
 
     def anim_out(self, w=width*screen_scf, h=height*screen_scf, duration=1):
         Animation.cancel_all(self)
         anim = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.4*h), opacity=0.0, label_opacity=0.0,
-                         label_font_size=0.07*self.height, duration=0.33*duration, t='out_elastic')
+                         label_font_size=0.0*w, duration=0.33*duration, t='out_elastic')
         anim.start(self)
 
     def switch(self, w=width*screen_scf, h=height*screen_scf, duration=1):
@@ -1039,7 +1062,7 @@ class Tutorial(Widget):
                              label_font_size=0.0, duration=0.25*duration, t='in_elastic')
         anim_pause = Animation(duration=0.5*duration)
         anim_in = Animation(label_size=(0.6*w, 0.3*h), label_pos=(0.2*w, 0.4*h), label_opacity=1.0,
-                            label_font_size=0.1*self.height, duration=0.25*duration, t='out_elastic')
+                            label_font_size=0.05*w, duration=0.25*duration, t='out_elastic')
         anim = anim_out + anim_pause + anim_in
         anim.start(self)
 
@@ -1152,7 +1175,7 @@ class DrubbleGame(Widget):
                 self.ads.request_banner()
             elif platform == 'ios' and not self.adSwitchSuccessful:
                 try:
-                    self.banner_ad = autoclass('adSwitch').alloc()  # .init()
+                    self.banner_ad = autoclass('adSwitch').alloc().init()
                     self.adSwitchSuccessful = True
                     print('loaded adSwitch')
                 except:
@@ -1175,7 +1198,7 @@ class DrubbleGame(Widget):
         # Ball
         self.add_widget(self.ball)
         self.ball.anim_in(w=self.width, h=self.height, duration=0.5)
-        if p.volley_mode:
+        if p.num_player is 1 or p.volley_mode:
             self.ball.impact.color = pink[isDark]
         else:
             self.ball.impact.color = self.player[gs.active_player].line_color
@@ -1536,8 +1559,6 @@ class DrubbleGame(Widget):
                 self.tilt_stick.update_el(xy[0], xy[1])
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
 
-        if self.tutorial_mode:
-            self.tutorial.check_touches(self)
 
     def on_touch_move(self, touch):
         if gs.game_mode > 2:
@@ -1848,6 +1869,28 @@ class DrubbleGame(Widget):
 
     # Time step the game
     def update(self, dt):
+        if gs.game_mode < 3:
+            # Make sure the AdMob banner is not automatically created at the start
+            if self.adSwitchSuccessful:
+                self.banner_ad.hide_ads()
+
+            # There is no updating required for the splash and update screen, so exit the method
+            return
+
+        # Do tutorial stuff
+        if self.tutorial_mode:
+            # Check touches
+            self.tutorial.check_touches(self)
+
+            # Detect if ball bounce is impacting soon, in which case, pause it
+            if self.tutorial.n in (5, 6) and gs.dyb <= -0.5 * norm(gs.u[:2]) and not self.tutorial.ball_is_paused:
+                self.tutorial.ball_is_paused = True
+                self.tutorial.pause_state = gs.u[:4]
+
+            # Make the ball stationary while paused
+            if self.tutorial.ball_is_paused:
+                gs.xb, gs.yb, gs.dxb, gs.dyb = gs.u[:4] = self.tutorial.pause_state[:4]
+
         # Memory debugging and garbage collection
         if p.gc and gs.n > 0 and not gs.n % 100:
             gc.collect()
@@ -1860,17 +1903,35 @@ class DrubbleGame(Widget):
                 print(stat)
 
         # Angle and speed settings
-        if 2 < gs.game_mode < 6:
+        if gs.game_mode < 6:
             gs.set_angle_and_speed()
             # start_loop.pitch = gs.start_angle / p.sa
             if gs.game_mode == 5:
                 start_loop.volume = 0.5 * gs.start_speed / p.ss
 
         # Call the sim_step method
-        if 2 < gs.game_mode < 7:
+        if gs.game_mode < 7:
             gs.sim_step()
 
-        if gs.game_mode > 2 and not p.volley_mode:
+        if p.volley_mode:
+            # Update the net
+            self.net.update(gs.m2p, gs.po, w=self.width, h=self.height)
+
+            # Automatically cycle based on randomized start conditions for the serving computer
+            if gs.game_mode == 3 and p.serving_player == 1:
+                self.action_button_press()
+            elif gs.game_mode == 4 and p.serving_player == 1 and 180.0 / pi * gs.start_angle >= p.serving_angle:
+                self.action_button_press()
+            elif gs.game_mode == 5 and p.serving_player == 1 and gs.start_speed >= p.serving_speed:
+                self.action_button_press()
+
+            # Bring the action button back if the ball is stuck
+            if gs.Stuck and self.action_butt.label_text is '':
+                if stats.volley_score[0] >= p.winning_score or stats.volley_score[1] >= p.winning_score:
+                    self.action_butt.label_text = 'Results'
+                else:
+                    self.action_butt.label_text = 'Restart'
+        else:
             stats.update()
 
             # Update score line
@@ -1880,49 +1941,30 @@ class DrubbleGame(Widget):
             self.boing_label.update('Boing! %7.0f' % stats.stool_count)
             self.score_label.update('Score %8.0f' % stats.score)
 
-        if gs.game_mode > 2:
-            x_mean = 0.5 * (gs.xb + gs.xp[0])
-            self.bg.update(x_mean, gs.yb, self.width, self.height)
-            self.bg.make_markers()
-            self.move_stick.update_el(gs.ctrl[0], gs.ctrl[1])
-            self.tilt_stick.update_el(-gs.ctrl[3], gs.ctrl[2])
+        x_mean = 0.5 * (gs.xb + gs.xp[0])
+        self.bg.update(x_mean, gs.yb, self.width, self.height)
+        self.bg.make_markers()
+        self.move_stick.update_el(gs.ctrl[0], gs.ctrl[1])
+        self.tilt_stick.update_el(-gs.ctrl[3], gs.ctrl[2])
 
-            if p.volley_mode:
-                # Update the net
-                self.net.update(gs.m2p, gs.po, w=self.width, h=self.height)
+        # Start blinking the action button if the ball is stuck, and make the ball "explode"
+        if gs.game_mode == 6 and gs.Stuck and not self.action_butt.is_blinking:
+            self.action_butt.blink(duration=0.5)
+            animation = Animation(random_scale=4.0, opacity=0.0, duration=3.0)
+            animation.start(self.ball)
 
-                # Automatically cycle based on randomized start conditions for the serving computer
-                if gs.game_mode == 3 and p.serving_player == 1:
-                    self.action_button_press()
-                elif gs.game_mode == 4 and p.serving_player == 1 and 180.0 / pi * gs.start_angle >= p.serving_angle:
-                    self.action_button_press()
-                elif gs.game_mode == 5 and p.serving_player == 1 and gs.start_speed >= p.serving_speed:
-                    self.action_button_press()
+        # Update the ball
+        self.ball.update(gs.xb, gs.yb, gs.m2p, gs.po, self.width, self.height, self.tutorial.ball_is_paused)
 
-                # Bring the action button back if the ball is stuck
-                if gs.Stuck and self.action_butt.label_text is '':
-                    if stats.volley_score[0] >= p.winning_score or stats.volley_score[1] >= p.winning_score:
-                        self.action_butt.label_text = 'Results'
-                    else:
-                        self.action_butt.label_text = 'Restart'
+        if gs.stool_bounce and p.num_player > 1 and not p.volley_mode:
+            self.ball.impact.color = self.player[1 - gs.active_player % 2].line_color
 
-            # Start blinking the action button if the ball is stuck, and make the ball "explode"
-            if gs.game_mode == 6 and gs.Stuck and not self.action_butt.is_blinking:
-                self.action_butt.blink(duration=0.5)
-                animation = Animation(random_scale=4.0, opacity=0.0, duration=3.0)
-                animation.start(self.ball)
-
-            # Update the ball
-            self.ball.update(gs.xb, gs.yb, gs.m2p, gs.po, self.width, self.height)
-            if gs.stool_bounce and p.num_player > 1 and not p.volley_mode:
-                self.ball.impact.color = self.player[1 - gs.active_player % 2].line_color
-
-            # Update the player(s)
-            self.player[0].update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], gs.m2p, gs.po,
-                               self.width, self.height, gs.player[0])
-            if p.num_player > 1:
-                self.player[1].update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], gs.m2p, gs.po,
-                                     self.width, self.height, gs.player[1])
+        # Update the player(s)
+        self.player[0].update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], gs.m2p, gs.po,
+                           self.width, self.height, gs.player[0])
+        if p.num_player > 1:
+            self.player[1].update(gs.xp[1], gs.yp[1] + 1.5 * p.d, gs.lp[1], gs.tp[1], gs.m2p, gs.po,
+                                 self.width, self.height, gs.player[1])
 
 
 class DrubbleApp(App):

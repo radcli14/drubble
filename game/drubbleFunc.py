@@ -331,7 +331,7 @@ def ball_predict(gs, active_player):
 
         # Solve for time the ball would hit the ground
         tI = ta + sqrt(2.0 * ya / p.g)
-    elif gs.game_mode > 2 and gs.yb > 3.0:
+    elif gs.game_mode > 2 and gs.yb > 3.2:
         # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
         tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - 3.2))) / p.g
