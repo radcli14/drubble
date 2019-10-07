@@ -7,6 +7,9 @@ try:
 except:
     USE_NUMPY = False
     print('Failed importing numpy')
+print('')
+print('  USE_NUMPY = ' + str(USE_NUMPY))
+print('')
 from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
 from random import randint
 from kivy.storage.jsonstore import JsonStore
@@ -70,8 +73,10 @@ def xy2p(x, y, m2p, po, w, h):
     :param h: Screen height in pixels
     :return: (x in pixels, y in pixels)
     """
-    xp = x * m2p - po + 0.5 * w if type(x) in (int, float) else [xi * m2p - po + 0.5 * w for xi in x]
-    yp = y * m2p + 0.05 * h if type(y) in (int, float) else [yi * m2p + 0.05 * h for yi in y]
+    # xp = x * m2p - po + 0.5 * w if type(x) in (int, float) else [xi * m2p - po + 0.5 * w for xi in x]
+    # yp = y * m2p + 0.05 * h if type(y) in (int, float) else [yi * m2p + 0.05 * h for yi in y]
+    xp = [xi * m2p - po + 0.5 * w for xi in x] if type(x) in (list, tuple) else x * m2p - po + 0.5 * w
+    yp = [yi * m2p + 0.05 * h for yi in y] if type(y) in (list, tuple) else y * m2p + 0.05 * h
     return xp, yp
 
 
@@ -92,7 +97,7 @@ class Parameters:
     y0 = 1.5     # Equilibrium position of player CG [m]
     d = 0.3      # Relative position from player CG to stool rotation axis [m]
     l0 = 1.5     # Equilibrium position of stool
-    ax = 1.0     # Horizontal acceleration [g]
+    ax = 1.5     # Horizontal acceleration [g]
     Qx = ax*m*g  # Max horizontal force [N]
     Gx = 1.5     # Control gain on Qx
     fy = 0.8     # vertical frequency [Hz]
@@ -121,7 +126,7 @@ class Parameters:
 
     # Gameplay settings
     userControlled = [[True,   True,  True, True],
-                      [False, False, False,False]]
+                      [False, False, False, False]]
     num_player = 1
 
     # Stool parameters
@@ -146,7 +151,7 @@ class Parameters:
         K = np.diag([0.0, Ky, Kl, Kt])
 
     # Touch Stick Sensitivity
-    tsens = 1.5
+    tsens = 1.2
     
     # Tolerance on last bounce speed before stopping motion
     dybtol = 4.0
@@ -159,6 +164,8 @@ class Parameters:
     linearMass = False
     num_euler_steps = 1
     timeRun = False
+    gc = False
+    profile_mode = False
     
     # Font settings
     MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
@@ -189,10 +196,10 @@ class Parameters:
     leg_length = 0.9 * (y0 - d)
 
     # Number of points to include in the future trajectory predictions (ball_predict() function)
-    num_future_points = 16
+    num_future_points = 7
 
     # Time increment between future trajectory points
-    future_increment = 0.12
+    future_increment = 0.1
 
     # Sound effects and music settings
     fx_is_on = True
@@ -297,19 +304,17 @@ def linspace(start, stop, n):
     if n == 1:
         return stop
     h = (stop - start) / (n - 1)
-    v = []
-    for i in range(n):
-        v.append(start + h * i)
+    v = [start + h * i for i in range(n)]
     return v
 
 
 def zeros(ztup):
     try:
-        z = [0 for i in range(ztup[1])]
-        Z = [z for i in range(ztup[0])]
+        z = [0 for _ in range(ztup[1])]
+        Z = [z for _ in range(ztup[0])]
         return Z
     except:
-        z = [0 for i in range(ztup)]
+        z = [0 for _ in range(ztup)]
         return z
 
 
@@ -326,10 +331,10 @@ def ball_predict(gs, active_player):
 
         # Solve for time the ball would hit the ground
         tI = ta + sqrt(2.0 * ya / p.g)
-    elif gs.game_mode > 2 and (gs.yb > gs.yp[active_player] + p.d + gs.lp[active_player]):
+    elif gs.game_mode > 2 and gs.yb > 3.2:
         # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
-        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - gs.yp[active_player] - p.d - gs.lp[active_player]))) / p.g
+        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - 3.2))) / p.g
     else:
         tI = 0
 
@@ -434,7 +439,8 @@ class GameState:
         # Event states
         self.ue = u0[:]
         self.xI, self.yI, self.tI, self.traj, self.timeUntilBounce = ball_predict(self, 0)
-        
+        self.stool_count = 0
+
         # Angle and Speed Conditions
         self.start_angle = p.sa
         self.start_speed = p.ss
@@ -490,12 +496,12 @@ class GameState:
             self.ctrl = [moveStick[0], moveStick[1], tiltStick[1], -tiltStick[0]]
         
     # Execute a simulation step of duration dt    
-    def sim_step(self, p, gs, stats):
+    def sim_step(self):
         # Increment n 
         self.n += 1
 
         # Active player
-        self.active_player = int(self.xb > 0) if p.volley_mode else stats.stool_count % p.num_player
+        self.active_player = int(self.xb > 0) if p.volley_mode else self.stool_count % p.num_player
 
         # Initial assumption, there was no event
         self.stool_bounce = False
@@ -523,14 +529,19 @@ class GameState:
 
         # Integrate using Euler method
         # Initialize state variables
-        U = zeros((num_step+1, 20))
-        U[0] = self.u
+        if USE_NUMPY:
+            U = np.zeros((num_step+1, 20))
+            U[0, :] = self.u
+        else:
+            U = zeros((num_step+1, 20))
+            U[0] = self.u
+
         for k in range(1, num_step+1):
             # Increment time
             self.t += ddt / num_step
             
             # Calculate the derivatives of states w.r.t. time
-            dudt = player_and_stool(self.t, U[k-1], p, gs, stats)
+            dudt = player_and_stool(self.t, U[k-1])
 
             # Calculate the states at the next step
             if USE_NUMPY:
@@ -556,10 +567,11 @@ class GameState:
         if self.stool_bounce or self.floor_bounce or self.net_bounce:
             # Change ball states depending on if it was a stool or floor bounce
             if self.stool_bounce:
+                self.stool_count += 1
+
                 # Play the sound
                 if SOUND_LOADED and p.fx_is_on:
                     stool_sound.volume = max(0.02, min(norm([self.dxb, self.dyb]) / 130.0, 0.8))
-                    print('  stool_sound.volume = ', stool_sound.volume)
                     stool_sound.play()
 
                 # Obtain the bounce velocity
@@ -577,7 +589,6 @@ class GameState:
                 # Play the sound
                 if SOUND_LOADED and p.fx_is_on:
                     floor_sound.volume = min(norm([self.dxb, self.dyb]) / 13.0, 1.0)
-                    print('  floor_sound.volume = ', floor_sound.volume)
                     floor_sound.play()
 
                 # Reverse direction of the ball
@@ -588,7 +599,6 @@ class GameState:
                 # Play the sound
                 if SOUND_LOADED and p.fx_is_on:
                     floor_sound.volume = min(norm([self.dxb, self.dyb]) / 13.0, 1.0)
-                    print('  floor_sound.volume = ', floor_sound.volume)
                     floor_sound.play()
 
                 # Obtain the bounce velocity
@@ -598,7 +608,7 @@ class GameState:
 
             # Re-initialize from the event states
             self.t += ddt - tBreak
-            dudt = player_and_stool(self.t, self.ue, p, gs, stats)
+            dudt = player_and_stool(self.t, self.ue)
             self.u = [self.ue[i] + dudt[i]*(ddt-tBreak) for i in range(20)]
 
             # The speed of the ball dropped too much, it is now stuck
@@ -829,7 +839,7 @@ class GameScore:
     def init_high(self, high_score_file='score.json'):
         # Initialize the JsonStore
         self.high_score_file = high_score_file
-        print('Attempting to initialize high scores at ', self.high_score_file)
+        print('Attempting to initialize high scores at ' + self.high_score_file)
         self.store = JsonStore(high_score_file)
 
         # Import high scores, or set to zero
@@ -847,9 +857,9 @@ class GameScore:
             self.high_height = self.store.get('high_height')['value']
             self.high_stool_count = self.store.get('high_stool_count')['value']
             self.high_score = self.store.get('high_score')['value']
-            print('imported high scores')
+            print('  Successfully imported high scores')
         except:
-            print('Failed importing high scores, creating store')
+            print('  Failed importing high scores, creating store')
 
     # Update high scores
     def update_high(self):
@@ -899,6 +909,9 @@ class GameScore:
             self.store.put('high_score', value=self.high_score)
         except:
             print('failed exporting high scores to ', self.high_score_file)
+
+
+stats = GameScore()
 
 
 # Determine from the stats what percentile the current game is, return string forms
@@ -980,7 +993,7 @@ def cycle_modes(gs, stats, engine):
 
 
 # Equation of Motion
-def player_and_stool(t, u, p, gs, stats):
+def player_and_stool(t, u):
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
@@ -1007,10 +1020,10 @@ def player_and_stool(t, u, p, gs, stats):
                               [-p.mg * lp[k]*c, -p.mg * lp[k] * s,   0,       p.mg * lp[k]**2]])
 
             # Centripetal [0,1] and Coriolis [3] Force Vector
-            D = np.array([[- p.mg * dlp[k] * dtp[k] * c + p.mg * lp[k] * dtp[k] * dtp[k] * s],
-                          [- p.mg * dlp[k] * dtp[k] * s + p.mg * lp[k] * dtp[k] * dtp[k] * c],
-                          [0.0],
-                          [2.0 * p.mg * dtp[k]]])
+            D = np.array([[- 2.0 * p.mg * dlp[k] * dtp[k] * c + p.mg * lp[k] * s * dtp[k]**2],
+                          [- 2.0 * p.mg * dlp[k] * dtp[k] * s - p.mg * lp[k] * c * dtp[k]**2],
+                          [- p.mg * lp[k] * dtp[k]**2],
+                          [2.0 * p.mg * lp[k] * dlp[k] * dtp[k]]])
 
             # Gravitational Force Vector
             G = np.array([[0.0],
@@ -1023,7 +1036,7 @@ def player_and_stool(t, u, p, gs, stats):
                 t = t[0]
         
         # Control inputs form the generalized forces
-        Qx, Qy, Ql, Qth = control_logic(t, u, k, p, gs, stats)
+        Qx, Qy, Ql, Qth = control_logic(u, k)
 
         # Equation of Motion
         if USE_NUMPY:
@@ -1097,7 +1110,14 @@ def kvUpdateKey(keyPush, keycode, val):
     return keyPush
 
 
-def control_logic(t, u, k, p, gs, stats):
+def control_logic(u, k):
+    # Initialize the list of generalized forces
+    Q = [0.0, 0.0, 0.0, 0.0]
+
+    # If the ball is stuck, then stop making the computer move
+    if k is 1 and gs.Stuck:
+        return Q
+
     # Unpack the state variables
     xb, yb, dxb, dyb, xp, yp, lp, tp, dxp, dyp, dlp, dtp = unpackStates(u)
     
@@ -1107,59 +1127,54 @@ def control_logic(t, u, k, p, gs, stats):
     if p.volley_mode:
         player_run_ahead = 10.0 if gs.xI < 0 else 0.0
     else:
-        player_run_ahead = 10.0 * (p.num_player - 1 - gs.active_player)
-    diff_distance = 0.4 if p.volley_mode else -0.1
+        player_run_ahead = 0.0 if k == gs.active_player else 10.0
+    diff_distance = 0.4 if p.volley_mode else -0.25
     pip = gs.xI + player_run_ahead + diff_distance
     if p.userControlled[k][0]:
-        if gs.ctrl[0] == 0:
-            Bx = 0.0 if dxp[k] == 0.0 else -erf(dxp[k])  # Friction
-        else:
-            Bx = gs.ctrl[0]
+        Q[0] = p.Qx * (1.5 * gs.ctrl[0] - 0.5 * erf(dxp[k]))
     else:
         if gs.timeUntilBounce > 0:
             if pip - xp[k] > 3:
-                Bx = 1.0
+                Q[0] = p.Qx
             elif pip - xp[k] < -3:
-                Bx = -1.0
+                Q[0] = - p.Qx
             else:
-                Bx = min(max(p.Gx * (pip - xp[k]) - 0.4*dxp[k], -1), 1)
+                Q[0] = p.Qx * min(max(p.Gx * (pip - xp[k]) - 0.4*dxp[k], -1), 1)
         else:
-            Bx = min(max(p.Gx * (xb - xp[k] + player_run_ahead), -1), 1)
+            Q[0] = p.Qx * min(max(p.Gx * (xb - xp[k] + player_run_ahead), -1), 1)
     
     # Control leg extension based on timing, turn on when impact in <0.2 sec
     if p.userControlled[k][1]:
-        By = gs.ctrl[1]
+        Q[1] = p.Qy * gs.ctrl[1]
     else:
         if (gs.timeUntilBounce < 0.6) and (gs.timeUntilBounce > 0.4):
-            By = -1.0
+            Q[1] = - p.Qy
         elif abs(gs.timeUntilBounce) < 0.2:
-            By = 1.0
-        else:
-            By = 0.0
-    
+            Q[1] = p.Qy
+
     # Control arm extension based on timing, turn on when impact in <0.2 sec
     if p.userControlled[k][2]:
-        Bl = gs.ctrl[2]
+        Q[2] = p.Ql * gs.ctrl[2]
     else:
-        Bl = abs(gs.timeUntilBounce) < 0.2
+        Q[2] = p.Ql * (abs(gs.timeUntilBounce) < 0.2)
     
     # Control stool angle by pointing at the ball
-    xdiff = xb-xp[k]  # Ball distance - player distance
-    ydiff = yb-yp[k]-p.d
-    wantAngle = atan2(-xdiff, ydiff)
+    dx = xb - xp[k]  # Ball distance - player distance
+    dy = yb - yp[k] - p.d
+    want_angle = atan2(-dx, dy)
     if p.userControlled[k][3]:
-        Bth = gs.ctrl[3]
+        Q[3] = p.Qt * gs.ctrl[3]
     else:
-        Bth = p.Gt*(wantAngle-tp[k])
-        if Bth > 1.0:
-            Bth = 1.0
-        elif Bth < -1.0 or (0 < gs.timeUntilBounce < 0.017):
-            Bth = -1.0
+        Q[3] = p.Qt * p.Gt * (want_angle-tp[k])
+        if Q[3] > p.Qt:
+            Q[3] = p.Qt
+        elif Q[3] < -p.Qt or (0 < gs.timeUntilBounce < 0.017):
+            Q[3] = - p.Qt
 
     if USE_NUMPY:
-        return np.array([Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt])
+        return np.array(Q)
     else:
-        return Bx*p.Qx, By*p.Qy, Bl*p.Ql, Bth*p.Qt
+        return Q
 
 
 def ball_hit_floor(t, u):
@@ -1197,9 +1212,7 @@ def ball_hit_stool(t, u, k):
     r2 = xb - ri[0], yb - ri[1]
 
     # Calculate the distance to the outer radius of the ball t
-    L = norm(r2) - p.rb
-    
-    return L 
+    return norm(r2) - p.rb
 
 
 def ball_bounce_stool(gs, k):

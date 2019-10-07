@@ -9,6 +9,29 @@
             pos: self.pos
 
 
+<Yard>:
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 1
+        Line:
+            points: self.pos[0] + 0.5 * self.size[0], 0, self.pos[0] + 0.5 * self.size[0], self.size[1]
+            width: 5
+            cap: 'none'
+            #width: 0.01 * self.size[0]
+        Color:
+            rgba: 0, 0, 0, 1
+        Rectangle:
+            pos: root.pos
+            size: root.size[0], 0.7 * root.size[1]
+    Label:
+        text: root.text
+        font_size: 0.7 * root.height
+        color: 1, 1, 1, 1
+        background_color: 0, 0, 0, 1
+        pos: root.pos
+        size: root.size[0], 0.7 * root.size[1]
+
+
 <MyBackground>:
     canvas:
         Color:
@@ -124,6 +147,46 @@
         color: 0.2, 0.2, 0.2, 0.7
         opacity: root.opacity
 
+
+<ImpactBall>:
+    canvas.before:
+        PushMatrix
+        Rotate:
+            angle: -self.angle
+            axis: 0, 0, 1
+            origin: self.pos[0] + 0.5 * self.size[0], self.pos[1] + 0.5 * self.size[1]
+        Color:
+            rgba: self.color
+        Ellipse:
+            source: self.source
+            size: self.size
+            pos: self.pos
+    canvas.after:
+        PopMatrix
+
+
+<Ball>:
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 0.35
+        Line:
+            points: self.past_points
+            width: 0.1 * self.sz
+        Color:
+            rgba: 1, 0.8, 0, 0.35
+        Line:
+            points: self.past_points[:32]
+            width: 0.2 * self.sz
+        Color:
+            rgba: 1, 0.58, 0, 0.35
+        Line:
+            points: self.past_points[:16]
+            width: 0.3 * self.sz
+        Color:
+            rgba: 1, 0.23, 0.19, 0.35
+        Line:
+            points: self.past_points[:8]
+            width: 0.4 * self.sz
 
 <OptionButtons>:
     canvas:
