@@ -880,6 +880,7 @@ class Tutorial(Widget):
            '']
     is_paused = False
     ball_is_paused = False
+    ball_wait = False
     pause_state = gs.u
 
     # Text label properties
@@ -924,6 +925,9 @@ class Tutorial(Widget):
 
     def set_pause_false(self, dt):
         self.is_paused = False
+
+    def set_wait_false(self, dt):
+        self.ball_wait = False
 
     def pause(self, dt):
         self.is_paused = True
@@ -970,6 +974,7 @@ class Tutorial(Widget):
             return
 
         was_touched = False
+        in_range = abs(gs.xp[0] - gs.xI) < p.rb
         w = self.width
         h = self.height
 
@@ -982,7 +987,7 @@ class Tutorial(Widget):
                         app_object.tilt_stick.norm_pos[1] * h - 0.167 * ring_size[1])
             print('Surrounded the move stick with a rotating ring_size = ', ring_size, '  ring_pos = ', ring_pos)
             self.new_ring_position(ring_size=ring_size, ring_pos=ring_pos, in_duration=2.0, out_duration=0.0)
-        elif self.n == 1 and abs(gs.ctrl[2]) + abs(gs.ctrl[3]) > 0.5:
+        elif self.n == 1 and norm(gs.ctrl[2:4]) > 0.3:
             # Touch left
             was_touched = True
             app_object.move_stick.anim_in(w=self.width, h=self.height, duration=1)
@@ -991,7 +996,7 @@ class Tutorial(Widget):
                         app_object.move_stick.norm_pos[1] * h - 0.167 * ring_size[1])
             print('Surrounded the tilt stick with a rotating ring_size = ', ring_size, '  ring_pos = ', ring_pos)
             self.new_ring_position(ring_size=ring_size, ring_pos=ring_pos, in_duration=2.0, out_duration=2.0)
-        elif self.n == 2 and abs(gs.ctrl[1]) + abs(gs.ctrl[2]) > 0.5:
+        elif self.n == 2 and norm(gs.ctrl[:1]) > 0.3:
             # Touch right
             was_touched = True
             app_object.action_butt.anim_in(w=self.width, h=self.height)
@@ -1011,22 +1016,18 @@ class Tutorial(Widget):
             # Touch speed
             was_touched = True
             self.clear_ring(out_duration=1.0)
-        elif self.n == 6:
-            # Run to ball
-            if abs(gs.xp[0] - gs.xI) < 0.1:
-                was_touched = True
-        elif self.n == 7:
-            # Try to bounce
-            if abs(gs.xp[0] - gs.xI) < 0.1:
-                was_touched = True
-                self.ball_is_paused = False
-        elif self.n == 8:
-            # Bounce as far
+        elif self.n in (6, 7, 8) and in_range:
+            # (6) Run to ball, (7) Try to bounce, (8) Bounce as far
             was_touched = True
-            app_object.option_butt.anim_in(w=self.width, h=self.height)
-        elif self.n == 9:
+            self.ball_is_paused = False
+            self.ball_wait = True
+            Clock.schedule_once(self.set_wait_false, 0.9)
+        elif self.n == 9 and in_range:
             # Good luck
             was_touched = True
+            self.ball_is_paused = False
+            if not app_object.option_butt.is_on_screen:
+                app_object.option_butt.anim_in(w=self.width, h=self.height)
 
         # Switch to the next message if there was a touch
         next_pause_duration = 3.0 if self.n < 8 else 5.0
@@ -1882,14 +1883,13 @@ class DrubbleGame(Widget):
             # Check touches
             self.tutorial.check_touches(self)
 
-            # Detect if ball bounce is impacting soon, in which case, pause it
-            if self.tutorial.n in (5, 6) and gs.dyb <= -0.5 * norm(gs.u[:2]) and not self.tutorial.ball_is_paused:
-                self.tutorial.ball_is_paused = True
-                self.tutorial.pause_state = gs.u[:4]
-
             # Make the ball stationary while paused
             if self.tutorial.ball_is_paused:
                 gs.xb, gs.yb, gs.dxb, gs.dyb = gs.u[:4] = self.tutorial.pause_state[:4]
+            # Detect if ball bounce is impacting soon, in which case, pause it
+            elif self.tutorial.n in (6, 7, 8) and gs.dyb <= -0.5 * norm(gs.u[:2]) and not self.tutorial.ball_wait:
+                self.tutorial.ball_is_paused = True
+                self.tutorial.pause_state = gs.u[:4]
 
         # Memory debugging and garbage collection
         if p.gc and gs.n > 0 and not gs.n % 100:
