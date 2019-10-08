@@ -16,12 +16,14 @@ And install pod again using pod install.
 DSPerson commented on Jun 14
 Xcode -> File -> Workspace Setting... -> cut Build System to Legacy Build System. Have Fun
 
-
 :-1: Undefined symbol: _OBJC_CLASS_$_WKWebView
 Go to your Project, click on General, scroll down to Linked Frameworks and Libraries, and add WebKit.framework as Optional. See here: Xcode 6 + iOS 8 SDK but deploy on iOS 7 (UIWebKit & WKWebKit)
 
 -- When validating for app store on 7 October 2019
 Invalid Bundle Structure - The binary file 'drubble.app/lib/python3.7/site-packages/numpy/core/lib/libnpymath.a' is not permitted. Your app can’t contain standalone executables or libraries, other than a valid CFBundleExecutable of supported bundles. Refer to the Bundle Programming Guide at https://developer.apple.com/go/?id=bundle-structure for information on the iOS app bundle structure.
+
+ITMS-90683: Missing Purpose String in Info.plist
+-- in XCode, click on drubble-info.plist, add entry for "Privacy - Camera Usage Description"
 
 Google AdMob IDs
 
@@ -881,6 +883,7 @@ class Tutorial(Widget):
     is_paused = False
     ball_is_paused = False
     ball_wait = False
+    dyb_before = 0
     pause_state = gs.u
 
     # Text label properties
@@ -969,10 +972,11 @@ class Tutorial(Widget):
         self.ring.pos = (self.ring.pos[0] * width_scale, self.ring.pos[1] * height_scale)
         self.ring.center = (self.ring.pos[0] + 0.5 * self.ring.size[0], self.ring.pos[1] + 0.5 * self.ring.size[1])
 
-    def check_touches(self, app_object):
+    def update(self, app_object):
         if self.is_paused:
             return
 
+        self.dyb_before = gs.dyb
         was_touched = False
         in_range = abs(gs.xp[0] - gs.xI) < p.rb
         w = self.width
@@ -1021,7 +1025,7 @@ class Tutorial(Widget):
             was_touched = True
             self.ball_is_paused = False
             self.ball_wait = True
-            Clock.schedule_once(self.set_wait_false, 0.9)
+            # Clock.schedule_once(self.set_wait_false, 0.9)
         elif self.n == 9 and in_range:
             # Good luck
             was_touched = True
@@ -1878,19 +1882,6 @@ class DrubbleGame(Widget):
             # There is no updating required for the splash and update screen, so exit the method
             return
 
-        # Do tutorial stuff
-        if self.tutorial_mode:
-            # Check touches
-            self.tutorial.check_touches(self)
-
-            # Make the ball stationary while paused
-            if self.tutorial.ball_is_paused:
-                gs.xb, gs.yb, gs.dxb, gs.dyb = gs.u[:4] = self.tutorial.pause_state[:4]
-            # Detect if ball bounce is impacting soon, in which case, pause it
-            elif self.tutorial.n in (6, 7, 8) and gs.dyb <= -0.5 * norm(gs.u[:2]) and not self.tutorial.ball_wait:
-                self.tutorial.ball_is_paused = True
-                self.tutorial.pause_state = gs.u[:4]
-
         # Memory debugging and garbage collection
         if p.gc and gs.n > 0 and not gs.n % 100:
             gc.collect()
@@ -1902,16 +1893,36 @@ class DrubbleGame(Widget):
             for stat in top_stats[:20]:
                 print(stat)
 
-        # Angle and speed settings
-        if gs.game_mode < 6:
-            gs.set_angle_and_speed()
-            # start_loop.pitch = gs.start_angle / p.sa
-            if gs.game_mode == 5:
-                start_loop.volume = 0.5 * gs.start_speed / p.ss
-
         # Call the sim_step method
         if gs.game_mode < 7:
             gs.sim_step()
+
+        # Do tutorial stuff
+        if self.tutorial_mode:
+            # The ball will be paused above the player to allow them to get under the stool. The .ball_wait property
+            # in the tutorial makes sure this pause only happens once per bounce. To determine whether to permit the
+            # pause, this determines whether the sign of the trajectory has changed.
+            sign_change = (self.tutorial.dyb_before * gs.dyb) < 0
+
+            # The tutorial method tests several conditions to determine whether to advance
+            self.tutorial.update(self)
+
+            # Make the ball stationary while paused
+            if self.tutorial.ball_is_paused:
+                gs.xb, gs.yb, gs.dxb, gs.dyb = gs.u[:4] = self.tutorial.pause_state[:4]
+            # Detect if ball bounce is impacting soon, in which case, pause it
+            elif self.tutorial.n in (6, 7, 8) and gs.dyb <= -0.5 * norm(gs.u[2:4]) and not self.tutorial.ball_wait:
+                self.tutorial.ball_is_paused = True
+                self.tutorial.pause_state = gs.u[:4]
+            # If a sign change occured, then permit flipping the .ball_wait property to False
+            elif self.tutorial.ball_wait and sign_change:
+                self.tutorial.ball_wait = False
+
+        # Angle and speed settings
+        if gs.game_mode < 6:
+            gs.set_angle_and_speed()
+            if gs.game_mode == 5:
+                start_loop.volume = 0.5 * gs.start_speed / p.ss
 
         if p.volley_mode:
             # Update the net
