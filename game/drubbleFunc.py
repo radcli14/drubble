@@ -1,4 +1,9 @@
 # Import modules
+from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
+from random import randint
+from kivy.storage.jsonstore import JsonStore
+from kivy.core.audio import SoundLoader
+import sys
 try:
     import numpy as np
     from numpy import array
@@ -10,12 +15,7 @@ except:
 print('')
 print('  USE_NUMPY = ' + str(USE_NUMPY))
 print('')
-from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
-from random import randint
-from kivy.storage.jsonstore import JsonStore
-from kivy.core.audio import SoundLoader
 
-import sys
 # Frame rate
 if 'dRuBbLe' in sys.argv[0]:
     fs = 60
@@ -26,21 +26,34 @@ else:
 dt = 1.0/fs
 
 # Color definition
-red = (1, 0, 0)
-green = (0, 1, 0)
-blue = (0, 0, 1)
 darkBlue = (0, 0, 128.0/255.0)
-white = (1, 1, 1)
-gray = (160.0/255.0, 160.0/255.0, 160.0/255.0)
-black = (0, 0, 0)
-pink = (1, 100.0/255.0, 100.0/255.0)
 skyBlue = (135.0/255.0, 226.0/255.0, 255.0/255.0)
 cyan = (0.0, 1.0, 1.0)
 darkGreen = (0, 120.0/255.0, 0)
-pink = (1.0, 182.0/255.0, 193.0/255.0)
 olive = [[128.0 / 255.0, 128.0 / 255.0, 0.0, 1.0], [128.0 / 255.0, 128.0 / 255.0, 0.0, 1.0]]
 
-# Apple System Colors
+# Android System Colors
+red = [[244.0 / 255.0, 67.0 / 255.0, 54.0 / 255.0, 1.0], []]
+pink = [[233.0 / 255.0, 30.0 / 255.0, 99.0 / 255.0, 1.0], []]
+purple = [[156.0 / 255.0, 39.0 / 255.0, 176.0 / 255.0, 1.0], []]
+deep_purple = [[103.0 / 255.0, 58.0 / 255.0, 183.0 / 255.0, 1.0], []]
+indigo = [[6.0 / 255.0, 81.0 / 255.0, 181.0 / 255.0, 1.0], []]
+blue = [[33.0 / 255.0, 150.0 / 255.0, 243.0 / 255.0, 1.0], []]
+light_blue = [[3.0 / 255.0, 169.0 / 255.0, 244.0 / 255.0, 1.0], []]
+cyan = [[0.0 / 255.0, 188.0 / 255.0, 212.0 / 255.0, 1.0], []]
+teal = [[0.0 / 255.0, 150.0 / 255.0, 136.0 / 255.0, 1.0], []]
+green = [[76.0 / 255.0, 175.0 / 255.0, 80.0 / 255.0, 1.0], []]
+light_green = [[139.0 / 255.0, 195.0 / 255.0, 74.0 / 255.0, 1.0], []]
+lime = [[205.0 / 255.0, 220.0 / 255.0, 57.0 / 255.0, 1.0], []]
+yellow = [[255.0 / 255.0, 235.0 / 255.0, 59.0 / 255.0, 1.0], []]
+amber = [[255.0 / 255.0, 193.0 / 255.0, 7.0 / 255.0, 1.0], []]
+orange = [[255.0 / 255.0, 152.0 / 255.0, 0.0 / 255.0, 1.0], []]
+deep_orange = [[255.0 / 255.0, 87.0 / 255.0, 2.0 / 255.0, 1.0], []]
+brown = [[121.0 / 255.0, 85.0 / 255.0, 72.0 / 255.0, 1.0], []]
+grey = [[158.0 / 255.0, 158.0 / 255.0, 158.0 / 255.0, 1.0], []]
+blue_grey = [[96.0 / 255.0, 125.0 / 255.0, 139.0 / 255.0, 1.0], []]
+
+# Apple System Color
 blue = [[0.0, 122.0 / 255.0, 1.0, 1.0], [10.0 / 255.0, 132.0 / 255.0, 1.0, 1.0]]
 green = [[52.0 / 255.0, 199.0 / 255.0, 89.0 / 255.0, 1.0], [48.0 / 255.0, 209.0 / 255.0, 88.0 / 255.0, 1.0]]
 indigo = [[88.0 / 255.0, 86.0 / 255.0, 214.0 / 255.0, 1.0], [94.0 / 255.0, 91.0 / 255.0, 120.0 / 255.0, 1.0]]
@@ -51,6 +64,7 @@ red = [[255.0 / 255.0, 59.0 / 255.0, 48.0 / 255.0, 1.0], [255.0 / 255.0, 69.0 / 
 teal = [[90.0 / 255.0, 200.0 / 255.0, 250.0 / 255.0, 1.0], [100.0 / 255.0, 110.0 / 255.0, 255.0 / 255.0, 1.0]]
 yellow = [[255.0 / 255.0, 204.0 / 255.0, 0.0 / 255.0, 1.0], [255.0 / 255.0, 214.0 / 255.0, 10.0 / 255.0, 1.0]]
 
+# Shades of gray
 gray = [[142.0 / 255.0, 142.0 / 255.0, 147.0 / 255.0, 1.0], [142.0 / 255.0, 142.0 / 255.0, 147.0 / 255.0, 1.0]]
 gray_2 = [[174.0 / 255.0, 174.0 / 255.0, 178.0 / 255.0, 1.0], [99.0 / 255.0, 99.0 / 255.0, 102.0 / 255.0, 1.0]]
 gray_3 = [[199.0 / 255.0, 199.0 / 255.0, 204.0 / 255.0, 1.0], [72.0 / 255.0, 72.0 / 255.0, 74.0 / 255.0, 1.0]]
@@ -59,6 +73,8 @@ gray_5 = [[229.0 / 255.0, 229.0 / 255.0, 234.0 / 255.0, 1.0], [44.0 / 255.0, 44.
 gray_6 = [[242.0 / 255.0, 242.0 / 255.0, 247.0 / 255.0, 1.0], [28.0 / 255.0, 28.0 / 255.0, 30.0 / 255.0, 1.0]]
 
 # Black if darkMode is true, otherwise white
+white = (1, 1, 1)
+black = (0, 0, 0)
 black_white = [[0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]
 
 
@@ -120,13 +136,12 @@ class Parameters:
     Ct = 2.0 * zl * sqrt(Kt*m)  # Tilt damping [N-m-s/rad]
 
     # Initial states
-    q0 = [0.0, y0,  l0, 0.0]
-    u0 = [0.0, rb, 0.0, 0.0, x0,   y0,  l0,   0.0, 0.0, 0.0, 0.0, 10.0,
-          0.0, y0, l0,  0.0, 0.0, 0.0, 0.0, -10.0]
+    q0 = [0.0, y0, l0, 0.0]
+    u0 = [0.0, rb, 0.0, 0.0, x0, y0, l0, 0.0, 0.0, 0.0, 0.0, 10.0, 0.0, y0, l0, 0.0, 0.0, 0.0, 0.0, -10.0]
 
-    # Gameplay settings
-    userControlled = [[True,   True,  True, True],
-                      [False, False, False, False]]
+    # Game play settings
+    demo_mode = True
+    userControlled = [[False for _ in range(4)], [False for _ in range(4)]]
     num_player = 1
 
     # Stool parameters
@@ -466,7 +481,7 @@ class GameState:
     def set_control(self, keyPush=[0, 0, 0, 0, 0, 0, 0, 0],
                    moveStick=(0, 0), tiltStick=(0, 0),
                    g=(0, 0, 0), a=(0, 0, 0)):
-        
+
         if self.ctrl_func == 0:
             # Key press control
             self.ctrl = [keyPush[1]-keyPush[0], keyPush[2]-keyPush[3], keyPush[4]-keyPush[5], keyPush[6]-keyPush[7]]
@@ -1115,7 +1130,7 @@ def control_logic(u, k):
     Q = [0.0, 0.0, 0.0, 0.0]
 
     # If the ball is stuck, then stop making the computer move
-    if k is 1 and gs.Stuck:
+    if gs.Stuck:
         return Q
 
     # Unpack the state variables
@@ -1125,10 +1140,10 @@ def control_logic(u, k):
     # Is the active player, this will be at gs.xI, otherwise will be at
     # gs.xI + 10
     if p.volley_mode:
-        player_run_ahead = 10.0 if gs.xI < 0 else 0.0
+        player_run_ahead = 10.0 if gs.xI < 0 and k is 1 else 0.0
     else:
         player_run_ahead = 0.0 if k == gs.active_player else 10.0
-    diff_distance = 0.4 if p.volley_mode else -0.25
+    diff_distance =  (2.0 * k - 1) * 0.4 if p.volley_mode else -0.25
     pip = gs.xI + player_run_ahead + diff_distance
     if p.userControlled[k][0]:
         Q[0] = p.Qx * (1.5 * gs.ctrl[0] - 0.5 * erf(dxp[k]))
@@ -1139,7 +1154,7 @@ def control_logic(u, k):
             elif pip - xp[k] < -3:
                 Q[0] = - p.Qx
             else:
-                Q[0] = p.Qx * min(max(p.Gx * (pip - xp[k]) - 0.4*dxp[k], -1), 1)
+                Q[0] = p.Qx * min(max(p.Gx * (pip - xp[k]) - 0.4 * dxp[k], -1), 1)
         else:
             Q[0] = p.Qx * min(max(p.Gx * (xb - xp[k] + player_run_ahead), -1), 1)
     

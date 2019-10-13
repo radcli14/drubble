@@ -1564,7 +1564,6 @@ class DrubbleGame(Widget):
                 self.tilt_stick.update_el(xy[0], xy[1])
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
 
-
     def on_touch_move(self, touch):
         if gs.game_mode > 2:
             # Detect control inputs
@@ -1893,6 +1892,12 @@ class DrubbleGame(Widget):
             for stat in top_stats[:20]:
                 print(stat)
 
+        # If running in demo mode, use computer control algorithm
+        if p.demo_mode and gs.n > 0:
+            Q = control_logic(gs.u, 0)
+            sc = p.Qx, p.Qy, p.Ql, p.Qt
+            gs.ctrl = [Q[k] / sc[k] for k in range(4)]
+
         # Call the sim_step method
         if gs.game_mode < 7:
             gs.sim_step()
@@ -1921,7 +1926,7 @@ class DrubbleGame(Widget):
         # Angle and speed settings
         if gs.game_mode < 6:
             gs.set_angle_and_speed()
-            if gs.game_mode == 5:
+            if gs.game_mode is 5 and SOUND_LOADED:
                 start_loop.volume = 0.5 * gs.start_speed / p.ss
 
         if p.volley_mode:
