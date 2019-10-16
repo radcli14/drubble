@@ -3,6 +3,7 @@ from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
 from random import randint
 from kivy.storage.jsonstore import JsonStore
 from kivy.core.audio import SoundLoader
+from kivy.uix.image import Image
 import sys
 try:
     import numpy as np
@@ -186,14 +187,26 @@ class Parameters:
     MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Player visual settings
-    bro = {'image_source': 'a/myFace2.png', 'jersey_source': 'a/MyJersey.png',
-           'shorts_source': 'a/MyShorts.png', 'line_color': green[0], 'stool_color': gray[0]}
-    gal = {'image_source': 'a/LadyFace.png', 'jersey_source': 'a/LadyJersey.png',
-           'shorts_source': 'a/LadyShorts.png', 'line_color': orange[0], 'stool_color': gray_6[0]}
-    max = {'image_source': 'a/max_face.png', 'jersey_source': 'a/max_jersey.png',
-           'shorts_source': 'a/max_shorts.png', 'line_color': gray[0], 'stool_color': red[0]}
-    woof = {'image_source': 'a/woof_face.png', 'jersey_source': 'a/woof_jersey.png',
-            'shorts_source': 'a/woof_shorts.png', 'line_color': indigo[0], 'stool_color': orange[0]}
+    bro = {'face_texture': Image(source='a/myFace2.png').texture,
+           'jersey_texture': Image(source='a/MyJersey.png').texture,
+           'shorts_texture0': Image(source='a/MyShorts.png').texture,
+           'shorts_texture1': Image(source='a/MyShorts1.png').texture,
+           'line_color': green[0], 'stool_color': gray[0]}
+    gal = {'face_texture': Image(source='a/LadyFace.png').texture,
+           'jersey_source': Image(source='a/LadyJersey.png').texture,
+           'shorts_texture0': Image(source='a/LadyShorts.png').texture,
+           'shorts_texture1': Image(source='a/LadyShorts1.png').texture,
+           'line_color': orange[0], 'stool_color': gray_6[0]}
+    max = {'face_texture': Image(source='a/max_face.png').texture,
+           'jersey_texture': Image(source='a/max_jersey.png').texture,
+           'shorts_texture0': Image(source='a/max_shorts.png').texture,
+           'shorts_texture1': Image(source='a/max_shorts.png').texture,
+           'line_color': gray[0], 'stool_color': red[0]}
+    woof = {'face_texture': Image(source='a/woof_face.png').texture,
+            'jersey_texture': Image(source='a/woof_jersey.png').texture,
+            'shorts_texture0': Image(source='a/woof_shorts.png').texture,
+            'shorts_texture1': Image(source='a/woof_shorts1.png').texture,
+            'line_color': indigo[0], 'stool_color': orange[0]}
 
     players = bro, gal, max, woof
 

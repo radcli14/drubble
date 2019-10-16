@@ -289,11 +289,10 @@ class MyFace(Widget):
 
     def __init__(self, **kwargs):
         super(MyFace, self).__init__()
-        self.face_texture = Image(source=kwargs['image_source']).texture
-        self.jersey_texture = Image(source=kwargs['jersey_source']).texture
-        shorts_source = kwargs['shorts_source']
-        self.shorts_texture0 = Image(source=shorts_source).texture
-        self.shorts_texture1 = Image(source=shorts_source.replace('.', '1.')).texture
+        self.face_texture = kwargs['face_texture']
+        self.jersey_texture = kwargs['jersey_texture']
+        self.shorts_texture0 = kwargs['shorts_texture0']
+        self.shorts_texture1 = kwargs['shorts_texture1']
         self.stool_color = kwargs['stool_color']
         self.line_color = kwargs['line_color']
         self.opacity = 0.0
