@@ -140,8 +140,8 @@ class Parameters:
     u0 = [0.0, rb, 0.0, 0.0, x0, y0, l0, 0.0, 0.0, 0.0, 0.0, 10.0, 0.0, y0, l0, 0.0, 0.0, 0.0, 0.0, -10.0]
 
     # Game play settings
-    demo_mode = True
-    userControlled = [[False for _ in range(4)], [False for _ in range(4)]]
+    demo_mode = False
+    userControlled = [[True for _ in range(4)], [False for _ in range(4)]]
     num_player = 1
 
     # Stool parameters
@@ -190,6 +190,8 @@ class Parameters:
                   'shorts_source': 'a/MyShorts.png', 'line_color': green[0], 'stool_color': gray[0]}
     isu_gal = {'image_source': 'a/LadyFace.png', 'jersey_source': 'a/LadyJersey.png',
                'shorts_source': 'a/LadyShorts.png', 'line_color': orange[0], 'stool_color': gray_6[0]}
+    max = {'image_source': 'a/max_face.png', 'jersey_source': 'a/max_jersey.png',
+           'shorts_source': 'a/max_shorts.png', 'line_color': gray[0], 'stool_color': red[0]}
 
     # This is the text used in the upper right button
     actionMSG = '', '', '', 'Begin', 'Set Angle', 'Set Speed', 'High Scores', 'Restart'

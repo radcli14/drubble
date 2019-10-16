@@ -1119,7 +1119,7 @@ class DrubbleGame(Widget):
             self.score_label = ScoreLabel(text='Score', norm_left=0.8)
 
             # Initialize the player faces
-            self.player = [MyFace(**p.college_me), MyFace(**p.isu_gal)]
+            self.player = [MyFace(**p.college_me), MyFace(**p.max)]  # MyFace(**p.isu_gal)]
 
             # Initialize the high score labels
             j = p.difficult_level
