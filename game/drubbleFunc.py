@@ -186,12 +186,16 @@ class Parameters:
     MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Player visual settings
-    college_me = {'image_source': 'a/myFace2.png', 'jersey_source': 'a/MyJersey.png',
-                  'shorts_source': 'a/MyShorts.png', 'line_color': green[0], 'stool_color': gray[0]}
-    isu_gal = {'image_source': 'a/LadyFace.png', 'jersey_source': 'a/LadyJersey.png',
-               'shorts_source': 'a/LadyShorts.png', 'line_color': orange[0], 'stool_color': gray_6[0]}
+    bro = {'image_source': 'a/myFace2.png', 'jersey_source': 'a/MyJersey.png',
+           'shorts_source': 'a/MyShorts.png', 'line_color': green[0], 'stool_color': gray[0]}
+    gal = {'image_source': 'a/LadyFace.png', 'jersey_source': 'a/LadyJersey.png',
+           'shorts_source': 'a/LadyShorts.png', 'line_color': orange[0], 'stool_color': gray_6[0]}
     max = {'image_source': 'a/max_face.png', 'jersey_source': 'a/max_jersey.png',
            'shorts_source': 'a/max_shorts.png', 'line_color': gray[0], 'stool_color': red[0]}
+    woof = {'image_source': 'a/woof_face.png', 'jersey_source': 'a/woof_jersey.png',
+            'shorts_source': 'a/woof_shorts.png', 'line_color': indigo[0], 'stool_color': orange[0]}
+
+    players = bro, gal, max, woof
 
     # This is the text used in the upper right button
     actionMSG = '', '', '', 'Begin', 'Set Angle', 'Set Speed', 'High Scores', 'Restart'

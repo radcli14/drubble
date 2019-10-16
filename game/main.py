@@ -237,6 +237,8 @@ class MyBackground(Widget):
 
 
 class SplashScreen(Widget):
+    splash_texture = Image(source='a/splash.png').texture
+
     def __init__(self, w=width*screen_scf, h=height*screen_scf, splash_duration=4.0, **kwargs):
         super(SplashScreen, self).__init__(**kwargs)
         self.height = h
@@ -267,29 +269,31 @@ class MyFace(Widget):
     jersey_left = NumericProperty(0.0)
     jersey_right = NumericProperty(0.0)
     jersey_bottom = NumericProperty(0.0)
-    jersey_source = StringProperty(None)
+    jersey_texture = ObjectProperty(None)
     stool_left = NumericProperty(0.0)
     stool_bottom = NumericProperty(0.0)
     stool_width = NumericProperty(0.0)
     stool_height = NumericProperty(0.0)
     stool_angle = NumericProperty(0.0)
     rotate_center = ListProperty([0, 0])
-    image_source = StringProperty(None)
+    face_texture = ObjectProperty(None)
     stool_color = ListProperty([1, 1, 1, 1])
     line_list = ListProperty([0, 0])
     line_color = ListProperty([0, 0, 0])
     line_width = NumericProperty(1)
-    shorts_source0 = StringProperty(None)
-    shorts_source1 = StringProperty(None)
+    shorts_texture0 = ObjectProperty(None)
+    shorts_texture1 = ObjectProperty(None)
     shorts_angle0 = NumericProperty(0.0)
     shorts_angle1 = NumericProperty(0.0)
+    stool_texture = ObjectProperty(Image(source='a/stool.png').texture)
 
     def __init__(self, **kwargs):
         super(MyFace, self).__init__()
-        self.image_source = kwargs['image_source']
-        self.jersey_source = kwargs['jersey_source']
-        self.shorts_source0 = kwargs['shorts_source']
-        self.shorts_source1 = self.shorts_source0.replace('.', '1.')
+        self.face_texture = Image(source=kwargs['image_source']).texture
+        self.jersey_texture = Image(source=kwargs['jersey_source']).texture
+        shorts_source = kwargs['shorts_source']
+        self.shorts_texture0 = Image(source=shorts_source).texture
+        self.shorts_texture1 = Image(source=shorts_source.replace('.', '1.')).texture
         self.stool_color = kwargs['stool_color']
         self.line_color = kwargs['line_color']
         self.opacity = 0.0
@@ -339,6 +343,9 @@ class VolleyNet(Widget):
     back_line_pos = ListProperty([[0.0, 0.0], [0.0, 0.0]])
     back_line_size = ListProperty([[0.0, 0.0], [0.0, 0.0]])
 
+    net_rect = Image(source='a/net_rect.png').texture
+    net_circle = Image(source='a/net_circ.png').texture
+
     def __init__(self):
         super(VolleyNet, self).__init__()
         self.opacity = 0.0
@@ -372,7 +379,7 @@ class VolleyNet(Widget):
 class ImpactBall(Widget):
     color = ListProperty([1.0, 1.0, 1.0, 1.0])
     angle = NumericProperty(0.0)
-    source = StringProperty('a/cg_black_on_white.png')
+    texture = ObjectProperty(Image(source='a/cg_black_on_white.png').texture)
 
     def __init__(self, color=pink[isDark]):
         super(ImpactBall, self).__init__()
@@ -1119,7 +1126,7 @@ class DrubbleGame(Widget):
             self.score_label = ScoreLabel(text='Score', norm_left=0.8)
 
             # Initialize the player faces
-            self.player = [MyFace(**p.college_me), MyFace(**p.max)]  # MyFace(**p.isu_gal)]
+            self.player = [MyFace(**p.players[0]), MyFace(**p.players[3])]
 
             # Initialize the high score labels
             j = p.difficult_level
