@@ -1125,7 +1125,9 @@ class DrubbleGame(Widget):
             self.score_label = ScoreLabel(text='Score', norm_left=0.8)
 
             # Initialize the player faces
-            self.player = [MyFace(**p.players[0]), MyFace(**p.players[randint(1, 3)])]
+            self.rand_player = randint(1, len(p.player_data)-1)
+            self.player_dicts = [p.players[0], p.players[self.rand_player]]
+            self.player = [MyFace(**p.players[0]), MyFace(**p.players[self.rand_player])]
 
             # Initialize the high score labels
             j = p.difficult_level
@@ -1979,7 +1981,7 @@ class DrubbleGame(Widget):
         self.ball.update(gs.xb, gs.yb, gs.m2p, gs.po, self.width, self.height, self.tutorial.ball_is_paused)
 
         if gs.stool_bounce and p.num_player > 1 and not p.volley_mode:
-            self.ball.impact.color = self.player[1 - gs.active_player % 2].line_color
+            self.ball.impact.color = self.player_dicts[1 - gs.active_player % 2]['ball_color']
 
         # Update the player(s)
         self.player[0].update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], gs.m2p, gs.po,

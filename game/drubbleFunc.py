@@ -187,19 +187,20 @@ class Parameters:
     MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Player visual settings
-    player_data = [('bro', green[0], gray[0]),
-                   ('gal', orange[0], gray_6[0]),
-                   ('max', gray[0], red[0]),
-                   ('woof', indigo[0], orange[0])]
+    player_data = [('bro', green[0], gray[0], green[0]),
+                   ('gal', orange[0], gray_6[0], yellow[0]),
+                   ('max', gray[0], red[0], red[0]),
+                   ('woof', indigo[0], orange[0], orange[0]),
+                   ('hal', black_white[0], orange[0], gray_3[0])]
     players = {}
     for n, data in enumerate(player_data):
-        name, line_color, stool_color = data
+        name, line_color, stool_color, ball_color = data
         players[n] = players[name] = {
             'face_texture': Image(source='a/'+name+'_face.png').texture,
             'jersey_texture': Image(source='a/'+name+'_jersey.png').texture,
             'shorts_texture0': Image(source='a/'+name+'_shorts.png').texture,
             'shorts_texture1': Image(source='a/'+name+'_shorts1.png').texture,
-            'line_color': line_color, 'stool_color': stool_color
+            'line_color': line_color, 'stool_color': stool_color, 'ball_color': ball_color
         }
 
     # This is the text used in the upper right button
@@ -409,6 +410,7 @@ class GameState:
     active_player = 0
     screen_width = 0
     screen_height = 0
+    u = zeros(20)
 
     # Initiate the state variables as a list, and as individual variables
     def __init__(self, u0=p.u0, engine='kivy'):
@@ -443,20 +445,18 @@ class GameState:
         self.te = 0
         
         # State variables
-        self.u = u0[:]
-        # self = varStates(self)
-        self.xb = self.u[0]  # Ball distance [m]
-        self.yb = self.u[1]  # Ball height [m]
-        self.dxb = self.u[2]  # Ball horizontal speed [m]
-        self.dyb = self.u[3]  # Ball vertical speed [m]
-        self.xp = self.u[4:13:8]  # Player distance [m]
-        self.yp = self.u[5:14:8]  # Player height [m]
-        self.lp = self.u[6:15:8]  # Stool extension [m]
-        self.tp = self.u[7:16:8]  # Stool tilt [rad]
-        self.dxp = self.u[8:17:8]  # Player horizontal speed [m/s]
-        self.dyp = self.u[9:18:8]  # Player vertical speed [m/s]
-        self.dlp = self.u[10:19:8]  # Stool extension rate [m/s]
-        self.dtp = self.u[11:20:8]  # Stool tilt rate [rad/s]
+        self.xb = self.u[0] = u0[0]  # Ball distance [m]
+        self.yb = self.u[1] = u0[1]  # Ball height [m]
+        self.dxb = self.u[2] = u0[2]  # Ball horizontal speed [m]
+        self.dyb = self.u[3] = u0[3]  # Ball vertical speed [m]
+        self.xp = self.u[4:13:8] = u0[4:13:8]  # Player distance [m]
+        self.yp = self.u[5:14:8] = u0[5:14:8]  # Player height [m]
+        self.lp = self.u[6:15:8] = u0[6:15:8]  # Stool extension [m]
+        self.tp = self.u[7:16:8] = u0[7:16:8]  # Stool tilt [rad]
+        self.dxp = self.u[8:17:8] = u0[8:17:8]  # Player horizontal speed [m/s]
+        self.dyp = self.u[9:18:8] = u0[9:18:8]  # Player vertical speed [m/s]
+        self.dlp = self.u[10:19:8] = u0[10:19:8]  # Stool extension rate [m/s]
+        self.dtp = self.u[11:20:8] = u0[11:20:8]  # Stool tilt rate [rad/s]
 
         # Foot positions for drawing the stick figure [x, y, phase]
         self.foot_position = [[[self.xp[0] - p.stance_width, 0.0, 0.0], [self.xp[0] + p.stance_width, 0.0, 0.5 * pi]],
@@ -711,7 +711,6 @@ class GameState:
             self.u[1] = p.u0[1]
 
         # Named states
-        # self = varStates(self)
         self.xb = self.u[0]  # Ball distance [m]
         self.yb = self.u[1]  # Ball height [m]
         self.dxb = self.u[2]  # Ball horizontal speed [m]
