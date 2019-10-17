@@ -187,28 +187,20 @@ class Parameters:
     MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Player visual settings
-    bro = {'face_texture': Image(source='a/myFace2.png').texture,
-           'jersey_texture': Image(source='a/MyJersey.png').texture,
-           'shorts_texture0': Image(source='a/MyShorts.png').texture,
-           'shorts_texture1': Image(source='a/MyShorts1.png').texture,
-           'line_color': green[0], 'stool_color': gray[0]}
-    gal = {'face_texture': Image(source='a/LadyFace.png').texture,
-           'jersey_source': Image(source='a/LadyJersey.png').texture,
-           'shorts_texture0': Image(source='a/LadyShorts.png').texture,
-           'shorts_texture1': Image(source='a/LadyShorts1.png').texture,
-           'line_color': orange[0], 'stool_color': gray_6[0]}
-    max = {'face_texture': Image(source='a/max_face.png').texture,
-           'jersey_texture': Image(source='a/max_jersey.png').texture,
-           'shorts_texture0': Image(source='a/max_shorts.png').texture,
-           'shorts_texture1': Image(source='a/max_shorts.png').texture,
-           'line_color': gray[0], 'stool_color': red[0]}
-    woof = {'face_texture': Image(source='a/woof_face.png').texture,
-            'jersey_texture': Image(source='a/woof_jersey.png').texture,
-            'shorts_texture0': Image(source='a/woof_shorts.png').texture,
-            'shorts_texture1': Image(source='a/woof_shorts1.png').texture,
-            'line_color': indigo[0], 'stool_color': orange[0]}
-
-    players = bro, gal, max, woof
+    player_data = [('bro', green[0], gray[0]),
+                   ('gal', orange[0], gray_6[0]),
+                   ('max', gray[0], red[0]),
+                   ('woof', indigo[0], orange[0])]
+    players = {}
+    for n, data in enumerate(player_data):
+        name, line_color, stool_color = data
+        players[n] = players[name] = {
+            'face_texture': Image(source='a/'+name+'_face.png').texture,
+            'jersey_texture': Image(source='a/'+name+'_jersey.png').texture,
+            'shorts_texture0': Image(source='a/'+name+'_shorts.png').texture,
+            'shorts_texture1': Image(source='a/'+name+'_shorts1.png').texture,
+            'line_color': line_color, 'stool_color': stool_color
+        }
 
     # This is the text used in the upper right button
     actionMSG = '', '', '', 'Begin', 'Set Angle', 'Set Speed', 'High Scores', 'Restart'
@@ -343,11 +335,11 @@ def linspace(start, stop, n):
 
 
 def zeros(ztup):
-    try:
+    if type(ztup) in (list, tuple):
         z = [0 for _ in range(ztup[1])]
         Z = [z for _ in range(ztup[0])]
         return Z
-    except:
+    else:
         z = [0 for _ in range(ztup)]
         return z
 
