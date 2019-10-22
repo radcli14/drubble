@@ -499,9 +499,9 @@ class BallCannon(Widget):
         anim = Animation(opacity=1.0, color=[1.0, 1.0, 1.0, 1.0], duration=duration)
         anim.start(self)
 
-    def anim_out(self):
+    def anim_out(self, duration=1.0):
         Animation.cancel_all(self)
-        anim = Animation(opacity=0.0, duration=1)
+        anim = Animation(opacity=0.0, color=[1.0, 1.0, 1.0, 0.0], duration=duration)
         anim.start(self)
 
 
