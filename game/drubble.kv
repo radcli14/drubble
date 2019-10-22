@@ -190,6 +190,24 @@
             points: self.past_points[:8]
             width: 0.4 * self.sz
 
+
+<BallCannon>:
+    canvas.before:
+        PushMatrix
+        Rotate:
+            angle: self.angle
+            axis: 0, 0, 1
+            origin: self.pos[0] + 0.25 * self.size[0], self.pos[1] + 0.5 * self.size[1]
+        Color:
+            rgba: self.color
+        Rectangle:
+            texture: self.texture
+            size: self.size
+            pos: self.pos
+    canvas.after:
+        PopMatrix
+
+
 <OptionButtons>:
     canvas:
         Color:

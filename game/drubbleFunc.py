@@ -735,7 +735,7 @@ class GameState:
         if self.game_mode == 4:
             self.start_angle = 0.25 * pi * (1 + 0.75*sin(self.phase))
         if self.game_mode == 5:
-            self.start_speed = p.ss * (1 + 0.75*sin(self.phase))
+            self.start_speed = p.ss * (1.2 + 0.6*sin(self.phase))
         if self.game_mode == 4 or self.game_mode == 5:
             self.phase += 3 * dt * p.difficult_speed_scale[p.difficult_level]
             start_direction = 1.0 if not p.volley_mode or (p.volley_mode and p.serving_player == 0) else -1.0

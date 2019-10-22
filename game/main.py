@@ -407,8 +407,9 @@ class Ball(Widget):
     past_x = zeros(32)
     past_y = zeros(32)
     past_points = ListProperty(zeros(64))
+    ball_texture = Image(source='a/ball.png').texture
 
-    def __init__(self, image_source='a/ball.png', **kwargs):
+    def __init__(self, **kwargs):
         super(Ball, self).__init__(**kwargs)
         self.opacity = 0.0
         self.future = []
@@ -418,7 +419,7 @@ class Ball(Widget):
             self.future = [Ellipse(size=(0, 0)) for _ in range(p.num_future_points)]
             self.impact = ImpactBall(color=(pink[isDark]))
             Color(rgba=(1, 1, 1, 1))
-            self.now = Ellipse(size=(self.sz, self.sz), source=image_source, pos=self.pos)
+            self.now = Ellipse(size=(self.sz, self.sz), texture=self.ball_texture, pos=self.pos)
 
     def update(self, xb, yb, m2p, po, w, h, pause_flag):
         # Update the past position of the ball
@@ -461,6 +462,35 @@ class Ball(Widget):
         self.random_scale = 0.0
         Animation.cancel_all(self)
         anim = Animation(opacity=1.0, duration=duration)
+        anim.start(self)
+
+    def anim_out(self):
+        Animation.cancel_all(self)
+        anim = Animation(opacity=0.0, duration=1)
+        anim.start(self)
+
+
+class BallCannon(Widget):
+    texture = Image(source='a/ball_cannon.png').texture
+    angle = NumericProperty(p.sa)
+    color = ListProperty([1.0, 1.0, 1.0, 0.0])
+
+    def __init__(self, **kwargs):
+        super(BallCannon, self).__init__(**kwargs)
+        self.opacity = 0.0
+
+    def update(self, xb, yb, angle, speed, m2p, po, w=Window.width, h=Window.height):
+        x, y = xy2p(xb, yb, m2p, po, w, h)
+
+        self.size = float(6.0 * p.rb * m2p), float(3.0 * p.rb * m2p)
+        self.pos = float(x - 1.5 * p.rb * m2p), float(y - 1.5 * p.rb * m2p)
+        self.angle = 180.0 / pi * angle
+        self.color[1] = float(1.0 - 0.5 * 0.77 * speed / 20.0)
+        self.color[2] = float(1.0 - 0.5 * 0.81 * speed / 20.0)
+
+    def anim_in(self, duration=1.0):
+        Animation.cancel_all(self)
+        anim = Animation(opacity=1.0, color=[1.0, 1.0, 1.0, 1.0], duration=duration)
         anim.start(self)
 
     def anim_out(self):
@@ -1112,6 +1142,7 @@ class DrubbleGame(Widget):
 
             # Initialize the ball
             self.ball = Ball()
+            self.ball_cannon = BallCannon()
 
             # Initialize the sticks
             self.move_stick = Stick(norm_size=(0.3, 0.5), norm_pos=(0.69, 0.34), out_position='right')
@@ -1215,6 +1246,8 @@ class DrubbleGame(Widget):
             self.ball.impact.color = pink[isDark]
         else:
             self.ball.impact.color = self.player[gs.active_player].line_color
+        self.add_widget(self.ball_cannon)
+        self.ball_cannon.anim_in(duration=0.5)
 
         # Players
         self.add_widget(self.player[0])
@@ -1264,6 +1297,7 @@ class DrubbleGame(Widget):
         if p.volley_mode:
             self.net.anim_out(duration=0.2)
         self.ball.anim_out()
+        self.ball_cannon.anim_out()
         self.move_stick.anim_out(w=self.width, h=self.height)
         self.tilt_stick.anim_out(w=self.width, h=self.height)
         self.player[0].anim_out()
@@ -1285,6 +1319,7 @@ class DrubbleGame(Widget):
         # animations to complete before removing the widgets.
         self.remove_widget(self.bg)
         self.remove_widget(self.ball)
+        self.remove_widget(self.ball_cannon)
         # Volleyball net
         if p.volley_mode:
             self.remove_widget(self.net)
@@ -1979,6 +2014,12 @@ class DrubbleGame(Widget):
 
         # Update the ball
         self.ball.update(gs.xb, gs.yb, gs.m2p, gs.po, self.width, self.height, self.tutorial.ball_is_paused)
+        if not p.volley_mode:
+            self.ball_cannon.update(0.0, p.rb, gs.start_angle, gs.start_speed, gs.m2p, gs.po, self.width, self.height)
+        elif p.serving_player is 0:
+            self.ball_cannon.update(-p.back_line+1, p.rb, gs.start_angle, gs.start_speed, gs.m2p, gs.po)
+        elif p.serving_player is 1:
+            self.ball_cannon.update(p.back_line-1, p.rb, pi-gs.start_angle, gs.start_speed, gs.m2p, gs.po)
 
         if gs.stool_bounce and p.num_player > 1 and not p.volley_mode:
             self.ball.impact.color = self.player_dicts[1 - gs.active_player % 2]['ball_color']
