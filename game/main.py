@@ -263,6 +263,9 @@ class SplashScreen(Widget):
 
 
 class MyFace(Widget):
+    face_scale = 0.0
+    down_shift = 0.0
+    face_size = NumericProperty(0.7)
     sz = NumericProperty(0)
     img_left = NumericProperty(0.0)
     img_bottom = NumericProperty(0.0)
@@ -289,6 +292,8 @@ class MyFace(Widget):
 
     def __init__(self, **kwargs):
         super(MyFace, self).__init__()
+        self.face_scale = kwargs['face_size']
+        self.down_shift = kwargs['down_shift']
         self.face_texture = kwargs['face_texture']
         self.jersey_texture = kwargs['jersey_texture']
         self.shorts_texture0 = kwargs['shorts_texture0']
@@ -299,9 +304,10 @@ class MyFace(Widget):
 
     def update(self, x, y, l, th, m2p, po, w, h, player):
         xp, yp = xy2p(x, y, m2p, po, w, h)
-        self.sz = int(m2p*0.7)
-        self.img_left = int(xp - self.sz * 0.5)
-        self.img_bottom = int(yp - 0.05 * m2p)
+        self.sz = int(m2p * 0.7)
+        self.face_size = float(self.face_scale * m2p)
+        self.img_left = int(xp - self.face_size * 0.5)
+        self.img_bottom = int(yp - self.down_shift * self.face_size)
         self.jersey_left = int(xp - self.sz * 0.3)
         self.jersey_bottom = int(yp - 1.0 * self.sz)
         self.jersey_right = int(xp + self.sz * 0.3)
@@ -316,7 +322,7 @@ class MyFace(Widget):
         self.shorts_angle0 = -atan2(player[4] - player[6], player[5] - player[7]) * 180.0 / pi
         self.shorts_angle1 = -atan2(player[4] - player[2], player[5] - player[3]) * 180.0 / pi
 
-    def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1.0):
+    def anim_in(self, w=Window.width, h=Window.height, duration=1.0):
         self.width = w
         self.height = h
         Animation.cancel_all(self)
@@ -485,8 +491,8 @@ class BallCannon(Widget):
         self.size = float(6.0 * p.rb * m2p), float(3.0 * p.rb * m2p)
         self.pos = float(x - 1.5 * p.rb * m2p), float(y - 1.5 * p.rb * m2p)
         self.angle = 180.0 / pi * angle
-        self.color[1] = float(1.0 - 0.5 * 0.77 * speed / 20.0)
-        self.color[2] = float(1.0 - 0.5 * 0.81 * speed / 20.0)
+        self.color[1] = float(1.0 - 0.384 * (speed - 10.0) / 10.0)
+        self.color[2] = float(1.0 - 0.406 * (speed - 10.0) / 10.0)
 
     def anim_in(self, duration=1.0):
         Animation.cancel_all(self)
@@ -1157,6 +1163,7 @@ class DrubbleGame(Widget):
 
             # Initialize the player faces
             self.rand_player = randint(1, len(p.player_data)-1)
+            # self.rand_player = 2  # for debugging
             self.player_dicts = [p.players[0], p.players[self.rand_player]]
             self.player = [MyFace(**p.players[0]), MyFace(**p.players[self.rand_player])]
 

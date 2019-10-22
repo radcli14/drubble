@@ -187,20 +187,21 @@ class Parameters:
     MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Player visual settings
-    player_data = [('bro', green[0], gray[0], green[0]),
-                   ('gal', orange[0], gray_6[0], yellow[0]),
-                   ('max', gray[0], red[0], red[0]),
-                   ('woof', indigo[0], orange[0], orange[0]),
-                   ('hal', black_white[0], orange[0], gray_3[0])]
+    player_data = [('bro', green[0], gray[0], green[0], 0.7, 0.05),
+                   ('gal', orange[0], gray_6[0], yellow[0], 0.8, 0.1),
+                   ('max', gray[0], red[0], red[0], 0.7, 0.1),
+                   ('woof', indigo[0], orange[0], orange[0], 0.8, 0.1),
+                   ('hal', black_white[0], orange[0], gray_3[0], 1.1, 0.25)]
     players = {}
     for n, data in enumerate(player_data):
-        name, line_color, stool_color, ball_color = data
+        name, line_color, stool_color, ball_color, face_size, down_shift = data
         players[n] = players[name] = {
             'face_texture': Image(source='a/'+name+'_face.png').texture,
             'jersey_texture': Image(source='a/'+name+'_jersey.png').texture,
             'shorts_texture0': Image(source='a/'+name+'_shorts.png').texture,
             'shorts_texture1': Image(source='a/'+name+'_shorts1.png').texture,
-            'line_color': line_color, 'stool_color': stool_color, 'ball_color': ball_color
+            'line_color': line_color, 'stool_color': stool_color, 'ball_color': ball_color,
+            'face_size': face_size, 'down_shift': down_shift
         }
 
     # This is the text used in the upper right button
