@@ -16,12 +16,14 @@ And install pod again using pod install.
 DSPerson commented on Jun 14
 Xcode -> File -> Workspace Setting... -> cut Build System to Legacy Build System. Have Fun
 
-
 :-1: Undefined symbol: _OBJC_CLASS_$_WKWebView
 Go to your Project, click on General, scroll down to Linked Frameworks and Libraries, and add WebKit.framework as Optional. See here: Xcode 6 + iOS 8 SDK but deploy on iOS 7 (UIWebKit & WKWebKit)
 
 -- When validating for app store on 7 October 2019
 Invalid Bundle Structure - The binary file 'drubble.app/lib/python3.7/site-packages/numpy/core/lib/libnpymath.a' is not permitted. Your app can’t contain standalone executables or libraries, other than a valid CFBundleExecutable of supported bundles. Refer to the Bundle Programming Guide at https://developer.apple.com/go/?id=bundle-structure for information on the iOS app bundle structure.
+
+ITMS-90683: Missing Purpose String in Info.plist
+-- in XCode, click on drubble-info.plist, add entry for "Privacy - Camera Usage Description"
 
 Google AdMob IDs
 
@@ -235,6 +237,8 @@ class MyBackground(Widget):
 
 
 class SplashScreen(Widget):
+    splash_texture = Image(source='a/splash.png').texture
+
     def __init__(self, w=width*screen_scf, h=height*screen_scf, splash_duration=4.0, **kwargs):
         super(SplashScreen, self).__init__(**kwargs)
         self.height = h
@@ -259,44 +263,51 @@ class SplashScreen(Widget):
 
 
 class MyFace(Widget):
+    face_scale = 0.0
+    down_shift = 0.0
+    face_size = NumericProperty(0.7)
     sz = NumericProperty(0)
     img_left = NumericProperty(0.0)
     img_bottom = NumericProperty(0.0)
     jersey_left = NumericProperty(0.0)
     jersey_right = NumericProperty(0.0)
     jersey_bottom = NumericProperty(0.0)
-    jersey_source = StringProperty(None)
+    jersey_texture = ObjectProperty(None)
     stool_left = NumericProperty(0.0)
     stool_bottom = NumericProperty(0.0)
     stool_width = NumericProperty(0.0)
     stool_height = NumericProperty(0.0)
     stool_angle = NumericProperty(0.0)
     rotate_center = ListProperty([0, 0])
-    image_source = StringProperty(None)
+    face_texture = ObjectProperty(None)
     stool_color = ListProperty([1, 1, 1, 1])
     line_list = ListProperty([0, 0])
     line_color = ListProperty([0, 0, 0])
     line_width = NumericProperty(1)
-    shorts_source0 = StringProperty(None)
-    shorts_source1 = StringProperty(None)
+    shorts_texture0 = ObjectProperty(None)
+    shorts_texture1 = ObjectProperty(None)
     shorts_angle0 = NumericProperty(0.0)
     shorts_angle1 = NumericProperty(0.0)
+    stool_texture = ObjectProperty(Image(source='a/stool.png').texture)
 
     def __init__(self, **kwargs):
         super(MyFace, self).__init__()
-        self.image_source = kwargs['image_source']
-        self.jersey_source = kwargs['jersey_source']
-        self.shorts_source0 = kwargs['shorts_source']
-        self.shorts_source1 = self.shorts_source0.replace('.', '1.')
+        self.face_scale = kwargs['face_size']
+        self.down_shift = kwargs['down_shift']
+        self.face_texture = kwargs['face_texture']
+        self.jersey_texture = kwargs['jersey_texture']
+        self.shorts_texture0 = kwargs['shorts_texture0']
+        self.shorts_texture1 = kwargs['shorts_texture1']
         self.stool_color = kwargs['stool_color']
         self.line_color = kwargs['line_color']
         self.opacity = 0.0
 
     def update(self, x, y, l, th, m2p, po, w, h, player):
         xp, yp = xy2p(x, y, m2p, po, w, h)
-        self.sz = int(m2p*0.7)
-        self.img_left = int(xp - self.sz * 0.5)
-        self.img_bottom = int(yp - 0.05 * m2p)
+        self.sz = int(m2p * 0.7)
+        self.face_size = float(self.face_scale * m2p)
+        self.img_left = int(xp - self.face_size * 0.5)
+        self.img_bottom = int(yp - self.down_shift * self.face_size)
         self.jersey_left = int(xp - self.sz * 0.3)
         self.jersey_bottom = int(yp - 1.0 * self.sz)
         self.jersey_right = int(xp + self.sz * 0.3)
@@ -311,7 +322,7 @@ class MyFace(Widget):
         self.shorts_angle0 = -atan2(player[4] - player[6], player[5] - player[7]) * 180.0 / pi
         self.shorts_angle1 = -atan2(player[4] - player[2], player[5] - player[3]) * 180.0 / pi
 
-    def anim_in(self, w=width*screen_scf, h=height*screen_scf, duration=1.0):
+    def anim_in(self, w=Window.width, h=Window.height, duration=1.0):
         self.width = w
         self.height = h
         Animation.cancel_all(self)
@@ -336,6 +347,9 @@ class VolleyNet(Widget):
     score_bottom = NumericProperty(0.9 * Window.height)
     back_line_pos = ListProperty([[0.0, 0.0], [0.0, 0.0]])
     back_line_size = ListProperty([[0.0, 0.0], [0.0, 0.0]])
+
+    net_rect = Image(source='a/net_rect.png').texture
+    net_circle = Image(source='a/net_circ.png').texture
 
     def __init__(self):
         super(VolleyNet, self).__init__()
@@ -370,7 +384,7 @@ class VolleyNet(Widget):
 class ImpactBall(Widget):
     color = ListProperty([1.0, 1.0, 1.0, 1.0])
     angle = NumericProperty(0.0)
-    source = StringProperty('a/cg_black_on_white.png')
+    texture = ObjectProperty(Image(source='a/cg_black_on_white.png').texture)
 
     def __init__(self, color=pink[isDark]):
         super(ImpactBall, self).__init__()
@@ -399,8 +413,9 @@ class Ball(Widget):
     past_x = zeros(32)
     past_y = zeros(32)
     past_points = ListProperty(zeros(64))
+    ball_texture = Image(source='a/ball.png').texture
 
-    def __init__(self, image_source='a/ball.png', **kwargs):
+    def __init__(self, **kwargs):
         super(Ball, self).__init__(**kwargs)
         self.opacity = 0.0
         self.future = []
@@ -410,7 +425,7 @@ class Ball(Widget):
             self.future = [Ellipse(size=(0, 0)) for _ in range(p.num_future_points)]
             self.impact = ImpactBall(color=(pink[isDark]))
             Color(rgba=(1, 1, 1, 1))
-            self.now = Ellipse(size=(self.sz, self.sz), source=image_source, pos=self.pos)
+            self.now = Ellipse(size=(self.sz, self.sz), texture=self.ball_texture, pos=self.pos)
 
     def update(self, xb, yb, m2p, po, w, h, pause_flag):
         # Update the past position of the ball
@@ -453,6 +468,35 @@ class Ball(Widget):
         self.random_scale = 0.0
         Animation.cancel_all(self)
         anim = Animation(opacity=1.0, duration=duration)
+        anim.start(self)
+
+    def anim_out(self):
+        Animation.cancel_all(self)
+        anim = Animation(opacity=0.0, duration=1)
+        anim.start(self)
+
+
+class BallCannon(Widget):
+    texture = Image(source='a/ball_cannon.png').texture
+    angle = NumericProperty(p.sa)
+    color = ListProperty([1.0, 1.0, 1.0, 0.0])
+
+    def __init__(self, **kwargs):
+        super(BallCannon, self).__init__(**kwargs)
+        self.opacity = 0.0
+
+    def update(self, xb, yb, angle, speed, m2p, po, w=Window.width, h=Window.height):
+        x, y = xy2p(xb, yb, m2p, po, w, h)
+
+        self.size = float(6.0 * p.rb * m2p), float(3.0 * p.rb * m2p)
+        self.pos = float(x - 1.5 * p.rb * m2p), float(y - 1.5 * p.rb * m2p)
+        self.angle = 180.0 / pi * angle
+        self.color[1] = float(1.0 - 0.384 * (speed - 10.0) / 10.0)
+        self.color[2] = float(1.0 - 0.406 * (speed - 10.0) / 10.0)
+
+    def anim_in(self, duration=1.0):
+        Animation.cancel_all(self)
+        anim = Animation(opacity=1.0, color=[1.0, 1.0, 1.0, 1.0], duration=duration)
         anim.start(self)
 
     def anim_out(self):
@@ -880,6 +924,8 @@ class Tutorial(Widget):
            '']
     is_paused = False
     ball_is_paused = False
+    ball_wait = False
+    dyb_before = 0
     pause_state = gs.u
 
     # Text label properties
@@ -925,6 +971,9 @@ class Tutorial(Widget):
     def set_pause_false(self, dt):
         self.is_paused = False
 
+    def set_wait_false(self, dt):
+        self.ball_wait = False
+
     def pause(self, dt):
         self.is_paused = True
         Clock.schedule_once(self.set_pause_false, dt)
@@ -965,11 +1014,13 @@ class Tutorial(Widget):
         self.ring.pos = (self.ring.pos[0] * width_scale, self.ring.pos[1] * height_scale)
         self.ring.center = (self.ring.pos[0] + 0.5 * self.ring.size[0], self.ring.pos[1] + 0.5 * self.ring.size[1])
 
-    def check_touches(self, app_object):
+    def update(self, app_object):
         if self.is_paused:
             return
 
+        self.dyb_before = gs.dyb
         was_touched = False
+        in_range = abs(gs.xp[0] - gs.xI) < p.rb
         w = self.width
         h = self.height
 
@@ -982,7 +1033,7 @@ class Tutorial(Widget):
                         app_object.tilt_stick.norm_pos[1] * h - 0.167 * ring_size[1])
             print('Surrounded the move stick with a rotating ring_size = ', ring_size, '  ring_pos = ', ring_pos)
             self.new_ring_position(ring_size=ring_size, ring_pos=ring_pos, in_duration=2.0, out_duration=0.0)
-        elif self.n == 1 and abs(gs.ctrl[2]) + abs(gs.ctrl[3]) > 0.5:
+        elif self.n == 1 and norm(gs.ctrl[2:4]) > 0.3:
             # Touch left
             was_touched = True
             app_object.move_stick.anim_in(w=self.width, h=self.height, duration=1)
@@ -991,7 +1042,7 @@ class Tutorial(Widget):
                         app_object.move_stick.norm_pos[1] * h - 0.167 * ring_size[1])
             print('Surrounded the tilt stick with a rotating ring_size = ', ring_size, '  ring_pos = ', ring_pos)
             self.new_ring_position(ring_size=ring_size, ring_pos=ring_pos, in_duration=2.0, out_duration=2.0)
-        elif self.n == 2 and abs(gs.ctrl[1]) + abs(gs.ctrl[2]) > 0.5:
+        elif self.n == 2 and norm(gs.ctrl[:1]) > 0.3:
             # Touch right
             was_touched = True
             app_object.action_butt.anim_in(w=self.width, h=self.height)
@@ -1011,22 +1062,18 @@ class Tutorial(Widget):
             # Touch speed
             was_touched = True
             self.clear_ring(out_duration=1.0)
-        elif self.n == 6:
-            # Run to ball
-            if abs(gs.xp[0] - gs.xI) < 0.1:
-                was_touched = True
-        elif self.n == 7:
-            # Try to bounce
-            if abs(gs.xp[0] - gs.xI) < 0.1:
-                was_touched = True
-                self.ball_is_paused = False
-        elif self.n == 8:
-            # Bounce as far
+        elif self.n in (6, 7, 8) and in_range:
+            # (6) Run to ball, (7) Try to bounce, (8) Bounce as far
             was_touched = True
-            app_object.option_butt.anim_in(w=self.width, h=self.height)
-        elif self.n == 9:
+            self.ball_is_paused = False
+            self.ball_wait = True
+            # Clock.schedule_once(self.set_wait_false, 0.9)
+        elif self.n == 9 and in_range:
             # Good luck
             was_touched = True
+            self.ball_is_paused = False
+            if not app_object.option_butt.is_on_screen:
+                app_object.option_butt.anim_in(w=self.width, h=self.height)
 
         # Switch to the next message if there was a touch
         next_pause_duration = 3.0 if self.n < 8 else 5.0
@@ -1101,6 +1148,7 @@ class DrubbleGame(Widget):
 
             # Initialize the ball
             self.ball = Ball()
+            self.ball_cannon = BallCannon()
 
             # Initialize the sticks
             self.move_stick = Stick(norm_size=(0.3, 0.5), norm_pos=(0.69, 0.34), out_position='right')
@@ -1114,7 +1162,10 @@ class DrubbleGame(Widget):
             self.score_label = ScoreLabel(text='Score', norm_left=0.8)
 
             # Initialize the player faces
-            self.player = [MyFace(**p.college_me), MyFace(**p.isu_gal)]
+            self.rand_player = randint(1, len(p.player_data)-1)
+            # self.rand_player = 2  # for debugging
+            self.player_dicts = [p.players[0], p.players[self.rand_player]]
+            self.player = [MyFace(**p.players[0]), MyFace(**p.players[self.rand_player])]
 
             # Initialize the high score labels
             j = p.difficult_level
@@ -1202,6 +1253,8 @@ class DrubbleGame(Widget):
             self.ball.impact.color = pink[isDark]
         else:
             self.ball.impact.color = self.player[gs.active_player].line_color
+        self.add_widget(self.ball_cannon)
+        self.ball_cannon.anim_in(duration=0.5)
 
         # Players
         self.add_widget(self.player[0])
@@ -1251,6 +1304,7 @@ class DrubbleGame(Widget):
         if p.volley_mode:
             self.net.anim_out(duration=0.2)
         self.ball.anim_out()
+        self.ball_cannon.anim_out()
         self.move_stick.anim_out(w=self.width, h=self.height)
         self.tilt_stick.anim_out(w=self.width, h=self.height)
         self.player[0].anim_out()
@@ -1272,6 +1326,7 @@ class DrubbleGame(Widget):
         # animations to complete before removing the widgets.
         self.remove_widget(self.bg)
         self.remove_widget(self.ball)
+        self.remove_widget(self.ball_cannon)
         # Volleyball net
         if p.volley_mode:
             self.remove_widget(self.net)
@@ -1558,7 +1613,6 @@ class DrubbleGame(Widget):
                 self.tilt_stick.id_code = touch.id
                 self.tilt_stick.update_el(xy[0], xy[1])
                 gs.ctrl[2:4] = [xy[1], -xy[0]]
-
 
     def on_touch_move(self, touch):
         if gs.game_mode > 2:
@@ -1877,20 +1931,6 @@ class DrubbleGame(Widget):
             # There is no updating required for the splash and update screen, so exit the method
             return
 
-        # Do tutorial stuff
-        if self.tutorial_mode:
-            # Check touches
-            self.tutorial.check_touches(self)
-
-            # Detect if ball bounce is impacting soon, in which case, pause it
-            if self.tutorial.n in (5, 6) and gs.dyb <= -0.5 * norm(gs.u[:2]) and not self.tutorial.ball_is_paused:
-                self.tutorial.ball_is_paused = True
-                self.tutorial.pause_state = gs.u[:4]
-
-            # Make the ball stationary while paused
-            if self.tutorial.ball_is_paused:
-                gs.xb, gs.yb, gs.dxb, gs.dyb = gs.u[:4] = self.tutorial.pause_state[:4]
-
         # Memory debugging and garbage collection
         if p.gc and gs.n > 0 and not gs.n % 100:
             gc.collect()
@@ -1902,16 +1942,42 @@ class DrubbleGame(Widget):
             for stat in top_stats[:20]:
                 print(stat)
 
-        # Angle and speed settings
-        if gs.game_mode < 6:
-            gs.set_angle_and_speed()
-            # start_loop.pitch = gs.start_angle / p.sa
-            if gs.game_mode == 5:
-                start_loop.volume = 0.5 * gs.start_speed / p.ss
+        # If running in demo mode, use computer control algorithm
+        if p.demo_mode and gs.n > 0:
+            Q = control_logic(gs.u, 0)
+            sc = p.Qx, p.Qy, p.Ql, p.Qt
+            gs.ctrl = [Q[k] / sc[k] for k in range(4)]
 
         # Call the sim_step method
         if gs.game_mode < 7:
             gs.sim_step()
+
+        # Do tutorial stuff
+        if self.tutorial_mode:
+            # The ball will be paused above the player to allow them to get under the stool. The .ball_wait property
+            # in the tutorial makes sure this pause only happens once per bounce. To determine whether to permit the
+            # pause, this determines whether the sign of the trajectory has changed.
+            sign_change = (self.tutorial.dyb_before * gs.dyb) < 0
+
+            # The tutorial method tests several conditions to determine whether to advance
+            self.tutorial.update(self)
+
+            # Make the ball stationary while paused
+            if self.tutorial.ball_is_paused:
+                gs.xb, gs.yb, gs.dxb, gs.dyb = gs.u[:4] = self.tutorial.pause_state[:4]
+            # Detect if ball bounce is impacting soon, in which case, pause it
+            elif self.tutorial.n in (6, 7, 8) and gs.dyb <= -0.5 * norm(gs.u[2:4]) and not self.tutorial.ball_wait:
+                self.tutorial.ball_is_paused = True
+                self.tutorial.pause_state = gs.u[:4]
+            # If a sign change occured, then permit flipping the .ball_wait property to False
+            elif self.tutorial.ball_wait and sign_change:
+                self.tutorial.ball_wait = False
+
+        # Angle and speed settings
+        if gs.game_mode < 6:
+            gs.set_angle_and_speed()
+            if gs.game_mode is 5 and SOUND_LOADED:
+                start_loop.volume = 0.5 * gs.start_speed / p.ss
 
         if p.volley_mode:
             # Update the net
@@ -1955,9 +2021,15 @@ class DrubbleGame(Widget):
 
         # Update the ball
         self.ball.update(gs.xb, gs.yb, gs.m2p, gs.po, self.width, self.height, self.tutorial.ball_is_paused)
+        if not p.volley_mode:
+            self.ball_cannon.update(0.0, p.rb, gs.start_angle, gs.start_speed, gs.m2p, gs.po, self.width, self.height)
+        elif p.serving_player is 0:
+            self.ball_cannon.update(-p.back_line+1, p.rb, gs.start_angle, gs.start_speed, gs.m2p, gs.po)
+        elif p.serving_player is 1:
+            self.ball_cannon.update(p.back_line-1, p.rb, pi-gs.start_angle, gs.start_speed, gs.m2p, gs.po)
 
         if gs.stool_bounce and p.num_player > 1 and not p.volley_mode:
-            self.ball.impact.color = self.player[1 - gs.active_player % 2].line_color
+            self.ball.impact.color = self.player_dicts[1 - gs.active_player % 2]['ball_color']
 
         # Update the player(s)
         self.player[0].update(gs.xp[0], gs.yp[0] + 1.5*p.d, gs.lp[0], gs.tp[0], gs.m2p, gs.po,

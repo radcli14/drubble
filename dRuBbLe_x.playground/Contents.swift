@@ -886,12 +886,15 @@ print(bg.name)
 print(bg.update(x: 320.0, m2p: 40, w: 800, h: 500))
 print(xy2p(x: 10,y: 3,m2p: 40, po: 5, w: 800, h: 500))
 
-
+print("  Right before start scene")
 // Make the game window
 class GameScene: SKScene {
     override func didMove(to view: SKView) {
+        self.backgroundColor = UIColor(red: 0.35, green: 0.78, blue: 0.98, alpha: 1.0);
+        
     }
     
     override func sceneDidLoad() {
     }
 }
+print("    Right after")

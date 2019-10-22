@@ -1,4 +1,10 @@
 # Import modules
+from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
+from random import randint
+from kivy.storage.jsonstore import JsonStore
+from kivy.core.audio import SoundLoader
+from kivy.uix.image import Image
+import sys
 try:
     import numpy as np
     from numpy import array
@@ -10,12 +16,7 @@ except:
 print('')
 print('  USE_NUMPY = ' + str(USE_NUMPY))
 print('')
-from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
-from random import randint
-from kivy.storage.jsonstore import JsonStore
-from kivy.core.audio import SoundLoader
 
-import sys
 # Frame rate
 if 'dRuBbLe' in sys.argv[0]:
     fs = 60
@@ -26,21 +27,34 @@ else:
 dt = 1.0/fs
 
 # Color definition
-red = (1, 0, 0)
-green = (0, 1, 0)
-blue = (0, 0, 1)
 darkBlue = (0, 0, 128.0/255.0)
-white = (1, 1, 1)
-gray = (160.0/255.0, 160.0/255.0, 160.0/255.0)
-black = (0, 0, 0)
-pink = (1, 100.0/255.0, 100.0/255.0)
 skyBlue = (135.0/255.0, 226.0/255.0, 255.0/255.0)
 cyan = (0.0, 1.0, 1.0)
 darkGreen = (0, 120.0/255.0, 0)
-pink = (1.0, 182.0/255.0, 193.0/255.0)
 olive = [[128.0 / 255.0, 128.0 / 255.0, 0.0, 1.0], [128.0 / 255.0, 128.0 / 255.0, 0.0, 1.0]]
 
-# Apple System Colors
+# Android System Colors
+red = [[244.0 / 255.0, 67.0 / 255.0, 54.0 / 255.0, 1.0], []]
+pink = [[233.0 / 255.0, 30.0 / 255.0, 99.0 / 255.0, 1.0], []]
+purple = [[156.0 / 255.0, 39.0 / 255.0, 176.0 / 255.0, 1.0], []]
+deep_purple = [[103.0 / 255.0, 58.0 / 255.0, 183.0 / 255.0, 1.0], []]
+indigo = [[6.0 / 255.0, 81.0 / 255.0, 181.0 / 255.0, 1.0], []]
+blue = [[33.0 / 255.0, 150.0 / 255.0, 243.0 / 255.0, 1.0], []]
+light_blue = [[3.0 / 255.0, 169.0 / 255.0, 244.0 / 255.0, 1.0], []]
+cyan = [[0.0 / 255.0, 188.0 / 255.0, 212.0 / 255.0, 1.0], []]
+teal = [[0.0 / 255.0, 150.0 / 255.0, 136.0 / 255.0, 1.0], []]
+green = [[76.0 / 255.0, 175.0 / 255.0, 80.0 / 255.0, 1.0], []]
+light_green = [[139.0 / 255.0, 195.0 / 255.0, 74.0 / 255.0, 1.0], []]
+lime = [[205.0 / 255.0, 220.0 / 255.0, 57.0 / 255.0, 1.0], []]
+yellow = [[255.0 / 255.0, 235.0 / 255.0, 59.0 / 255.0, 1.0], []]
+amber = [[255.0 / 255.0, 193.0 / 255.0, 7.0 / 255.0, 1.0], []]
+orange = [[255.0 / 255.0, 152.0 / 255.0, 0.0 / 255.0, 1.0], []]
+deep_orange = [[255.0 / 255.0, 87.0 / 255.0, 2.0 / 255.0, 1.0], []]
+brown = [[121.0 / 255.0, 85.0 / 255.0, 72.0 / 255.0, 1.0], []]
+grey = [[158.0 / 255.0, 158.0 / 255.0, 158.0 / 255.0, 1.0], []]
+blue_grey = [[96.0 / 255.0, 125.0 / 255.0, 139.0 / 255.0, 1.0], []]
+
+# Apple System Color
 blue = [[0.0, 122.0 / 255.0, 1.0, 1.0], [10.0 / 255.0, 132.0 / 255.0, 1.0, 1.0]]
 green = [[52.0 / 255.0, 199.0 / 255.0, 89.0 / 255.0, 1.0], [48.0 / 255.0, 209.0 / 255.0, 88.0 / 255.0, 1.0]]
 indigo = [[88.0 / 255.0, 86.0 / 255.0, 214.0 / 255.0, 1.0], [94.0 / 255.0, 91.0 / 255.0, 120.0 / 255.0, 1.0]]
@@ -51,6 +65,7 @@ red = [[255.0 / 255.0, 59.0 / 255.0, 48.0 / 255.0, 1.0], [255.0 / 255.0, 69.0 / 
 teal = [[90.0 / 255.0, 200.0 / 255.0, 250.0 / 255.0, 1.0], [100.0 / 255.0, 110.0 / 255.0, 255.0 / 255.0, 1.0]]
 yellow = [[255.0 / 255.0, 204.0 / 255.0, 0.0 / 255.0, 1.0], [255.0 / 255.0, 214.0 / 255.0, 10.0 / 255.0, 1.0]]
 
+# Shades of gray
 gray = [[142.0 / 255.0, 142.0 / 255.0, 147.0 / 255.0, 1.0], [142.0 / 255.0, 142.0 / 255.0, 147.0 / 255.0, 1.0]]
 gray_2 = [[174.0 / 255.0, 174.0 / 255.0, 178.0 / 255.0, 1.0], [99.0 / 255.0, 99.0 / 255.0, 102.0 / 255.0, 1.0]]
 gray_3 = [[199.0 / 255.0, 199.0 / 255.0, 204.0 / 255.0, 1.0], [72.0 / 255.0, 72.0 / 255.0, 74.0 / 255.0, 1.0]]
@@ -59,6 +74,8 @@ gray_5 = [[229.0 / 255.0, 229.0 / 255.0, 234.0 / 255.0, 1.0], [44.0 / 255.0, 44.
 gray_6 = [[242.0 / 255.0, 242.0 / 255.0, 247.0 / 255.0, 1.0], [28.0 / 255.0, 28.0 / 255.0, 30.0 / 255.0, 1.0]]
 
 # Black if darkMode is true, otherwise white
+white = (1, 1, 1)
+black = (0, 0, 0)
 black_white = [[0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]
 
 
@@ -120,13 +137,12 @@ class Parameters:
     Ct = 2.0 * zl * sqrt(Kt*m)  # Tilt damping [N-m-s/rad]
 
     # Initial states
-    q0 = [0.0, y0,  l0, 0.0]
-    u0 = [0.0, rb, 0.0, 0.0, x0,   y0,  l0,   0.0, 0.0, 0.0, 0.0, 10.0,
-          0.0, y0, l0,  0.0, 0.0, 0.0, 0.0, -10.0]
+    q0 = [0.0, y0, l0, 0.0]
+    u0 = [0.0, rb, 0.0, 0.0, x0, y0, l0, 0.0, 0.0, 0.0, 0.0, 10.0, 0.0, y0, l0, 0.0, 0.0, 0.0, 0.0, -10.0]
 
-    # Gameplay settings
-    userControlled = [[True,   True,  True, True],
-                      [False, False, False, False]]
+    # Game play settings
+    demo_mode = False
+    userControlled = [[True for _ in range(4)], [False for _ in range(4)]]
     num_player = 1
 
     # Stool parameters
@@ -171,10 +187,22 @@ class Parameters:
     MacsFavoriteFont = 'Optima'  # Papyrus' 'jokerman' 'poorrichard' 'rockwell' 'comicsansms'
     
     # Player visual settings
-    college_me = {'image_source': 'a/myFace2.png', 'jersey_source': 'a/MyJersey.png',
-                  'shorts_source': 'a/MyShorts.png', 'line_color': green[0], 'stool_color': gray[0]}
-    isu_gal = {'image_source': 'a/LadyFace.png', 'jersey_source': 'a/LadyJersey.png',
-               'shorts_source': 'a/LadyShorts.png', 'line_color': orange[0], 'stool_color': gray_6[0]}
+    player_data = [('bro', green[0], gray[0], green[0], 0.7, 0.05),
+                   ('gal', orange[0], gray_6[0], yellow[0], 0.8, 0.1),
+                   ('max', gray[0], red[0], red[0], 0.7, 0.1),
+                   ('woof', indigo[0], orange[0], orange[0], 0.8, 0.1),
+                   ('hal', black_white[0], orange[0], gray_3[0], 1.1, 0.25)]
+    players = {}
+    for n, data in enumerate(player_data):
+        name, line_color, stool_color, ball_color, face_size, down_shift = data
+        players[n] = players[name] = {
+            'face_texture': Image(source='a/'+name+'_face.png').texture,
+            'jersey_texture': Image(source='a/'+name+'_jersey.png').texture,
+            'shorts_texture0': Image(source='a/'+name+'_shorts.png').texture,
+            'shorts_texture1': Image(source='a/'+name+'_shorts1.png').texture,
+            'line_color': line_color, 'stool_color': stool_color, 'ball_color': ball_color,
+            'face_size': face_size, 'down_shift': down_shift
+        }
 
     # This is the text used in the upper right button
     actionMSG = '', '', '', 'Begin', 'Set Angle', 'Set Speed', 'High Scores', 'Restart'
@@ -309,11 +337,11 @@ def linspace(start, stop, n):
 
 
 def zeros(ztup):
-    try:
+    if type(ztup) in (list, tuple):
         z = [0 for _ in range(ztup[1])]
         Z = [z for _ in range(ztup[0])]
         return Z
-    except:
+    else:
         z = [0 for _ in range(ztup)]
         return z
 
@@ -383,6 +411,7 @@ class GameState:
     active_player = 0
     screen_width = 0
     screen_height = 0
+    u = zeros(20)
 
     # Initiate the state variables as a list, and as individual variables
     def __init__(self, u0=p.u0, engine='kivy'):
@@ -417,20 +446,18 @@ class GameState:
         self.te = 0
         
         # State variables
-        self.u = u0[:]
-        # self = varStates(self)
-        self.xb = self.u[0]  # Ball distance [m]
-        self.yb = self.u[1]  # Ball height [m]
-        self.dxb = self.u[2]  # Ball horizontal speed [m]
-        self.dyb = self.u[3]  # Ball vertical speed [m]
-        self.xp = self.u[4:13:8]  # Player distance [m]
-        self.yp = self.u[5:14:8]  # Player height [m]
-        self.lp = self.u[6:15:8]  # Stool extension [m]
-        self.tp = self.u[7:16:8]  # Stool tilt [rad]
-        self.dxp = self.u[8:17:8]  # Player horizontal speed [m/s]
-        self.dyp = self.u[9:18:8]  # Player vertical speed [m/s]
-        self.dlp = self.u[10:19:8]  # Stool extension rate [m/s]
-        self.dtp = self.u[11:20:8]  # Stool tilt rate [rad/s]
+        self.xb = self.u[0] = u0[0]  # Ball distance [m]
+        self.yb = self.u[1] = u0[1]  # Ball height [m]
+        self.dxb = self.u[2] = u0[2]  # Ball horizontal speed [m]
+        self.dyb = self.u[3] = u0[3]  # Ball vertical speed [m]
+        self.xp = self.u[4:13:8] = u0[4:13:8]  # Player distance [m]
+        self.yp = self.u[5:14:8] = u0[5:14:8]  # Player height [m]
+        self.lp = self.u[6:15:8] = u0[6:15:8]  # Stool extension [m]
+        self.tp = self.u[7:16:8] = u0[7:16:8]  # Stool tilt [rad]
+        self.dxp = self.u[8:17:8] = u0[8:17:8]  # Player horizontal speed [m/s]
+        self.dyp = self.u[9:18:8] = u0[9:18:8]  # Player vertical speed [m/s]
+        self.dlp = self.u[10:19:8] = u0[10:19:8]  # Stool extension rate [m/s]
+        self.dtp = self.u[11:20:8] = u0[11:20:8]  # Stool tilt rate [rad/s]
 
         # Foot positions for drawing the stick figure [x, y, phase]
         self.foot_position = [[[self.xp[0] - p.stance_width, 0.0, 0.0], [self.xp[0] + p.stance_width, 0.0, 0.5 * pi]],
@@ -466,7 +493,7 @@ class GameState:
     def set_control(self, keyPush=[0, 0, 0, 0, 0, 0, 0, 0],
                    moveStick=(0, 0), tiltStick=(0, 0),
                    g=(0, 0, 0), a=(0, 0, 0)):
-        
+
         if self.ctrl_func == 0:
             # Key press control
             self.ctrl = [keyPush[1]-keyPush[0], keyPush[2]-keyPush[3], keyPush[4]-keyPush[5], keyPush[6]-keyPush[7]]
@@ -685,7 +712,6 @@ class GameState:
             self.u[1] = p.u0[1]
 
         # Named states
-        # self = varStates(self)
         self.xb = self.u[0]  # Ball distance [m]
         self.yb = self.u[1]  # Ball height [m]
         self.dxb = self.u[2]  # Ball horizontal speed [m]
@@ -710,7 +736,7 @@ class GameState:
         if self.game_mode == 4:
             self.start_angle = 0.25 * pi * (1 + 0.75*sin(self.phase))
         if self.game_mode == 5:
-            self.start_speed = p.ss * (1 + 0.75*sin(self.phase))
+            self.start_speed = p.ss * (1.2 + 0.6*sin(self.phase))
         if self.game_mode == 4 or self.game_mode == 5:
             self.phase += 3 * dt * p.difficult_speed_scale[p.difficult_level]
             start_direction = 1.0 if not p.volley_mode or (p.volley_mode and p.serving_player == 0) else -1.0
@@ -1115,7 +1141,7 @@ def control_logic(u, k):
     Q = [0.0, 0.0, 0.0, 0.0]
 
     # If the ball is stuck, then stop making the computer move
-    if k is 1 and gs.Stuck:
+    if gs.Stuck:
         return Q
 
     # Unpack the state variables
@@ -1125,10 +1151,10 @@ def control_logic(u, k):
     # Is the active player, this will be at gs.xI, otherwise will be at
     # gs.xI + 10
     if p.volley_mode:
-        player_run_ahead = 10.0 if gs.xI < 0 else 0.0
+        player_run_ahead = 10.0 if gs.xI < 0 and k is 1 else 0.0
     else:
         player_run_ahead = 0.0 if k == gs.active_player else 10.0
-    diff_distance = 0.4 if p.volley_mode else -0.25
+    diff_distance =  (2.0 * k - 1) * 0.4 if p.volley_mode else -0.25
     pip = gs.xI + player_run_ahead + diff_distance
     if p.userControlled[k][0]:
         Q[0] = p.Qx * (1.5 * gs.ctrl[0] - 0.5 * erf(dxp[k]))
@@ -1139,7 +1165,7 @@ def control_logic(u, k):
             elif pip - xp[k] < -3:
                 Q[0] = - p.Qx
             else:
-                Q[0] = p.Qx * min(max(p.Gx * (pip - xp[k]) - 0.4*dxp[k], -1), 1)
+                Q[0] = p.Qx * min(max(p.Gx * (pip - xp[k]) - 0.4 * dxp[k], -1), 1)
         else:
             Q[0] = p.Qx * min(max(p.Gx * (xb - xp[k] + player_run_ahead), -1), 1)
     

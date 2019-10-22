@@ -4,7 +4,7 @@
 <SplashScreen>:
     canvas:
         Rectangle:
-            source: 'a/splash.png'
+            texture: self.splash_texture
             size: self.width, self.height
             pos: self.pos
 
@@ -70,7 +70,7 @@
             angle: self.shorts_angle0
             origin: self.jersey_right-0.12*self.sz, self.jersey_bottom-0.04*self.sz
         Rectangle:
-            source: self.shorts_source0
+            texture: self.shorts_texture0
             pos: self.jersey_right-0.45*self.sz, self.jersey_bottom-0.35*self.sz
             size: 0.4*self.sz, 0.7*self.sz
         PopMatrix
@@ -79,18 +79,18 @@
             angle: self.shorts_angle1
             origin: self.jersey_left+0.12*self.sz, self.jersey_bottom-0.04*self.sz
         Rectangle:
-            source: self.shorts_source1
+            texture: self.shorts_texture1
             pos: self.jersey_left + 0.05*self.sz, self.jersey_bottom-0.35*self.sz
             size: 0.4*self.sz, 0.7*self.sz
         PopMatrix
         Rectangle:
-            source: self.jersey_source
+            texture: self.jersey_texture
             pos: self.jersey_left, self.jersey_bottom
             size: 0.6*self.sz, self.sz
         Rectangle:
-            source: self.image_source
+            texture: self.face_texture
             pos: self.img_left, self.img_bottom
-            size: self.sz, self.sz
+            size: self.face_size, self.face_size
         PushMatrix
         Rotate:
             angle: self.stool_angle
@@ -98,7 +98,7 @@
         Color:
             rgba: self.stool_color
         Rectangle:
-            source: 'a/stool.png'
+            texture: self.stool_texture
             pos: self.stool_left, self.stool_bottom
             size: self.stool_width, self.stool_height
         PopMatrix
@@ -125,11 +125,13 @@
 <VolleyNet>:
     canvas:
         Color:
-            rgba: 0.2, 0.2, 0.2, 0.7
+            rgba: 1, 1, 1, 0.8
         Rectangle:
+            texture: self.net_rect
             pos: self.pos
             size: self.size[0], self.size[1] - 0.5 * self.size[0]
         Ellipse:
+            texture: self.net_circle
             pos: self.pos[0], self.pos[1] + self.size[1] - self.size[0]
             size: self.size[0], self.size[0]
         Rectangle:
@@ -158,7 +160,7 @@
         Color:
             rgba: self.color
         Ellipse:
-            source: self.source
+            texture: self.texture
             size: self.size
             pos: self.pos
     canvas.after:
@@ -187,6 +189,24 @@
         Line:
             points: self.past_points[:8]
             width: 0.4 * self.sz
+
+
+<BallCannon>:
+    canvas.before:
+        PushMatrix
+        Rotate:
+            angle: self.angle
+            axis: 0, 0, 1
+            origin: self.pos[0] + 0.25 * self.size[0], self.pos[1] + 0.5 * self.size[1]
+        Color:
+            rgba: self.color
+        Rectangle:
+            texture: self.texture
+            size: self.size
+            pos: self.pos
+    canvas.after:
+        PopMatrix
+
 
 <OptionButtons>:
     canvas:
