@@ -250,6 +250,9 @@ class Parameters:
 
 
 p = Parameters()
+dp = dir(p)
+for k, pval in enumerate(dp):
+    print()
 
 
 # Initialize sounds

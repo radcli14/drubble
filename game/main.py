@@ -384,6 +384,8 @@ class VolleyNet(Widget):
 class ImpactBall(Widget):
     color = ListProperty([1.0, 1.0, 1.0, 1.0])
     angle = NumericProperty(0.0)
+    star_texture = ObjectProperty(Image(source='a/bano.png').texture)
+    star_scale = NumericProperty(2.0)
     texture = ObjectProperty(Image(source='a/cg_black_on_white.png').texture)
 
     def __init__(self, color=pink[isDark]):
@@ -392,8 +394,8 @@ class ImpactBall(Widget):
         self.start_rotation()
 
     def start_rotation(self):
-        anim = Animation(angle=360, duration=1.57)
-        anim += Animation(angle=360, duration=1.57)
+        anim = Animation(angle=360, star_scale=10.0, duration=1.57)
+        anim += Animation(angle=360, star_scale=2.0, duration=1.57)
         anim.repeat = True
         anim.start(self)
 
