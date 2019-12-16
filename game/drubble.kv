@@ -154,7 +154,17 @@
     canvas.before:
         PushMatrix
         Rotate:
-            angle: -self.angle
+            angle: self.angle
+            axis: 0, 0, 1
+            origin: self.pos[0] + 0.5 * self.size[0], self.pos[1] + 0.5 * self.size[1]
+        Color:
+            rgba: 1, 1, 1, 0.1 * self.star_scale * self.color[3]
+        Rectangle:
+            texture: self.star_texture
+            size: self.star_scale * self.size[0], self.star_scale * self.size[1]
+            pos: self.pos[0] - 0.5 * (self.star_scale - 1.0) * self.size[0], self.pos[1] - 0.5 * (self.star_scale - 1.0) * self.size[1]
+        Rotate:
+            angle: - 2.0 * self.angle
             axis: 0, 0, 1
             origin: self.pos[0] + 0.5 * self.size[0], self.pos[1] + 0.5 * self.size[1]
         Color:

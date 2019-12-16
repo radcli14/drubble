@@ -250,6 +250,9 @@ class Parameters:
 
 
 p = Parameters()
+dp = dir(p)
+for k, pval in enumerate(dp):
+    print()
 
 
 # Initialize sounds
@@ -636,10 +639,10 @@ class GameState:
             # Re-initialize from the event states
             self.t += ddt - tBreak
             dudt = player_and_stool(self.t, self.ue)
-            self.u = [self.ue[i] + dudt[i]*(ddt-tBreak) for i in range(20)]
+            self.u = [self.ue[i] + dudt[i] * (ddt-tBreak) for i in range(20)]
 
             # The speed of the ball dropped too much, it is now stuck
-            if sqrt(self.u[2]**2 + self.u[3]**2) < p.dybtol and self.u[1] < 1:
+            if self.floor_bounce and p.volley_mode or sqrt(self.u[2]**2 + self.u[3]**2) < p.dybtol and self.u[1] < 1:
                 # Play the sound
                 if SOUND_LOADED and p.fx_is_on:
                     stuck_sound.play()
@@ -1064,15 +1067,22 @@ def player_and_stool(t, u):
         # Control inputs form the generalized forces
         Qx, Qy, Ql, Qth = control_logic(u, k)
 
+        # Equilibrium stool angle
+        Teq = atan2(xp[k] - xb,yb - p.d - yp[k]), atan2(xp[k] - gs.xI, gs.yI - p.d - yp[k])
+        w = (1.0 + 2.0 * erf(0.2 * abs(xp[k]-gs.xI))) / 3.0
+        teq = min(max(w * Teq[0] + (1.0 - w) * Teq[1], -0.5), 0.5)
+
         # Equation of Motion
         if USE_NUMPY:
             Q = np.array([[Qx], [Qy], [Ql], [Qth]])
+            p.q0_array[3] = teq
             rhs = - p.C.dot(dq) - p.K.dot(q) + p.K.dot(p.q0_array) - D - G + Q
             if p.linearMass:
                 ddq = p.invM.dot(rhs)
             else:
                 ddq = np.linalg.inv(M).dot(rhs)
         else:
+
             # Equations of motion, created in the Jupyter notebook eom.ipynb
             ddq = [None, None, None, None]
             ddq[0] = (-p.Cl*dlp[k]*lp[k]*s - p.Ct*dtp[k]*c - p.Cx*dxp[k]*lp[k] + p.Kl*p.l0*lp[k]*s - p.Kl*lp[k]**2*s
@@ -1082,7 +1092,7 @@ def player_and_stool(t, u):
                       - (p.Cy*dyp[k] - p.Ky*p.y0 + p.Ky*yp[k] - Qy - 2.0*dlp[k]*dtp[k]*p.mg*s - dtp[k]**2*p.mg*lp[k]*c
                          + p.g*p.mc + p.g*p.mg)*lp[k])/(p.mc*lp[k])
             ddq[2] = -p.Cl*dlp[k]/p.mg - p.Cl*dlp[k]/p.mc - p.Cx*dxp[k]*s/p.mc + p.Cy*dyp[k]*c/p.mc + p.Kl*p.l0/p.mg + p.Kl*p.l0/p.mc - p.Kl*lp[k]/p.mg - p.Kl*lp[k]/p.mc - p.Ky*p.y0*c/p.mc + p.Ky*yp[k]*c/p.mc + Ql/p.mg + Ql/p.mc + Qx*s/p.mc - Qy*c/p.mc + dtp[k]**2*lp[k]
-            ddq[3] = (-p.Ct*dtp[k]*p.mc - p.Ct*dtp[k]*p.mg - p.Cx*dxp[k]*p.mg*lp[k]*c - p.Cy*dyp[k]*p.mg*lp[k]*s - p.Kt*p.mc*tp[k] - p.Kt*p.mg*tp[k] + p.Ky*p.mg*p.y0*lp[k]*s - p.Ky*p.mg*lp[k]*yp[k]*s + Qth*p.mc + Qth*p.mg + Qx*p.mg*lp[k]*c + Qy*p.mg*lp[k]*s - 2.0*dlp[k]*dtp[k]*p.mc*p.mg*lp[k])/(p.mc*p.mg*lp[k]**2)
+            ddq[3] = (-p.Ct*dtp[k]*p.mc - p.Ct*dtp[k]*p.mg - p.Cx*dxp[k]*p.mg*lp[k]*c - p.Cy*dyp[k]*p.mg*lp[k]*s - p.Kt*p.mc*(tp[k]-teq) - p.Kt*p.mg*(tp[k]-teq) + p.Ky*p.mg*p.y0*lp[k]*s - p.Ky*p.mg*lp[k]*yp[k]*s + Qth*p.mc + Qth*p.mg + Qx*p.mg*lp[k]*c + Qy*p.mg*lp[k]*s - 2.0*dlp[k]*dtp[k]*p.mc*p.mg*lp[k])/(p.mc*p.mg*lp[k]**2)
 
         # Output state derivatives (Player velocities and accelerations)
         i1 = k * 8 + 4

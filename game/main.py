@@ -384,6 +384,8 @@ class VolleyNet(Widget):
 class ImpactBall(Widget):
     color = ListProperty([1.0, 1.0, 1.0, 1.0])
     angle = NumericProperty(0.0)
+    star_texture = ObjectProperty(Image(source='a/bano.png').texture)
+    star_scale = NumericProperty(2.0)
     texture = ObjectProperty(Image(source='a/cg_black_on_white.png').texture)
 
     def __init__(self, color=pink[isDark]):
@@ -451,6 +453,7 @@ class Ball(Widget):
         x, y = xy2p(self.impact_x, self.impact_y, m2p, po, w, h)
         self.impact.pos = int(x), int(y)
         self.impact.size = self.sz, self.sz
+        self.impact.star_scale = float(1.0 + 3.0 * gs.timeUntilBounce)
 
         # Generate the future positions of the ball
         X, Y = xy2p(gs.traj['x'], gs.traj['y'], m2p, po, w, h)
@@ -499,9 +502,9 @@ class BallCannon(Widget):
         anim = Animation(opacity=1.0, color=[1.0, 1.0, 1.0, 1.0], duration=duration)
         anim.start(self)
 
-    def anim_out(self):
+    def anim_out(self, duration=1.0):
         Animation.cancel_all(self)
-        anim = Animation(opacity=0.0, duration=1)
+        anim = Animation(opacity=0.0, color=[1.0, 1.0, 1.0, 0.0], duration=duration)
         anim.start(self)
 
 
@@ -1775,8 +1778,8 @@ class DrubbleGame(Widget):
             self.player[0].anim_out()
             if p.num_player > 1:
                 self.player[1].anim_out()
-            self.option_butt.anim_out_then_in(w=self.width, h=self.height)
-            self.action_butt.anim_out_then_in(w=self.width, h=self.height)
+            # self.option_butt.anim_out_then_in(w=self.width, h=self.height)
+            # self.action_butt.anim_out_then_in(w=self.width, h=self.height)
         elif gs.game_mode == 3:
             print('  Animating in, w=', self.width, ' h=', self.height)
             self.remove_high_scores()
