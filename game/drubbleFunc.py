@@ -639,10 +639,10 @@ class GameState:
             # Re-initialize from the event states
             self.t += ddt - tBreak
             dudt = player_and_stool(self.t, self.ue)
-            self.u = [self.ue[i] + dudt[i]*(ddt-tBreak) for i in range(20)]
+            self.u = [self.ue[i] + dudt[i] * (ddt-tBreak) for i in range(20)]
 
             # The speed of the ball dropped too much, it is now stuck
-            if sqrt(self.u[2]**2 + self.u[3]**2) < p.dybtol and self.u[1] < 1:
+            if self.floor_bounce and p.volley_mode or sqrt(self.u[2]**2 + self.u[3]**2) < p.dybtol and self.u[1] < 1:
                 # Play the sound
                 if SOUND_LOADED and p.fx_is_on:
                     stuck_sound.play()
@@ -1070,7 +1070,7 @@ def player_and_stool(t, u):
         # Equilibrium stool angle
         Teq = atan2(xp[k] - xb,yb - p.d - yp[k]), atan2(xp[k] - gs.xI, gs.yI - p.d - yp[k])
         w = (1.0 + 2.0 * erf(0.2 * abs(xp[k]-gs.xI))) / 3.0
-        teq = min(max(w * Teq[0] + (1-w) * Teq[1], -pi/4), pi/4)
+        teq = min(max(w * Teq[0] + (1.0 - w) * Teq[1], -0.5), 0.5)
 
         # Equation of Motion
         if USE_NUMPY:

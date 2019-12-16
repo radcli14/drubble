@@ -394,8 +394,8 @@ class ImpactBall(Widget):
         self.start_rotation()
 
     def start_rotation(self):
-        anim = Animation(angle=360, star_scale=10.0, duration=1.57)
-        anim += Animation(angle=360, star_scale=2.0, duration=1.57)
+        anim = Animation(angle=360, duration=1.57)
+        anim += Animation(angle=360, duration=1.57)
         anim.repeat = True
         anim.start(self)
 
@@ -453,6 +453,7 @@ class Ball(Widget):
         x, y = xy2p(self.impact_x, self.impact_y, m2p, po, w, h)
         self.impact.pos = int(x), int(y)
         self.impact.size = self.sz, self.sz
+        self.impact.star_scale = float(1.0 + 3.0 * gs.timeUntilBounce)
 
         # Generate the future positions of the ball
         X, Y = xy2p(gs.traj['x'], gs.traj['y'], m2p, po, w, h)
@@ -1777,8 +1778,8 @@ class DrubbleGame(Widget):
             self.player[0].anim_out()
             if p.num_player > 1:
                 self.player[1].anim_out()
-            self.option_butt.anim_out_then_in(w=self.width, h=self.height)
-            self.action_butt.anim_out_then_in(w=self.width, h=self.height)
+            # self.option_butt.anim_out_then_in(w=self.width, h=self.height)
+            # self.action_butt.anim_out_then_in(w=self.width, h=self.height)
         elif gs.game_mode == 3:
             print('  Animating in, w=', self.width, ' h=', self.height)
             self.remove_high_scores()

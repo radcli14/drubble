@@ -40,8 +40,7 @@ The two players alternate shots.
 
 ### Volley dRuBbLe
 First person bounces it over the center barrier, second person attempts to return it.
-The round ends when either player can no longer return the ball, at which time the last player to hit the ball over the barrier earns a point.
-Bounces are unlimited, and bounces of the ground are allowed.
+The round ends when the ball hits the ground, at which time the last player to hit the ball over the barrier earns a point.
 
 ### Triple dRuBbLe (Planned)
 First person throws it, second person bounces it to the third person, who bounces it to the first person who has run behind them.
@@ -77,6 +76,6 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 - [ ] Add a Triple dRuBbLe sub-game
 - [x] Include a banner ad
 - [ ] Add networked multiplayer mode
-- [ ] Create a ball cannon
+- [x] Create a ball cannon
 - [ ] Add statistical plots to the high scores
 - [ ] Add additional players, and a selection screen
