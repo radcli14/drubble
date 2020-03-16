@@ -75,6 +75,29 @@ if platform == 'android':
 elif platform == 'ios':
     from pyobjus import autoclass
 
+# Setup Google Play Games
+if platform == 'android':
+    # Support for Google Play
+    import gs_android
+    leaderboard_single_easy = 'CgkIv4HMjZUPEAIQAQ'
+    leaderboard_single_hard = 'CgkIv4HMjZUPEAIQAg'
+    leaderboard_single_silly = 'CgkIv4HMjZUPEAIQAw'
+    leaderboard_double_easy = 'CgkIv4HMjZUPEAIQBA'
+    leaderboard_double_hard = 'CgkIv4HMjZUPEAIQBQ'
+    leaderboard_double_silly = 'CgkIv4HMjZUPEAIQBg'
+    leaderboard = [[leaderboard_single_easy, leaderboard_double_easy],
+                   [leaderboard_single_hard, leaderboard_double_hard],
+                   [leaderboard_single_silly, leaderboard_double_silly]]
+    # achievements = {}
+
+    from kivy.uix.popup import Popup
+
+    class GooglePlayPopup(Popup):
+        pass
+
+else:
+    achievements = {}
+
 # Dark mode toggle, for future implementation
 isDark = 0
 
@@ -1165,8 +1188,8 @@ class DrubbleGame(Widget):
             self.score_label = ScoreLabel(text='Score', norm_left=0.8)
 
             # Initialize the player faces
-            self.rand_player = randint(1, len(p.player_data)-1)
-            # self.rand_player = 2  # for debugging
+            self.rand_player = randint(1, len(p.player_data)-2)
+            # self.rand_player = 12  # for debugging
             self.player_dicts = [p.players[0], p.players[self.rand_player]]
             self.player = [MyFace(**p.players[0]), MyFace(**p.players[self.rand_player])]
 
