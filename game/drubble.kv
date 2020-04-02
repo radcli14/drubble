@@ -54,15 +54,15 @@
 <MyFace>:
     canvas:
         Color:
-            rgba: self.line_color[0], self.line_color[1], self.line_color[2], 1
+            rgba: self.line_color
         Line:
             points: self.line_list
             width: self.line_width
-        Color:
-            rgba: 0.7, 0.7, 0.7, 1
-        Ellipse:
-            pos: self.jersey_left+0.1*self.sz, self.jersey_bottom-0.3*self.sz
-            size: 0.4*self.sz, 0.6*self.sz
+        # Color:
+        #     rgba: 0.7, 0.7, 0.7, 1
+        # Ellipse:
+        #     pos: self.jersey_left+0.1*self.sz, self.jersey_bottom-0.3*self.sz
+        #     size: 0.4*self.sz, 0.6*self.sz
         Color:
             rgba: 1, 1, 1, 1
         PushMatrix
