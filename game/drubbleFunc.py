@@ -193,7 +193,8 @@ class Parameters:
                    ('woof', indigo[0], orange[0], orange[0], 0.8, 0.1),
                    ('hal', black_white[0], orange[0], gray_3[0], 1.1, 0.25),
                    ('goran', gray_6[0][:3] + [0.5], blue[0], red[0], 1, 0),
-                   ('bear', yellow[0], pink[0], purple[0], 0.7, 0.1)]
+                   ('bear', yellow[0], pink[0], purple[0], 0.7, 0.1),
+                   ('pigy', red[0], purple[0], pink[0], 0.8, 0.1)]
     players = {}
     for n, data in enumerate(player_data):
         name, line_color, stool_color, ball_color, face_size, down_shift = data
