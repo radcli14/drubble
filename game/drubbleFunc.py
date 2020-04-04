@@ -188,7 +188,7 @@ class Parameters:
     
     # Player visual settings (name, line_color, stool_color, ball_color, face_size, down_shift)
     player_data = [('bro', green[0], gray[0], green[0], 0.7, 0.05),
-                   ('gal', orange[0], gray_6[0], yellow[0], 0.8, 0.1),
+                   ('gal', orange[0], gray_6[0], yellow[0], 1.1, 0.1),
                    ('max', gray[0], red[0], red[0], 0.7, 0.1),
                    ('woof', indigo[0], orange[0], orange[0], 0.8, 0.1),
                    ('hal', black_white[0], orange[0], gray_3[0], 1.1, 0.25),
