@@ -1,5 +1,5 @@
 # Import modules
-from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf
+from math import sin, cos, pi, sqrt, isnan, fmod, atan2, erf, inf
 from random import randint
 from kivy.storage.jsonstore import JsonStore
 from kivy.core.audio import SoundLoader
@@ -359,59 +359,73 @@ def zeros(ztup):
 
 # Predict motion of the ball
 def ball_predict(gs, active_player):
+    """
+    Predict the trajectory of the ball.
+
+    :param gs:  GameState object
+    :param active_player: integer
+    :return: tuple
+    """
     if gs.dyb == 0 or gs.game_mode <= 2:
         # Ball is not moving, impact time is zero
-        tI = 0
+        time_at_impact = 0
+
     elif gs.game_mode > 2 and (gs.dyb > 0) and (gs.yb < gs.yp[active_player] + p.d + gs.lp[active_player]):
         # Ball is in play, moving upward and below the stool
         # Solve for time and height at apogee
-        ta = gs.dyb / p.g
-        ya = 0.5 * p.g * ta ** 2
+        time_at_apogee = gs.dyb / p.g
+        y_at_apogee = 0.5 * p.g * time_at_apogee ** 2
 
         # Solve for time the ball would hit the ground
-        tI = ta + sqrt(2.0 * ya / p.g)
+        time_at_impact = time_at_apogee + sqrt(2.0 * y_at_apogee / p.g)
+
     elif gs.game_mode > 2 and gs.yb > 3.2:
         # Ball is in play, above the stool
         # Solve for time that the ball would hit the stool
-        tI = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - 3.2))) / p.g
+        time_at_impact = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb - 3.2))) / p.g
+
     else:
-        tI = 0
+        time_at_impact = 0
 
-    if isnan(tI):
-        tI = 0
-
-    # Solve for position that the ball would hit the stool
-    xI = gs.xb + gs.dxb * tI
-    yI = gs.yb + gs.dyb * tI - 0.5 * p.g * tI ** 2
+    # Fix NaNs
+    if isnan(time_at_impact):
+        time_at_impact = 0
 
     # Solve for time that the ball would hit the ground
-    tG = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb-p.rb))) / p.g
+    time_at_ground = -(-gs.dyb - sqrt(gs.dyb ** 2 + 2.0 * p.g * (gs.yb-p.rb))) / p.g
+
+    # Volley mode, check for wall impacts
+    time_at_back_line = (p.back_line - gs.xb) / gs.dxb if gs.volley_game_is_active and gs.dxb > 0.0 \
+        else -(p.back_line + gs.xb) / gs.dxb if gs.volley_game_is_active and gs.dxb < 0.0 \
+        else inf
+    back_line_increment = max(0.0, time_at_impact - time_at_back_line)
+
+    # Solve for position that the ball would hit the stool
+    x_at_impact = gs.xb + gs.dxb * time_at_impact - (1.0 + p.COR_n[0]) * gs.dxb * back_line_increment
+    y_at_impact = gs.yb + gs.dyb * time_at_impact - 0.5 * p.g * time_at_impact ** 2
 
     # Solve at 0.15 second increments or until ball hits ground
     time_offset = dt + p.future_increment - fmod(gs.t / p.future_increment, 1.0) * p.future_increment
-    T = zeros(p.num_future_points)
-    for n in range(p.num_future_points):
-        t = time_offset + p.future_increment * n
-        T[n] = t if t < tG else tG
+    t0, inc = (time_offset, p.future_increment)
+    time = [t0 + inc * n if t0 + inc * n < time_at_ground else time_at_ground for n in range(p.num_future_points)]
 
-    traj = {'t': zeros(p.num_future_points), 'x': zeros(p.num_future_points), 'y': zeros(p.num_future_points)}
-    n = -1
-    for t in T:
-        n += 1
-        traj['t'][n] = gs.t + T[n]
-        traj['x'][n] = gs.xb + gs.dxb * t
-        traj['y'][n] = gs.yb + gs.dyb * t - 0.5 * p.g * t ** 2
+    # Create the trajectory dictionary
+    traj = {'t': [gs.t + t for t in time],
+            'x': [gs.xb + gs.dxb * t if t < time_at_back_line
+                  else gs.xb + gs.dxb * t - (1.0 + p.COR_n[0]) * gs.dxb * (t - time_at_back_line)
+                  for t in time],
+            'y': [gs.yb + gs.dyb * t - 0.5 * p.g * t ** 2 for t in time]}
 
     # Time until event
-    time_until_bounce = tI
-    tI = time_until_bounce + gs.t
+    time_until_bounce = time_at_impact
+    time_at_impact = time_until_bounce + gs.t
 
     # Output variables
-    # xI = Ball distance at impact [m]
-    # yI = Ball height at impact [m]
-    # tI = Time at impact [s]
+    # x_at_impact = Ball distance at impact [m]
+    # y_at_impact = Ball height at impact [m]
+    # time_at_impact = Time at impact [s]
     # traj = Ball trajectory ['t' in seconds, 'x' in m, 'y' in m]
-    return xI, yI, tI, traj, time_until_bounce
+    return x_at_impact, y_at_impact, time_at_impact, traj, time_until_bounce
 
 
 class GameState:
