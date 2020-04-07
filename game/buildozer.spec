@@ -22,14 +22,14 @@ source.include_patterns = a/*.png,a/*.wav,fonts/*.ttf,a/*.mp3
 #source.exclude_exts = spec
 
 # (list) List of directory to exclude (let empty to not exclude anything)
-source.exclude_dirs = tests,bin,audio,build,dc,dist,figs,photos,venv,venv2,fonts
+source.exclude_dirs = tests,bin,audio,build,dc,dist,figs,photos,venv,venv2,fonts,libs
 
 # (list) List of exclusions using pattern matching
 #source.exclude_patterns = license,images/*/*.jpg
 source.exclude_patterns = dRuBbLe.py,dRuBbLe_x.playground,demoDrubble.py
 
 # (str) Application versioning (method 1)
-version = 1.3.64
+version = 1.4.1
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -86,10 +86,10 @@ fullscreen = 0
 #android.presplash_color = #FFFFFF
 
 # (list) Permissions
-#android.permissions = INTERNET, ACCESS_NETWORK_STATE
+android.permissions = INTERNET, ACCESS_NETWORK_STATE
 
 # (int) Target Android API, should be as high as possible.
-android.api = 28
+# android.api = 28
 
 # (int) Minimum API your APK will support.
 #android.minapi = 19
@@ -143,10 +143,11 @@ android.api = 28
 # down the build process. Allows wildcards matching, for example:
 # OUYA-ODK/libs/*.jar
 #android.add_jars = foo.jar,bar.jar,path/to/more/*.jar
+android.add_jars = libs/*.jar
 
 # (list) List of Java files to add to the android project (can be java or a
 # directory containing the files)
-#android.add_src =
+android.add_src = libs/basegameutils/java/
 
 # (list) Android AAR archives to add (currently works only with sdl2_gradle
 # bootstrap)
@@ -191,7 +192,7 @@ android.meta_data = com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-4007502
 
 # (list) Android library project to add (will be added in the
 # project.properties automatically.)
-#android.library_references =
+android.library_references = libs/google-play-services_lib
 
 # (list) Android shared libraries which will be added to AndroidManifest.xml using <uses-library> tag
 #android.uses_library =
@@ -203,8 +204,8 @@ android.logcat_filters = *:S python:D
 #android.copy_libs = 1
 
 # (str) The Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
-#android.arch = armeabi-v7a
-android.arch = arm64-v8a
+android.arch = armeabi-v7a
+# android.arch = arm64-v8a
 
 #
 # Python for android (p4a) specific
@@ -302,3 +303,9 @@ warn_on_root = 1
 #    Then, invoke the command line with the "demo" profile:
 #
 #buildozer --profile demo android debug
+
+[app:android.meta_data]
+com.google.android.gms.version = @integer/google_play_services_version
+com.google.android.gms.games.APP_ID = @string/app_id
+com.google.android.gms.appstate.APP_ID = @string/app_id
+

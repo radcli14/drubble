@@ -14,11 +14,11 @@ class GameHelperListener(PythonJavaClass):
 
     @java_method('()V')
     def onSignInFailed(self):
-        print 'signing failed :('
+        print('signing failed :(')
 
     @java_method('()V')
     def onSignInSucceeded(self):
-        print 'signin success :)'
+        print('signin success :)')
 
 gh_instance = None
 gh_instance_listener = None
