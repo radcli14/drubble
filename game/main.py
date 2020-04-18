@@ -1189,7 +1189,7 @@ class DrubbleGame(Widget):
 
             # Initialize the player faces
             self.rand_player = randint(1, len(p.player_data)-2)
-            # self.rand_player = 12  # for debugging
+            self.rand_player = 12 # for debugging
             self.player_dicts = [p.players[0], p.players[self.rand_player]]
             self.player = [MyFace(**p.players[0]), MyFace(**p.players[self.rand_player])]
 

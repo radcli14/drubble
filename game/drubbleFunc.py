@@ -199,6 +199,7 @@ class Parameters:
                    ('chiq', orange[0], green[0], purple[0], 1.0, 0.1),
                    ('rob', red[0], indigo[0], indigo[0], 0.65, 0.1),
                    ('donk', yellow[0], red[0], orange[0], 0.7, 0.1),
+                   ('chance', (178/255, 80/255, 0, 1), green[0], red[0], 0.7, 0.0),
                    ('anon', gray[0], gray[0], gray[0], 0.75, 0.2)]
     players = {}
     for n, data in enumerate(player_data):
