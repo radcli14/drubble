@@ -57,25 +57,3 @@ Given the description above, the dynamics are represented by a 4 degree-of-freed
 ![Dynamics Model Diagram](extra_data/figs/diagram.png)
 
 **Figure 1 - Dynamics Model Diagram**
-
-
-
-## Task List 
-### Before Release
-- [x] Move sticks and buttons out of the way so I can add a banner ad on the high score screen
-- [x] Fix the computer player control
-- [x] Put in limits for the states to prevent crashing
-- [x] Add a tutorial
-- [x] Add audio for setting ball speed, button presses
-- [x] Add a background screen connecting the last screen to the first, geographically
-- [x] Add one more base audio file
-- [x] Cancel animations before any new animation to ensure that widgets get removed when they are supposed to
-
-### Future
-- [x] Add a Volley dRuBbLe sub-game
-- [ ] Add a Triple dRuBbLe sub-game
-- [x] Include a banner ad
-- [ ] Add networked multiplayer mode
-- [x] Create a ball cannon
-- [ ] Add statistical plots to the high scores
-- [ ] Add additional players, and a selection screen
