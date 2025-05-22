@@ -100,15 +100,24 @@ struct ContentView: View {
                     HStack {
                         // Movement controls
                         VStack {
-                            Button("↑") { gameManager.moveUp() }
+                            Button("Jump") { }
                                 .padding()
+                                .simultaneousGesture(
+                                    DragGesture(minimumDistance: 0)
+                                        .onChanged { _ in
+                                            gameManager.startJumping()
+                                        }
+                                        .onEnded { _ in
+                                            gameManager.stopJumping()
+                                        }
+                                )
                             HStack {
                                 Button("←") { }
                                     .padding()
                                     .simultaneousGesture(
                                         DragGesture(minimumDistance: 0)
                                             .onChanged { _ in
-                                                gameManager.moveLeft()
+                                                gameManager.startMovingLeft()
                                             }
                                             .onEnded { _ in
                                                 gameManager.stopMoving()
@@ -119,15 +128,13 @@ struct ContentView: View {
                                     .simultaneousGesture(
                                         DragGesture(minimumDistance: 0)
                                             .onChanged { _ in
-                                                gameManager.moveRight()
+                                                gameManager.startMovingRight()
                                             }
                                             .onEnded { _ in
                                                 gameManager.stopMoving()
                                             }
                                     )
                             }
-                            Button("↓") { gameManager.moveDown() }
-                                .padding()
                         }
                         .padding()
                         
@@ -135,16 +142,41 @@ struct ContentView: View {
                         
                         // Stool controls
                         VStack {
-                            Button("Extend") { gameManager.extendStool() }
+                            Button("Extend") { }
                                 .padding()
+                                .simultaneousGesture(
+                                    DragGesture(minimumDistance: 0)
+                                        .onChanged { _ in
+                                            gameManager.startExtendingStool()
+                                        }
+                                        .onEnded { _ in
+                                            gameManager.stopExtendingStool()
+                                        }
+                                )
                             HStack {
-                                Button("←") { gameManager.tiltLeft() }
+                                Button("←") { }
                                     .padding()
-                                Button("→") { gameManager.tiltRight() }
+                                    .simultaneousGesture(
+                                        DragGesture(minimumDistance: 0)
+                                            .onChanged { _ in
+                                                gameManager.startTiltingLeft()
+                                            }
+                                            .onEnded { _ in
+                                                gameManager.stopTilting()
+                                            }
+                                    )
+                                Button("→") { }
                                     .padding()
+                                    .simultaneousGesture(
+                                        DragGesture(minimumDistance: 0)
+                                            .onChanged { _ in
+                                                gameManager.startTiltingRight()
+                                            }
+                                            .onEnded { _ in
+                                                gameManager.stopTilting()
+                                            }
+                                    )
                             }
-                            Button("Retract") { gameManager.retractStool() }
-                                .padding()
                         }
                         .padding()
                     }
