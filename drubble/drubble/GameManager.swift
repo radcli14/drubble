@@ -26,10 +26,15 @@ class GameManager: NSObject, ObservableObject {
     let camera: SCNNode
     
     // Game Objects
-    private var player: SCNNode
+    private var player: SCNNode  // Root node for the player
+    private var playerBody: SCNNode
+    private var playerHead: SCNNode
+    private var playerArms: [SCNNode]
+    private var playerLegs: [SCNNode]
     private var ball: SCNNode
     private var ground: SCNNode
     private var stool: SCNNode
+    private var stoolRungs: [SCNNode]
     
     // Physics Parameters
     private let gravity: Float = 9.81
@@ -37,6 +42,8 @@ class GameManager: NSObject, ObservableObject {
     private let stoolRadius: Float = 0.35
     private let playerStartX: Float = 5.0
     private let playerStartY: Float = 1.5
+    private let playerHeight: Float = 2.0
+    private let limbThickness: Float = 0.1
     
     // Game State
     @Published private(set) var startAngle: Float = .pi / 4
@@ -44,40 +51,97 @@ class GameManager: NSObject, ObservableObject {
     private var isStuck = false
     private var lastUpdateTime: TimeInterval = 0
     
+    // Movement State
+    private var isMovingLeft = false
+    private var isMovingRight = false
+    private let moveSpeed: Float = 3.0  // Units per second
+    
     override init() {
         // Initialize properties
         scene = SCNScene()
-        scene.background.contents = UIColor.systemBlue.withAlphaComponent(0.3)
+        scene.background.contents = UIColor.clear
         
         // Setup Camera
         camera = SCNNode()
         camera.camera = SCNCamera()
-        camera.position = SCNVector3(x: 0, y: 5, z: 10)
+        camera.position = SCNVector3(x: 5, y: 8, z: 15)
         camera.eulerAngles.x = -Float.pi / 6
+        camera.look(at: SCNVector3(x: 5, y: 0, z: 0))
         
         // Create Ground
         let groundGeometry = SCNFloor()
         groundGeometry.reflectivity = 0
         let groundMaterial = SCNMaterial()
-        groundMaterial.diffuse.contents = UIColor.systemGreen
+        groundMaterial.diffuse.contents = UIColor.systemGray.withAlphaComponent(0.3)
+        groundMaterial.transparency = 0.7
         groundGeometry.materials = [groundMaterial]
         ground = SCNNode(geometry: groundGeometry)
         
         // Create Player
-        let playerGeometry = SCNCylinder(radius: 0.1, height: 1.5)
-        let playerMaterial = SCNMaterial()
-        playerMaterial.diffuse.contents = UIColor.systemBlue
-        playerGeometry.materials = [playerMaterial]
-        player = SCNNode(geometry: playerGeometry)
-        player.position = SCNVector3(x: playerStartX, y: playerStartY, z: 0)
+        player = SCNNode()  // Root node
+        player.position = SCNVector3(x: playerStartX, y: 0, z: 0)
         
-        // Create Stool
+        // Body
+        let bodyGeometry = SCNCylinder(radius: CGFloat(limbThickness), height: CGFloat(playerHeight) * 0.4)
+        let bodyMaterial = SCNMaterial()
+        bodyMaterial.diffuse.contents = UIColor.systemBlue
+        bodyGeometry.materials = [bodyMaterial]
+        playerBody = SCNNode(geometry: bodyGeometry)
+        playerBody.position = SCNVector3(x: 0, y: playerHeight * 0.5, z: 0)
+        
+        // Head
+        let headGeometry = SCNSphere(radius: CGFloat(limbThickness) * 2)
+        headGeometry.materials = [bodyMaterial]
+        playerHead = SCNNode(geometry: headGeometry)
+        playerHead.position = SCNVector3(x: 0, y: playerHeight * 0.7, z: 0)
+        
+        // Arms
+        playerArms = []
+        let armLength: Float = 0.6
+        for i in 0...1 {
+            let armGeometry = SCNCylinder(radius: CGFloat(limbThickness) * 0.8, height: CGFloat(armLength))
+            let arm = SCNNode(geometry: armGeometry)
+            arm.position = SCNVector3(x: (i == 0 ? -1 : 1) * limbThickness * 3, 
+                                    y: playerHeight * 0.6,
+                                    z: 0)
+            arm.eulerAngles.z = (i == 0 ? 1 : -1) * Float.pi / 6
+            playerArms.append(arm)
+        }
+        
+        // Legs
+        playerLegs = []
+        let legLength: Float = 0.7
+        for i in 0...1 {
+            let legGeometry = SCNCylinder(radius: CGFloat(limbThickness), height: CGFloat(legLength))
+            let leg = SCNNode(geometry: legGeometry)
+            leg.position = SCNVector3(x: (i == 0 ? -1 : 1) * limbThickness * 2,
+                                    y: playerHeight * 0.3,
+                                    z: 0)
+            playerLegs.append(leg)
+        }
+        
+        // Create Stool with rungs
+        stool = SCNNode()
+        stool.position = SCNVector3(x: playerStartX, y: playerHeight * 0.9, z: 0)
+        
         let stoolGeometry = SCNCylinder(radius: CGFloat(stoolRadius), height: 0.1)
         let stoolMaterial = SCNMaterial()
         stoolMaterial.diffuse.contents = UIColor.systemOrange
         stoolGeometry.materials = [stoolMaterial]
-        stool = SCNNode(geometry: stoolGeometry)
-        stool.position = SCNVector3(x: playerStartX, y: playerStartY - 0.8, z: 0)
+        let stoolTop = SCNNode(geometry: stoolGeometry)
+        
+        // Create rungs
+        stoolRungs = []
+        let rungCount = 2
+        let rungSpacing: Float = 0.2
+        for i in 0..<rungCount {
+            let rungGeometry = SCNCylinder(radius: CGFloat(limbThickness), height: CGFloat(stoolRadius) * 2)
+            rungGeometry.materials = [stoolMaterial]
+            let rung = SCNNode(geometry: rungGeometry)
+            rung.position = SCNVector3(x: 0, y: -Float(i + 1) * rungSpacing, z: 0)
+            rung.eulerAngles.x = Float.pi / 2  // Rotate to be horizontal
+            stoolRungs.append(rung)
+        }
         
         // Create Ball
         let ballGeometry = SCNSphere(radius: CGFloat(ballRadius))
@@ -90,26 +154,22 @@ class GameManager: NSObject, ObservableObject {
         // Call super.init() after all properties are initialized
         super.init()
         
-        // Setup scene hierarchy and additional configuration
+        // Setup scene hierarchy
         scene.rootNode.addChildNode(camera)
-        
-        // Setup Lighting
-        let ambientLight = SCNNode()
-        ambientLight.light = SCNLight()
-        ambientLight.light?.type = .ambient
-        ambientLight.light?.intensity = 100
-        scene.rootNode.addChildNode(ambientLight)
-        
-        let directionalLight = SCNNode()
-        directionalLight.light = SCNLight()
-        directionalLight.light?.type = .directional
-        directionalLight.position = SCNVector3(x: 5, y: 5, z: 0)
-        scene.rootNode.addChildNode(directionalLight)
-        
         scene.rootNode.addChildNode(ground)
         scene.rootNode.addChildNode(player)
-        scene.rootNode.addChildNode(stool)
         scene.rootNode.addChildNode(ball)
+        
+        // Add player parts to player node
+        player.addChildNode(playerBody)
+        player.addChildNode(playerHead)
+        playerArms.forEach { player.addChildNode($0) }
+        playerLegs.forEach { player.addChildNode($0) }
+        
+        // Add stool parts
+        scene.rootNode.addChildNode(stool)
+        stool.addChildNode(stoolTop)
+        stoolRungs.forEach { stool.addChildNode($0) }
         
         // Setup Physics
         scene.physicsWorld.gravity = SCNVector3(x: 0, y: -gravity, z: 0)
@@ -124,12 +184,9 @@ class GameManager: NSObject, ObservableObject {
         stool.physicsBody?.categoryBitMask = 2
         ground.physicsBody?.categoryBitMask = 4
         
-        ball.physicsBody?.collisionBitMask = 2 | 4  // Collide with stool and ground
+        ball.physicsBody?.collisionBitMask = 2 | 4
         
-        // Set up physics contact delegate
         scene.physicsWorld.contactDelegate = self
-        
-        // Start update loop
         setupUpdateLoop()
     }
     
@@ -145,16 +202,43 @@ class GameManager: NSObject, ObservableObject {
     private func update() {
         guard gameMode == .playing else { return }
         
-        // Check if ball is below ground (game over condition)
+        // Handle continuous movement
+        if isMovingLeft {
+            movePlayerAndStool(deltaX: -moveSpeed / 60)  // 60 fps
+        } else if isMovingRight {
+            movePlayerAndStool(deltaX: moveSpeed / 60)
+        }
+        
+        // Check if ball is below ground
         if ball.position.y < -2 {
             gameMode = .gameOver
             return
         }
         
-        // Update score based on successful bounces
         if ball.physicsBody?.velocity.y ?? 0 > 0 {
             isStuck = false
         }
+    }
+    
+    private func movePlayerAndStool(deltaX: Float) {
+        let action = SCNAction.moveBy(x: CGFloat(deltaX), y: 0, z: 0, duration: 0)
+        player.runAction(action)
+        stool.runAction(action)
+        
+        // Animate legs while moving
+        animateLegsForMovement()
+    }
+    
+    private func animateLegsForMovement() {
+        let legSwingAngle: Float = Float.pi / 6
+        
+        // Alternate leg positions
+        let timestamp = CACurrentMediaTime()
+        let frequency: Double = 2.0  // Steps per second
+        let phase = sin(timestamp * .pi * frequency)
+        
+        playerLegs[0].eulerAngles.x = legSwingAngle * Float(phase)
+        playerLegs[1].eulerAngles.x = -legSwingAngle * Float(phase)
     }
     
     // MARK: - Game Control Methods
@@ -193,16 +277,19 @@ class GameManager: NSObject, ObservableObject {
     // MARK: - Player Control Methods
     func moveLeft() {
         guard gameMode != .menu && gameMode != .gameOver else { return }
-        let action = SCNAction.moveBy(x: -0.5, y: 0, z: 0, duration: 0.1)
-        player.runAction(action)
-        stool.runAction(action)
+        isMovingLeft = true
+        isMovingRight = false
     }
     
     func moveRight() {
         guard gameMode != .menu && gameMode != .gameOver else { return }
-        let action = SCNAction.moveBy(x: 0.5, y: 0, z: 0, duration: 0.1)
-        player.runAction(action)
-        stool.runAction(action)
+        isMovingRight = true
+        isMovingLeft = false
+    }
+    
+    func stopMoving() {
+        isMovingLeft = false
+        isMovingRight = false
     }
     
     func moveUp() {

@@ -103,10 +103,28 @@ struct ContentView: View {
                             Button("↑") { gameManager.moveUp() }
                                 .padding()
                             HStack {
-                                Button("←") { gameManager.moveLeft() }
+                                Button("←") { }
                                     .padding()
-                                Button("→") { gameManager.moveRight() }
+                                    .simultaneousGesture(
+                                        DragGesture(minimumDistance: 0)
+                                            .onChanged { _ in
+                                                gameManager.moveLeft()
+                                            }
+                                            .onEnded { _ in
+                                                gameManager.stopMoving()
+                                            }
+                                    )
+                                Button("→") { }
                                     .padding()
+                                    .simultaneousGesture(
+                                        DragGesture(minimumDistance: 0)
+                                            .onChanged { _ in
+                                                gameManager.moveRight()
+                                            }
+                                            .onEnded { _ in
+                                                gameManager.stopMoving()
+                                            }
+                                    )
                             }
                             Button("↓") { gameManager.moveDown() }
                                 .padding()
