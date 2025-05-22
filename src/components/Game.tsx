@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Platform } from 'react-native';
-import { Canvas } from '@react-three/fiber';
-import { Cylinder, Sphere, OrthographicCamera } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber/native';
+import { Cylinder, Sphere, OrthographicCamera } from '@react-three/drei/native';
 import { GameManager } from '../game/GameManager';
 import { GameControls } from '../types/GameTypes';
 import { PhysicsParams } from '../constants/PhysicsParams';
-import { useFrame } from '@react-three/fiber';
 
 // Player character component
 const Player = ({ position, stoolExtension, stoolTilt }: any) => {
@@ -23,7 +22,7 @@ const Player = ({ position, stoolExtension, stoolTilt }: any) => {
         args={[bodyRadius, bodyRadius, bodyHeight, 8]}
         position={[0, bodyHeight/2, 0]}
       >
-        <meshStandardMaterial color="blue" />
+        <meshBasicMaterial color="blue" />
       </Cylinder>
 
       {/* Head */}
@@ -31,7 +30,7 @@ const Player = ({ position, stoolExtension, stoolTilt }: any) => {
         args={[headRadius, 8, 8]}
         position={[0, bodyHeight + headRadius, 0]}
       >
-        <meshStandardMaterial color="pink" />
+        <meshBasicMaterial color="pink" />
       </Sphere>
 
       {/* Arms */}
@@ -40,14 +39,14 @@ const Player = ({ position, stoolExtension, stoolTilt }: any) => {
         position={[-bodyRadius*2, bodyHeight*0.8, 0]}
         rotation={[0, 0, Math.PI/4]}
       >
-        <meshStandardMaterial color="blue" />
+        <meshBasicMaterial color="blue" />
       </Cylinder>
       <Cylinder
         args={[0.05, 0.05, armLength, 8]}
         position={[bodyRadius*2, bodyHeight*0.8, 0]}
         rotation={[0, 0, -Math.PI/4]}
       >
-        <meshStandardMaterial color="blue" />
+        <meshBasicMaterial color="blue" />
       </Cylinder>
 
       {/* Legs */}
@@ -55,13 +54,13 @@ const Player = ({ position, stoolExtension, stoolTilt }: any) => {
         args={[0.05, 0.05, legLength, 8]}
         position={[-bodyRadius*1.5, legLength/2, 0]}
       >
-        <meshStandardMaterial color="blue" />
+        <meshBasicMaterial color="blue" />
       </Cylinder>
       <Cylinder
         args={[0.05, 0.05, legLength, 8]}
         position={[bodyRadius*1.5, legLength/2, 0]}
       >
-        <meshStandardMaterial color="blue" />
+        <meshBasicMaterial color="blue" />
       </Cylinder>
 
       {/* Stool */}
@@ -70,7 +69,7 @@ const Player = ({ position, stoolExtension, stoolTilt }: any) => {
           args={[0.2, 0.2, 0.05, 8]}
           position={[0, 0, 0]}
         >
-          <meshStandardMaterial color="brown" />
+          <meshBasicMaterial color="brown" />
         </Cylinder>
       </group>
     </group>
@@ -80,7 +79,7 @@ const Player = ({ position, stoolExtension, stoolTilt }: any) => {
 // Ball component
 const Ball = ({ position }: any) => (
   <Sphere args={[PhysicsParams.rb, 32, 32]} position={[position.x, position.y, position.z]}>
-    <meshStandardMaterial color="red" />
+    <meshBasicMaterial color="red" />
   </Sphere>
 );
 
@@ -91,7 +90,7 @@ const Wall = () => (
       args={[0.2, 0.2, PhysicsParams.wallHeight, 8]}
       rotation={[0, 0, 0]}
     >
-      <meshStandardMaterial color="gray" />
+      <meshBasicMaterial color="gray" />
     </Cylinder>
   </group>
 );
@@ -100,17 +99,18 @@ const Wall = () => (
 const Ground = () => (
   <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0, 0]}>
     <planeGeometry args={[100, 100]} />
-    <meshStandardMaterial color="green" />
+    <meshBasicMaterial color="green" />
   </mesh>
 );
 
 // Scene component that handles the 3D rendering
 const Scene = ({ gameManager, controls }: { gameManager: GameManager, controls: GameControls }) => {
+  const state = gameManager.getState();
+
+  // Update game state every frame
   useFrame(() => {
     gameManager.update(controls);
   });
-
-  const state = gameManager.getState();
 
   return (
     <>
@@ -121,10 +121,6 @@ const Scene = ({ gameManager, controls }: { gameManager: GameManager, controls: 
         near={0.1}
         far={1000}
       />
-      
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
-      <directionalLight position={[-10, 10, -5]} intensity={0.5} />
       
       <color attach="background" args={["#87CEEB"]} /> {/* Sky blue background */}
       
@@ -145,8 +141,8 @@ const Scene = ({ gameManager, controls }: { gameManager: GameManager, controls: 
 
 // Main game component
 export const Game = () => {
-  const [gameManager] = React.useState(() => new GameManager());
-  const [controls, setControls] = React.useState<GameControls>({
+  const [gameManager] = useState(() => new GameManager());
+  const [controls, setControls] = useState<GameControls>({
     horizontal: 0,
     vertical: 0,
     stoolExtend: 0,
@@ -154,7 +150,7 @@ export const Game = () => {
   });
 
   // Handle keyboard input
-  React.useEffect(() => {
+  useEffect(() => {
     if (Platform.OS === 'web') {
       const handleKeyDown = (e: KeyboardEvent) => {
         switch (e.key) {
@@ -225,7 +221,7 @@ export const Game = () => {
 
   return (
     <View style={{ flex: 1 }}>
-      <Canvas style={{ flex: 1 }}>
+      <Canvas gl={{ alpha: false }}>
         <Scene gameManager={gameManager} controls={controls} />
       </Canvas>
     </View>
